@@ -39,4 +39,4 @@ steps:
       build-mode: none
   - name: Analyze code
     uses: github/codeql-action/analyze@v3
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }
