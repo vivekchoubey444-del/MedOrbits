@@ -107,3 +107,4 @@ jobs:
 
       - name: Validate ESLint configuration
         run: node -e "JSON.parse(require('fs').readFileSync('.eslintrc.json', 'utf8'))"
+        
