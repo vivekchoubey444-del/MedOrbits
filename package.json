@@ -17,6 +17,7 @@
 “start:production”: “cross-env NODE_ENV=production node server.js”,
 “check:node”: “node –version”,
 “check:env”: “node scripts/check-env.js”,
+“check:json”: “node scripts/validate-json.js”,
 “check:data”: “node scripts/validate-data.js”,
 “check:health”: “node scripts/health-check.js”,
 “lint”: “eslint . –ignore-pattern node_modules –ignore-pattern storage –ignore-pattern coverage”,
