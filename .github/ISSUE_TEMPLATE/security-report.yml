@@ -1,116 +1,48 @@
-
 name: Security vulnerability report
-description: Privately report a suspected security vulnerability in MedOrbits
+description: Read the private reporting instructions for suspected MedOrbits vulnerabilities
 title: "[Security]: "
 labels: []
 assignees: []
-
 body:
   - type: markdown
     attributes:
       value: |
-        ## Important security notice
-
-        **Do not submit sensitive vulnerability details in a public issue.**
-        GitHub issue forms are generally public unless your repository has a
-        specifically configured private vulnerability reporting feature.
-
-        Before continuing, check the repository's SECURITY.md for private
-        reporting instructions. If no private reporting channel is available,
-        ask a maintainer for one before sharing technical details.
-
-        Do not include passwords, API keys, session tokens, payment information,
-        identity documents, or another person's private data.
-
+        ## Important: protect sensitive information
+        **This form creates a public GitHub issue. It is not a private
+        vulnerability reporting channel.**
+        Do not submit exploit steps, proof-of-concept code, credentials,
+        tokens, private user data, payment information, or other sensitive
+        technical details here.
+        First read the repository's SECURITY.md file for reporting
+        instructions. If no private reporting channel is available,
+        ask a maintainer through a non-public channel to provide one
+        before sharing sensitive information.
   - type: checkboxes
-    id: privacy_acknowledgment
+    id: acknowledgment
     attributes:
-      label: Reporting acknowledgment
+      label: Required acknowledgment
       options:
-        - label: I understand that this issue may be publicly visible.
+        - label: I understand that this form creates a publicly visible issue.
           required: true
-        - label: I have removed secrets and sensitive personal information.
+        - label: I will not include sensitive technical details or personal data.
           required: true
-
-  - type: dropdown
-    id: vulnerability_type
-    attributes:
-      label: Suspected vulnerability category
-      description: Select the closest category.
-      options:
-        - Authentication or session management
-        - Authorization or access control
-        - Injection or input validation
-        - Cross-site scripting (XSS)
-        - Cross-site request forgery (CSRF)
-        - File upload or document access
-        - Sensitive data exposure
-        - Payment or webhook security
-        - API security
-        - Dependency vulnerability
-        - Configuration or deployment
-        - Denial of service
-        - Other
-    validations:
-      required: true
-
   - type: textarea
     id: summary
     attributes:
-      label: High-level summary
-      description: Provide a non-sensitive summary without exploit details.
-      placeholder: Describe the suspected security impact at a high level.
-    validations:
-      required: true
-
-  - type: textarea
-    id: affected_component
-    attributes:
-      label: Affected component
-      description: Identify the relevant page, endpoint, module, or version without exposing sensitive data.
-      placeholder: Component, endpoint, version, or configuration
-    validations:
-      required: true
-
-  - type: textarea
-    id: impact
-    attributes:
-      label: Potential impact
-      description: Explain what an attacker might be able to do, without including sensitive proof-of-concept details.
-    validations:
-      required: true
-
-  - type: textarea
-    id: reproduction
-    attributes:
-      label: Safe reproduction overview
-      description: Provide only a high-level description here. Send detailed reproduction steps through an approved private channel.
-      placeholder: Describe the general conditions needed to reproduce the issue.
+      label: Non-sensitive summary (optional)
+      description: |
+        Only provide a general summary if it is safe to disclose publicly.
+        Otherwise, leave this blank and contact a maintainer privately.
+      placeholder: General topic only; do not include exploit details.
     validations:
       required: false
-
-  - type: textarea
-    id: mitigation
-    attributes:
-      label: Suggested mitigation
-      description: If known, describe a possible fix or defensive measure.
-    validations:
-      required: false
-
-  - type: checkboxes
-    id: authorization
-    attributes:
-      label: Testing authorization
-      options:
-        - label: I tested only systems I own or was explicitly authorized to assess.
-          required: true
-        - label: I avoided accessing, changing, or retaining other users' data.
-          required: true
-
   - type: markdown
     attributes:
       value: |
-        **Next step:** Use the private reporting channel documented in
-        `SECURITY.md` to share sensitive technical details. If no private
-        channel is available, request one from a maintainer before sending
-        exploit steps or proof-of-concept material.
+        ## Next steps
+        1. Read `SECURITY.md` in the repository.
+        2. Use an explicitly published private reporting channel, if available.
+        3. If no private channel is available, request one privately before
+           sending sensitive technical details.
+        Do not assume that a contact address or private reporting feature
+        exists unless it is explicitly available.

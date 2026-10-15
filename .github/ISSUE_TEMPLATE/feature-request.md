@@ -1,4 +1,19 @@
-name: Feature request about: Suggest an improvement or new capability for MedOrbits title: “[Feature]: “ labels: [“enhancement”, “triage”] assignees: []
+
+
+
+
+⸻
+
+name: Feature request
+about: Suggest an improvement or new capability for MedOrbits
+title: “[Feature]: “
+labels:
+
+* enhancement
+* triage
+    assignees: []
+
+⸻
 
 Problem or Opportunity
 
@@ -10,24 +25,26 @@ Proposed Solution
 
 Intended Users and Use Case
 
-• Who would benefit?
-• When or why is this needed?
-• What outcome should it enable?
+* Who would benefit?
+* When or why is this needed?
+* What outcome should it enable?
 
 Affected Area
 
-☐ Website / user interface
-☐ Authentication or account
-☐ Education / admissions
-☐ Applications or documents
-☐ Careers / jobs
-☐ Payments or subscriptions
-☐ Notifications or email
-☐ Admin dashboard
-☐ API / backend
-☐ Database
-☐ Deployment / infrastructure
-☐ Other
+Select all that apply:
+
+* [ ]	Website / user interface
+* [ ]	Authentication or account
+* [ ]	Education / admissions
+* [ ]	Applications or documents
+* [ ]	Careers / jobs
+* [ ]	Payments or subscriptions
+* [ ]	Notifications or email
+* [ ]	Admin dashboard
+* [ ]	API / backend
+* [ ]	Database
+* [ ]	Deployment / infrastructure
+* [ ]	Other
 
 Expected Behavior
 
@@ -35,24 +52,28 @@ Expected Behavior
 
 Alternatives Considered
 
-<!— Describe any alternative solutions or workarounds you have considered. —>
+<!— Describe alternative solutions or workarounds you have considered. —>
 
 Acceptance Criteria
 
 <!— List observable conditions that would indicate the feature is complete. —>
 
-• [ ]
-• [ ]
-• [ ]
+* [ ]
+* [ ]
+* [ ]
 
 Impact and Priority
 
-☐ Critical workflow
-☐ Significant improvement
-☐ Quality-of-life improvement
-☐ Optional enhancement
+Select the closest option:
 
-Explain the expected impact:
+* [ ]	Critical workflow
+* [ ]	Significant improvement
+* [ ]	Quality-of-life improvement
+* [ ]	Optional enhancement
+
+Expected impact:
+
+<!— Explain the expected impact on users or the project. —>
 
 Additional Context
 
@@ -60,10 +81,10 @@ Additional Context
 
 Security, Privacy, and Accessibility
 
-<!— Note any implications for personal data, permissions, payments, document handling, accessibility, or abuse prevention. Write “None known” if not applicable. —>
+<!— Note implications for personal data, permissions, payments, document handling, accessibility, or abuse prevention. Write “None known” if not applicable. —>
 
 Contribution
 
-☐ I am willing to help implement or test this feature.
-☐ I may be able to help with design, documentation, or feedback.
-☐ I am requesting the feature only.
+* [ ]	I am willing to help implement or test this feature.
+* [ ]	I may be able to help with design, documentation, or feedback.
+* [ ]	I am requesting the feature only.

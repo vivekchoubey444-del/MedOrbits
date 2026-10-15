@@ -1,6 +1,4 @@
-
-name: Dependency Review
-
+name: MedOrbits Dependency Review
 on:
   pull_request:
     branches:
@@ -14,28 +12,27 @@ on:
       - "Dockerfile"
       - "**/Dockerfile"
       - ".github/workflows/**"
+      - ".github/dependabot.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: dependency-review-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
 jobs:
   dependency-review:
     name: Review dependency changes
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
-    # This job is intended for pull requests targeting the repository.
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
-
+    # Skip pull requests originating from external forks.
+    # Manual runs remain available for repository maintainers.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4
         with:

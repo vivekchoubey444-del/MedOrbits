@@ -1,6 +1,4 @@
-
 name: MedOrbits Release
-
 on:
   push:
     tags:
@@ -8,72 +6,118 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag to release (for example, v1.0.0)"
+        description: "Existing version tag (for example, v1.0.0)"
         required: true
         type: string
-
 permissions:
-  contents: write
-
+  contents: read
 concurrency:
   group: release-${{ github.event.inputs.tag || github.ref }}
   cancel-in-progress: false
-
 jobs:
   validate:
     name: Validate release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release tag: $tag"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Checkout release source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
           persist-credentials: false
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Validate package metadata
+      - name: Verify release tag and package version
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          node -e "const p = require('./package.json'); if (!p.name || !p.version) process.exit(1); console.log(p.name, p.version)"
-          git status --short
-
+          set -euo pipefail
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          package_version="$(node -p "require('./package.json').version")"
+          expected_version="${RELEASE_TAG#v}"
+          if [ "$package_version" != "$expected_version" ]; then
+            echo "::error::Tag version $expected_version does not match package.json version $package_version."
+            exit 1
+          fi
+          echo "Validated release: $RELEASE_TAG"
+      - name: Install locked dependencies
+        run: npm ci
       - name: Run tests
-        run: npm test --if-present
-
+        run: |
+          node -e "
+            const p = require('./package.json');
+            if (!p.scripts || !p.scripts.test) {
+              console.error('A test script is required before release.');
+              process.exit(1);
+            }
+          "
+          npm test
   publish:
     name: Publish GitHub Release
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    permissions:
+      contents: write
     steps:
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release tag: $tag"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Checkout release source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
           persist-credentials: false
-
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          if ! git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
-            echo "::error::The release tag does not exist."
+          set -euo pipefail
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::error::A GitHub Release already exists for $RELEASE_TAG."
             exit 1
           fi
-
           gh release create "$RELEASE_TAG" \
             --generate-notes \
-            --verify-tag
+            --verify-tag \
+            --title "MedOrbits $RELEASE_TAG"

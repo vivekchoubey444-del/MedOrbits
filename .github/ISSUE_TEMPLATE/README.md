@@ -1,69 +1,75 @@
+GitHub Issue Templates
 
-# GitHub Issue Templates
+This directory contains issue templates for reporting bugs, requesting features, and directing suspected security vulnerabilities to the appropriate reporting channel for MedOrbits.
 
-This directory contains issue templates for reporting bugs, requesting features,
-and documenting suspected security vulnerabilities in the MedOrbits project.
+Available Templates
 
-## Available Templates
+1. Bug Report
 
-### 1. Bug Report
+File: bug-report.md
 
-File: `bug-report.md`
+Use this template to report reproducible problems with the MedOrbits website, backend, APIs, database, authentication, payments, document handling, or other application features.
 
-Use this template to report reproducible problems with the website, backend,
-API, database, authentication, payments, documents, or other MedOrbits features.
+Include reproduction steps, expected behavior, actual behavior, environment details, and sanitized error logs where possible.
 
-Include reproduction steps, expected behavior, actual behavior, and sanitized
-error logs where possible.
+Do not include credentials, access tokens, private user information, or production data.
 
-### 2. Feature Request
+2. Feature Request
 
-File: `feature-request.md`
+File: feature-request.md
 
-Use this template to propose new features, improvements, and changes to existing
-MedOrbits functionality.
+Use this template to propose new features, improvements, and changes to existing MedOrbits functionality.
 
-Describe the problem, intended users, proposed solution, expected impact, and
-acceptance criteria.
+Describe the problem, intended users, proposed solution, expected impact, and acceptance criteria.
 
-### 3. Security Vulnerability Report
+3. Security Vulnerability Report
 
-File: `security-report.yml`
+File: security-report.yml
 
-This GitHub issue form provides a structured way to describe a suspected
-security concern.
+This GitHub issue form provides a structured way to direct suspected security concerns toward the appropriate reporting process.
 
-**Do not submit sensitive vulnerability details in a public issue.**
+Important: GitHub issue forms create public issues unless a separate private reporting mechanism is used.
 
-Check the root `SECURITY.md` file for private reporting instructions. GitHub
-issue forms do not automatically make reports private. If no private reporting
-channel is available, request one from a maintainer before sharing technical
-details.
+* Read the root SECURITY.md file before reporting a suspected vulnerability.
+* Do not publish exploit steps, proof-of-concept code, credentials, session tokens, or sensitive technical details in a public issue.
+* If a private reporting channel is available, use that channel.
+* If no private reporting channel is available, ask a maintainer privately to provide one before sharing sensitive details.
 
-Never include passwords, API keys, session tokens, payment-card information,
-identity documents, or another person’s private data.
+Never include passwords, API keys, payment-card information, identity documents, or another person’s private data.
 
-## Labels
+Labels
 
-The templates refer to these suggested labels:
+The templates may use these labels:
 
-- `bug`
-- `enhancement`
-- `triage`
+* bug
+* enhancement
+* triage
 
-Create these labels in the repository if they do not already exist.
+Create these labels in the repository if they do not already exist. Ensure the labels referenced by individual templates match the labels configured in GitHub.
 
-## Maintainer Responsibilities
+Maintainer Responsibilities
 
-- Keep templates aligned with `CONTRIBUTING.md` and `SECURITY.md`.
-- Remove unnecessary questions and keep reporting straightforward.
-- Review incoming issues and apply appropriate labels.
-- Direct security reports to the configured private reporting channel.
+* Keep issue templates aligned with CONTRIBUTING.md and SECURITY.md.
+* Keep questions relevant and reporting straightforward.
+* Review incoming issues and apply appropriate labels.
+* Avoid requesting sensitive personal data or credentials.
+* Direct security concerns to the configured private reporting channel.
+* Update this documentation whenever template filenames or reporting procedures change.
 
-## Adding a Template
+Adding a Template
 
-Add a Markdown template (`.md`) or a GitHub issue form (`.yml`) to this directory.
-Test the template by opening a new issue in the repository.
+Add a Markdown template (.md) or a GitHub Issue Form (.yml) to this directory.
 
-For more information, see the root `README.md`, `CONTRIBUTING.md`, and
-`SECURITY.md` files.
+After adding a template:
+
+1. Verify that its filename matches the documentation.
+2. Check YAML syntax for Issue Forms.
+3. Confirm that referenced labels exist.
+4. Open a test issue when appropriate and verify the template appears correctly.
+5. Confirm that security-reporting instructions do not encourage disclosure of sensitive details publicly.
+
+For additional guidance, see the root README.md, CONTRIBUTING.md, and SECURITY.md.
+
+⸻
+
+Security reminder: Issue templates improve consistency; they do not protect source code, restrict repository cloning, or make public issues private.

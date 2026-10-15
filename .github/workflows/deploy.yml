@@ -1,6 +1,4 @@
-
 name: MedOrbits Deployment
-
 on:
   workflow_dispatch:
   workflow_run:
@@ -10,21 +8,17 @@ on:
       - completed
     branches:
       - main
-
 permissions:
   contents: read
   actions: read
-
 concurrency:
   group: medorbits-production-deployment
   cancel-in-progress: false
-
 jobs:
   verify:
     name: Verify deployment eligibility
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (
@@ -32,47 +26,45 @@ jobs:
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository
       )
-
     steps:
       - name: Confirm deployment trigger
         run: |
           echo "Deployment eligibility checks passed."
-          echo "Configure the deployment provider before enabling production deployment."
-
+          echo "A hosting provider must be configured before production deployment."
   deploy:
     name: Deploy to production
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
+    # Configure this environment in repository settings.
     environment:
       name: production
-
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
           persist-credentials: false
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify project configuration
+      - name: Verify required project files
+        shell: bash
         run: |
+          set -euo pipefail
           test -f package.json
           test -f package-lock.json
+          echo "Required project files found."
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify Node.js configuration
+        run: |
           node --version
           npm --version
-
       - name: Deployment provider configuration required
         run: |
           echo "::error::Production deployment is not configured."
-          echo "Add the provider-specific deployment action and required secrets."
+          echo "Configure your hosting provider and deployment secrets before enabling this workflow."
           exit 1

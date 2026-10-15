@@ -1,29 +1,42 @@
-name: Bug report about: Report a reproducible bug in MedOrbits title: “[Bug]: “ labels: [“bug”, “triage”] assignees: []
+
+
+
+
+⸻
+
+name: Bug report
+about: Report a reproducible bug in MedOrbits
+title: “[Bug]: “
+labels:
+
+* bug
+* triage
+    assignees: []
+
+⸻
 
 Bug Summary
 
-<!— A clear, concise description of the problem. —>
+<!— Provide a clear, concise description of the problem. —>
 
 Affected Area
 
-☐ Website / user interface
-☐ Authentication or account
-☐ Education / admissions
-☐ Applications or documents
-☐ Careers / jobs
-☐ Payments or subscriptions
-☐ Notifications or email
-☐ Admin dashboard
-☐ API / backend
-☐ Database
-☐ Deployment / infrastructure
-☐ Other
+Select all that apply:
+
+* [ ]	Website / user interface
+* [ ]	Authentication or account
+* [ ]	Education / admissions
+* [ ]	Applications or documents
+* [ ]	Careers / jobs
+* [ ]	Payments or subscriptions
+* [ ]	Notifications or email
+* [ ]	Admin dashboard
+* [ ]	API / backend
+* [ ]	Database
+* [ ]	Deployment / infrastructure
+* [ ]	Other
 
 Steps to Reproduce
-
-1. 
-2. 
-3. 
 
 Expected Behavior
 
@@ -35,17 +48,19 @@ Actual Behavior
 
 Reproducibility
 
-☐ Happens every time
-☐ Happens intermittently
-☐ Happened once
+Select one:
+
+* [ ]	Happens every time
+* [ ]	Happens intermittently
+* [ ]	Happened once
 
 Environment
 
-• Page or endpoint:
-• Browser and version:
-• Operating system/device:
-• App version or commit, if known:
-• Environment: Local / Staging / Production / Other
+* Page or endpoint:
+* Browser and version:
+* Operating system/device:
+* App version or commit, if known:
+* Environment: Local / Staging / Production / Other
 
 Error Messages and Logs
 
@@ -59,12 +74,16 @@ Screenshots or Recordings
 
 Impact
 
-☐ Blocks a critical workflow
-☐ Causes incorrect behavior or results
-☐ Affects a limited feature
-☐ Cosmetic or minor issue
+Select the closest option:
+
+* [ ]	Blocks a critical workflow
+* [ ]	Causes incorrect behavior or results
+* [ ]	Affects a limited feature
+* [ ]	Cosmetic or minor issue
 
 Describe the impact:
+
+<!— Explain who or what is affected. —>
 
 Possible Workaround
 
@@ -72,8 +91,8 @@ Possible Workaround
 
 Additional Context
 
-<!— Add any other relevant details. Do not include passwords, tokens, payment-card data, identity documents, or another person’s private information. —>
+<!— Add other relevant details. Never include credentials, tokens, payment-card data, identity documents, or another person’s private information. —>
 
 Security Reminder
 
-Do not report security vulnerabilities in a public issue. Follow the private reporting instructions in SECURITY.md instead.
+Do not report security vulnerabilities in a public issue. Follow the private reporting instructions in the root SECURITY.md file. If no private reporting channel is available, request one from a maintainer through a non-public channel before sharing sensitive technical details.
