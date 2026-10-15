@@ -39,7 +39,7 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Checkout release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Checkout release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
