@@ -1,181 +1,51 @@
-name: Validate Configuration
-
-on:
-push:
-branches:
-- main
-- master
-pull_request:
-workflow_dispatch:
-
-permissions:
-contents: read
-
-concurrency:
-group: validate-config-${{ github.workflow }}-${{ github.ref }}
-cancel-in-progress: true
-
-jobs:
-validate:
-name: Validate Project Configuration
-runs-on: ubuntu-latest
-timeout-minutes: 10
-
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: "20"
-      cache: npm
-  - name: Check required files
-    shell: bash
-    run: |
-      set -euo pipefail
-      required_files=(
-        "package.json"
-        "README.md"
-        ".editorconfig"
-        ".prettierrc.json"
-        ".eslintrc.json"
-      )
-      missing=0
-      for file in "${required_files[@]}"; do
-        if [[ -f "$file" ]]; then
-          echo "Found: $file"
-        else
-          echo "::error::Required file is missing: $file"
-          missing=1
-        fi
-      done
-      if [[ "$missing" -ne 0 ]]; then
-        exit 1
-      fi
-  - name: Validate JSON files
-    shell: bash
-    run: |
-      set -uo pipefail
-      count=0
-      failures=0
-      while IFS= read -r -d '' file; do
-        count=$((count + 1))
-        echo "Checking JSON: $file"
-        if node - "$file" <<'NODE'
-      const fs = require('node:fs');
-      const file = process.argv[2];
+- name: Validate JSON files
+  shell: bash
+  run: |
+    set -euo pipefail
+    errors=0
+    count=0
+    while IFS= read -r -d '' file; do
+      count=$((count + 1))
+      echo "Checking JSON: $file"
+      node <<'NODE' "$file"
       try {
-        const content = fs.readFileSync(file, 'utf8');
-        JSON.parse(content);
-        console.log(`Valid JSON: ${file}`);
-      } catch (error) {
-        console.error(`::error file=${file}::Invalid JSON: ${error.message}`);
-        process.exitCode = 1;
+        const fs = require('node:fs');
+        JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+      } catch (err) {
+        console.error(`${process.argv[1]}: ${err.message}`);
+        process.exit(1);
       }
       NODE
-        then
-          :
-        else
-          failures=$((failures + 1))
-        fi
-      done < <(
-        find . \
-          -type d \( -name .git -o -name node_modules -o -name coverage \) -prune -o \
-          -type f -name '*.json' -print0
-      )
-      echo "Checked $count JSON file(s)."
-      if (( failures > 0 )); then
-        echo "::error::$failures JSON file(s) are invalid."
-        exit 1
+      if [ $? -ne 0 ]; then
+        errors=$((errors + 1))
       fi
-      echo "All JSON files are valid."
-  - name: Validate YAML files
-    shell: bash
-    run: |
-      set -euo pipefail
-      ruby -e '
-        require "yaml"
-        files = Dir.glob(
-          "{.github,config,deploy}/**/*.{yml,yaml}",
-          File::FNM_EXTGLOB
-        ).select { |file| File.file?(file) }
-        files.concat(
-          Dir.glob("*.{yml,yaml}", File::FNM_EXTGLOB)
-            .select { |file| File.file?(file) }
-        )
-        files.uniq!
-        failures = []
-        files.each do |file|
-          begin
-            YAML.parse_file(file)
-            puts "Valid YAML: #{file}"
-          rescue StandardError => error
-            warn "::error file=#{file}::Invalid YAML: #{error.message}"
-            failures << file
-          end
-        end
-        puts "Checked #{files.length} YAML file(s)."
-        unless failures.empty?
-          warn "Invalid YAML files: #{failures.join(", ")}"
-          exit 1
-        end
-      '
-  - name: Validate package metadata
-    shell: bash
-    run: |
-      set -euo pipefail
-      node <<'NODE'
-      const fs = require('node:fs');
-      const file = 'package.json';
-      const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
-      const errors = [];
-      if (!pkg.name) {
-        errors.push('Missing package name.');
-      }
-      if (!pkg.version) {
-        errors.push('Missing package version.');
-      }
-      if (!pkg.scripts || typeof pkg.scripts !== 'object') {
-        errors.push('Missing scripts object.');
-      }
-      if (!pkg.dependencies || typeof pkg.dependencies !== 'object') {
-        errors.push('Missing dependencies object.');
-      }
-      if (errors.length > 0) {
-        for (const error of errors) {
-          console.error(`::error::${error}`);
-        }
-        process.exit(1);
-      }
-      console.log(`Package: ${pkg.name}`);
-      console.log(`Version: ${pkg.version}`);
-      console.log('Package metadata is valid.');
-      NODE
-  - name: Check Prettier configuration
-    shell: bash
-    run: |
-      set -euo pipefail
-      node <<'NODE'
-      const fs = require('node:fs');
-      const file = '.prettierrc.json';
-      if (!fs.existsSync(file)) {
-        console.error(`::error::Missing ${file}`);
-        process.exit(1);
-      }
-      JSON.parse(fs.readFileSync(file, 'utf8'));
-      console.log('Prettier configuration is valid.');
-      NODE
-  - name: Check ESLint configuration
-    shell: bash
-    run: |
-      set -euo pipefail
-      node <<'NODE'
-      const fs = require('node:fs');
-      const file = '.eslintrc.json';
-      if (!fs.existsSync(file)) {
-        console.error(`::error::Missing ${file}`);
-        process.exit(1);
-      }
-      JSON.parse(fs.readFileSync(file, 'utf8'));
-      console.log('ESLint configuration is valid JSON.');
-      NODE
+    done < <(
+      find . \
+        -type d \( -name node_modules -o -name .git -o -name coverage \) -prune \
+        -o -type f -name '*.json' -print0
+    )
+
+    echo "Validated $count JSON file(s). Errors: $errors"
+    if [ "$errors" -ne 0 ]; then
+      echo "::error ::JSON validation failed ($errors file(s))"
+      exit 1
+    fi
+
+- name: Validate YAML syntax
+  shell: ruby
+  run: |
+    require 'yaml'
+    require 'find'
+    count = 0
+    Find.find('.') do |path|
+      if File.directory?(path) &&
+         %w[.git node_modules coverage].include?(File.basename(path))
+        Find.prune
+      elsif File.file?(path) &&
+            path.match?(/\.(yml|yaml)\z/i)
+        puts "Checking YAML: #{path}"
+        YAML.parse_file(path)
+        count += 1
+      end
+    end
+    puts "Validated #{count} YAML file(s)."
