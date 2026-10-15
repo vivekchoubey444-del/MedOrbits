@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "colleges": [],
+  "fields": [
+    "id",
+    "name",
+    "slug",
+    "countryCode",
+    "state",
+    "city",
+    "address",
+    "website",
+    "courses",
+    "recognitionAuthority",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Add only verified institution records. Do not invent recognition, fees, rankings or contact details."
+}

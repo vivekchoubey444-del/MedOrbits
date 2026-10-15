@@ -1,0 +1,62 @@
+/* =========================================================
+MedOrbits -- Forms and Search Controls
+Search forms, input fields and select controls
+========================================================= */
+
+/* =========================================================
+
+1. Form Control Typography
+    ========================================================= */
+
+button,
+input,
+select {
+font: inherit;
+}
+
+/* =========================================================
+2. Search Form Layout
+========================================================= */
+
+.search-form {
+display: grid;
+grid-template-columns: 1.4fr 1fr 1fr auto;
+gap: 10px;
+}
+
+/* =========================================================
+3. Shared Form Fields
+========================================================= */
+
+.field {
+width: 100%;
+min-width: 0;
+border: 1px solid rgba(201, 169, 110, 0.25);
+border-radius: 9px;
+background: #21172b;
+color: var(–white);
+padding: 13px 14px;
+outline: none;
+transition:
+border-color 0.2s ease,
+box-shadow 0.2s ease,
+background 0.2s ease;
+}
+
+/* =========================================================
+4. Focus States
+========================================================= */
+
+.field:focus {
+border-color: var(–gold);
+box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.1);
+}
+
+/* =========================================================
+5. Select Dropdown Options
+========================================================= */
+
+.field option {
+background: #21172b;
+color: var(–white);
+}

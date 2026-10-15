@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "faqs": [
+    {
+      "id": "faq-course-choice",
+      "question": "How do I choose a suitable course?",
+      "answer": "Consider your interests, academic background, eligibility, costs and goals. Verify programme information with official institutions.",
+      "category": "courses",
+      "sortOrder": 1,
+      "active": true
+    },
+    {
+      "id": "faq-institutions",
+      "question": "How do I verify a college or university?",
+      "answer": "Check recognition, accreditation and programme details with the relevant official regulator or institution.",
+      "category": "institutions",
+      "sortOrder": 2,
+      "active": true
+    },
+    {
+      "id": "faq-study-abroad",
+      "question": "What should I check before studying abroad?",
+      "answer": "Verify institution recognition, tuition, living costs, visa requirements, licensing rules and refund policies through official sources.",
+      "category": "study-abroad",
+      "sortOrder": 3,
+      "active": true
+    },
+    {
+      "id": "faq-scholarships",
+      "question": "Are scholarships guaranteed?",
+      "answer": "No. Eligibility, award amounts, deadlines and selection conditions depend on the scholarship provider.",
+      "category": "funding",
+      "sortOrder": 4,
+      "active": true
+    },
+    {
+      "id": "faq-jobs",
+      "question": "Does the website guarantee jobs or admissions?",
+      "answer": "No. Listings and guidance do not guarantee admission, employment, funding or any particular outcome.",
+      "category": "careers",
+      "sortOrder": 5,
+      "active": true
+    }
+  ]
+}

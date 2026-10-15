@@ -1,0 +1,86 @@
+
+{
+  "description": "Synthetic MedOrbits user fixtures for local development and automated tests. Password hashes are placeholders and must not be used for authentication.",
+  "users": [
+    {
+      "id": "USR-TEST-0001",
+      "name": "Test Applicant One",
+      "email": "applicant1@example.invalid",
+      "passwordHash": "$FIXTURE_NOT_A_REAL_PASSWORD_HASH$",
+      "role": "user",
+      "status": "active",
+      "emailVerified": true,
+      "phone": null,
+      "createdAt": "2026-01-10T09:00:00.000Z",
+      "updatedAt": "2026-01-10T09:00:00.000Z",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_verified_user"
+      }
+    },
+    {
+      "id": "USR-TEST-0002",
+      "name": "Test Applicant Two",
+      "email": "applicant2@example.invalid",
+      "passwordHash": "$FIXTURE_NOT_A_REAL_PASSWORD_HASH$",
+      "role": "user",
+      "status": "active",
+      "emailVerified": false,
+      "phone": null,
+      "createdAt": "2026-01-12T10:30:00.000Z",
+      "updatedAt": "2026-01-12T10:30:00.000Z",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_unverified_user"
+      }
+    },
+    {
+      "id": "USR-TEST-ADMIN-0001",
+      "name": "Test Administrator One",
+      "email": "admin1@example.invalid",
+      "passwordHash": "$FIXTURE_NOT_A_REAL_PASSWORD_HASH$",
+      "role": "admin",
+      "status": "active",
+      "emailVerified": true,
+      "phone": null,
+      "createdAt": "2026-01-05T08:00:00.000Z",
+      "updatedAt": "2026-01-05T08:00:00.000Z",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_administrator"
+      }
+    },
+    {
+      "id": "USR-TEST-ADMIN-0002",
+      "name": "Test Administrator Two",
+      "email": "admin2@example.invalid",
+      "passwordHash": "$FIXTURE_NOT_A_REAL_PASSWORD_HASH$",
+      "role": "admin",
+      "status": "active",
+      "emailVerified": true,
+      "phone": null,
+      "createdAt": "2026-01-06T08:00:00.000Z",
+      "updatedAt": "2026-01-06T08:00:00.000Z",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "second_administrator"
+      }
+    },
+    {
+      "id": "USR-TEST-0003",
+      "name": "Test Disabled User",
+      "email": "disabled@example.invalid",
+      "passwordHash": "$FIXTURE_NOT_A_REAL_PASSWORD_HASH$",
+      "role": "user",
+      "status": "disabled",
+      "emailVerified": true,
+      "phone": null,
+      "createdAt": "2026-01-15T12:00:00.000Z",
+      "updatedAt": "2026-01-20T12:00:00.000Z",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "disabled_user"
+      }
+    }
+  ]
+}

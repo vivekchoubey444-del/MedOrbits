@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "courses": [
+    {
+      "id": "course-mbbs",
+      "name": "MBBS",
+      "slug": "mbbs",
+      "category": "medical",
+      "level": "Undergraduate",
+      "duration": "Varies by country and regulations",
+      "countryCodes": [
+        "IN",
+        "RU",
+        "GE",
+        "KZ",
+        "UZ",
+        "KG"
+      ],
+      "description": "Medical degree pathway. Confirm eligibility, recognition, licensing and current admission rules with official authorities.",
+      "path": "/education/study-india/mbbs.html",
+      "active": true
+    },
+    {
+      "id": "course-bds",
+      "name": "BDS",
+      "slug": "bds",
+      "category": "dental",
+      "level": "Undergraduate",
+      "duration": "Varies by institution",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Dental education pathway. Confirm eligibility and recognition with official sources.",
+      "path": "/education/study-india/bds.html",
+      "active": true
+    },
+    {
+      "id": "course-ayush",
+      "name": "AYUSH",
+      "slug": "ayush",
+      "category": "ayush",
+      "level": "Undergraduate",
+      "duration": "Varies by programme",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Traditional and complementary healthcare programme category.",
+      "path": "/education/study-india/ayush.html",
+      "active": true
+    },
+    {
+      "id": "course-nursing",
+      "name": "Nursing",
+      "slug": "nursing",
+      "category": "healthcare",
+      "level": "Diploma / Undergraduate",
+      "duration": "Varies by qualification",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Nursing education and healthcare career pathways.",
+      "path": "/education/study-india/nursing.html",
+      "active": true
+    },
+    {
+      "id": "course-pharmacy",
+      "name": "Pharmacy",
+      "slug": "pharmacy",
+      "category": "healthcare",
+      "level": "Diploma / Undergraduate / Postgraduate",
+      "duration": "Varies by qualification",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Pharmacy education and related professional pathways.",
+      "path": "/education/study-india/pharmacy.html",
+      "active": true
+    },
+    {
+      "id": "course-paramedical",
+      "name": "Paramedical",
+      "slug": "paramedical",
+      "category": "allied-health",
+      "level": "Certificate / Diploma / Undergraduate",
+      "duration": "Varies by programme",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Allied health, diagnostics and support-care programmes.",
+      "path": "/education/study-india/paramedical.html",
+      "active": true
+    },
+    {
+      "id": "course-engineering",
+      "name": "Engineering",
+      "slug": "engineering",
+      "category": "technology",
+      "level": "Diploma / Undergraduate / Postgraduate",
+      "duration": "Varies by qualification",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Technical study pathways and specialisations.",
+      "path": "/education/study-india/engineering.html",
+      "active": true
+    },
+    {
+      "id": "course-management",
+      "name": "Management",
+      "slug": "management",
+      "category": "business",
+      "level": "Undergraduate / Postgraduate",
+      "duration": "Varies by qualification",
+      "countryCodes": [
+        "IN"
+      ],
+      "description": "Business, leadership and management qualifications.",
+      "path": "/education/study-india/management.html",
+      "active": true
+    }
+  ]
+}

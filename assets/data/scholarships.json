@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "scholarships": [],
+  "fields": [
+    "id",
+    "name",
+    "provider",
+    "countryCode",
+    "eligibleCourseIds",
+    "eligibility",
+    "benefit",
+    "deadline",
+    "applicationUrl",
+    "sourceUrl",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Add only current scholarship details verified from the provider."
+}

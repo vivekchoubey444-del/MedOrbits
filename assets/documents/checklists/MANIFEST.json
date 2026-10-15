@@ -1,0 +1,534 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "package": "MedOrbits Checklists",
+  "packageVersion": "1.0.0",
+  "designSystem": {
+    "brand": "MedOrbits",
+    "name": "Royal Burgundy and Champagne Gold"
+  },
+  "baseDirectory": "assets/documents/checklists/",
+  "documentation": {
+    "readme": "README.md",
+    "categoryReadmes": [
+      "admissions/README.md",
+      "applications/README.md",
+      "career/README.md",
+      "education/README.md",
+      "examinations/README.md",
+      "general/README.md",
+      "study-abroad/README.md"
+    ]
+  },
+  "resources": [
+    {
+      "id": "admissions-admissions-checklist",
+      "title": "Admissions Checklist",
+      "category": "admissions",
+      "path": "admissions/admissions-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Plan and verify the steps involved in an education admission.",
+      "intendedUse": "Before applying; during selection; before joining",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-admission-document-checklist",
+      "title": "Admission Document Checklist",
+      "category": "admissions",
+      "path": "admissions/admission-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Inventory common records that may be requested during admission.",
+      "intendedUse": "Before submission or verification",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-eligibility-verification-checklist",
+      "title": "Eligibility Verification Checklist",
+      "category": "admissions",
+      "path": "admissions/eligibility-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Check published eligibility rules before paying fees or submitting an application.",
+      "intendedUse": "Before application submission",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-application-submission-checklist",
+      "title": "Admission Application Submission Checklist",
+      "category": "admissions",
+      "path": "admissions/application-submission-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Reduce avoidable errors before submitting an admission application.",
+      "intendedUse": "Final pre-submission review",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-counselling-checklist",
+      "title": "Counselling Checklist",
+      "category": "admissions",
+      "path": "admissions/counselling-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for counselling, preference selection, and seat-allocation processes.",
+      "intendedUse": "Before and during counselling",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-document-verification-checklist",
+      "title": "Admission Document Verification Checklist",
+      "category": "admissions",
+      "path": "admissions/document-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare documents for institutional or authorised online verification.",
+      "intendedUse": "Before the verification appointment",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-admission-fee-payment-checklist",
+      "title": "Admission Fee Payment Checklist",
+      "category": "admissions",
+      "path": "admissions/admission-fee-payment-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Help verify admission charges and safely record a payment.",
+      "intendedUse": "Before and after payment",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-reporting-and-enrolment-checklist",
+      "title": "Reporting and Enrolment Checklist",
+      "category": "admissions",
+      "path": "admissions/reporting-and-enrolment-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for campus reporting and completion of enrolment formalities.",
+      "intendedUse": "After allotment or offer acceptance",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "admissions-postgraduate-admission-checklist",
+      "title": "Postgraduate Admission Checklist",
+      "category": "admissions",
+      "path": "admissions/postgraduate-admission-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Organize common postgraduate application and admission requirements.",
+      "intendedUse": "Before applying to postgraduate programmes",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-preparation-checklist",
+      "title": "Application Preparation Checklist",
+      "category": "applications",
+      "path": "applications/application-preparation-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Plan an application from initial research through final readiness.",
+      "intendedUse": "Before completing an application",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-document-checklist",
+      "title": "Application Document Checklist",
+      "category": "applications",
+      "path": "applications/application-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Track supporting documents for an application package.",
+      "intendedUse": "While assembling supporting evidence",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-review-checklist",
+      "title": "Application Review Checklist",
+      "category": "applications",
+      "path": "applications/application-review-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Perform a structured quality check before submission.",
+      "intendedUse": "Final review",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-submission-checklist",
+      "title": "Application Submission Checklist",
+      "category": "applications",
+      "path": "applications/application-submission-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Ensure an application is submitted correctly and on time.",
+      "intendedUse": "At the point of submission",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-follow-up-checklist",
+      "title": "Application Follow-up Checklist",
+      "category": "applications",
+      "path": "applications/application-follow-up-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Track acknowledgement, requests, decisions, and next actions.",
+      "intendedUse": "After submitting an application",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "applications-application-tracking-worksheet",
+      "title": "Application Tracking Worksheet",
+      "category": "applications",
+      "path": "applications/application-tracking-worksheet.pdf",
+      "format": "application/pdf",
+      "description": "Record application status and next actions in one printable worksheet.",
+      "intendedUse": "Use one row per application",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-career-readiness-checklist",
+      "title": "Career Readiness Checklist",
+      "category": "career",
+      "path": "career/career-readiness-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Review the foundations needed for a focused job search.",
+      "intendedUse": "Before beginning or restarting a job search",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-resume-review-checklist",
+      "title": "Resume Review Checklist",
+      "category": "career",
+      "path": "career/resume-review-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Check resume accuracy, readability, and relevance before sending.",
+      "intendedUse": "Before each application",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-cover-letter-checklist",
+      "title": "Cover Letter Checklist",
+      "category": "career",
+      "path": "career/cover-letter-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare a focused, role-specific cover letter.",
+      "intendedUse": "Before sending a cover letter",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-job-search-checklist",
+      "title": "Job Search Checklist",
+      "category": "career",
+      "path": "career/job-search-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Organize a safe and consistent job search.",
+      "intendedUse": "During an active job search",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-interview-readiness-checklist",
+      "title": "Interview Readiness Checklist",
+      "category": "career",
+      "path": "career/interview-readiness-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for interview logistics, questions, and follow-up.",
+      "intendedUse": "Before an interview",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-job-offer-evaluation-checklist",
+      "title": "Job Offer Evaluation Checklist",
+      "category": "career",
+      "path": "career/job-offer-evaluation-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Compare job terms and clarify important conditions before accepting.",
+      "intendedUse": "Before accepting or declining an offer",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "career-first-job-readiness-checklist",
+      "title": "First Job Readiness Checklist",
+      "category": "career",
+      "path": "career/first-job-readiness-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare practical essentials for starting a first job.",
+      "intendedUse": "Before your first working day",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-course-selection-checklist",
+      "title": "Course Selection Checklist",
+      "category": "education",
+      "path": "education/course-selection-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Compare courses against academic goals and practical constraints.",
+      "intendedUse": "Before choosing a course",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-college-comparison-checklist",
+      "title": "College Comparison Checklist",
+      "category": "education",
+      "path": "education/college-comparison-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Compare colleges using consistent, verifiable criteria.",
+      "intendedUse": "When shortlisting institutions",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-university-verification-checklist",
+      "title": "University Verification Checklist",
+      "category": "education",
+      "path": "education/university-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Verify an institution and programme before committing money or documents.",
+      "intendedUse": "Before application or payment",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-education-document-checklist",
+      "title": "Education Document Checklist",
+      "category": "education",
+      "path": "education/education-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Organize academic records for education-related processes.",
+      "intendedUse": "Before applying, transferring, or enrolling",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-study-planning-checklist",
+      "title": "Study Planning Checklist",
+      "category": "education",
+      "path": "education/study-planning-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Create a manageable plan for study, revision, and progress review.",
+      "intendedUse": "At the start of a study period",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-education-budget-checklist",
+      "title": "Education Budget Checklist",
+      "category": "education",
+      "path": "education/education-budget-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Estimate the total cost of study and plan funding sources.",
+      "intendedUse": "Before accepting an offer",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "education-enrolment-readiness-checklist",
+      "title": "Enrolment Readiness Checklist",
+      "category": "education",
+      "path": "education/enrolment-readiness-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for registration and the start of a course.",
+      "intendedUse": "After receiving an offer",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-examination-registration-checklist",
+      "title": "Examination Registration Checklist",
+      "category": "examinations",
+      "path": "examinations/examination-registration-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Organize examination registration and confirmation steps.",
+      "intendedUse": "Before the registration deadline",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-examination-document-checklist",
+      "title": "Examination Document Checklist",
+      "category": "examinations",
+      "path": "examinations/examination-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare records that may be needed for registration or exam day.",
+      "intendedUse": "Before registration and examination day",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-exam-preparation-checklist",
+      "title": "Exam Preparation Checklist",
+      "category": "examinations",
+      "path": "examinations/exam-preparation-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Plan revision, practice, materials, and readiness.",
+      "intendedUse": "During the preparation period",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-exam-day-checklist",
+      "title": "Exam Day Checklist",
+      "category": "examinations",
+      "path": "examinations/exam-day-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for a calm, organised examination day.",
+      "intendedUse": "The day before and day of the exam",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-admit-card-verification-checklist",
+      "title": "Admit Card Verification Checklist",
+      "category": "examinations",
+      "path": "examinations/admit-card-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Check examination entry details as soon as the admit card is available.",
+      "intendedUse": "Immediately after admit-card release",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-examination-result-checklist",
+      "title": "Examination Result Checklist",
+      "category": "examinations",
+      "path": "examinations/examination-result-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Review results and identify the correct next steps.",
+      "intendedUse": "After result publication",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "examinations-counselling-preparation-checklist",
+      "title": "Examination Counselling Preparation Checklist",
+      "category": "examinations",
+      "path": "examinations/counselling-preparation-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare for counselling or placement processes following an examination.",
+      "intendedUse": "Before counselling registration",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "general-checklist",
+      "title": "General Planning Checklist",
+      "category": "general",
+      "path": "general/general-checklist.pdf",
+      "format": "application/pdf",
+      "description": "A reusable checklist for planning, preparation, and completion.",
+      "intendedUse": "For everyday planning",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "personal-document-checklist",
+      "title": "Personal Document Checklist",
+      "category": "general",
+      "path": "general/personal-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Inventory important personal records and track secure storage.",
+      "intendedUse": "For personal record organisation",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "deadline-tracking-checklist",
+      "title": "Deadline Tracking Checklist",
+      "category": "general",
+      "path": "general/deadline-tracking-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Record important dates and prepare actions ahead of time.",
+      "intendedUse": "For applications, payments, renewals, and appointments",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "document-review-checklist",
+      "title": "Document Review Checklist",
+      "category": "general",
+      "path": "general/document-review-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Check documents for accuracy, readability, and safe sharing.",
+      "intendedUse": "Before uploading, printing, or sending a document",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "payment-safety-checklist",
+      "title": "Payment Safety Checklist",
+      "category": "general",
+      "path": "general/payment-safety-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Reduce avoidable risks when making online or institutional payments.",
+      "intendedUse": "Before making a payment",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "task-completion-checklist",
+      "title": "Task Completion Checklist",
+      "category": "general",
+      "path": "general/task-completion-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Confirm that a task is complete and its records are in order.",
+      "intendedUse": "At task closeout",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-study-abroad-checklist",
+      "title": "Study Abroad Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/study-abroad-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Coordinate research and preparation for international education.",
+      "intendedUse": "From initial research to departure",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-destination-research-checklist",
+      "title": "Study Destination Research Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/destination-research-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Compare countries and cities for study, cost, and practical suitability.",
+      "intendedUse": "Before selecting a destination",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-university-verification-checklist",
+      "title": "International University Verification Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/university-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Verify international institutions, campuses, and programmes before applying.",
+      "intendedUse": "Before paying an agent or institution",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-study-abroad-application-checklist",
+      "title": "Study Abroad Application Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/study-abroad-application-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Organize institution applications for international study.",
+      "intendedUse": "Before and during application submission",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-visa-document-checklist",
+      "title": "Study Visa Document Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/visa-document-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Help organise documents that may be needed for a student visa or permit.",
+      "intendedUse": "Before a visa or study-permit application",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-study-abroad-budget-checklist",
+      "title": "Study Abroad Budget Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/study-abroad-budget-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Estimate the full cost of international study and prepare a funding plan.",
+      "intendedUse": "Before accepting an offer",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-accommodation-preparation-checklist",
+      "title": "Study Abroad Accommodation Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/accommodation-preparation-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Prepare safe, practical accommodation before travelling.",
+      "intendedUse": "Before booking or moving in",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    },
+    {
+      "id": "study-abroad-pre-departure-checklist",
+      "title": "Study Abroad Pre-Departure Checklist",
+      "category": "study-abroad",
+      "path": "study-abroad/pre-departure-checklist.pdf",
+      "format": "application/pdf",
+      "description": "Coordinate final tasks before travelling to study abroad.",
+      "intendedUse": "In the weeks before departure",
+      "verificationStatus": "general-guidance-not-officially-verified"
+    }
+  ],
+  "publishing": {
+    "visibility": "public",
+    "requireFileExistenceCheck": true,
+    "requirePdfValidation": true,
+    "requireLinkValidation": true,
+    "requireContentReviewBeforePublication": true,
+    "allowPersonalData": false
+  },
+  "verificationPolicy": "Verify changing eligibility rules, deadlines, fees, documents, recognition, examination requirements, and visa conditions against relevant official sources.",
+  "disclaimer": "These resources provide general planning guidance and do not replace official instructions or guarantee admission, employment, examination success, funding, or visa approval."
+}

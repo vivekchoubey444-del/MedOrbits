@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "countries": [
+    {
+      "id": "IN",
+      "name": "India",
+      "slug": "india",
+      "region": "South Asia",
+      "currency": "INR",
+      "studyAbroad": false,
+      "active": true
+    },
+    {
+      "id": "RU",
+      "name": "Russia",
+      "slug": "russia",
+      "region": "Europe/Asia",
+      "currency": "RUB",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "GE",
+      "name": "Georgia",
+      "slug": "georgia",
+      "region": "Europe/Asia",
+      "currency": "GEL",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "KZ",
+      "name": "Kazakhstan",
+      "slug": "kazakhstan",
+      "region": "Central Asia",
+      "currency": "KZT",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "UZ",
+      "name": "Uzbekistan",
+      "slug": "uzbekistan",
+      "region": "Central Asia",
+      "currency": "UZS",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "KG",
+      "name": "Kyrgyzstan",
+      "slug": "kyrgyzstan",
+      "region": "Central Asia",
+      "currency": "KGS",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "GB",
+      "name": "United Kingdom",
+      "slug": "united-kingdom",
+      "region": "Europe",
+      "currency": "GBP",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "US",
+      "name": "United States",
+      "slug": "united-states",
+      "region": "North America",
+      "currency": "USD",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "CA",
+      "name": "Canada",
+      "slug": "canada",
+      "region": "North America",
+      "currency": "CAD",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "AU",
+      "name": "Australia",
+      "slug": "australia",
+      "region": "Oceania",
+      "currency": "AUD",
+      "studyAbroad": true,
+      "active": true
+    },
+    {
+      "id": "DE",
+      "name": "Germany",
+      "slug": "germany",
+      "region": "Europe",
+      "currency": "EUR",
+      "studyAbroad": true,
+      "active": true
+    }
+  ]
+}

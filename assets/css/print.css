@@ -1,0 +1,65 @@
+/* =========================================================
+MedOrbits -- Print Styles
+Print-friendly document presentation
+========================================================= */
+
+@media print {
+/* Use a light colour scheme for printed output */
+:root {
+color-scheme: light;
+}
+
+/* Page and body */
+@page {
+margin: 15mm;
+}
+
+body {
+background: #fff !important;
+color: #111 !important;
+font-size: 11pt;
+line-height: 1.5;
+}
+
+/* Hide screen-only navigation and promotional elements */
+.header,
+.announcement,
+.menu-toggle,
+.nav,
+.nav-cta,
+.hero-actions,
+.search-band,
+.footer {
+display: none !important;
+}
+
+/* Keep important content blocks together */
+.section,
+.card,
+.faq {
+break-inside: avoid;
+background: #fff !important;
+color: #111 !important;
+box-shadow: none !important;
+}
+
+/* Make links identifiable on paper */
+a {
+color: #111 !important;
+text-decoration: underline;
+}
+
+/* Keep images within the printable page width */
+img {
+max-width: 100% !important;
+height: auto;
+}
+
+/* Avoid unnecessary shadows and decorative effects */
+*,
+*::before,
+*::after {
+box-shadow: none !important;
+text-shadow: none !important;
+}
+}

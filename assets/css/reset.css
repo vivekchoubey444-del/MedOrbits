@@ -1,0 +1,50 @@
+/* =========================================================
+MedOrbits -- Base Reset
+Browser normalization and foundational layout rules
+Original homepage rules preserved
+========================================================= */
+
+/* Consistent box sizing */
+*,
+*::before,
+*::after {
+box-sizing: border-box;
+}
+
+/* Document scrolling and anchor positioning */
+html {
+scroll-behavior: smooth;
+scroll-padding-top: 100px;
+}
+
+/* Responsive images */
+img {
+display: block;
+max-width: 100%;
+}
+
+/* Remove the default mobile tap highlight */
+button,
+a {
+-webkit-tap-highlight-color: transparent;
+}
+
+/* Inherit the site’s typography in form controls */
+button,
+input,
+select,
+textarea {
+font: inherit;
+}
+
+/* Prevent long content from forcing grid or flex overflow */
+body {
+min-width: 0;
+}
+
+button,
+input,
+select,
+textarea {
+max-width: 100%;
+}

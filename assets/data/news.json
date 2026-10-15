@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "news": [],
+  "fields": [
+    "id",
+    "title",
+    "slug",
+    "summary",
+    "body",
+    "category",
+    "sourceName",
+    "sourceUrl",
+    "publishedAt",
+    "updatedAt",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Publish current announcements only after checking the official source and publication date."
+}

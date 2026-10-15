@@ -1,0 +1,2 @@
+# Document Templates
+Standalone printable HTML templates using MedOrbits deep plum and champagne gold. They intentionally omit site navigation/header and footer. These templates are not legal documents by themselves. Render trusted data with autoescaping, validate amounts/dates/identifiers, and protect generated files with authorization and retention rules. For PDF conversion, sandbox the renderer and disallow arbitrary user HTML or network access.

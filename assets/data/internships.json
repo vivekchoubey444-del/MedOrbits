@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "internships": [],
+  "fields": [
+    "id",
+    "title",
+    "slug",
+    "employer",
+    "sectorId",
+    "locationId",
+    "duration",
+    "paidStatus",
+    "description",
+    "requirements",
+    "applicationUrl",
+    "closingAt",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Use clear paid/unpaid status and verify dates and application links."
+}

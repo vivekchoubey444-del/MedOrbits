@@ -1,0 +1,2 @@
+# Storage Integration
+API: `put({key,body:Buffer,contentType})`, `get(key)`, `delete(key)`. Local storage is default under `storage/private`; set `STORAGE_LOCAL_ROOT` and `STORAGE_MAX_FILE_BYTES` as needed. For S3 set `STORAGE_DRIVER=s3`, `S3_BUCKET`, `S3_REGION`, optionally endpoint/path-style/prefix, and install `@aws-sdk/client-s3`. Prefer instance roles. This adapter intentionally does not generate public/signed URLs. Authorize downloads, scan uploads as appropriate, use server-generated keys, and never trust filenames or MIME types supplied by clients.

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "notifications": [],
+  "fields": [
+    "id",
+    "title",
+    "message",
+    "type",
+    "audience",
+    "startsAt",
+    "expiresAt",
+    "targetUrl",
+    "active"
+  ],
+  "note": "Do not put private or sensitive user information in public notification data."
+}

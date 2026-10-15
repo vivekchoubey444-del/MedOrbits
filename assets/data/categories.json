@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "categories": [
+    {
+      "id": "medical",
+      "name": "Medical",
+      "slug": "medical",
+      "description": "Medical education and related pathways",
+      "active": true
+    },
+    {
+      "id": "dental",
+      "name": "Dental",
+      "slug": "dental",
+      "description": "Dental education pathways",
+      "active": true
+    },
+    {
+      "id": "ayush",
+      "name": "AYUSH",
+      "slug": "ayush",
+      "description": "Traditional and complementary healthcare programmes",
+      "active": true
+    },
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "slug": "healthcare",
+      "description": "Nursing, pharmacy and healthcare-related courses",
+      "active": true
+    },
+    {
+      "id": "allied-health",
+      "name": "Allied Health",
+      "slug": "allied-health",
+      "description": "Diagnostic and allied-health pathways",
+      "active": true
+    },
+    {
+      "id": "technology",
+      "name": "Technology",
+      "slug": "technology",
+      "description": "Engineering and technical study pathways",
+      "active": true
+    },
+    {
+      "id": "business",
+      "name": "Business",
+      "slug": "business",
+      "description": "Management and business education",
+      "active": true
+    }
+  ]
+}

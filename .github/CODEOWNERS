@@ -1,0 +1,56 @@
+
+# MedOrbits CODEOWNERS
+# Replace @YOUR_GITHUB_USERNAME with your actual GitHub username
+# or @YOUR_ORGANIZATION/TEAM with a valid GitHub team.
+
+# Default owner for all files
+* @YOUR_GITHUB_USERNAME
+
+# Repository documentation and policies
+/README.md @YOUR_GITHUB_USERNAME
+/README-PRODUCTION.md @YOUR_GITHUB_USERNAME
+/CONTRIBUTING.md @YOUR_GITHUB_USERNAME
+/CODE_OF_CONDUCT.md @YOUR_GITHUB_USERNAME
+/CHANGELOG.md @YOUR_GITHUB_USERNAME
+/SUPPORT.md @YOUR_GITHUB_USERNAME
+/SECURITY.md @YOUR_GITHUB_USERNAME
+/NOTICE @YOUR_GITHUB_USERNAME
+/LICENSE @YOUR_GITHUB_USERNAME
+
+# GitHub workflows and repository governance
+/.github/ @YOUR_GITHUB_USERNAME
+/.editorconfig @YOUR_GITHUB_USERNAME
+/.prettierrc.json @YOUR_GITHUB_USERNAME
+/.eslintrc.json @YOUR_GITHUB_USERNAME
+/.gitignore @YOUR_GITHUB_USERNAME
+
+# Backend application
+/server.js @YOUR_GITHUB_USERNAME
+/src/ @YOUR_GITHUB_USERNAME
+
+# Frontend assets and website pages
+/assets/ @YOUR_GITHUB_USERNAME
+/pages/ @YOUR_GITHUB_USERNAME
+/education/ @YOUR_GITHUB_USERNAME
+/career/ @YOUR_GITHUB_USERNAME
+/account/ @YOUR_GITHUB_USERNAME
+/admin/ @YOUR_GITHUB_USERNAME
+
+# API, database, and migrations
+/database/ @YOUR_GITHUB_USERNAME
+
+# Tests and quality assurance
+/tests/ @YOUR_GITHUB_USERNAME
+
+# Technical documentation
+/docs/ @YOUR_GITHUB_USERNAME
+
+# Deployment and infrastructure
+/infrastructure/ @YOUR_GITHUB_USERNAME
+/Dockerfile @YOUR_GITHUB_USERNAME
+/docker-compose.yml @YOUR_GITHUB_USERNAME
+/.dockerignore @YOUR_GITHUB_USERNAME
+
+# Dependency manifests and lockfiles
+/package.json @YOUR_GITHUB_USERNAME
+/package-lock.json @YOUR_GITHUB_USERNAME

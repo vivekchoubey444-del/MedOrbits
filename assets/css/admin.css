@@ -1,0 +1,89 @@
+/* =========================================================
+MedOrbits -- Admin Styles
+Administrative layout, panels, and data tables
+========================================================= */
+
+/* Admin layout */
+.admin-shell {
+display: grid;
+grid-template-columns: 240px minmax(0, 1fr);
+gap: 22px;
+align-items: start;
+}
+
+/* Sidebar and main content panels */
+.admin-sidebar,
+.admin-content {
+min-width: 0;
+padding: 20px;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 14px;
+background: var(–panel, #21172b);
+}
+
+/* Horizontally scrollable table container */
+.admin-table-wrap {
+width: 100%;
+max-width: 100%;
+overflow-x: auto;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 10px;
+-webkit-overflow-scrolling: touch;
+}
+
+/* Admin data table */
+.admin-table {
+width: 100%;
+min-width: 620px;
+border-collapse: collapse;
+}
+
+/* Table cells */
+.admin-table th,
+.admin-table td {
+padding: 12px 14px;
+border-bottom: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+text-align: left;
+font-size: 12px;
+vertical-align: middle;
+}
+
+/* Table headings */
+.admin-table th {
+color: var(–gold-light, #e4d0a1);
+background: var(–panel-2, #2b1d36);
+font-weight: 600;
+}
+
+/* Remove the bottom border from the final row */
+.admin-table tbody tr:last-child td {
+border-bottom: 0;
+}
+
+/* Responsive admin layout */
+@media (max-width: 900px) {
+.admin-shell {
+grid-template-columns: minmax(0, 1fr);
+gap: 16px;
+}
+
+.admin-sidebar,
+.admin-content {
+padding: 16px;
+}
+}
+
+/* Compact mobile spacing */
+@media (max-width: 480px) {
+.admin-sidebar,
+.admin-content {
+padding: 12px;
+border-radius: 10px;
+}
+
+.admin-table th,
+.admin-table td {
+padding: 10px 12px;
+font-size: 12px;
+}
+}

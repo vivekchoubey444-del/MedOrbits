@@ -1,0 +1,80 @@
+/* =========================================================
+MedOrbits -- Career Hub Styles
+Reusable career cards, metadata and status indicators
+========================================================= */
+
+/* =========================================================
+
+1. Career Cards Grid
+    ========================================================= */
+
+.career-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 18px;
+}
+
+/* =========================================================
+2. Career Cards
+========================================================= */
+
+.career-card {
+padding: 20px;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 14px;
+background: linear-gradient(
+145deg,
+var(–panel-2, #2b1d36),
+var(–panel, #21172b)
+);
+transition:
+border-color 0.2s ease,
+transform 0.2s ease,
+box-shadow 0.2s ease;
+}
+
+.career-card:hover {
+transform: translateY(-3px);
+border-color: var(–gold, #c9a96e);
+box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* =========================================================
+3. Career Metadata
+========================================================= */
+
+.career-meta {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+color: var(–muted, #b7acbf);
+font-size: 11px;
+}
+
+/* =========================================================
+4. Career Status Indicators
+========================================================= */
+
+.career-status {
+display: inline-flex;
+align-items: center;
+padding: 4px 9px;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 999px;
+color: var(–gold-light, #e4d0a1);
+font-size: 10px;
+}
+
+/* =========================================================
+5. Reduced Motion
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+.career-card {
+transition: none;
+}
+
+.career-card:hover {
+transform: none;
+}
+}

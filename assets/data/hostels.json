@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "hostels": [],
+  "fields": [
+    "id",
+    "name",
+    "institutionId",
+    "countryCode",
+    "city",
+    "address",
+    "genderPolicy",
+    "roomTypes",
+    "monthlyCostMin",
+    "monthlyCostMax",
+    "currency",
+    "amenities",
+    "contactUrl",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Do not publish personal contact details or unverified accommodation prices."
+}

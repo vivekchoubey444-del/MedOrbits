@@ -1,0 +1,41 @@
+/* =========================================================
+MedOrbits -- Accessibility Helpers
+Focus visibility, hidden states, and reduced motion
+========================================================= */
+
+/* Visible keyboard focus */
+:focus-visible {
+outline: 2px solid var(–gold-light, #e4d0a1);
+outline-offset: 3px;
+}
+
+/* Avoid clipping keyboard focus on interactive controls */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+outline-offset: 3px;
+}
+
+/* Respect the native hidden attribute */
+[hidden] {
+display: none !important;
+}
+
+/* Reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+html:focus-within {
+scroll-behavior: auto;
+}
+
+*,
+*::before,
+*::after {
+animation-duration: 0.01ms !important;
+animation-iteration-count: 1 !important;
+transition-duration: 0.01ms !important;
+scroll-behavior: auto !important;
+}
+}

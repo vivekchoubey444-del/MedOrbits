@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "services": [
+    {
+      "id": "recruitment-sourcing",
+      "name": "Candidate Sourcing",
+      "slug": "candidate-sourcing",
+      "description": "Support employers in defining role requirements and sourcing relevant candidates.",
+      "audience": "employers",
+      "active": true
+    },
+    {
+      "id": "recruitment-screening",
+      "name": "Recruitment Coordination",
+      "slug": "recruitment-coordination",
+      "description": "Coordinate candidate screening and recruitment communication where agreed.",
+      "audience": "employers",
+      "active": true
+    },
+    {
+      "id": "recruitment-career",
+      "name": "Candidate Career Support",
+      "slug": "candidate-career-support",
+      "description": "Provide career preparation resources and application guidance.",
+      "audience": "candidates",
+      "active": true
+    }
+  ],
+  "disclaimer": "Service scope, fees and availability must be confirmed in written terms. Recruitment outcomes are not guaranteed."
+}

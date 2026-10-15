@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "jobs": [],
+  "fields": [
+    "id",
+    "title",
+    "slug",
+    "employer",
+    "sectorId",
+    "locationId",
+    "employmentType",
+    "workMode",
+    "description",
+    "requirements",
+    "applicationUrl",
+    "postedAt",
+    "closingAt",
+    "verifiedAt",
+    "active"
+  ],
+  "note": "Add real vacancies only with permission and verified application details. Do not promise employment."
+}

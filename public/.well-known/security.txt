@@ -1,0 +1,9 @@
+MedOrbits Security Disclosure Policy
+
+Website: https://medorbits.in/
+
+Contact: mailto:security@medorbits.in
+Expires: 2027-10-15T23:59:59.000Z
+Preferred-Languages: en, hi
+Canonical: https://medorbits.in/.well-known/security.txt
+Policy: https://medorbits.in/legal/security-policy.html

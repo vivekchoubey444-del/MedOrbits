@@ -1,0 +1,158 @@
+/* =========================================================
+MedOrbits -- Shared UI Components
+Containers, buttons, labels, captions, tags and disclaimers
+========================================================= */
+
+/* =========================================================
+
+1. Main Container
+    ========================================================= */
+
+.container {
+width: min(1180px, calc(100% - 40px));
+margin-inline: auto;
+}
+
+/* =========================================================
+2. Skip Navigation Link
+Accessibility support for keyboard users
+========================================================= */
+
+.skip-link {
+position: absolute;
+top: -60px;
+left: 12px;
+z-index: 9999;
+padding: 10px 14px;
+border-radius: 8px;
+background: var(–gold-light);
+color: #170e1d;
+}
+
+.skip-link:focus {
+top: 12px;
+}
+
+/* =========================================================
+3. Button Variants
+========================================================= */
+
+.btn-outline {
+background: transparent;
+color: var(–gold-light);
+border-color: rgba(217, 204, 228, 0.35);
+}
+
+/* =========================================================
+4. Eyebrows and Section Labels
+========================================================= */
+
+.eyebrow,
+.kicker {
+display: inline-flex;
+align-items: center;
+gap: 9px;
+color: var(–gold-light);
+font-size: 10px;
+font-weight: 700;
+letter-spacing: 0.17em;
+text-transform: uppercase;
+}
+
+.eyebrow::before {
+content: "";
+width: 26px;
+height: 1px;
+background: var(–gold);
+}
+
+/* =========================================================
+5. Visual Captions
+========================================================= */
+
+.visual-caption {
+position: absolute;
+z-index: 1;
+right: 22px;
+bottom: 19px;
+left: 22px;
+}
+
+.visual-caption strong {
+display: block;
+color: var(–gold-light);
+font: 600 21px "Playfair Display", Georgia, serif;
+}
+
+.visual-caption span {
+color: #e2d9e7;
+font-size: 12px;
+}
+
+/* =========================================================
+6. Visual Stamps
+========================================================= */
+
+.visual-stamp {
+position: absolute;
+z-index: 2;
+top: 17px;
+right: 17px;
+padding: 8px 11px;
+border: 1px solid var(–line);
+border-radius: 30px;
+background: rgba(16, 10, 23, 0.8);
+color: var(–gold-light);
+font-size: 9px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+}
+
+/* =========================================================
+7. Text Links
+========================================================= */
+
+.text-link {
+color: var(–gold-light);
+font-size: 11px;
+font-weight: 700;
+white-space: nowrap;
+}
+
+.text-link:hover {
+text-decoration: underline;
+}
+
+/* =========================================================
+8. Content Tags
+========================================================= */
+
+.tag {
+position: absolute;
+top: 11px;
+left: 11px;
+padding: 5px 8px;
+border: 1px solid rgba(201, 169, 110, 0.4);
+border-radius: 5px;
+background: rgba(16, 10, 23, 0.88);
+color: var(–gold-light);
+font-size: 8px;
+font-weight: 700;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+}
+
+/* =========================================================
+9. Disclaimers and Notices
+========================================================= */
+
+.disclaimer {
+margin: 0 0 15px;
+padding: 13px 16px;
+border-left: 2px solid var(–gold);
+border-radius: 0 7px 7px 0;
+background: rgba(43, 29, 54, 0.32);
+color: #a79caf;
+font-size: 10px;
+line-height: 1.8;
+}

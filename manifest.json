@@ -1,0 +1,238 @@
+{
+  "name": "MedOrbits",
+  "manifestVersion": "1.0.0",
+  "manifestType": "repository",
+  "description": "Repository inventory for the MedOrbits education, admissions, career services, and consultancy platform.",
+  "repositoryRoot": "medorbits/",
+  "statusSemantics": {
+    "planned": "Listed in the intended project structure; existence has not been verified.",
+    "existing": "Confirmed to exist in the repository.",
+    "deprecated": "Retained temporarily for compatibility but scheduled for removal."
+  },
+  "brand": {
+    "name": "MedOrbits",
+    "designDirection": "Royal Burgundy and Champagne Gold",
+    "visualGuidance": "Use premium, accessible colour combinations and maintain readable contrast."
+  },
+  "runtime": {
+    "platform": "Node.js",
+    "entryPoints": [
+      "server.js",
+      "src/app.js",
+      "index.html"
+    ],
+    "nodeVersionFile": ".nvmrc",
+    "packageManifest": "package.json",
+    "environmentTemplate": ".env.example"
+  },
+  "projectAreas": [
+    {
+      "id": "root",
+      "path": ".",
+      "purpose": "Application entry points, runtime configuration, package metadata, container configuration, and project-wide documentation.",
+      "status": "planned"
+    },
+    {
+      "id": "github",
+      "path": ".github/",
+      "purpose": "Repository ownership, issue templates, dependency updates, CI, testing, security scanning, deployment, and release workflows.",
+      "status": "planned"
+    },
+    {
+      "id": "husky",
+      "path": ".husky/",
+      "purpose": "Git hooks for pre-commit, commit-message, and pre-push checks.",
+      "status": "planned"
+    },
+    {
+      "id": "pages",
+      "path": "pages/",
+      "purpose": "Public informational pages, contact and service pages, accessibility, sitemap, and error/offline pages.",
+      "status": "planned"
+    },
+    {
+      "id": "account",
+      "path": "account/",
+      "purpose": "Authentication, account security, profile, dashboard, applications, counselling, documents, payments, subscriptions, and user support.",
+      "status": "planned"
+    },
+    {
+      "id": "education",
+      "path": "education/",
+      "purpose": "Course, college, university, India-study, study-abroad, admissions, and education-resource pages.",
+      "status": "planned"
+    },
+    {
+      "id": "career",
+      "path": "career/",
+      "purpose": "Job and internship discovery, employer services, recruitment, resume support, interview preparation, sectors, locations, and career resources.",
+      "status": "planned"
+    },
+    {
+      "id": "admin",
+      "path": "admin/",
+      "purpose": "Administrative interfaces for users, roles, applications, courses, colleges, jobs, documents, payments, subscriptions, support, audit logs, and settings.",
+      "status": "planned"
+    },
+    {
+      "id": "legal",
+      "path": "legal/",
+      "purpose": "Privacy, terms, refunds, disclaimers, cookies, accessibility, data deletion, consent, employer, job-service, payment, and grievance policies.",
+      "status": "planned"
+    },
+    {
+      "id": "assets",
+      "path": "assets/",
+      "purpose": "Frontend CSS and JavaScript, JSON datasets, images, icons, and downloadable public documents.",
+      "status": "planned",
+      "subareas": [
+        "assets/css/",
+        "assets/js/",
+        "assets/data/",
+        "assets/images/",
+        "assets/icons/",
+        "assets/documents/"
+      ]
+    },
+    {
+      "id": "public",
+      "path": "public/",
+      "purpose": "Public web metadata and well-known endpoints, including robots.txt, sitemap.xml, manifest.json, and security.txt.",
+      "status": "planned"
+    },
+    {
+      "id": "database",
+      "path": "database/",
+      "purpose": "SQL schema, ordered database migrations, seed data, and test fixtures.",
+      "status": "planned",
+      "databaseEngine": "MySQL"
+    },
+    {
+      "id": "storage",
+      "path": "storage/",
+      "purpose": "Storage conventions for private files, temporary files, and logs. Runtime data should be protected and should not be committed.",
+      "status": "planned"
+    },
+    {
+      "id": "src",
+      "path": "src/",
+      "purpose": "Backend application modules, configuration, routes, controllers, middleware, services, models, repositories, validation, policies, integrations, templates, workers, and jobs.",
+      "status": "planned",
+      "subareas": [
+        "src/config/",
+        "src/routes/",
+        "src/controllers/",
+        "src/middleware/",
+        "src/services/",
+        "src/models/",
+        "src/repositories/",
+        "src/validators/",
+        "src/policies/",
+        "src/utils/",
+        "src/integrations/",
+        "src/templates/",
+        "src/workers/",
+        "src/jobs/"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "path": "infrastructure/",
+      "purpose": "Database backup and recovery, capacity planning, monitoring, deployment, rollback, and queue operations documentation and scripts.",
+      "status": "planned"
+    },
+    {
+      "id": "scripts",
+      "path": "scripts/",
+      "purpose": "Environment checks, database migrations and seeds, data validation, and health-check utilities.",
+      "status": "planned"
+    },
+    {
+      "id": "tests",
+      "path": "tests/",
+      "purpose": "Unit, integration, API, database, security, end-to-end, accessibility tests, and fixtures.",
+      "status": "planned"
+    },
+    {
+      "id": "docs",
+      "path": "docs/",
+      "purpose": "Architecture, API, database, security, deployment, and operations documentation.",
+      "status": "planned"
+    }
+  ],
+  "documentCollections": [
+    {
+      "id": "admission-guides",
+      "path": "assets/documents/admission-guides/",
+      "manifest": "assets/documents/admission-guides/MANIFEST.json",
+      "purpose": "Public educational guides for course selection, eligibility, admissions, applications, and counselling.",
+      "status": "planned"
+    },
+    {
+      "id": "career-resources",
+      "path": "assets/documents/career-resources/",
+      "manifest": "assets/documents/career-resources/MANIFEST.json",
+      "purpose": "Career-development resources including resumes, cover letters, interviews, job search, internships, and workplace skills.",
+      "status": "planned"
+    },
+    {
+      "id": "checklists",
+      "path": "assets/documents/checklists/",
+      "purpose": "Printable checklists grouped by admissions, applications, career, education, examinations, general tasks, and study abroad.",
+      "status": "planned"
+    },
+    {
+      "id": "fee-guides",
+      "path": "assets/documents/fee-guides/",
+      "manifest": "assets/documents/fee-guides/MANIFEST.json",
+      "purpose": "General guides for education fees, living costs, financial aid, loans, counselling charges, and refund terms.",
+      "status": "planned"
+    },
+    {
+      "id": "study-abroad-guides",
+      "path": "assets/documents/study-abroad/",
+      "manifest": "assets/documents/study-abroad/MANIFEST.json",
+      "purpose": "International education planning guides covering applications, immigration preparation, funding, accommodation, and student safety.",
+      "status": "planned"
+    }
+  ],
+  "security": {
+    "neverCommitSecrets": true,
+    "environmentSecretsSource": ".env",
+    "environmentTemplate": ".env.example",
+    "privateStorageMustBeProtected": true,
+    "enforceAuthenticationAndAuthorizationForPrivateRecords": true,
+    "verifyPaymentWebhooks": true,
+    "reviewDependenciesAndRunSecurityChecks": true,
+    "doNotPublishPrivateApplicantDocuments": true
+  },
+  "quality": {
+    "formattingConfig": ".prettierrc.json",
+    "lintConfig": ".eslintrc.json",
+    "editorConfig": ".editorconfig",
+    "automatedChecksDirectory": ".github/workflows/",
+    "testDirectory": "tests/",
+    "documentationDirectory": "docs/"
+  },
+  "dataGovernance": {
+    "publicDataMustBeReviewed": true,
+    "timeSensitiveEducationInformationMustBeVerified": true,
+    "feeAndAdmissionClaimsMustUseOfficialSources": true,
+    "privateRecordsMustNotBeStoredInPublicAssets": true,
+    "keepDirectoryManifestsSynchronized": true
+  },
+  "maintenance": {
+    "maintainedBy": "MedOrbits",
+    "updateWhenProjectStructureChanges": true,
+    "verifyPathsBeforeMarkingExisting": true,
+    "keepNestedManifestsConsistent": true,
+    "reviewSecurityAndDeploymentDocumentation": true
+  },
+  "notes": [
+    "This manifest describes the intended repository structure and does not prove that every listed path exists.",
+    "Set an item's status to existing only after checking the repository.",
+    "Keep public downloadable resources separate from private user uploads and application records.",
+    "The project tree includes both root server.js and src/app.js; document their responsibilities clearly to avoid ambiguous application startup.",
+    "Ensure database engine configuration and SQL syntax consistently match MySQL if MySQL is the selected database."
+  ]
+}

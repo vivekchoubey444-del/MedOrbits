@@ -1,0 +1,16 @@
+{
+"id": "UNIVERSITY-001",
+"name": "Official University Name",
+"slug": "official-university-name",
+"countryCode": "IN",
+"stateOrRegion": "State or Region",
+"city": "City",
+"website": "https://official-university-domain.example",
+"courses": [],
+"recognitionAuthority": {
+"name": "Relevant Official Authority",
+"website": null
+},
+"verifiedAt": null,
+"active": true
+}

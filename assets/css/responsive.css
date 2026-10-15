@@ -1,0 +1,276 @@
+/* =========================================================
+MedOrbits -- Responsive Styles
+Extracted from the original homepage
+========================================================= */
+
+/* --------------------------------------
+Tablet and compact desktop: 1100px and below
+-------------------------------------- */
+@media (max-width: 1100px) {
+.menu-toggle {
+display: inline-flex;
+}
+
+.nav {
+display: none;
+position: absolute;
+top: 100%;
+left: 0;
+right: 0;
+align-items: stretch;
+flex-direction: column;
+gap: 4px;
+padding: 15px 22px 20px;
+background: #160d20;
+border-bottom: 1px solid var(–line);
+}
+
+.nav.open {
+display: flex;
+}
+
+.nav > a,
+.nav-trigger {
+padding: 11px 8px;
+text-align: left;
+}
+
+.nav-group {
+width: 100%;
+}
+
+.dropdown {
+position: static;
+width: 100%;
+margin-bottom: 5px;
+box-shadow: none;
+}
+
+.nav-cta {
+width: 100%;
+}
+
+.hero-grid {
+gap: 28px;
+}
+
+.cards {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.footer-grid {
+grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.footer-brand {
+grid-column: 1 / -1;
+}
+}
+
+/* --------------------------------------
+Mobile and tablet: 760px and below
+-------------------------------------- */
+@media (max-width: 760px) {
+.container {
+width: calc(100% - 28px);
+}
+
+.announcement {
+gap: 7px;
+font-size: 8px;
+letter-spacing: 0.06em;
+}
+
+.nav-wrap {
+min-height: 70px;
+}
+
+.brand img {
+width: 41px;
+height: 41px;
+}
+
+.brand strong {
+font-size: 14px;
+}
+
+.brand small {
+font-size: 7px;
+}
+
+.hero {
+padding: 48px 0;
+}
+
+.hero-grid,
+.about-grid {
+grid-template-columns: 1fr;
+}
+
+.hero h1 {
+font-size: clamp(38px, 10vw, 54px);
+}
+
+.hero-visual,
+.hero-visual img {
+height: 270px;
+min-height: 270px;
+}
+
+.pillars {
+grid-template-columns: repeat(2, 1fr);
+}
+
+.pillar {
+border-bottom: 1px solid var(–line);
+}
+
+.pillar:nth-child(2) {
+border-right: 0;
+}
+
+.pillar:nth-child(n + 3) {
+border-bottom: 0;
+}
+
+.search-form {
+grid-template-columns: 1fr;
+}
+
+.section {
+padding: 52px 0;
+}
+
+.section-head {
+align-items: flex-start;
+flex-direction: column;
+gap: 10px;
+}
+
+.cards {
+gap: 12px;
+}
+
+.card-media img {
+height: 135px;
+}
+
+.card-body {
+padding: 12px;
+}
+
+.card h3 {
+font-size: 15px;
+}
+
+.card p {
+min-height: 66px;
+font-size: 10px;
+}
+
+.about-visual img {
+height: 270px;
+}
+
+.check-list {
+grid-template-columns: 1fr;
+}
+
+.video-grid {
+grid-template-columns: 1fr;
+}
+
+.cta-inner {
+align-items: flex-start;
+flex-direction: column;
+}
+
+.footer-grid {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 22px 16px;
+}
+
+.footer-brand {
+grid-column: 1 / -1;
+}
+
+.footer-bottom {
+flex-direction: column;
+}
+}
+
+/* --------------------------------------
+Narrow mobile: 390px and below
+-------------------------------------- */
+@media (max-width: 390px) {
+.cards,
+.footer-grid {
+grid-template-columns: 1fr;
+}
+
+.card-media img {
+height: 190px;
+}
+
+.card p {
+min-height: 0;
+}
+
+.hero-actions .btn {
+width: 100%;
+}
+
+.brand small {
+letter-spacing: 0.07em;
+}
+}
+
+/* --------------------------------------
+Reduced-motion preferences
+-------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+html {
+scroll-behavior: auto;
+}
+
+*,
+*::before,
+*::after {
+animation-duration: 0.01ms !important;
+animation-iteration-count: 1 !important;
+transition-duration: 0.01ms !important;
+scroll-behavior: auto !important;
+}
+
+.intro-screen,
+.intro-screen::before,
+.intro-screen::after,
+.intro-content,
+.intro-logo,
+.intro-tagline,
+.intro-rule {
+animation: none !important;
+transition: none !important;
+}
+
+.intro-screen::before,
+.intro-screen::after {
+opacity: 1;
+transform: none;
+}
+
+.intro-content,
+.intro-logo,
+.intro-tagline {
+opacity: 1;
+transform: none;
+}
+
+.intro-tagline {
+letter-spacing: 0.24em;
+}
+
+.intro-rule {
+width: 150px;
+}
+}

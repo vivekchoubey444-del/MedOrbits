@@ -1,0 +1,99 @@
+
+{
+  "root": true,
+  "env": {
+    "es2022": true,
+    "node": true,
+    "browser": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "ignorePatterns": [
+    "node_modules/",
+    "coverage/",
+    "dist/",
+    "build/",
+    "storage/",
+    "uploads/",
+    "public/vendor/",
+    "*.min.js"
+  ],
+  "rules": {
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-undef": "error",
+    "no-console": "off",
+    "eqeqeq": [
+      "error",
+      "always"
+    ],
+    "curly": [
+      "error",
+      "all"
+    ],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-duplicate-imports": "error",
+    "no-unreachable": "error",
+    "no-debugger": "warn",
+    "no-alert": "warn",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-prototype-builtins": "error",
+    "no-unsafe-finally": "error",
+    "valid-typeof": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "server.js",
+        "src/**/*.js",
+        "scripts/**/*.js"
+      ],
+      "env": {
+        "node": true,
+        "browser": false
+      },
+      "parserOptions": {
+        "sourceType": "script"
+      }
+    },
+    {
+      "files": [
+        "assets/js/**/*.js",
+        "public/**/*.js",
+        "pages/**/*.js",
+        "education/**/*.js",
+        "career/**/*.js",
+        "account/**/*.js"
+      ],
+      "env": {
+        "browser": true,
+        "node": false
+      }
+    },
+    {
+      "files": [
+        "**/*.test.js",
+        "tests/**/*.js"
+      ],
+      "env": {
+        "jest": true,
+        "node": true
+      }
+    }
+  ]
+}

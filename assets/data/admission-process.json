@@ -1,0 +1,72 @@
+{
+"schemaVersion": "1.0.0",
+"updatedAt": null,
+"processes": [
+{
+"id": "process-general-india",
+"title": "General admission planning",
+"countryCode": "IN",
+"steps": [
+{
+"order": 1,
+"title": "Choose a course",
+"description": "Compare interests, eligibility and career goals."
+},
+{
+"order": 2,
+"title": "Check official eligibility",
+"description": "Review the current institution and regulator requirements."
+},
+{
+"order": 3,
+"title": "Prepare documents",
+"description": "Use the documents checklist and verify required formats."
+},
+{
+"order": 4,
+"title": "Apply through the official route",
+"description": "Submit forms and fees only through verified official channels."
+},
+{
+"order": 5,
+"title": "Track notices and deadlines",
+"description": "Check official portals for updates, counselling and results."
+}
+],
+"disclaimer": "This is a general planning outline, not an official admission notice."
+},
+{
+"id": "process-study-abroad",
+"title": "Study abroad planning",
+"countryCode": null,
+"steps": [
+{
+"order": 1,
+"title": "Research country and institution",
+"description": "Check recognition, programme details and student support."
+},
+{
+"order": 2,
+"title": "Verify eligibility and costs",
+"description": "Confirm entry criteria, tuition, living expenses and refund terms."
+},
+{
+"order": 3,
+"title": "Apply to the institution",
+"description": "Follow the institution’s official application process."
+},
+{
+"order": 4,
+"title": "Confirm visa requirements",
+"description": "Use the destination government’s official immigration information."
+},
+{
+"order": 5,
+"title": "Plan travel and accommodation",
+"description": "Confirm enrolment and arrangements before making non-refundable bookings."
+}
+],
+"disclaimer": "Requirements differ by country, institution and applicant."
+}
+]
+}

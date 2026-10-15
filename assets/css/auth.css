@@ -1,0 +1,118 @@
+/* =========================================================
+MedOrbits -- Authentication Styles
+Login, registration, password recovery and verification
+========================================================= */
+
+/* =========================================================
+
+1. Authentication Page
+    ========================================================= */
+
+.auth-page {
+min-height: 100vh;
+display: grid;
+place-items: center;
+padding: 36px 18px;
+background:
+radial-gradient(
+ellipse at 15% 10%,
+rgba(87, 57, 105, 0.2),
+transparent 36%
+),
+linear-gradient(
+135deg,
+var(–bg, #100a17),
+var(–bg-2, #191023)
+);
+}
+
+/* =========================================================
+2. Authentication Card
+========================================================= */
+
+.auth-shell {
+width: min(100%, 480px);
+padding: clamp(24px, 5vw, 42px);
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 20px;
+background: var(–panel, #21172b);
+box-shadow: var(–shadow, 0 22px 65px rgba(0, 0, 0, 0.25));
+}
+
+/* =========================================================
+3. Authentication Heading
+========================================================= */
+
+.auth-title {
+margin: 0 0 8px;
+font: 600 clamp(28px, 4vw, 38px) / 1.15
+"Playfair Display", Georgia, serif;
+}
+
+.auth-subtitle {
+margin: 0 0 24px;
+color: var(–muted, #b7acbf);
+font-size: 13px;
+}
+
+/* =========================================================
+4. Authentication Form
+========================================================= */
+
+.auth-form {
+display: grid;
+gap: 15px;
+}
+
+.auth-form label {
+display: block;
+margin-bottom: 6px;
+color: var(–lav, #d9cce4);
+font-size: 12px;
+font-weight: 600;
+}
+
+/* =========================================================
+5. Authentication Actions
+========================================================= */
+
+.auth-actions {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 12px;
+}
+
+/* =========================================================
+6. Authentication Links
+========================================================= */
+
+.auth-link {
+color: var(–gold-light, #e4d0a1);
+font-size: 12px;
+font-weight: 600;
+text-decoration: none;
+transition: color 0.2s ease;
+}
+
+.auth-link:hover {
+color: var(–gold, #c9a96e);
+text-decoration: underline;
+}
+
+.auth-link:focus-visible {
+outline: 2px solid var(–gold-light, #e4d0a1);
+outline-offset: 4px;
+border-radius: 2px;
+}
+
+/* =========================================================
+7. Reduced Motion
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+.auth-link {
+transition: none;
+}
+}

@@ -1,0 +1,2 @@
+# MedOrbits Templates
+Email and printable-document templates use the supplied reference palette: deep plum/burgundy (`#100a17`, `#191023`, `#21172b`), champagne gold (`#c9a96e`, `#e4d0a1`), lavender (`#d9cce4`) and muted text (`#b7acbf`). Templates intentionally omit the website's navigation header and footer. `{{variable}}` syntax is a convention, not an engine: use a trusted renderer with autoescaping. Validate URLs and never concatenate untrusted values into HTML. Keep generated documents private and authorized.

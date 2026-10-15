@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "services": [
+    {
+      "id": "service-education-guidance",
+      "name": "Education Guidance",
+      "slug": "education-guidance",
+      "description": "Help users research course options, institutions and admission steps.",
+      "audience": "students",
+      "active": true
+    },
+    {
+      "id": "service-admission-planning",
+      "name": "Admission Planning",
+      "slug": "admission-planning",
+      "description": "General support for understanding application processes and checklists.",
+      "audience": "students",
+      "active": true
+    },
+    {
+      "id": "service-career-support",
+      "name": "Career Support",
+      "slug": "career-support",
+      "description": "Career planning resources, resume preparation and opportunity research.",
+      "audience": "candidates",
+      "active": true
+    },
+    {
+      "id": "service-employer",
+      "name": "Employer Services",
+      "slug": "employer-services",
+      "description": "Recruitment support and candidate sourcing services.",
+      "audience": "employers",
+      "active": true
+    }
+  ]
+}

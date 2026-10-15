@@ -1,0 +1,78 @@
+
+name: MedOrbits Deployment
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - MedOrbits CI
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: medorbits-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify deployment eligibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
+
+    steps:
+      - name: Confirm deployment trigger
+        run: |
+          echo "Deployment eligibility checks passed."
+          echo "Configure the deployment provider before enabling production deployment."
+
+  deploy:
+    name: Deploy to production
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify project configuration
+        run: |
+          test -f package.json
+          test -f package-lock.json
+          node --version
+          npm --version
+
+      - name: Deployment provider configuration required
+        run: |
+          echo "::error::Production deployment is not configured."
+          echo "Add the provider-specific deployment action and required secrets."
+          exit 1

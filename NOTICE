@@ -1,0 +1,34 @@
+NOTICE
+
+MedOrbits
+
+Copyright and licensing information
+
+This project is distributed under the MIT License. See the LICENSE file in the root
+of this repository for the full license text.
+
+Third-party software
+
+This project may use third-party libraries, tools, fonts, icons, images, APIs, or other
+materials that are distributed under their own licenses or terms of service. Those
+materials are not automatically covered by the project's MIT License. Their respective
+copyright notices, license terms, attribution requirements, and usage restrictions
+remain applicable.
+
+Dependencies
+
+Review the licenses and notices for all dependencies actually installed or distributed
+with this project before releasing or deploying it. Keep required copyright notices,
+license texts, and attribution notices with the applicable distribution.
+
+Project assets and content
+
+Unless a separate license or notice says otherwise, the MIT License applies only to
+copyrightable material in this repository that the project owner is authorized to
+license. It does not grant rights to third-party trademarks, logos, brand names, or
+materials owned by others.
+
+No additional warranty
+
+This NOTICE is informational and does not modify the terms of the MIT License or any
+applicable third-party license. Refer to the relevant license for the binding terms.

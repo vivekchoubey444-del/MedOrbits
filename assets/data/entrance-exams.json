@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "exams": [
+    {
+      "id": "exam-neet-ug",
+      "name": "NEET UG",
+      "slug": "neet-ug",
+      "countryCode": "IN",
+      "courseIds": [
+        "course-mbbs",
+        "course-bds"
+      ],
+      "officialUrl": "https://exams.nta.ac.in/NEET/",
+      "description": "Check the current official examination information, eligibility, dates and notices.",
+      "verifiedAt": null,
+      "active": true
+    },
+    {
+      "id": "exam-other",
+      "name": "Other entrance examinations",
+      "slug": "other-entrance-exams",
+      "countryCode": "IN",
+      "courseIds": [],
+      "officialUrl": null,
+      "description": "Add examination details only after verifying the relevant official examination authority.",
+      "verifiedAt": null,
+      "active": true
+    }
+  ]
+}

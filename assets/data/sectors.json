@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "sectors": [
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "slug": "healthcare",
+      "active": true
+    },
+    {
+      "id": "education",
+      "name": "Education",
+      "slug": "education",
+      "active": true
+    },
+    {
+      "id": "technology",
+      "name": "Technology",
+      "slug": "technology",
+      "active": true
+    },
+    {
+      "id": "engineering",
+      "name": "Engineering",
+      "slug": "engineering",
+      "active": true
+    },
+    {
+      "id": "business",
+      "name": "Business and Management",
+      "slug": "business-management",
+      "active": true
+    },
+    {
+      "id": "hospitality",
+      "name": "Hospitality",
+      "slug": "hospitality",
+      "active": true
+    },
+    {
+      "id": "retail",
+      "name": "Retail and Customer Service",
+      "slug": "retail-customer-service",
+      "active": true
+    }
+  ]
+}

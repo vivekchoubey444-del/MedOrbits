@@ -1,0 +1,120 @@
+============================================================
+
+MedOrbits - Search Engine Crawling Policy
+
+Website: https://medorbits.in/
+
+File: https://medorbits.in/robots.txt
+
+Purpose: Guide compliant search engine crawlers
+
+============================================================
+
+----------------------------------------
+
+1. DEFAULT POLICY FOR ALL CRAWLERS
+
+----------------------------------------
+
+User-agent: *
+Allow: /
+
+----------------------------------------
+
+2. RESTRICTED APPLICATION AND ADMINISTRATIVE ROUTES
+
+Keep private or internal pages out of normal crawling.
+
+Enforce access control separately on the server.
+
+----------------------------------------
+
+Disallow: /admin/
+Disallow: /account/
+Disallow: /dashboard/
+Disallow: /private/
+Disallow: /internal/
+Disallow: /logs/
+Disallow: /backups/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /vendor/
+
+----------------------------------------
+
+3. API AND SYSTEM ENDPOINTS
+
+----------------------------------------
+
+Disallow: /api/
+Disallow: /api
+Disallow: /health
+Disallow: /health/
+Disallow: /debug/
+Disallow: /test/
+Disallow: /tmp/
+
+----------------------------------------
+
+4. USER-SPECIFIC AND TRANSACTIONAL PAGES
+
+Review these paths against the actual website routes.
+
+----------------------------------------
+
+Disallow: /account/login/
+Disallow: /account/register/
+Disallow: /account/reset-password/
+Disallow: /account/forgot-password/
+Disallow: /applications/draft/
+Disallow: /payments/checkout/
+Disallow: /payments/receipt/
+Disallow: /messages/private/
+
+----------------------------------------
+
+5. SEARCH, FILTER, AND DUPLICATE URL CONTROL
+
+Enable these restrictions only if these URL patterns exist.
+
+----------------------------------------
+
+Disallow: /*?sort=
+Disallow: /?filter=
+Disallow: /?page=
+Disallow: /?search=
+Disallow: /?*utm_
+
+----------------------------------------
+
+6. ALLOW PUBLIC WEBSITE CONTENT AND ASSETS
+
+----------------------------------------
+
+Allow: /assets/
+Allow: /assets/css/
+Allow: /assets/js/
+Allow: /assets/images/
+Allow: /assets/fonts/
+Allow: /education/
+Allow: /careers/
+Allow: /jobs/
+Allow: /internships/
+Allow: /study-abroad/
+Allow: /services/
+Allow: /pages/
+Allow: /legal/
+
+----------------------------------------
+
+7. SITEMAP DISCOVERY
+
+----------------------------------------
+
+Sitemap: https://medorbits.in/sitemap.xml
+
+============================================================
+
+END OF ROBOTS.TXT
+
+============================================================

@@ -1,0 +1,269 @@
+{
+"package": "MedOrbits Fee Guides",
+"manifestVersion": "1.0.0",
+"directory": "assets/documents/fee-guides/",
+"purpose": "General planning guides for understanding education fees, living costs, financial aid, loans, counselling charges, and refund terms.",
+"brand": {
+"name": "MedOrbits",
+"designDirection": "Royal Burgundy and Champagne Gold"
+},
+"access": "public",
+"defaultFormat": "application/pdf",
+"academicYear": null,
+"lastReviewed": null,
+"documents": [
+{
+"id": "education-fee-guide",
+"filename": "education-fee-guide.pdf",
+"title": "Education Fee Guide",
+"category": "general-education-fees",
+"status": "planned",
+"description": "General guidance for understanding education expenses and planning an education budget.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "college-fee-guide",
+"filename": "college-fee-guide.pdf",
+"title": "College Fee Guide",
+"category": "college-fees",
+"status": "planned",
+"description": "Guidance on college fee components, payment schedules, and expense planning.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "university-fee-guide",
+"filename": "university-fee-guide.pdf",
+"title": "University Fee Guide",
+"category": "university-fees",
+"status": "planned",
+"description": "Guidance on university tuition, additional charges, and payment requirements.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "mbbs-fee-guide",
+"filename": "mbbs-fee-guide.pdf",
+"title": "MBBS Fee Guide",
+"category": "medical-education",
+"status": "planned",
+"description": "Guidance on MBBS fee components and medical education cost planning.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "bds-fee-guide",
+"filename": "bds-fee-guide.pdf",
+"title": "BDS Fee Guide",
+"category": "dental-education",
+"status": "planned",
+"description": "Guidance on BDS tuition, additional charges, and related education expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "ayush-fee-guide",
+"filename": "ayush-fee-guide.pdf",
+"title": "AYUSH Fee Guide",
+"category": "ayush-education",
+"status": "planned",
+"description": "Guidance on fee planning for applicable AYUSH programmes.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "nursing-fee-guide",
+"filename": "nursing-fee-guide.pdf",
+"title": "Nursing Fee Guide",
+"category": "nursing-education",
+"status": "planned",
+"description": "Guidance on nursing programme fees and related educational expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "pharmacy-fee-guide",
+"filename": "pharmacy-fee-guide.pdf",
+"title": "Pharmacy Fee Guide",
+"category": "pharmacy-education",
+"status": "planned",
+"description": "Guidance on pharmacy programme fees and education cost planning.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "paramedical-fee-guide",
+"filename": "paramedical-fee-guide.pdf",
+"title": "Paramedical Fee Guide",
+"category": "paramedical-education",
+"status": "planned",
+"description": "Guidance on paramedical programme fees and associated expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "engineering-fee-guide",
+"filename": "engineering-fee-guide.pdf",
+"title": "Engineering Fee Guide",
+"category": "engineering-education",
+"status": "planned",
+"description": "Guidance on engineering tuition, institutional charges, and education budgeting.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "management-fee-guide",
+"filename": "management-fee-guide.pdf",
+"title": "Management Fee Guide",
+"category": "management-education",
+"status": "planned",
+"description": "Guidance on management and business programme fees and related expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "law-fee-guide",
+"filename": "law-fee-guide.pdf",
+"title": "Law Fee Guide",
+"category": "legal-education",
+"status": "planned",
+"description": "Guidance on law programme tuition and associated education expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "postgraduate-fee-guide",
+"filename": "postgraduate-fee-guide.pdf",
+"title": "Postgraduate Fee Guide",
+"category": "postgraduate-education",
+"status": "planned",
+"description": "Guidance on postgraduate tuition, programme charges, and financial planning.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "hostel-and-accommodation-fee-guide",
+"filename": "hostel-and-accommodation-fee-guide.pdf",
+"title": "Hostel and Accommodation Fee Guide",
+"category": "living-costs",
+"status": "planned",
+"description": "Guidance on hostel charges, accommodation costs, deposits, and living expenses.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "scholarship-and-financial-aid-guide",
+"filename": "scholarship-and-financial-aid-guide.pdf",
+"title": "Scholarship and Financial Aid Guide",
+"category": "financial-aid",
+"status": "planned",
+"description": "General guidance on scholarships, financial aid eligibility, application processes, and official verification.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "education-loan-guide",
+"filename": "education-loan-guide.pdf",
+"title": "Education Loan Guide",
+"category": "education-financing",
+"status": "planned",
+"description": "General guidance on education loans, lender comparisons, repayment terms, and borrowing considerations.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "admission-and-counselling-fees-guide",
+"filename": "admission-and-counselling-fees-guide.pdf",
+"title": "Admission and Counselling Fees Guide",
+"category": "admission-costs",
+"status": "planned",
+"description": "Guidance on admission charges, counselling fees, deposits, and applicable payment conditions.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+},
+{
+"id": "refund-and-cancellation-fee-guide",
+"filename": "refund-and-cancellation-fee-guide.pdf",
+"title": "Refund and Cancellation Fee Guide",
+"category": "refunds-and-cancellations",
+"status": "planned",
+"description": "Guidance on refund eligibility, cancellation procedures, deductions, and applicable refund policies.",
+"academicYear": null,
+"lastVerified": null,
+"officialSources": []
+}
+],
+"accuracyPolicy": {
+"avoidUnverifiedCurrentFeeAmounts": true,
+"verifyAgainstOfficialSources": true,
+"officialNotificationsTakePrecedence": true,
+"verifyRefundAndCancellationTermsInWriting": true,
+"verifyLoanAndScholarshipConditions": true,
+"warnAgainstPaymentsToUnverifiedPersonalAccounts": true,
+"financialOrLegalAdvice": false
+},
+"verificationPolicy": {
+"officialSourcesRequired": true,
+"verificationDateRequiredForTimeSensitiveInformation": true,
+"identifyApplicableAcademicYear": true,
+"identifyCurrencyAndPaymentPeriod": true,
+"recordApplicableInstitutionAndProgramme": true
+},
+"contentStandards": [
+"Explain relevant tuition and additional fee components.",
+"Identify the applicable institution, programme, campus, intake, student category, and academic year where relevant.",
+"Distinguish official fee information from general estimates.",
+"Include living costs, accommodation, and other expenses only where relevant.",
+"Explain applicable scholarship, financial aid, and loan conditions using verified sources.",
+"Clarify refund, cancellation, deposit, and payment terms using official policies.",
+"Include official source links and the last verification date.",
+"Do not invent fees, refund guarantees, eligibility rules, or financial terms."
+],
+"publishingChecklist": [
+"Verify fee information against current official sources.",
+"Identify the applicable academic year and programme.",
+"Clearly label estimates and distinguish them from official amounts.",
+"Check currency, payment period, deposits, and additional charges.",
+"Verify scholarship, loan, refund, and cancellation information.",
+"Test all links and review PDF readability and printing.",
+"Check document metadata, accessibility, and page layout.",
+"Remove personal financial records and confidential applicant information.",
+"Confirm the deployed file exists before publishing its download link.",
+"Identify or withdraw outdated versions."
+],
+"privacy": {
+"publicResourcesOnly": true,
+"prohibitedContent": [
+"Personal financial records",
+"Bank account details",
+"Completed applicant forms",
+"Identity documents",
+"Confidential student records"
+]
+},
+"maintenance": {
+"maintainedBy": "MedOrbits",
+"keepManifestSynchronizedWithDirectory": true,
+"reviewWhenOfficialFeeNoticesChange": true,
+"reviewRefundAndFinancialConditionsPeriodically": true,
+"removeOrMarkOutdatedResources": true
+}
+}

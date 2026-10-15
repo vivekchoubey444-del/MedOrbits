@@ -1,0 +1,178 @@
+{
+  "package": "MedOrbits Admission Guides",
+  "manifestVersion": "1.0.0",
+  "directory": "assets/documents/admission-guides/",
+  "purpose": "Public educational resources for course selection, admission planning, eligibility, application procedures, and counselling preparation.",
+  "brand": {
+    "name": "MedOrbits",
+    "designDirection": "Royal Burgundy and Champagne Gold"
+  },
+  "access": "public",
+  "defaultFormat": "application/pdf",
+  "academicYear": null,
+  "lastReviewed": null,
+  "verificationPolicy": {
+    "officialSourcesRequired": true,
+    "verificationDateRequiredForTimeSensitiveInformation": true,
+    "officialNotificationsTakePrecedence": true,
+    "doNotInventFeesEligibilityRulesInstitutionsOrDeadlines": true
+  },
+  "documents": [
+    {
+      "id": "general-admission-guide",
+      "filename": "general-admission-guide.pdf",
+      "title": "General Admission Guide",
+      "category": "general-admissions",
+      "status": "planned",
+      "description": "General guidance for admission planning, applications, and counselling preparation.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "mbbs-admission-guide",
+      "filename": "mbbs-admission-guide.pdf",
+      "title": "MBBS Admission Guide",
+      "category": "medical-admissions",
+      "status": "planned",
+      "description": "Guidance for MBBS admission pathways, eligibility, examinations, counselling, and enrolment.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "bds-admission-guide",
+      "filename": "bds-admission-guide.pdf",
+      "title": "BDS Admission Guide",
+      "category": "dental-admissions",
+      "status": "planned",
+      "description": "Guidance for BDS admission pathways, eligibility, examinations, counselling, and enrolment.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "ayush-admission-guide",
+      "filename": "ayush-admission-guide.pdf",
+      "title": "AYUSH Admission Guide",
+      "category": "ayush-admissions",
+      "status": "planned",
+      "description": "Guidance for relevant AYUSH programmes and their applicable admission pathways.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "nursing-admission-guide",
+      "filename": "nursing-admission-guide.pdf",
+      "title": "Nursing Admission Guide",
+      "category": "nursing-admissions",
+      "status": "planned",
+      "description": "Guidance for nursing programme selection, eligibility, applications, and admission.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "pharmacy-admission-guide",
+      "filename": "pharmacy-admission-guide.pdf",
+      "title": "Pharmacy Admission Guide",
+      "category": "pharmacy-admissions",
+      "status": "planned",
+      "description": "Guidance for pharmacy programmes, eligibility, applications, and admission.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "paramedical-admission-guide",
+      "filename": "paramedical-admission-guide.pdf",
+      "title": "Paramedical Admission Guide",
+      "category": "paramedical-admissions",
+      "status": "planned",
+      "description": "Guidance for paramedical programmes, eligibility, applications, and admission.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "engineering-admission-guide",
+      "filename": "engineering-admission-guide.pdf",
+      "title": "Engineering Admission Guide",
+      "category": "engineering-admissions",
+      "status": "planned",
+      "description": "Guidance for engineering and technology programme selection and admission.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "management-admission-guide",
+      "filename": "management-admission-guide.pdf",
+      "title": "Management Admission Guide",
+      "category": "management-admissions",
+      "status": "planned",
+      "description": "Guidance for management and business education admissions.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "law-admission-guide",
+      "filename": "law-admission-guide.pdf",
+      "title": "Law Admission Guide",
+      "category": "law-admissions",
+      "status": "planned",
+      "description": "Guidance for law programme selection, eligibility, applications, and admission.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    },
+    {
+      "id": "postgraduate-admission-guide",
+      "filename": "postgraduate-admission-guide.pdf",
+      "title": "Postgraduate Admission Guide",
+      "category": "postgraduate-admissions",
+      "status": "planned",
+      "description": "General guidance for postgraduate programme selection and admission preparation.",
+      "academicYear": null,
+      "lastVerified": null,
+      "officialSources": []
+    }
+  ],
+  "contentStandards": [
+    "Include only sections relevant to the course and admission pathway.",
+    "Explain eligibility and applicable entrance examinations using official sources.",
+    "Verify application and counselling dates before publication.",
+    "Identify the academic year covered by each guide.",
+    "State the verification date for time-sensitive information.",
+    "Include relevant official resources and clarify that official notifications take precedence."
+  ],
+  "publishingChecklist": [
+    "Review content for accuracy.",
+    "Confirm academic year and applicability.",
+    "Verify eligibility and deadlines against official sources.",
+    "Include official source links and a verification date.",
+    "Identify fees, currency, and payment period where applicable.",
+    "Check PDF text, links, tables, accessibility, and page layout.",
+    "Remove private or confidential information.",
+    "Verify the deployed website link before listing a document as published.",
+    "Clearly identify or remove outdated editions from active listings."
+  ],
+  "privacy": {
+    "publicResourcesOnly": true,
+    "prohibitedContent": [
+      "Private student application records",
+      "Identity proofs and passports",
+      "Financial records",
+      "Personal contact details",
+      "Confidential counselling files"
+    ],
+    "privateRecordsStorage": "Use secure backend storage with appropriate authentication and authorization."
+  },
+  "maintenance": {
+    "keepManifestSynchronizedWithDirectory": true,
+    "reviewWhenOfficialNotificationsChange": true,
+    "removeOrMarkOutdatedResources": true
+  }
+}

@@ -1,0 +1,77 @@
+#!/usr/bin/env sh
+
+MedOrbits pre-commit quality checks
+
+set -eu
+
+echo ""
+echo "MedOrbits: Running pre-commit checks…"
+echo ""
+
+Move to the repository root.
+
+if ! repo_root=$(git rev-parse –show-toplevel); then
+echo "ERROR: Unable to determine the Git repository root."
+exit 1
+fi
+
+cd "$repo_root"
+
+Verify required project files and tools.
+
+if [ ! -f package.json ]; then
+echo "ERROR: package.json was not found at the repository root."
+exit 1
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+echo "ERROR: Node.js is required to run pre-commit checks."
+exit 1
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+echo "ERROR: npm is required to run pre-commit checks."
+exit 1
+fi
+
+Check whether an npm script exists.
+
+has_script() {
+node -e ’
+const pkg = require("./package.json");
+const name = process.argv[1];
+process.exit(
+pkg.scripts && typeof pkg.scripts[name] === "string" ? 0 : 1
+);
+’ "$1"
+}
+
+Run ESLint.
+
+if has_script lint; then
+echo "Running ESLint…"
+npm run lint
+else
+echo "WARNING: Skipping ESLint; no lint script is configured."
+fi
+
+Run Prettier formatting validation.
+
+if has_script format:check; then
+echo "Running Prettier formatting check…"
+npm run format:check
+else
+echo "WARNING: Skipping Prettier; no format:check script is configured."
+fi
+
+Run automated tests when configured.
+
+if has_script test; then
+echo "Running automated tests…"
+npm test
+else
+echo "WARNING: Skipping tests; no test script is configured."
+fi
+
+echo ""
+echo "MedOrbits: All configured pre-commit checks passed."

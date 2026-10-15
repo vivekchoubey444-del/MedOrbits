@@ -1,0 +1,61 @@
+/* =========================================================
+MedOrbits -- Master Stylesheet
+Luxury Aubergine & Champagne Gold
+
+Import shared modules in dependency order.
+Pages should normally load this stylesheet only.
+========================================================= */
+
+/* 1. Design tokens */
+@import url("./variables.css");
+
+/* 2. Browser reset and normalization */
+@import url("./reset.css");
+
+/* 3. Typography and global page foundations */
+@import url("./typography.css");
+
+/* 4. Shared interface components */
+@import url("./components.css");
+
+/* 5. Site-wide layout, header, navigation and footer */
+@import url("./layout.css");
+
+/* 6. Forms and search controls */
+@import url("./forms.css");
+
+/* 7. Education pages and course components */
+@import url("./education.css");
+
+/* 8. Career and employment components */
+@import url("./career.css");
+
+/* 9. Authentication interfaces */
+@import url("./auth.css");
+
+/* 10. Account dashboards */
+@import url("./dashboard.css");
+
+/* 11. Administrative interfaces */
+@import url("./admin.css");
+
+/* 12. Opening screen and reusable animations */
+@import url("./animations.css");
+
+/* 13. Accessibility and reduced-motion support */
+@import url("./accessibility.css");
+
+/* 14. Responsive layouts and breakpoints */
+@import url("./responsive.css");
+
+/* 15. Print-specific presentation */
+@import url("./print.css");
+
+/* =========================================================
+Compatibility notes
+
+Preserve existing homepage selectors and required styles
+in their appropriate modules. Do not duplicate original
+header, footer, or intro-animation rules here unless
+a deliberate, tested override is required.
+========================================================= */

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "fees": [],
+  "fields": [
+    "id",
+    "courseId",
+    "institutionId",
+    "countryCode",
+    "academicYear",
+    "tuitionMin",
+    "tuitionMax",
+    "currency",
+    "hostelMin",
+    "hostelMax",
+    "otherCosts",
+    "sourceUrl",
+    "verifiedAt"
+  ],
+  "note": "No fee amounts are prefilled because costs vary by institution, intake and year. Populate with dated official sources."
+}

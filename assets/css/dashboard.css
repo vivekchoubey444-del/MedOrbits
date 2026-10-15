@@ -1,0 +1,109 @@
+/* =========================================================
+MedOrbits -- Dashboard Styles
+Account layouts, sidebar navigation, statistics and panels
+========================================================= */
+
+/* =========================================================
+
+1. Dashboard Layout
+    ========================================================= */
+
+.dashboard-layout {
+display: grid;
+grid-template-columns: 260px minmax(0, 1fr);
+min-height: 70vh;
+gap: 24px;
+}
+
+/* =========================================================
+2. Dashboard Sidebar and Content Panels
+========================================================= */
+
+.dashboard-sidebar,
+.dashboard-panel {
+padding: 20px;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 14px;
+background: var(–panel, #21172b);
+}
+
+/* =========================================================
+3. Dashboard Navigation
+========================================================= */
+
+.dashboard-nav {
+display: grid;
+gap: 6px;
+}
+
+.dashboard-nav a {
+padding: 10px 12px;
+border-radius: 8px;
+color: var(–muted, #b7acbf);
+font-size: 13px;
+transition:
+background 0.2s ease,
+color 0.2s ease;
+}
+
+.dashboard-nav a[aria-current="page"],
+.dashboard-nav a:hover {
+background: var(–panel-2, #2b1d36);
+color: var(–gold-light, #e4d0a1);
+}
+
+/* =========================================================
+4. Dashboard Statistics Grid
+========================================================= */
+
+.dashboard-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 16px;
+}
+
+/* =========================================================
+5. Dashboard Statistic Cards
+========================================================= */
+
+.dashboard-stat {
+padding: 18px;
+border: 1px solid var(–line, rgba(201, 169, 110, 0.24));
+border-radius: 12px;
+background: var(–panel, #21172b);
+transition:
+border-color 0.2s ease,
+transform 0.2s ease;
+}
+
+.dashboard-stat:hover {
+border-color: var(–gold, #c9a96e);
+transform: translateY(-2px);
+}
+
+.dashboard-stat strong {
+display: block;
+color: var(–gold-light, #e4d0a1);
+font-size: 24px;
+overflow-wrap: anywhere;
+}
+
+.dashboard-stat span {
+color: var(–muted, #b7acbf);
+font-size: 11px;
+}
+
+/* =========================================================
+6. Reduced Motion
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+.dashboard-nav a,
+.dashboard-stat {
+transition: none;
+}
+
+.dashboard-stat:hover {
+transform: none;
+}
+}

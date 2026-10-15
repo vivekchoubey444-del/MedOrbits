@@ -1,0 +1,440 @@
+/* =========================================================
+MedOrbits -- Education Homepage Styles
+Hero, education pillars, search band, cards, about section,
+video content, CTA and FAQs.
+
+Keep these styles aligned with index.html.
+========================================================= */
+
+/* =========================================================
+
+1. Hero Section
+    ========================================================= */
+
+.hero {
+position: relative;
+isolation: isolate;
+overflow: hidden;
+padding: 78px 0 72px;
+background:
+linear-gradient(
+90deg,
+rgba(16, 10, 23, 0.97),
+rgba(26, 16, 36, 0.88) 58%,
+rgba(26, 16, 36, 0.56)
+),
+url("/assets/images/hero/hero-home.jpg") center / cover no-repeat,
+#100a17;
+}
+
+.hero::after {
+content: "";
+position: absolute;
+inset: 0;
+z-index: -1;
+background:
+radial-gradient(
+ellipse at 82% 18%,
+rgba(201, 169, 110, 0.14),
+transparent 36%
+),
+radial-gradient(
+ellipse at 90% 90%,
+rgba(84, 30, 50, 0.2),
+transparent 42%
+);
+}
+
+.hero-grid {
+display: grid;
+grid-template-columns: 1.08fr 0.92fr;
+align-items: center;
+gap: 48px;
+}
+
+.hero h1 {
+max-width: 720px;
+margin: 18px 0;
+font: 600 clamp(39px, 5.3vw, 67px) / 1.08
+"Playfair Display", Georgia, serif;
+letter-spacing: -0.035em;
+}
+
+.hero h1 em {
+color: var(–gold-light);
+font-style: normal;
+}
+
+.hero-copy {
+max-width: 610px;
+color: #d0c5d8;
+font-size: 15px;
+line-height: 1.85;
+}
+
+.hero-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 12px;
+margin-top: 26px;
+}
+
+/* =========================================================
+2. Hero Visual
+========================================================= */
+
+.hero-visual {
+position: relative;
+min-height: 390px;
+overflow: hidden;
+border: 1px solid var(–line);
+border-radius: 20px;
+background: linear-gradient(145deg, #30203e, #171020);
+box-shadow: var(–shadow);
+}
+
+.hero-visual img {
+width: 100%;
+height: 390px;
+object-fit: cover;
+}
+
+.hero-visual::after {
+content: "";
+position: absolute;
+inset: 40% 0 0;
+background: linear-gradient(
+transparent,
+rgba(16, 10, 23, 0.96)
+);
+pointer-events: none;
+}
+
+/* =========================================================
+3. Education Pillars
+========================================================= */
+
+.pillars {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+border-block: 1px solid var(–line);
+background: rgba(43, 29, 54, 0.38);
+}
+
+.pillar {
+padding: 20px 14px;
+text-align: center;
+border-right: 1px solid var(–line);
+}
+
+.pillar:last-child {
+border-right: 0;
+}
+
+.pillar strong {
+display: block;
+color: var(–gold-light);
+font: 600 18px "Playfair Display", Georgia, serif;
+}
+
+.pillar span {
+color: var(–muted);
+font-size: 10px;
+}
+
+/* =========================================================
+4. Search Band
+========================================================= */
+
+.search-band {
+padding: 23px 0;
+background: rgba(11, 7, 16, 0.65);
+border-bottom: 1px solid var(–line);
+}
+
+/* =========================================================
+5. General Sections
+========================================================= */
+
+.section {
+padding: 76px 0;
+scroll-margin-top: 100px;
+}
+
+.section.alt {
+background:
+radial-gradient(
+ellipse at 90% 10%,
+rgba(84, 30, 50, 0.13),
+transparent 40%
+),
+rgba(43, 29, 54, 0.18);
+border-block: 1px solid rgba(217, 204, 228, 0.08);
+}
+
+.section-head {
+display: flex;
+justify-content: space-between;
+align-items: end;
+gap: 25px;
+margin-bottom: 29px;
+}
+
+.section-head h2,
+.about-title {
+margin: 8px 0 10px;
+font: 600 clamp(28px, 3.3vw, 42px) / 1.18
+"Playfair Display", Georgia, serif;
+letter-spacing: -0.025em;
+}
+
+.section-head h2 span,
+.about-title span {
+color: var(–gold-light);
+}
+
+.section-head p {
+max-width: 650px;
+margin: 0;
+color: var(–muted);
+font-size: 12px;
+}
+
+/* =========================================================
+6. Education and Service Cards
+========================================================= */
+
+.cards {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 17px;
+}
+
+.card {
+min-width: 0;
+overflow: hidden;
+border: 1px solid rgba(201, 169, 110, 0.2);
+border-radius: 14px;
+background: linear-gradient(145deg, #2b1d36, #191023);
+transition:
+transform 0.25s ease,
+border-color 0.25s ease,
+box-shadow 0.25s ease;
+}
+
+.card:hover {
+transform: translateY(-5px);
+border-color: rgba(201, 169, 110, 0.68);
+box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+}
+
+.card-media {
+position: relative;
+overflow: hidden;
+background: #2b1d36;
+}
+
+.card-media img {
+width: 100%;
+height: 165px;
+object-fit: cover;
+transition: transform 0.45s ease;
+}
+
+.card:hover .card-media img {
+transform: scale(1.045);
+}
+
+.card-body {
+padding: 16px;
+}
+
+.card h3 {
+margin: 0 0 7px;
+color: #eee2f3;
+font: 600 18px "Playfair Display", Georgia, serif;
+}
+
+.card p {
+min-height: 55px;
+margin: 0 0 13px;
+color: var(–muted);
+font-size: 11px;
+line-height: 1.7;
+}
+
+.card .card-link {
+color: var(–gold-light);
+font-size: 10px;
+font-weight: 700;
+}
+
+/* =========================================================
+7. About Section
+========================================================= */
+
+.about-grid {
+display: grid;
+grid-template-columns: 0.9fr 1.1fr;
+align-items: center;
+gap: 45px;
+}
+
+.about-visual {
+overflow: hidden;
+border: 1px solid var(–line);
+border-radius: 17px;
+background: #21172b;
+}
+
+.about-visual img {
+width: 100%;
+height: 380px;
+object-fit: cover;
+}
+
+.body-copy {
+color: var(–muted);
+font-size: 13px;
+line-height: 1.9;
+}
+
+/* =========================================================
+8. Benefits and Check Lists
+========================================================= */
+
+.check-list {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 10px;
+margin: 20px 0 25px;
+}
+
+.check-list span {
+color: var(–lav);
+font-size: 12px;
+}
+
+.check-list span::before {
+content: "✦";
+color: var(–gold);
+margin-right: 8px;
+}
+
+/* =========================================================
+9. Video Section
+========================================================= */
+
+.video-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 17px;
+}
+
+.video-card {
+overflow: hidden;
+border: 1px solid var(–line);
+border-radius: 13px;
+background: #21172b;
+}
+
+.video-frame {
+aspect-ratio: 16 / 9;
+background: #100a17;
+}
+
+.video-frame video {
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+
+.video-copy {
+padding: 15px;
+}
+
+.video-copy small {
+color: var(–gold-light);
+font-size: 9px;
+font-weight: 700;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+}
+
+.video-copy h3 {
+margin: 6px 0;
+color: var(–lav);
+font: 600 17px "Playfair Display", Georgia, serif;
+}
+
+.video-copy p {
+margin: 0;
+color: var(–muted);
+font-size: 11px;
+}
+
+/* =========================================================
+10. Call-to-Action Section
+========================================================= */
+
+.cta {
+padding: 49px 0;
+border-block: 1px solid var(–line);
+background:
+linear-gradient(
+100deg,
+rgba(16, 10, 23, 0.97),
+rgba(43, 29, 54, 0.91) 62%,
+rgba(84, 30, 50, 0.6)
+),
+url("/assets/images/backgrounds/education-global.jpg")
+center / cover,
+#100a17;
+}
+
+.cta-inner {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 25px;
+}
+
+.cta h2 {
+margin: 8px 0;
+font: 600 clamp(27px, 3vw, 38px) "Playfair Display", Georgia, serif;
+}
+
+.cta p {
+margin: 0;
+color: var(–muted);
+font-size: 12px;
+}
+
+/* =========================================================
+11. Frequently Asked Questions
+========================================================= */
+
+.faq-list {
+display: grid;
+gap: 10px;
+}
+
+.faq {
+padding: 17px 19px;
+border: 1px solid var(–line);
+border-radius: 10px;
+background: rgba(43, 29, 54, 0.45);
+}
+
+.faq summary {
+color: var(–lav);
+font-size: 12px;
+font-weight: 700;
+cursor: pointer;
+}
+
+.faq p {
+margin: 12px 0 0;
+color: var(–muted);
+font-size: 12px;
+}

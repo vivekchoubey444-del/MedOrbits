@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "locations": [
+    {
+      "id": "location-india",
+      "countryCode": "IN",
+      "country": "India",
+      "state": null,
+      "city": null,
+      "label": "India",
+      "active": true
+    },
+    {
+      "id": "location-remote",
+      "countryCode": null,
+      "country": "Remote",
+      "state": null,
+      "city": null,
+      "label": "Remote",
+      "active": true
+    }
+  ],
+  "note": "Add specific locations only when they are accurate and relevant to a listing."
+}

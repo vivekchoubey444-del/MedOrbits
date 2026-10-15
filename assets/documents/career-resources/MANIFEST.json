@@ -1,0 +1,131 @@
+{
+"schemaVersion": "1.0.0",
+"manifestVersion": "1.0.0",
+"root": "career-resources/",
+"name": "MedOrbits Career Resources",
+"description": "Public career guidance resources for resumes, cover letters, interviews, job searches, internships, and workplace skills.",
+"maintainer": "MedOrbits Project Team",
+"accessLevel": "public-resources-only",
+"categories": [
+{
+"name": "cover-letters",
+"path": "cover-letters/",
+"files": [
+"cover-letters/README.md",
+"cover-letters/cover-letter-template.docx",
+"cover-letters/cover-letter-writing-guide.pdf",
+"cover-letters/job-application-email-guide.pdf"
+]
+},
+{
+"name": "internships",
+"path": "internships/",
+"files": [
+"internships/README.md",
+"internships/internship-application-guide.pdf",
+"internships/internship-interview-guide.pdf",
+"internships/internship-preparation-checklist.pdf",
+"internships/internship-resume-checklist.pdf"
+]
+},
+{
+"name": "interview-preparation",
+"path": "interview-preparation/",
+"files": [
+"interview-preparation/README.md",
+"interview-preparation/common-interview-questions.pdf",
+"interview-preparation/interview-follow-up-guide.pdf",
+"interview-preparation/interview-preparation-guide.pdf",
+"interview-preparation/mock-interview-worksheet.pdf"
+]
+},
+{
+"name": "job-search",
+"path": "job-search/",
+"files": [
+"job-search/README.md",
+"job-search/job-application-tracker.xlsx",
+"job-search/job-offer-evaluation-checklist.pdf",
+"job-search/job-portal-safety-guide.pdf",
+"job-search/job-search-planner.pdf"
+]
+},
+{
+"name": "resume-cv",
+"path": "resume-cv/",
+"files": [
+"resume-cv/README.md",
+"resume-cv/freshers-resume-guide.pdf",
+"resume-cv/resume-checklist.pdf",
+"resume-cv/resume-template-editable.docx",
+"resume-cv/resume-writing-guide.pdf"
+]
+},
+{
+"name": "workplace-skills",
+"path": "workplace-skills/",
+"files": [
+"workplace-skills/README.md",
+"workplace-skills/first-job-readiness-checklist.pdf",
+"workplace-skills/professional-communication-guide.pdf",
+"workplace-skills/teamwork-and-collaboration-guide.pdf",
+"workplace-skills/workplace-etiquette-guide.pdf"
+]
+}
+],
+"files": [
+"README.md",
+"cover-letters/README.md",
+"cover-letters/cover-letter-template.docx",
+"cover-letters/cover-letter-writing-guide.pdf",
+"cover-letters/job-application-email-guide.pdf",
+"internships/README.md",
+"internships/internship-application-guide.pdf",
+"internships/internship-interview-guide.pdf",
+"internships/internship-preparation-checklist.pdf",
+"internships/internship-resume-checklist.pdf",
+"interview-preparation/README.md",
+"interview-preparation/common-interview-questions.pdf",
+"interview-preparation/interview-follow-up-guide.pdf",
+"interview-preparation/interview-preparation-guide.pdf",
+"interview-preparation/mock-interview-worksheet.pdf",
+"job-search/README.md",
+"job-search/job-application-tracker.xlsx",
+"job-search/job-offer-evaluation-checklist.pdf",
+"job-search/job-portal-safety-guide.pdf",
+"job-search/job-search-planner.pdf",
+"resume-cv/README.md",
+"resume-cv/freshers-resume-guide.pdf",
+"resume-cv/resume-checklist.pdf",
+"resume-cv/resume-template-editable.docx",
+"resume-cv/resume-writing-guide.pdf",
+"workplace-skills/README.md",
+"workplace-skills/first-job-readiness-checklist.pdf",
+"workplace-skills/professional-communication-guide.pdf",
+"workplace-skills/teamwork-and-collaboration-guide.pdf",
+"workplace-skills/workplace-etiquette-guide.pdf"
+],
+"count": 30,
+"resourceCount": 24,
+"categoryCount": 6,
+"readmeCount": 7,
+"supportedFormats": [
+"PDF",
+"DOCX",
+"XLSX",
+"MD"
+],
+"validation": {
+"requireUniquePaths": true,
+"requireExistingFiles": true,
+"requireRelativePaths": true,
+"allowPathsOutsideRoot": false,
+"excludeGeneratedFiles": true
+},
+"maintenance": {
+"reviewBeforePublication": true,
+"verifyExternalLinks": true,
+"protectPersonalInformation": true,
+"updateManifestWhenFilesChange": true
+}
+}

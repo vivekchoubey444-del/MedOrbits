@@ -1,0 +1,157 @@
+openapi: 3.1.0
+info:
+  title: MedOrbits API
+  version: 1.0.0
+  description: >
+    Initial API contract scaffold for MedOrbits. Confirm paths, schemas,
+    security requirements, and response codes against the implemented server
+    before treating this specification as authoritative.
+servers:
+  - url: https://example.invalid/api
+    description: Placeholder; replace with the deployed API base URL.
+tags:
+  - name: Health
+  - name: Authentication
+  - name: Courses
+  - name: Applications
+  - name: Jobs
+  - name: Payments
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required: [status]
+        '503':
+          description: Service is not ready
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate a user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Authentication succeeded
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication failed
+        '429':
+          description: Rate limit exceeded
+  /courses:
+    get:
+      tags: [Courses]
+      summary: List available courses
+      operationId: listCourses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Course list
+  /applications:
+    get:
+      tags: [Applications]
+      summary: List applications available to the authenticated user
+      operationId: listApplications
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Application list
+        '401':
+          description: Authentication required
+        '403':
+          description: Access denied
+    post:
+      tags: [Applications]
+      summary: Submit an application
+      operationId: createApplication
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courseId:
+                  type: string
+                institutionId:
+                  type: string
+              required: [courseId]
+      responses:
+        '201':
+          description: Application created
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Access denied
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: Search published jobs
+      operationId: listJobs
+      responses:
+        '200':
+          description: Job search results
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Receive a payment-provider webhook
+      operationId: receivePaymentWebhook
+      description: >
+        Verify the provider signature against the raw request body before
+        processing. This placeholder contract must be aligned with the selected
+        provider's actual webhook format.
+      responses:
+        '200':
+          description: Event accepted or already processed
+        '400':
+          description: Invalid event
+        '401':
+          description: Signature verification failed
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session

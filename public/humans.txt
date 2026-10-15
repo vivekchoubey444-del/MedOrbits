@@ -1,0 +1,69 @@
+/* TEAM */
+
+Brand: MedOrbits
+Website: https://medorbits.in/
+Organization: MedOrbits
+Industry: Education Consultancy, Career Guidance and Recruitment
+Focus: Education, Admissions, Study Abroad, Jobs, Internships and Career Development
+
+/* ABOUT */
+
+MedOrbits connects students, educational institutions, job seekers and employers through education guidance, admission assistance, career support and recruitment services.
+
+Our mission is to make education and career opportunities easier to discover, understand and access.
+
+/* SERVICES */
+
+Education Consultancy
+Medical Admissions Guidance
+Study in India
+Study Abroad
+College and University Information
+Course and Fee Information
+Scholarship Guidance
+Career Counselling
+Job Opportunities
+Internship Opportunities
+Employer and Recruitment Services
+
+/* DESIGN */
+
+Design Philosophy: Premium, accessible and user-friendly
+Visual Identity: Royal Burgundy, Champagne Gold and complementary luxury palettes
+Typography: DM Sans and Playfair Display
+Design Priorities: Responsive layouts, readable content, accessible navigation and consistent branding
+
+/* TECHNOLOGY */
+
+Frontend: HTML5, CSS3 and JavaScript
+Data: Structured JSON resources where applicable
+Architecture: Modular website structure
+Compatibility: Responsive design for desktop, tablet and mobile devices
+Security: HTTPS and appropriate server-side access controls
+
+/* ACCESSIBILITY */
+
+We aim to provide clear navigation, readable typography, meaningful page titles, descriptive image text and keyboard-friendly interactions.
+
+/* CONTENT AND DATA */
+
+Public information should be reviewed for accuracy before publication.
+Admission requirements, fees, scholarships, employment details and deadlines may change.
+Users should verify official eligibility criteria and requirements with the relevant institution, employer or authority.
+
+/* CONTACT */
+
+Website: https://medorbits.in/
+Contact: Please use the contact information published on our official website.
+
+/* STANDARDS */
+
+Semantic HTML
+Responsive Web Design
+Search Engine Optimization
+Privacy-Conscious Data Handling
+Secure Development Practices
+
+/* LAST UPDATED */
+
+2026-10-15

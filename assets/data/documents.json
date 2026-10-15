@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "documentGroups": [
+    {
+      "id": "education-application",
+      "title": "Common education application documents",
+      "items": [
+        {
+          "id": "identity-proof",
+          "name": "Identity proof",
+          "required": "Varies by institution"
+        },
+        {
+          "id": "photographs",
+          "name": "Recent photographs",
+          "required": "Varies by institution"
+        },
+        {
+          "id": "academic-records",
+          "name": "Academic marksheets and certificates",
+          "required": "Varies by course"
+        },
+        {
+          "id": "entrance-score",
+          "name": "Entrance examination score or admit card",
+          "required": "If applicable"
+        },
+        {
+          "id": "category-certificate",
+          "name": "Category or reservation certificate",
+          "required": "If applicable"
+        },
+        {
+          "id": "transfer-migration",
+          "name": "Transfer or migration certificate",
+          "required": "If applicable"
+        }
+      ]
+    },
+    {
+      "id": "study-abroad",
+      "title": "Potential study abroad documents",
+      "items": [
+        {
+          "id": "passport",
+          "name": "Valid passport",
+          "required": "As required by destination"
+        },
+        {
+          "id": "offer-letter",
+          "name": "Official offer or admission letter",
+          "required": "As required"
+        },
+        {
+          "id": "financial-evidence",
+          "name": "Financial evidence",
+          "required": "As required by institution or visa authority"
+        },
+        {
+          "id": "language-evidence",
+          "name": "Language proficiency evidence",
+          "required": "If applicable"
+        },
+        {
+          "id": "visa-documents",
+          "name": "Visa application documents",
+          "required": "As required by official immigration authority"
+        }
+      ]
+    }
+  ],
+  "note": "This is a general checklist. Confirm exact requirements with the institution and relevant authority."
+}

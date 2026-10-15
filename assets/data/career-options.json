@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": null,
+  "careerOptions": [
+    {
+      "id": "career-healthcare",
+      "title": "Healthcare",
+      "slug": "healthcare",
+      "relatedCourseIds": [
+        "course-mbbs",
+        "course-bds",
+        "course-nursing",
+        "course-pharmacy",
+        "course-paramedical"
+      ],
+      "description": "Explore clinical, allied-health, diagnostics and healthcare support pathways.",
+      "note": "Licensing and scope of practice depend on jurisdiction."
+    },
+    {
+      "id": "career-technology",
+      "title": "Technology and Engineering",
+      "slug": "technology-engineering",
+      "relatedCourseIds": [
+        "course-engineering"
+      ],
+      "description": "Explore technical, engineering and technology-related pathways."
+    },
+    {
+      "id": "career-business",
+      "title": "Business and Management",
+      "slug": "business-management",
+      "relatedCourseIds": [
+        "course-management"
+      ],
+      "description": "Explore business operations, management and leadership pathways."
+    }
+  ]
+}

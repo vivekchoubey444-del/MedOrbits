@@ -1,0 +1,102 @@
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Synthetic MedOrbits course fixtures for local development and automated tests. These are not official course listings or admission requirements.",
+  "courses": [
+    {
+      "id": "COURSE-TEST-MBBS-001",
+      "slug": "mbbs",
+      "code": "MBBS",
+      "name": "Bachelor of Medicine and Bachelor of Surgery",
+      "shortName": "MBBS",
+      "category": "Medical",
+      "qualificationLevel": "Undergraduate",
+      "durationMonths": 66,
+      "durationYears": 5.5,
+      "institutionType": "medical",
+      "entranceExam": "NEET-UG",
+      "counsellingRequired": true,
+      "status": "active",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_medical_course"
+      }
+    },
+    {
+      "id": "COURSE-TEST-BDS-001",
+      "slug": "bds",
+      "code": "BDS",
+      "name": "Bachelor of Dental Surgery",
+      "shortName": "BDS",
+      "category": "Dental",
+      "qualificationLevel": "Undergraduate",
+      "durationMonths": 60,
+      "durationYears": 5,
+      "institutionType": "dental",
+      "entranceExam": "NEET-UG",
+      "counsellingRequired": true,
+      "status": "active",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_dental_course"
+      }
+    },
+    {
+      "id": "COURSE-TEST-PHARMACY-001",
+      "slug": "b-pharm",
+      "code": "BPHARM",
+      "name": "Bachelor of Pharmacy",
+      "shortName": "B.Pharm",
+      "category": "Pharmacy",
+      "qualificationLevel": "Undergraduate",
+      "durationMonths": 48,
+      "durationYears": 4,
+      "institutionType": "pharmacy",
+      "entranceExam": null,
+      "counsellingRequired": false,
+      "status": "active",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_pharmacy_course"
+      }
+    },
+    {
+      "id": "COURSE-TEST-BAMS-001",
+      "slug": "bams",
+      "code": "BAMS",
+      "name": "Bachelor of Ayurvedic Medicine and Surgery",
+      "shortName": "BAMS",
+      "category": "AYUSH",
+      "qualificationLevel": "Undergraduate",
+      "durationMonths": 66,
+      "durationYears": 5.5,
+      "institutionType": "ayush",
+      "entranceExam": "NEET-UG",
+      "counsellingRequired": true,
+      "status": "active",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "active_ayush_course"
+      }
+    },
+    {
+      "id": "COURSE-TEST-INACTIVE-001",
+      "slug": "medorbits-inactive-test-course",
+      "code": "TEST-INACTIVE",
+      "name": "MedOrbits Inactive Test Course",
+      "shortName": "Inactive Test",
+      "category": "Test",
+      "qualificationLevel": "Undergraduate",
+      "durationMonths": null,
+      "durationYears": null,
+      "institutionType": null,
+      "entranceExam": null,
+      "counsellingRequired": false,
+      "status": "inactive",
+      "metadata": {
+        "source": "fixture",
+        "testCase": "inactive_course"
+      }
+    }
+  ]
+}

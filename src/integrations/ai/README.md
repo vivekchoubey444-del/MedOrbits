@@ -1,0 +1,2 @@
+# AI Integration
+`createAiClient().generateText({system,prompt})` uses the OpenAI-compatible Chat Completions endpoint. Configure `AI_API_KEY`; optional `AI_API_URL`, `AI_MODEL`, `AI_TIMEOUT_MS`, `AI_MAX_OUTPUT_TOKENS`, and `AI_MAX_INPUT_CHARS`. Requires Node.js built-in `fetch`. AI output can be inaccurate and must be treated as untrusted. Do not send personal/financial/document data without authorization, disclosure, and review. Validate outputs before rendering or taking actions.

@@ -1,0 +1,2 @@
+# Email Templates
+HTML emails use a centered, table-based shell for broad email-client support and a deep plum/champagne-gold visual style. The base has a wordmark but no website navigation header or footer. Render `{{...}}` placeholders using a safe server-side template engine with autoescaping; validate URLs against an allowlist. Provide a plain-text alternative and test real email clients before production.

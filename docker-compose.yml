@@ -1,0 +1,181 @@
+============================================================
+
+MEDORBITS -- DOCKER COMPOSE CONFIGURATION
+
+File: docker-compose.yml
+
+============================================================
+
+name: medorbits
+
+services:
+
+–––––––––––––––––––––––––––––
+
+1. MEDORBITS WEB APPLICATION
+
+–––––––––––––––––––––––––––––
+
+app:
+build:
+context: .
+dockerfile: Dockerfile
+
+image: medorbits:latest
+container_name: medorbits-app
+restart: unless-stopped
+init: true
+env_file:
+  - .env
+environment:
+  NODE_ENV: production
+  APP_ENV: production
+  HOST: 0.0.0.0
+  PORT: 3000
+  # Docker service hostnames, not localhost.
+  DB_CLIENT: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_NAME: ${DB_NAME:-medorbits}
+  DB_USER: ${DB_USER:-medorbits_app}
+  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+  # Redis is available as a separate service.
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_ENABLED: ${REDIS_ENABLED:-false}
+ports:
+  - "${APP_PORT:-3000}:3000"
+depends_on:
+  mysql:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+networks:
+  - medorbits-network
+volumes:
+  # Persistent private files, not publicly served assets.
+  - app-private-storage:/app/storage/private
+  - app-temporary-storage:/app/storage/temporary
+  - app-logs:/app/storage/logs
+security_opt:
+  - no-new-privileges:true
+# The Dockerfile already defines a health check.
+healthcheck:
+  test:
+    - CMD
+    - node
+    - -e
+    - "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+stop_grace_period: 15s
+
+–––––––––––––––––––––––––––––
+
+2. MYSQL DATABASE
+
+–––––––––––––––––––––––––––––
+
+mysql:
+image: mysql:8.4
+container_name: medorbits-mysql
+
+restart: unless-stopped
+environment:
+  MYSQL_DATABASE: ${DB_NAME:-medorbits}
+  MYSQL_USER: ${DB_USER:-medorbits_app}
+  MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+  MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+# Database is deliberately not published to the host.
+# Other containers access it through the internal network.
+volumes:
+  - mysql-data:/var/lib/mysql
+networks:
+  - medorbits-network
+healthcheck:
+  test:
+    - CMD-SHELL
+    - 'mysqladmin ping -h 127.0.0.1 -u root -p"$${MYSQL_ROOT_PASSWORD}" --silent'
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 40s
+security_opt:
+  - no-new-privileges:true
+
+–––––––––––––––––––––––––––––
+
+3. REDIS -- SESSIONS, CACHE AND RATE-LIMIT STORAGE
+
+–––––––––––––––––––––––––––––
+
+redis:
+image: redis:7-alpine
+container_name: medorbits-redis
+
+restart: unless-stopped
+# Require a password before accepting Redis commands.
+# Configure the same password in REDIS_PASSWORD in .env.
+command:
+  - sh
+  - -c
+  - 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"'
+environment:
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+# Redis is not published to the host.
+volumes:
+  - redis-data:/data
+networks:
+  - medorbits-network
+healthcheck:
+  test:
+    - CMD-SHELL
+    - 'redis-cli -a "$$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG'
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 10s
+security_opt:
+  - no-new-privileges:true
+
+----------------------------------------
+
+4. PERSISTENT STORAGE
+
+----------------------------------------
+
+volumes:
+mysql-data:
+name: medorbits-mysql-data
+
+redis-data:
+name: medorbits-redis-data
+
+app-private-storage:
+name: medorbits-private-storage
+
+app-temporary-storage:
+name: medorbits-temporary-storage
+
+app-logs:
+name: medorbits-logs
+
+----------------------------------------
+
+5. INTERNAL NETWORK
+
+----------------------------------------
+
+networks:
+medorbits-network:
+name: medorbits-network
+driver: bridge
+internal: false
+
+============================================================
+
+END OF MEDORBITS DOCKER COMPOSE CONFIGURATION
+
+============================================================

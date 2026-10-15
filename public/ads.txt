@@ -1,0 +1,15 @@
+    MedOrbits - Authorized Digital Advertising Sellers
+
+Website: https://medorbits.in/
+
+Standard: IAB Tech Lab ads.txt
+
+Add verified advertising seller records below.
+
+Format:
+
+, , <DIRECT|RESELLER>, 
+
+Example format only -- replace with verified values:
+
+example-ad-network.com, pub-XXXXXXXXXXXXXXXX, DIRECT, XXXXXXXXXXXXXXXX

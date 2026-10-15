@@ -1,0 +1,44 @@
+
+# Ignore all runtime content by default
+*
+
+# Keep directory documentation and placeholders
+!.gitignore
+!.gitkeep
+!README.md
+
+# Keep the intended storage directories
+!tmp/
+!uploads/
+!documents/
+!applications/
+!profiles/
+!employer-documents/
+!generated/
+!exports/
+!quarantine/
+!backups/
+
+# Ignore all files inside runtime directories
+tmp/*
+uploads/*
+documents/*
+applications/*
+profiles/*
+employer-documents/*
+generated/*
+exports/*
+quarantine/*
+backups/*
+
+# Preserve placeholders
+!tmp/.gitkeep
+!uploads/.gitkeep
+!documents/.gitkeep
+!applications/.gitkeep
+!profiles/.gitkeep
+!employer-documents/.gitkeep
+!generated/.gitkeep
+!exports/.gitkeep
+!quarantine/.gitkeep
+!backups/.gitkeep
