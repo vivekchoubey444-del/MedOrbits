@@ -1,66 +1,37 @@
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-name: MedOrbits CI
+  - name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 20
+      cache: 'npm'
+      cache-dependency-path: package-lock.json
 
-on:
-  push:
-    branches:
-      - main
-      - develop
+  - name: Verify required project files
+    run: |
+      test -f package.json
+      test -f package-lock.json
+      test -f server.js
+      test -f .gitignore
 
-  pull_request:
-    branches:
-      - main
-      - develop
+  - name: Install dependencies
+    run: npm ci
 
-  workflow_dispatch:
+  - name: Check server JavaScript syntax
+    run: node --check server.js
 
-permissions:
-  contents: read
+  - name: Check application JavaScript syntax
+    run: |
+      find src -type f -name '*.js' -print0 |
+        xargs -0 -n 1 node --check
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  - name: Run lint
+    run: npm run lint --if-present
 
-jobs:
-  validate:
-    name: Validate and test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  - name: Check formatting
+    run: npm run format:check --if-present
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Verify required project files
-        run: |
-          test -f package.json
-          test -f package-lock.json
-          test -f server.js
-          test -f .gitignore
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check server JavaScript syntax
-        run: node --check server.js
-
-      - name: Check application JavaScript syntax
-        run: |
-          find src -type f -name '*.js' -print0 |
-            xargs -0 -r -n 1 node --check
-
-      - name: Run lint
-        run: npm run lint --if-present
-
-      - name: Check formatting
-        run: npm run format:check --if-present
-
-      - name: Run tests
-        run: npm test --if-present
+  - name: Run tests
+    run: npm run test --if-present
