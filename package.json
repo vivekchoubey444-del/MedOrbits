@@ -47,5 +47,5 @@
         YAML.parse_file(path)
         count += 1
       end
-    end
+    end 
     puts "Validated #{count} YAML file(s)."
