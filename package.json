@@ -74,3 +74,29 @@
       "<rootDir>/tests"
     ],
     "testMatch": [
+      "**/*.test.js",
+      "**/*.spec.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.config.js",
+      "!src/**/index.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "clearMocks": true,
+    "restoreMocks": true
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "all",
+    "printWidth": 80,
+    "tabWidth": 2,
+    "endOfLine": "lf"
+  }
+}
