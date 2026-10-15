@@ -92,7 +92,7 @@
     "clearMocks": true,
     "restoreMocks": true
   },
-  "prettier": {
+   "prettier": {
     "singleQuote": true,
     "semi": true,
     "trailingComma": "all",
