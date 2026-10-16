@@ -1,51 +1,46 @@
-name: MedOrbits CodeQL Analysis
+name: CodeQL JavaScript Analysis
+
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
-  schedule:
-    # Every Monday at 04:23 UTC (09:53 IST)
-    - cron: "23 4 * * 1"
-  workflow_dispatch:
+push:
+branches:
+- main
+- develop
+pull_request:
+branches:
+- main
+- develop
+schedule:
+- cron: “23 4 * * 1”
+workflow_dispatch:
+
+permissions:
+contents: read
+
+concurrency:
+group: codeql-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+cancel-in-progress: true
+
+jobs:
+analyze:
+name: Analyze JavaScript
+runs-on: ubuntu-latest
+timeout-minutes: 30
+
 permissions:
   contents: read
-concurrency:
-  group: codeql-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-jobs:
-  analyze:
-    name: Analyze JavaScript and TypeScript
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    steps:
-      # 1. Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      # 2. Initialize CodeQL
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          build-mode: none
-      # 3. Analyze source code
-      - name: Analyze source code
-        uses: github/codeql-action/analyze@v3
-        if: >-
-          ${{
-            github.event_name != 'pull_request' ||
-            github.event.pull_request.head.repo.full_name == github.repository
-          }}
-        with:
-          category: "/language:javascript-typescript"
-          upload: true
+  security-events: write
+  actions: read
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v5
+    with:
+      persist-credentials: false
+  - name: Initialize CodeQL
+    uses: github/codeql-action/init@v4
+    with:
+      languages: javascript-typescript
+      build-mode: none
+  - name: Analyze code
+    uses: github/codeql-action/analyze@v4
+    with:
+      category: /language:javascript-typescript
