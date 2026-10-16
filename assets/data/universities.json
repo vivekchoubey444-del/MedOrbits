@@ -1,16 +1,384 @@
+
 {
-"id": "UNIVERSITY-001",
-"name": "Official University Name",
-"slug": "official-university-name",
-"countryCode": "IN",
-"stateOrRegion": "State or Region",
-"city": "City",
-"website": "https://official-university-domain.example",
-"courses": [],
-"recognitionAuthority": {
-"name": "Relevant Official Authority",
-"website": null
-},
-"verifiedAt": null,
-"active": true
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": "2.1.0",
+  "updatedAt": null,
+  "metadata": {
+    "title": "MedOrbits Universities and Institutions Database",
+    "description": "A structured directory of universities and educational institutions, with cross-dataset references for courses, colleges, admissions, fees, examinations, documents, locations and student services.",
+    "language": "en",
+    "defaultCountryCode": "IN",
+    "defaultCurrency": "INR",
+    "dateFormat": "YYYY-MM-DD",
+    "idStrategy": "Stable unique identifiers that remain unchanged when display names or URLs change.",
+    "sourcePolicy": "Use official institutional websites, government directories and relevant regulatory authorities as authoritative sources.",
+    "verificationPolicy": "Verify institutional identity, recognition and published claims before making records publicly discoverable.",
+    "unknownValuePolicy": "Use null for unknown scalar values and empty arrays for known-empty or not-yet-populated collections."
+  },
+  "dataFiles": {
+    "colleges": "assets/data/colleges.json",
+    "courses": "assets/data/courses.json",
+    "fees": "assets/data/fees.json",
+    "admissions": "assets/data/admission-process.json",
+    "documents": "assets/data/documents.json",
+    "entranceExams": "assets/data/entrance-exams.json",
+    "states": "assets/data/locations/states.json",
+    "cities": "assets/data/locations/cities.json",
+    "hostels": "assets/data/hostels.json",
+    "scholarships": "assets/data/scholarships.json",
+    "careerOptions": "assets/data/career-options.json",
+    "jobs": "assets/data/jobs.json",
+    "internships": "assets/data/internships.json",
+    "news": "assets/data/news.json",
+    "services": "assets/data/services.json",
+    "faqs": "assets/data/faqs.json"
+  },
+  "fieldDefinitions": {
+    "id": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "description": "Permanent institution identifier used by related datasets."
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "shortName": {
+      "type": ["string", "null"]
+    },
+    "slug": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "aliases": {
+      "type": "array",
+      "items": "string"
+    },
+    "institutionType": {
+      "type": "string",
+      "enumRef": "allowedValues.institutionType"
+    },
+    "ownershipType": {
+      "type": "string",
+      "enumRef": "allowedValues.ownershipType"
+    },
+    "parentInstitutionId": {
+      "type": ["string", "null"],
+      "reference": "universities.id"
+    },
+    "foundedYear": {
+      "type": ["integer", "null"]
+    },
+    "countryCode": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+    "stateId": {
+      "type": ["string", "null"],
+      "reference": "states.id"
+    },
+    "cityId": {
+      "type": ["string", "null"],
+      "reference": "cities.id"
+    },
+    "address": {
+      "type": ["string", "null"]
+    },
+    "pincode": {
+      "type": ["string", "null"]
+    },
+    "coordinates": {
+      "type": ["object", "null"],
+      "properties": {
+        "latitude": {
+          "type": ["number", "null"],
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": ["number", "null"],
+          "minimum": -180,
+          "maximum": 180
+        }
+      }
+    },
+    "website": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "contact": {
+      "type": ["object", "null"],
+      "properties": {
+        "email": {
+          "type": ["string", "null"]
+        },
+        "phone": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "recognitions": {
+      "type": "array",
+      "description": "Recognition records supported by authoritative evidence."
+    },
+    "accreditations": {
+      "type": "array",
+      "description": "Accreditation records supported by authoritative evidence."
+    },
+    "courseIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "courses.id"
+    },
+    "collegeIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "colleges.id"
+    },
+    "feeIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "fees.id"
+    },
+    "admissionIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "admissions.processes.id"
+    },
+    "examIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "entranceExams"
+    },
+    "hostelIds": {
+      "type": "array",
+      "items": "string",
+      "reference": "hostels"
+    },
+    "facilities": {
+      "type": "array",
+      "items": "string"
+    },
+    "languageOfInstruction": {
+      "type": "array",
+      "items": "string"
+    },
+    "sourceUrls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "sourceType": {
+            "type": "string",
+            "enumRef": "allowedValues.sourceType"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "checkedAt": {
+            "type": ["string", "null"],
+            "format": "date"
+          }
+        },
+        "required": ["url", "sourceType"]
+      }
+    },
+    "verificationStatus": {
+      "type": "string",
+      "enumRef": "allowedValues.verificationStatus"
+    },
+    "verifiedAt": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "verifiedBy": {
+      "type": ["string", "null"]
+    },
+    "reviewDueAt": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "createdAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    }
+  },
+  "allowedValues": {
+    "institutionType": [
+      "central-university",
+      "state-university",
+      "private-university",
+      "deemed-university",
+      "open-university",
+      "international-university",
+      "other"
+    ],
+    "ownershipType": [
+      "public",
+      "private",
+      "government-aided",
+      "autonomous",
+      "other"
+    ],
+    "recognitionType": [
+      "government-recognition",
+      "statutory-recognition",
+      "regulatory-approval",
+      "professional-council-approval",
+      "institutional-accreditation",
+      "programme-accreditation",
+      "other"
+    ],
+    "recognitionStatus": [
+      "active",
+      "expired",
+      "suspended",
+      "withdrawn",
+      "pending",
+      "unknown"
+    ],
+    "sourceType": [
+      "official-website",
+      "government-directory",
+      "regulatory-body",
+      "official-document",
+      "official-notification",
+      "other"
+    ],
+    "verificationStatus": [
+      "draft",
+      "pending-review",
+      "verified",
+      "rejected",
+      "archived"
+    ],
+    "facility": [
+      "library",
+      "laboratories",
+      "research-centre",
+      "hospital",
+      "teaching-hospital",
+      "hostel",
+      "sports",
+      "transport",
+      "cafeteria",
+      "accessibility",
+      "career-services",
+      "student-support",
+      "other"
+    ]
+  },
+  "relationshipRules": {
+    "parentInstitutionId": {
+      "target": "universities.id",
+      "nullable": true,
+      "mustExist": true,
+      "preventSelfReference": true
+    },
+    "stateId": {
+      "target": "states.id",
+      "nullable": true,
+      "mustExistWhenProvided": true
+    },
+    "cityId": {
+      "target": "cities.id",
+      "nullable": true,
+      "mustExistWhenProvided": true
+    },
+    "courseIds": {
+      "target": "courses.id",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    },
+    "collegeIds": {
+      "target": "colleges.id",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    },
+    "feeIds": {
+      "target": "fees.id",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    },
+    "admissionIds": {
+      "target": "admissions.processes.id",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    },
+    "examIds": {
+      "target": "entranceExams",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    },
+    "hostelIds": {
+      "target": "hostels",
+      "uniqueItems": true,
+      "mustExistWhenProvided": true
+    }
+  },
+  "dataIntegrity": {
+    "uniqueInstitutionIds": true,
+    "uniqueInstitutionSlugs": true,
+    "uniqueAliasesRecommended": true,
+    "referencesMustResolve": true,
+    "preventCircularParentRelationships": true,
+    "preventDuplicateRelationshipIds": true,
+    "validateCountryStateCityConsistency": true,
+    "verifiedRecordsRequireSources": true,
+    "verifiedRecordsRequireVerifiedAt": true,
+    "verifiedRecordsRequireVerifiedBy": true,
+    "unverifiedRecordsMustNotBePresentedAsVerified": true,
+    "unverifiedLinksMustNotBeDisplayedAsOfficial": true,
+    "unknownValuesMustRemainNull": true,
+    "doNotInventInstitutionDetails": true,
+    "doNotInferRecognitionOrAccreditation": true,
+    "doNotDuplicateRelatedDatasetRecords": true
+  },
+  "displaySettings": {
+    "showVerifiedRecordsByDefault": true,
+    "showInstitutionType": true,
+    "showOwnershipType": true,
+    "showLocation": true,
+    "showOfficialWebsite": true,
+    "showRecognitions": true,
+    "showAccreditations": true,
+    "showCourses": true,
+    "showColleges": true,
+    "showFeeReferences": true,
+    "showAdmissionReferences": true,
+    "showHostels": true,
+    "showFacilities": true,
+    "showVerificationStatus": true,
+    "showSourceLinks": true,
+    "showLastVerifiedDate": true
+  },
+  "publicationRules": {
+    "publicListingRequires": [
+      "verificationStatus equals verified",
+      "active equals true",
+      "id, name and slug are valid",
+      "at least one relevant authoritative source is recorded",
+      "verification date and reviewer are recorded",
+      "all supplied cross-dataset references resolve"
+    ],
+    "unverifiedRecordsVisiblePublicly": false,
+    "expiredOrWithdrawnRecognition": "Display only with accurate status and context; never imply current validity.",
+    "missingRelationships": "Use empty arrays where appropriate and do not create fabricated references.",
+    "brokenRelationships": "Flag validation errors and prevent publication of affected records."
+  },
+  "universities": []
 }

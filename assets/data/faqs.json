@@ -1,46 +1,102 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "updatedAt": null,
+  "metadata": {
+    "title": "MedOrbits FAQs",
+    "description": "Frequently asked questions shown on the website. Answers are general guidance and do not replace official sources.",
+    "defaultLanguage": "en"
+  },
+  "fields": [
+    "id", "question", "answer", "category", "tags", "relatedCourseIds",
+    "relatedExamIds", "sortOrder", "active", "createdAt", "updatedAt"
+  ],
+  "allowedValues": {
+    "category": [
+      "general",
+      "courses",
+      "institutions",
+      "admissions",
+      "exams",
+      "documents",
+      "study-abroad",
+      "funding",
+      "careers"
+    ]
+  },
+  "dataRules": [
+    "id must be unique and use the faq- prefix.",
+    "category must be one of allowedValues.category.",
+    "sortOrder must be a positive integer; lower values display first.",
+    "relatedCourseIds and relatedExamIds, when set, must reference existing records.",
+    "Answers must not promise admission, employment, funding or any particular outcome.",
+    "Answers must not state specific dates, fees or eligibility rules; point to official sources instead.",
+    "The active field controls display only."
+  ],
   "faqs": [
     {
       "id": "faq-course-choice",
       "question": "How do I choose a suitable course?",
       "answer": "Consider your interests, academic background, eligibility, costs and goals. Verify programme information with official institutions.",
       "category": "courses",
+      "tags": [],
+      "relatedCourseIds": [],
+      "relatedExamIds": [],
       "sortOrder": 1,
-      "active": true
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
       "id": "faq-institutions",
       "question": "How do I verify a college or university?",
       "answer": "Check recognition, accreditation and programme details with the relevant official regulator or institution.",
       "category": "institutions",
+      "tags": [],
+      "relatedCourseIds": [],
+      "relatedExamIds": [],
       "sortOrder": 2,
-      "active": true
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
       "id": "faq-study-abroad",
       "question": "What should I check before studying abroad?",
       "answer": "Verify institution recognition, tuition, living costs, visa requirements, licensing rules and refund policies through official sources.",
       "category": "study-abroad",
+      "tags": [],
+      "relatedCourseIds": [],
+      "relatedExamIds": [],
       "sortOrder": 3,
-      "active": true
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
       "id": "faq-scholarships",
       "question": "Are scholarships guaranteed?",
       "answer": "No. Eligibility, award amounts, deadlines and selection conditions depend on the scholarship provider.",
       "category": "funding",
+      "tags": [],
+      "relatedCourseIds": [],
+      "relatedExamIds": [],
       "sortOrder": 4,
-      "active": true
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
       "id": "faq-jobs",
       "question": "Does the website guarantee jobs or admissions?",
       "answer": "No. Listings and guidance do not guarantee admission, employment, funding or any particular outcome.",
       "category": "careers",
+      "tags": [],
+      "relatedCourseIds": [],
+      "relatedExamIds": [],
       "sortOrder": 5,
-      "active": true
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     }
   ]
 }

@@ -1,4 +1,3 @@
-
 -- =============================================================================
 -- MedOrbits Migration 008: Payments and Subscriptions
 -- File: database/migrations/008_create_subscriptions_payments.sql
@@ -8,77 +7,78 @@
 --   001_create_users.sql
 --
 -- Purpose:
---   Manage user subscriptions, payment attempts and payment-provider references.
+--   Manage subscriptions, payment attempts, refunds and payment-provider events.
 --
--- Important:
---   - Generate public_id using crypto.randomUUID() in Node.js.
---   - Store monetary values as integer minor units (e.g. paise for INR).
---   - Verify payment status using the payment provider's server-side API/webhook.
---   - Never store card numbers, CVVs, UPI PINs or other payment credentials.
+-- Monetary values:
+--   Store integer minor units (e.g. paise for INR).
+--
+-- Security:
+--   - Never store card numbers, CVVs, UPI PINs or payment credentials.
+--   - Confirm payment status through authenticated server-side provider APIs
+--     or signature-verified webhooks.
+--   - Never trust browser redirects as proof of payment.
+--   - Keep provider API secrets outside the database and source repository.
 -- =============================================================================
-
-
 -- =============================================================================
 -- TABLE: subscriptions
 -- =============================================================================
-
 CREATE TABLE IF NOT EXISTS subscriptions (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-
     public_id CHAR(36) NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
-
     plan_code VARCHAR(80) NOT NULL,
     plan_name VARCHAR(150) NOT NULL,
-
+    -- Amount charged per billing interval, in minor currency units.
     amount_minor BIGINT UNSIGNED NOT NULL,
     currency CHAR(3) NOT NULL DEFAULT 'INR',
     billing_interval VARCHAR(20) NOT NULL DEFAULT 'monthly',
-
     status VARCHAR(30) NOT NULL DEFAULT 'pending',
-
     starts_at DATETIME(3) NULL,
     current_period_start DATETIME(3) NULL,
     current_period_end DATETIME(3) NULL,
+    trial_ends_at DATETIME(3) NULL,
+    next_billing_at DATETIME(3) NULL,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
     cancelled_at DATETIME(3) NULL,
-
+    ended_at DATETIME(3) NULL,
+    -- Provider integration. Never store API secrets here.
     provider VARCHAR(60) NULL,
     provider_customer_id VARCHAR(255) NULL,
     provider_subscription_id VARCHAR(255) NULL,
-
+    metadata JSON NULL,
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3),
-
     PRIMARY KEY (id),
-
     UNIQUE KEY uq_subscriptions_public_id (public_id),
-
+    UNIQUE KEY uq_subscriptions_provider_subscription (
+        provider,
+        provider_subscription_id
+    ),
     KEY idx_subscriptions_user_id (user_id),
     KEY idx_subscriptions_status (status),
     KEY idx_subscriptions_period_end (current_period_end),
+    KEY idx_subscriptions_next_billing (status, next_billing_at),
     KEY idx_subscriptions_user_status (user_id, status),
     KEY idx_subscriptions_provider_customer (
         provider,
         provider_customer_id
     ),
-    KEY idx_subscriptions_provider_subscription (
-        provider,
-        provider_subscription_id
-    ),
-
+    CONSTRAINT chk_subscriptions_public_id
+        CHECK (CHAR_LENGTH(TRIM(public_id)) = 36),
     CONSTRAINT chk_subscriptions_amount
         CHECK (amount_minor >= 0),
-
     CONSTRAINT chk_subscriptions_currency
         CHECK (currency REGEXP '^[A-Z]{3}$'),
-
     CONSTRAINT chk_subscriptions_plan_code
         CHECK (CHAR_LENGTH(TRIM(plan_code)) > 0),
-
     CONSTRAINT chk_subscriptions_plan_name
         CHECK (CHAR_LENGTH(TRIM(plan_name)) > 0),
-
+    CONSTRAINT chk_subscriptions_provider
+        CHECK (
+            provider IS NULL
+            OR CHAR_LENGTH(TRIM(provider)) > 0
+        ),
     CONSTRAINT chk_subscriptions_interval
         CHECK (
             billing_interval IN (
@@ -88,11 +88,11 @@ CREATE TABLE IF NOT EXISTS subscriptions (
                 'one_time'
             )
         ),
-
     CONSTRAINT chk_subscriptions_status
         CHECK (
             status IN (
                 'pending',
+                'trialing',
                 'active',
                 'past_due',
                 'cancelled',
@@ -100,69 +100,78 @@ CREATE TABLE IF NOT EXISTS subscriptions (
                 'suspended'
             )
         ),
-
     CONSTRAINT chk_subscriptions_period
         CHECK (
             current_period_start IS NULL
             OR current_period_end IS NULL
             OR current_period_end > current_period_start
         ),
-
+    CONSTRAINT chk_subscriptions_trial
+        CHECK (
+            trial_ends_at IS NULL
+            OR starts_at IS NULL
+            OR trial_ends_at >= starts_at
+        ),
+    CONSTRAINT chk_subscriptions_cancellation
+        CHECK (
+            cancel_at_period_end = FALSE
+            OR cancelled_at IS NULL
+            OR status = 'cancelled'
+        ),
+    CONSTRAINT chk_subscriptions_ended
+        CHECK (
+            status <> 'expired'
+            OR ended_at IS NOT NULL
+        ),
     CONSTRAINT fk_subscriptions_user
         FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE RESTRICT
-
+        ON UPDATE RESTRICT
 ) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
+  DEFAULT CHARACTER SET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- =============================================================================
 -- TABLE: payments
 -- =============================================================================
-
 CREATE TABLE IF NOT EXISTS payments (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-
     public_id CHAR(36) NOT NULL,
-
     user_id BIGINT UNSIGNED NOT NULL,
     subscription_id BIGINT UNSIGNED NULL,
-
+    -- Application-generated unique reference for this payment attempt.
     payment_reference VARCHAR(100) NOT NULL,
-
     provider VARCHAR(60) NOT NULL,
     provider_payment_id VARCHAR(255) NULL,
     provider_order_id VARCHAR(255) NULL,
-
     amount_minor BIGINT UNSIGNED NOT NULL,
     currency CHAR(3) NOT NULL DEFAULT 'INR',
-
     status VARCHAR(30) NOT NULL DEFAULT 'pending',
     payment_method VARCHAR(60) NULL,
-
+    initiated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     paid_at DATETIME(3) NULL,
     failed_at DATETIME(3) NULL,
+    cancelled_at DATETIME(3) NULL,
+    -- Idempotency key generated by the application for payment creation.
+    idempotency_key VARCHAR(150) NULL,
     failure_code VARCHAR(100) NULL,
     failure_message TEXT NULL,
-
+    -- Provider-confirmed transaction details only; exclude sensitive data.
+    provider_metadata JSON NULL,
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3),
-
     PRIMARY KEY (id),
-
     UNIQUE KEY uq_payments_public_id (public_id),
     UNIQUE KEY uq_payments_reference (payment_reference),
-
-    -- MySQL permits multiple NULL values in a unique index.
-    -- This preserves uniqueness for non-NULL provider payment IDs.
     UNIQUE KEY uq_payments_provider_payment (
         provider,
         provider_payment_id
     ),
-
+    UNIQUE KEY uq_payments_idempotency (
+        user_id,
+        idempotency_key
+    ),
     KEY idx_payments_user_id (user_id),
     KEY idx_payments_subscription_id (subscription_id),
     KEY idx_payments_status (status),
@@ -176,19 +185,16 @@ CREATE TABLE IF NOT EXISTS payments (
         provider,
         provider_order_id
     ),
-
+    CONSTRAINT chk_payments_public_id
+        CHECK (CHAR_LENGTH(TRIM(public_id)) = 36),
     CONSTRAINT chk_payments_amount
         CHECK (amount_minor > 0),
-
     CONSTRAINT chk_payments_currency
         CHECK (currency REGEXP '^[A-Z]{3}$'),
-
     CONSTRAINT chk_payments_provider
         CHECK (CHAR_LENGTH(TRIM(provider)) > 0),
-
     CONSTRAINT chk_payments_reference
         CHECK (CHAR_LENGTH(TRIM(payment_reference)) > 0),
-
     CONSTRAINT chk_payments_status
         CHECK (
             status IN (
@@ -201,17 +207,148 @@ CREATE TABLE IF NOT EXISTS payments (
                 'refunded'
             )
         ),
-
+    CONSTRAINT chk_payments_method
+        CHECK (
+            payment_method IS NULL
+            OR CHAR_LENGTH(TRIM(payment_method)) > 0
+        ),
+    CONSTRAINT chk_payments_paid_timestamp
+        CHECK (
+            status NOT IN (
+                'successful',
+                'partially_refunded',
+                'refunded'
+            )
+            OR paid_at IS NOT NULL
+        ),
     CONSTRAINT fk_payments_user
         FOREIGN KEY (user_id)
         REFERENCES users (id)
-        ON DELETE RESTRICT,
-
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
     CONSTRAINT fk_payments_subscription
         FOREIGN KEY (subscription_id)
         REFERENCES subscriptions (id)
         ON DELETE SET NULL
-
+        ON UPDATE RESTRICT
 ) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
+  DEFAULT CHARACTER SET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+-- =============================================================================
+-- TABLE: payment_refunds
+-- Purpose: Track individual full and partial refund transactions.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS payment_refunds (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    public_id CHAR(36) NOT NULL,
+    payment_id BIGINT UNSIGNED NOT NULL,
+    refund_reference VARCHAR(100) NOT NULL,
+    provider_refund_id VARCHAR(255) NULL,
+    amount_minor BIGINT UNSIGNED NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'INR',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    reason VARCHAR(500) NULL,
+    requested_by BIGINT UNSIGNED NULL,
+    requested_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    processed_at DATETIME(3) NULL,
+    provider_metadata JSON NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+        ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_payment_refunds_public_id (public_id),
+    UNIQUE KEY uq_payment_refunds_reference (refund_reference),
+    UNIQUE KEY uq_payment_refunds_provider_id (
+        provider_refund_id
+    ),
+    KEY idx_payment_refunds_payment_status (
+        payment_id,
+        status
+    ),
+    KEY idx_payment_refunds_requested_by (requested_by),
+    KEY idx_payment_refunds_created_at (created_at),
+    CONSTRAINT chk_payment_refunds_amount
+        CHECK (amount_minor > 0),
+    CONSTRAINT chk_payment_refunds_currency
+        CHECK (currency REGEXP '^[A-Z]{3}$'),
+    CONSTRAINT chk_payment_refunds_status
+        CHECK (
+            status IN (
+                'pending',
+                'processing',
+                'successful',
+                'failed',
+                'cancelled'
+            )
+        ),
+    CONSTRAINT chk_payment_refunds_processed
+        CHECK (
+            status <> 'successful'
+            OR processed_at IS NOT NULL
+        ),
+    CONSTRAINT fk_payment_refunds_payment
+        FOREIGN KEY (payment_id)
+        REFERENCES payments (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
+    CONSTRAINT fk_payment_refunds_requester
+        FOREIGN KEY (requested_by)
+        REFERENCES users (id)
+        ON DELETE SET NULL
+        ON UPDATE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+-- =============================================================================
+-- TABLE: payment_provider_events
+-- Purpose: Deduplicate provider webhooks and support reconciliation.
+--
+-- Store minimal event data. Do not retain unnecessary personal data or secrets.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS payment_provider_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    provider VARCHAR(60) NOT NULL,
+    provider_event_id VARCHAR(255) NOT NULL,
+    event_type VARCHAR(150) NOT NULL,
+    processing_status VARCHAR(30) NOT NULL DEFAULT 'received',
+    payment_id BIGINT UNSIGNED NULL,
+    received_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    processed_at DATETIME(3) NULL,
+    attempt_count INT UNSIGNED NOT NULL DEFAULT 0,
+    last_error TEXT NULL,
+    -- Optional sanitized event payload; exclude credentials and secrets.
+    event_payload JSON NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_payment_provider_event (
+        provider,
+        provider_event_id
+    ),
+    KEY idx_provider_events_status_received (
+        processing_status,
+        received_at
+    ),
+    KEY idx_provider_events_payment_id (payment_id),
+    CONSTRAINT chk_provider_events_provider
+        CHECK (CHAR_LENGTH(TRIM(provider)) > 0),
+    CONSTRAINT chk_provider_events_event_id
+        CHECK (CHAR_LENGTH(TRIM(provider_event_id)) > 0),
+    CONSTRAINT chk_provider_events_type
+        CHECK (CHAR_LENGTH(TRIM(event_type)) > 0),
+    CONSTRAINT chk_provider_events_status
+        CHECK (
+            processing_status IN (
+                'received',
+                'processing',
+                'processed',
+                'failed',
+                'ignored'
+            )
+        ),
+    CONSTRAINT fk_provider_events_payment
+        FOREIGN KEY (payment_id)
+        REFERENCES payments (id)
+        ON DELETE SET NULL
+        ON UPDATE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;

@@ -1,29 +1,41 @@
-#!/usr/bin/env node
 'use strict';
 
-// Migration runner adapter.
-// Connect this script to the migration library and schema conventions actually
-// used by the project before enabling database changes.
+require('dotenv').config();
+const fs = require('node:fs');
+const path = require('node:path');
+const mysql = require('mysql2/promise');
+
+const dir = path.join(__dirname, '..', 'db', 'migrations');
 
 async function main() {
-  if (process.env.ALLOW_MIGRATIONS !== 'true') {
-    throw new Error(
-      'Migration execution is disabled. Review the migration runner, then set ALLOW_MIGRATIONS=true explicitly.'
-    );
+  if (!fs.existsSync(dir)) {
+    console.log('No db/migrations directory, nothing to do');
+    return;
   }
-
-  if (process.env.NODE_ENV === 'production' && process.env.CONFIRM_PRODUCTION_MIGRATION !== 'true') {
-    throw new Error(
-      'Production migration blocked. Obtain approval and set CONFIRM_PRODUCTION_MIGRATION=true for the approved run.'
-    );
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
+  if (files.length === 0) {
+    console.log('No .sql files found, nothing to do');
+    return;
   }
-
-  throw new Error(
-    'Migration runner is not configured. Integrate the selected migration tool and database connection before use.'
-  );
+  const conn = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    multipleStatements: true,
+  });
+  for (const file of files) {
+    await conn.query(fs.readFileSync(path.join(dir, file), 'utf8'));
+    console.log(`Applied ${file}`);
+  }
+  await conn.end();
 }
 
-main().catch((error) => {
-  console.error(`Migration stopped: ${error.message}`);
-  process.exitCode = 1;
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
 });

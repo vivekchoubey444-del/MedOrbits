@@ -1,0 +1,720 @@
+{
+  "$schema": "../schemas/fee-guides-catalogue.schema.json",
+  "schemaVersion": "1.0.0",
+  "generatedFrom": "assets/documents/fee-guides/MANIFEST.json",
+  "package": "MedOrbits Fee Guides",
+  "updatedAt": null,
+  "categories": [
+    {
+      "id": "general-education-fees",
+      "label": "General Education Fees",
+      "description": "General education budgeting and fee planning."
+    },
+    {
+      "id": "college-fees",
+      "label": "College Fees",
+      "description": "College tuition and institutional charges."
+    },
+    {
+      "id": "university-fees",
+      "label": "University Fees",
+      "description": "University tuition and additional charges."
+    },
+    {
+      "id": "medical-education",
+      "label": "Medical Education",
+      "description": "Medical programme fee planning."
+    },
+    {
+      "id": "dental-education",
+      "label": "Dental Education",
+      "description": "Dental programme fee planning."
+    },
+    {
+      "id": "ayush-education",
+      "label": "AYUSH Education",
+      "description": "Applicable AYUSH programme fee planning."
+    },
+    {
+      "id": "nursing-education",
+      "label": "Nursing Education",
+      "description": "Nursing programme fees and expenses."
+    },
+    {
+      "id": "pharmacy-education",
+      "label": "Pharmacy Education",
+      "description": "Pharmacy programme fees and expenses."
+    },
+    {
+      "id": "paramedical-education",
+      "label": "Paramedical Education",
+      "description": "Paramedical and allied health programme costs."
+    },
+    {
+      "id": "engineering-education",
+      "label": "Engineering Education",
+      "description": "Engineering tuition and academic expenses."
+    },
+    {
+      "id": "management-education",
+      "label": "Management Education",
+      "description": "Management and business programme costs."
+    },
+    {
+      "id": "legal-education",
+      "label": "Legal Education",
+      "description": "Law programme fees and expenses."
+    },
+    {
+      "id": "postgraduate-education",
+      "label": "Postgraduate Education",
+      "description": "Postgraduate tuition and programme charges."
+    },
+    {
+      "id": "living-costs",
+      "label": "Living and Accommodation",
+      "description": "Accommodation, deposits, utilities, and living expenses."
+    },
+    {
+      "id": "financial-aid",
+      "label": "Scholarships and Financial Aid",
+      "description": "Scholarship eligibility and financial assistance."
+    },
+    {
+      "id": "education-financing",
+      "label": "Education Loans",
+      "description": "Education loan terms and repayment considerations."
+    },
+    {
+      "id": "admission-costs",
+      "label": "Admission and Counselling",
+      "description": "Admission charges, counselling fees, and deposits."
+    },
+    {
+      "id": "refunds-and-cancellations",
+      "label": "Refunds and Cancellations",
+      "description": "Refund policies, cancellation deadlines, and deductions."
+    }
+  ],
+  "documents": [
+    {
+      "id": "education-fee-guide",
+      "title": "Education Fee Guide",
+      "filename": "education-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/education-fee-guide.pdf",
+      "category": "general-education-fees",
+      "description": "Introduces common education expenses, cost comparison, and financial planning.",
+      "keywords": [
+        "education fees",
+        "tuition",
+        "study costs",
+        "budget planning"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "college-fee-guide",
+        "university-fee-guide"
+      ]
+    },
+    {
+      "id": "college-fee-guide",
+      "title": "College Fee Guide",
+      "filename": "college-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/college-fee-guide.pdf",
+      "category": "college-fees",
+      "description": "Explains college fee categories, payment schedules, deposits, and expense planning.",
+      "keywords": [
+        "college fees",
+        "tuition",
+        "college expenses",
+        "payment schedules"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "education-fee-guide",
+        "university-fee-guide"
+      ]
+    },
+    {
+      "id": "university-fee-guide",
+      "title": "University Fee Guide",
+      "filename": "university-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/university-fee-guide.pdf",
+      "category": "university-fees",
+      "description": "Explains university tuition, additional charges, payment requirements, and expense planning.",
+      "keywords": [
+        "university fees",
+        "tuition",
+        "university expenses"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "education-fee-guide",
+        "college-fee-guide"
+      ]
+    },
+    {
+      "id": "mbbs-fee-guide",
+      "title": "MBBS Fee Guide",
+      "filename": "mbbs-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/mbbs-fee-guide.pdf",
+      "category": "medical-education",
+      "description": "Explains medical tuition, admission charges, deposits, accommodation, and other medical education costs.",
+      "keywords": [
+        "MBBS fees",
+        "medical college fees",
+        "NEET",
+        "medical education costs"
+      ],
+      "programmes": [
+        "MBBS"
+      ],
+      "audience": [
+        "NEET aspirants",
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "bds-fee-guide",
+        "ayush-fee-guide",
+        "hostel-and-accommodation-fee-guide"
+      ]
+    },
+    {
+      "id": "bds-fee-guide",
+      "title": "BDS Fee Guide",
+      "filename": "bds-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/bds-fee-guide.pdf",
+      "category": "dental-education",
+      "description": "Covers dental tuition, institutional charges, deposits, and related education expenses.",
+      "keywords": [
+        "BDS fees",
+        "dental college fees",
+        "dental education"
+      ],
+      "programmes": [
+        "BDS"
+      ],
+      "audience": [
+        "NEET aspirants",
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "mbbs-fee-guide",
+        "ayush-fee-guide"
+      ]
+    },
+    {
+      "id": "ayush-fee-guide",
+      "title": "AYUSH Fee Guide",
+      "filename": "ayush-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/ayush-fee-guide.pdf",
+      "category": "ayush-education",
+      "description": "Introduces tuition, institutional charges, and other costs for relevant AYUSH programmes.",
+      "keywords": [
+        "AYUSH fees",
+        "BAMS fees",
+        "BHMS fees",
+        "BUMS fees",
+        "BSMS fees"
+      ],
+      "programmes": [
+        "BAMS",
+        "BHMS",
+        "BUMS",
+        "BSMS"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "mbbs-fee-guide",
+        "bds-fee-guide"
+      ]
+    },
+    {
+      "id": "nursing-fee-guide",
+      "title": "Nursing Fee Guide",
+      "filename": "nursing-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/nursing-fee-guide.pdf",
+      "category": "nursing-education",
+      "description": "Explains nursing tuition, applicable practical training charges, accommodation, and related expenses.",
+      "keywords": [
+        "nursing fees",
+        "BSc Nursing",
+        "GNM",
+        "ANM"
+      ],
+      "programmes": [
+        "BSc Nursing",
+        "GNM",
+        "ANM"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "paramedical-fee-guide",
+        "hostel-and-accommodation-fee-guide"
+      ]
+    },
+    {
+      "id": "pharmacy-fee-guide",
+      "title": "Pharmacy Fee Guide",
+      "filename": "pharmacy-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/pharmacy-fee-guide.pdf",
+      "category": "pharmacy-education",
+      "description": "Covers pharmacy tuition, laboratory charges, institutional fees, and related expenses.",
+      "keywords": [
+        "pharmacy fees",
+        "DPharm",
+        "BPharm",
+        "MPharm"
+      ],
+      "programmes": [
+        "DPharm",
+        "BPharm",
+        "MPharm"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "paramedical-fee-guide",
+        "college-fee-guide"
+      ]
+    },
+    {
+      "id": "paramedical-fee-guide",
+      "title": "Paramedical Fee Guide",
+      "filename": "paramedical-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/paramedical-fee-guide.pdf",
+      "category": "paramedical-education",
+      "description": "Helps users identify allied health and paramedical tuition, practical training charges, and related expenses.",
+      "keywords": [
+        "paramedical fees",
+        "allied health fees",
+        "laboratory technology",
+        "radiology"
+      ],
+      "programmes": [
+        "allied health",
+        "paramedical"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "nursing-fee-guide",
+        "pharmacy-fee-guide"
+      ]
+    },
+    {
+      "id": "engineering-fee-guide",
+      "title": "Engineering Fee Guide",
+      "filename": "engineering-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/engineering-fee-guide.pdf",
+      "category": "engineering-education",
+      "description": "Explains engineering tuition, laboratory charges, institutional fees, and education budgeting.",
+      "keywords": [
+        "engineering fees",
+        "BTech fees",
+        "BE fees",
+        "MTech fees"
+      ],
+      "programmes": [
+        "BE",
+        "BTech",
+        "MTech"
+      ],
+      "audience": [
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "college-fee-guide",
+        "education-loan-guide"
+      ]
+    },
+    {
+      "id": "management-fee-guide",
+      "title": "Management Fee Guide",
+      "filename": "management-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/management-fee-guide.pdf",
+      "category": "management-education",
+      "description": "Covers management and business programme tuition, deposits, and institutional charges.",
+      "keywords": [
+        "MBA fees",
+        "management fees",
+        "business school fees",
+        "PGDM fees"
+      ],
+      "programmes": [
+        "MBA",
+        "PGDM",
+        "management"
+      ],
+      "audience": [
+        "students",
+        "graduates",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "postgraduate-fee-guide",
+        "education-loan-guide"
+      ]
+    },
+    {
+      "id": "law-fee-guide",
+      "title": "Law Fee Guide",
+      "filename": "law-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/law-fee-guide.pdf",
+      "category": "legal-education",
+      "description": "Explains law tuition, institutional charges, deposits, and other possible expenses.",
+      "keywords": [
+        "law college fees",
+        "LLB fees",
+        "BA LLB fees",
+        "LLM fees"
+      ],
+      "programmes": [
+        "LLB",
+        "BA LLB",
+        "LLM"
+      ],
+      "audience": [
+        "students",
+        "graduates",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "college-fee-guide",
+        "education-loan-guide"
+      ]
+    },
+    {
+      "id": "postgraduate-fee-guide",
+      "title": "Postgraduate Fee Guide",
+      "filename": "postgraduate-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/postgraduate-fee-guide.pdf",
+      "category": "postgraduate-education",
+      "description": "Helps applicants assess postgraduate tuition, programme charges, accommodation, and funding requirements.",
+      "keywords": [
+        "postgraduate fees",
+        "masters fees",
+        "higher education costs"
+      ],
+      "programmes": [
+        "masters",
+        "postgraduate"
+      ],
+      "audience": [
+        "graduates",
+        "students",
+        "parents"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": false,
+      "relatedDocumentIds": [
+        "management-fee-guide",
+        "education-loan-guide"
+      ]
+    },
+    {
+      "id": "hostel-and-accommodation-fee-guide",
+      "title": "Hostel and Accommodation Fee Guide",
+      "filename": "hostel-and-accommodation-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/hostel-and-accommodation-fee-guide.pdf",
+      "category": "living-costs",
+      "description": "Explains hostel charges, accommodation deposits, utilities, food, and other living costs.",
+      "keywords": [
+        "hostel fees",
+        "accommodation costs",
+        "mess fees",
+        "living expenses"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "education-fee-guide",
+        "mbbs-fee-guide"
+      ]
+    },
+    {
+      "id": "scholarship-and-financial-aid-guide",
+      "title": "Scholarship and Financial Aid Guide",
+      "filename": "scholarship-and-financial-aid-guide.pdf",
+      "path": "assets/documents/fee-guides/scholarship-and-financial-aid-guide.pdf",
+      "category": "financial-aid",
+      "description": "Explains how to investigate scholarships, check eligibility, prepare applications, and verify funding conditions.",
+      "keywords": [
+        "scholarships",
+        "financial aid",
+        "education grants",
+        "scholarship eligibility"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "education-loan-guide",
+        "education-fee-guide"
+      ]
+    },
+    {
+      "id": "education-loan-guide",
+      "title": "Education Loan Guide",
+      "filename": "education-loan-guide.pdf",
+      "path": "assets/documents/fee-guides/education-loan-guide.pdf",
+      "category": "education-financing",
+      "description": "Explains education loan comparisons, interest, repayment structures, collateral, and borrowing risks.",
+      "keywords": [
+        "education loans",
+        "student loans",
+        "interest rates",
+        "loan repayment"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "scholarship-and-financial-aid-guide",
+        "education-fee-guide"
+      ]
+    },
+    {
+      "id": "admission-and-counselling-fees-guide",
+      "title": "Admission and Counselling Fees Guide",
+      "filename": "admission-and-counselling-fees-guide.pdf",
+      "path": "assets/documents/fee-guides/admission-and-counselling-fees-guide.pdf",
+      "category": "admission-costs",
+      "description": "Explains application charges, counselling fees, security deposits, seat acceptance payments, and payment verification.",
+      "keywords": [
+        "admission fees",
+        "counselling fees",
+        "security deposit",
+        "seat acceptance fee"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "refund-and-cancellation-fee-guide",
+        "mbbs-fee-guide"
+      ]
+    },
+    {
+      "id": "refund-and-cancellation-fee-guide",
+      "title": "Refund and Cancellation Fee Guide",
+      "filename": "refund-and-cancellation-fee-guide.pdf",
+      "path": "assets/documents/fee-guides/refund-and-cancellation-fee-guide.pdf",
+      "category": "refunds-and-cancellations",
+      "description": "Explains refund procedures, cancellation deadlines, deductions, deposits, and applicable written policies.",
+      "keywords": [
+        "fee refund",
+        "admission cancellation",
+        "refund policy",
+        "deposit refund"
+      ],
+      "programmes": [
+        "general"
+      ],
+      "audience": [
+        "students",
+        "parents",
+        "guardians"
+      ],
+      "countryCodes": [
+        "IN"
+      ],
+      "academicYear": null,
+      "status": "planned",
+      "sizeBytes": null,
+      "lastVerified": null,
+      "featured": true,
+      "relatedDocumentIds": [
+        "admission-and-counselling-fees-guide",
+        "college-fee-guide"
+      ]
+    }
+  ]
+}

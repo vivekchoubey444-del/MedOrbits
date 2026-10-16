@@ -1,35 +1,68 @@
+
 'use strict';
+
+/**
+ * MedOrbits -- Application Constants
+ *
+ * File: src/config/constants.js
+ *
+ * Purpose:
+ * - Centralize HTTP status codes and application error codes.
+ * - Define shared domain statuses and role identifiers.
+ * - Keep pagination, security, API, and environment defaults consistent.
+ *
+ * Important:
+ * Roles are identifiers, not permissions. Authorization must be enforced
+ * through server-side middleware and service-level policy checks.
+ */
 
 const HTTP_STATUS = Object.freeze({
   OK: 200,
   CREATED: 201,
+  ACCEPTED: 202,
   NO_CONTENT: 204,
+
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   METHOD_NOT_ALLOWED: 405,
+  NOT_ACCEPTABLE: 406,
   CONFLICT: 409,
+  GONE: 410,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
   UNPROCESSABLE_ENTITY: 422,
   TOO_MANY_REQUESTS: 429,
+
   INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
+  BAD_GATEWAY: 502,
   SERVICE_UNAVAILABLE: 503,
+  GATEWAY_TIMEOUT: 504,
 });
 
 const ERROR_CODES = Object.freeze({
   BAD_REQUEST: 'BAD_REQUEST',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
+
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
+  METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+  NOT_ACCEPTABLE: 'NOT_ACCEPTABLE',
   CONFLICT: 'CONFLICT',
-  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+  GONE: 'GONE',
+
   PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
+  UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
   INVALID_JSON: 'INVALID_JSON',
   CORS_ORIGIN_DENIED: 'CORS_ORIGIN_DENIED',
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
+  REQUEST_SERVICE_NOT_CONFIGURED: 'REQUEST_SERVICE_NOT_CONFIGURED',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
 });
 
@@ -46,7 +79,7 @@ const USER_ROLES = Object.freeze({
 
 /*
  * Roles are identifiers, not permissions.
- * Enforce permissions through server-side authorization middleware.
+ * Enforce access through server-side authorization middleware.
  */
 
 const APPLICATION_STATUS = Object.freeze({
@@ -111,7 +144,7 @@ const ENVIRONMENTS = Object.freeze({
   PRODUCTION: 'production',
 });
 
-module.exports = {
+module.exports = Object.freeze({
   HTTP_STATUS,
   ERROR_CODES,
   USER_ROLES,
@@ -123,4 +156,4 @@ module.exports = {
   SECURITY,
   API,
   ENVIRONMENTS,
-};
+});

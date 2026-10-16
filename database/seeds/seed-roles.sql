@@ -1,4 +1,3 @@
-
 -- =============================================================================
 -- MedOrbits: Seed Baseline Roles and Permissions
 -- File: database/seeds/seed-roles.sql
@@ -15,13 +14,10 @@
 --   Admin permissions are assigned to the system admin role.
 --   Assignment of the admin role to actual users must be restricted.
 -- =============================================================================
-
 START TRANSACTION;
-
 -- ---------------------------------------------------------------------------
 -- 1. Baseline roles
 -- ---------------------------------------------------------------------------
-
 INSERT INTO roles (
     name,
     display_name,
@@ -35,11 +31,9 @@ VALUES
     ('employer', 'Employer', 'Recruitment and employer account.', TRUE)
 ON DUPLICATE KEY UPDATE
     id = id;
-
 -- ---------------------------------------------------------------------------
 -- 2. Baseline permissions
 -- ---------------------------------------------------------------------------
-
 INSERT INTO permissions (
     name,
     resource,
@@ -77,11 +71,9 @@ VALUES
     ('support.manage', 'support', 'manage', 'Manage support requests.', TRUE)
 ON DUPLICATE KEY UPDATE
     id = id;
-
 -- ---------------------------------------------------------------------------
 -- 3. Baseline user permissions
 -- ---------------------------------------------------------------------------
-
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles AS r
@@ -103,11 +95,9 @@ WHERE r.name = 'user'
   )
 ON DUPLICATE KEY UPDATE
     role_id = role_id;
-
 -- ---------------------------------------------------------------------------
 -- 4. Counsellor permissions
 -- ---------------------------------------------------------------------------
-
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles AS r
@@ -125,11 +115,9 @@ WHERE r.name = 'counsellor'
   )
 ON DUPLICATE KEY UPDATE
     role_id = role_id;
-
 -- ---------------------------------------------------------------------------
 -- 5. Employer permissions
 -- ---------------------------------------------------------------------------
-
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles AS r
@@ -144,13 +132,11 @@ WHERE r.name = 'employer'
   )
 ON DUPLICATE KEY UPDATE
     role_id = role_id;
-
 -- ---------------------------------------------------------------------------
 -- 6. Admin permissions
 -- ---------------------------------------------------------------------------
 -- Only the system admin role receives these permissions from this seed.
 -- This does not assign the admin role to any user.
-
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles AS r
@@ -159,5 +145,4 @@ WHERE r.name = 'admin'
   AND p.is_system = TRUE
 ON DUPLICATE KEY UPDATE
     role_id = role_id;
-
 COMMIT;

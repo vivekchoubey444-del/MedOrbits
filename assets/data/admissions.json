@@ -1,19 +1,81 @@
 {
-"schemaVersion": "1.0.0",
+"schemaVersion": "1.1.0",
 "updatedAt": null,
+"metadata": {
+"title": "MedOrbits Admissions Database",
+"description": "Structured admission information for courses, institutions, countries and academic years.",
+"defaultCountryCode": "IN",
+"supportedCountryCodes": [],
+"dateFormat": "YYYY-MM-DD",
+"timezonePolicy": "Use the official timezone applicable to the admission authority.",
+"verificationPolicy": "Verify eligibility, deadlines and application instructions against current official sources before publication."
+},
 "admissions": [],
 "fields": [
 "id",
 "courseId",
+"institutionId",
 "countryCode",
 "academicYear",
+"admissionType",
 "eligibilitySummary",
+"eligibilitySourceUrl",
 "applicationStart",
 "applicationEnd",
+"applicationStatus",
+"applicationUrl",
 "officialUrl",
 "sourceUrl",
+"notificationTitle",
+"notificationDate",
 "verifiedAt",
-"active"
+"verifiedBy",
+"verificationStatus",
+"active",
+"createdAt",
+"updatedAt"
 ],
-"note": "Use current official notifications for eligibility and deadlines."
+"allowedValues": {
+"admissionType": [
+"entrance_exam",
+"merit_based",
+"counselling",
+"direct_application",
+"international_admission",
+"other"
+],
+"applicationStatus": [
+"upcoming",
+"open",
+"closed",
+"extended",
+"awaiting_notification",
+"not_applicable"
+],
+"verificationStatus": [
+"unverified",
+"pending_review",
+"verified",
+"outdated",
+"rejected"
+]
+},
+"dataRules": [
+"Every admission record must have a unique id.",
+"courseId must reference an existing course record.",
+"institutionId may be null when admission is managed by a central authority rather than a single institution.",
+"countryCode must use an appropriate ISO 3166-1 alpha-2 country code.",
+"academicYear must identify the applicable admission cycle.",
+"Dates must use YYYY-MM-DD or null when unknown or not applicable.",
+"applicationEnd must not precede applicationStart when both dates are provided.",
+"officialUrl must point to an authoritative institution, regulator, examination authority or counselling portal.",
+"sourceUrl should identify the source used to support the published admission information.",
+"verifiedAt must be null until the record has actually been verified.",
+"verifiedBy must identify an authorized reviewer or system when verification is recorded.",
+"Unverified records must not be presented as officially confirmed.",
+"Expired deadlines and outdated notifications must be reviewed before being displayed as current.",
+"The active field controls whether a record is enabled for normal application display; it does not indicate that applications are open.",
+"Never invent eligibility requirements, application dates, official links or verification details."
+],
+"note": "Use current official notifications for eligibility and deadlines. MedOrbits provides informational guidance and does not replace official admission authorities."
 }

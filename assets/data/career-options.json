@@ -1,38 +1,333 @@
 {
-  "schemaVersion": "1.0.0",
-  "updatedAt": null,
-  "careerOptions": [
-    {
-      "id": "career-healthcare",
-      "title": "Healthcare",
-      "slug": "healthcare",
-      "relatedCourseIds": [
-        "course-mbbs",
-        "course-bds",
-        "course-nursing",
-        "course-pharmacy",
-        "course-paramedical"
-      ],
-      "description": "Explore clinical, allied-health, diagnostics and healthcare support pathways.",
-      "note": "Licensing and scope of practice depend on jurisdiction."
-    },
-    {
-      "id": "career-technology",
-      "title": "Technology and Engineering",
-      "slug": "technology-engineering",
-      "relatedCourseIds": [
-        "course-engineering"
-      ],
-      "description": "Explore technical, engineering and technology-related pathways."
-    },
-    {
-      "id": "career-business",
-      "title": "Business and Management",
-      "slug": "business-management",
-      "relatedCourseIds": [
-        "course-management"
-      ],
-      "description": "Explore business operations, management and leadership pathways."
-    }
-  ]
+"schemaVersion": "1.1.0",
+"updatedAt": null,
+"metadata": {
+"title": "MedOrbits Career Options",
+"description": "Career pathways linked to educational courses, professional skills and further study options.",
+"language": "en",
+"defaultCountryCode": "IN",
+"disclaimer": "Career options are illustrative. Eligibility, professional registration, licensing and employment requirements depend on the jurisdiction, qualification and employer."
+},
+"careerOptions": [
+{
+"id": "career-healthcare",
+"title": "Healthcare",
+"slug": "healthcare",
+"category": "healthcare",
+"icon": "heart-pulse",
+"description": "Explore clinical, allied-health, diagnostics, pharmaceutical and healthcare support pathways.",
+"relatedCourseIds": [
+"course-mbbs",
+"course-bds",
+"course-nursing",
+"course-pharmacy",
+"course-paramedical"
+],
+"careerPaths": [
+{
+"id": "path-medical-practice",
+"title": "Medical practice",
+"relatedCourseIds": [
+"course-mbbs"
+],
+"exampleRoles": [
+"Medical practitioner",
+"Resident doctor",
+"Medical specialist after appropriate postgraduate training"
+],
+"furtherStudy": [
+"Relevant postgraduate medical qualifications"
+],
+"skills": [
+"Clinical reasoning",
+"Patient communication",
+"Evidence-based practice"
+],
+"licensingRequired": true,
+"licensingNote": "Medical practice requires the applicable recognized qualification, registration and authorization in the relevant jurisdiction."
+},
+{
+"id": "path-dental-care",
+"title": "Dental care",
+"relatedCourseIds": [
+"course-bds"
+],
+"exampleRoles": [
+"Dental practitioner",
+"Dental surgeon",
+"Dental specialist after appropriate further training"
+],
+"furtherStudy": [
+"Relevant postgraduate dental qualifications"
+],
+"skills": [
+"Oral-health assessment",
+"Patient care",
+"Clinical procedures"
+],
+"licensingRequired": true,
+"licensingNote": "Dental practice and specialist roles are subject to applicable registration and professional requirements."
+},
+{
+"id": "path-nursing",
+"title": "Nursing and patient care",
+"relatedCourseIds": [
+"course-nursing"
+],
+"exampleRoles": [
+"Staff nurse",
+"Community health nurse",
+"Nursing educator after appropriate additional qualifications"
+],
+"furtherStudy": [
+"Relevant postgraduate nursing qualifications",
+"Specialized nursing education"
+],
+"skills": [
+"Patient monitoring",
+"Clinical documentation",
+"Teamwork and communication"
+],
+"licensingRequired": true,
+"licensingNote": "Registration, qualification recognition and permitted duties depend on the relevant nursing regulator and jurisdiction."
+},
+{
+"id": "path-pharmacy",
+"title": "Pharmacy and pharmaceutical services",
+"relatedCourseIds": [
+"course-pharmacy"
+],
+"exampleRoles": [
+"Pharmacist, where eligible and registered",
+"Pharmaceutical industry associate",
+"Quality-control or quality-assurance associate"
+],
+"furtherStudy": [
+"Relevant postgraduate pharmaceutical qualifications",
+"Specialized pharmaceutical training"
+],
+"skills": [
+"Medication safety",
+"Pharmaceutical knowledge",
+"Quality and regulatory documentation"
+],
+"licensingRequired": null,
+"licensingNote": "Registration may be required for pharmacy practice. Industry and support roles have different qualification and authorization requirements."
+},
+{
+"id": "path-allied-health",
+"title": "Allied health and diagnostics",
+"relatedCourseIds": [
+"course-paramedical"
+],
+"exampleRoles": [
+"Medical laboratory technologist",
+"Diagnostic imaging technologist",
+"Allied-health professional in an eligible specialty"
+],
+"furtherStudy": [
+"Specialized allied-health qualifications",
+"Relevant postgraduate study"
+],
+"skills": [
+"Diagnostic procedures",
+"Equipment handling",
+"Laboratory or clinical safety"
+],
+"licensingRequired": null,
+"licensingNote": "Requirements vary by profession, qualification, employer and jurisdiction."
+}
+],
+"note": "Career examples are indicative and do not guarantee eligibility, employment or professional registration."
+},
+{
+"id": "career-technology",
+"title": "Technology and Engineering",
+"slug": "technology-engineering",
+"category": "technology",
+"icon": "cpu",
+"description": "Explore software, engineering, infrastructure, data and technology-related pathways.",
+"relatedCourseIds": [
+"course-engineering"
+],
+"careerPaths": [
+{
+"id": "path-software-development",
+"title": "Software development",
+"relatedCourseIds": [
+"course-engineering"
+],
+"exampleRoles": [
+"Software developer",
+"Web developer",
+"Application developer"
+],
+"furtherStudy": [
+"Relevant postgraduate study",
+"Specialized software engineering training"
+],
+"skills": [
+"Programming",
+"Problem-solving",
+"Software testing",
+"Version control"
+],
+"licensingRequired": false,
+"licensingNote": "Formal professional licensing is generally not required for ordinary software development, but employer and role-specific requirements may apply."
+},
+{
+"id": "path-data-technology",
+"title": "Data and analytics",
+"relatedCourseIds": [
+"course-engineering"
+],
+"exampleRoles": [
+"Data analyst",
+"Business intelligence analyst",
+"Junior data engineer, where qualified"
+],
+"furtherStudy": [
+"Relevant data science or analytics programmes",
+"Specialized technical certifications"
+],
+"skills": [
+"Statistics",
+"SQL",
+"Data visualization",
+"Analytical reasoning"
+],
+"licensingRequired": false,
+"licensingNote": "Requirements vary by employer and specialization."
+},
+{
+"id": "path-engineering",
+"title": "Engineering and technical operations",
+"relatedCourseIds": [
+"course-engineering"
+],
+"exampleRoles": [
+"Graduate engineer trainee",
+"Design or testing engineer",
+"Technical operations associate"
+],
+"furtherStudy": [
+"Relevant postgraduate engineering study",
+"Specialized engineering certifications"
+],
+"skills": [
+"Technical analysis",
+"Engineering fundamentals",
+"Design and testing",
+"Project documentation"
+],
+"licensingRequired": null,
+"licensingNote": "Some engineering roles, regulated activities and jurisdictions may require specific qualifications, registration or authorization."
+}
+],
+"note": "Role eligibility depends on the engineering discipline, technical skills, qualification and employer requirements."
+},
+{
+"id": "career-business",
+"title": "Business and Management",
+"slug": "business-management",
+"category": "business",
+"icon": "briefcase-business",
+"description": "Explore business operations, finance, marketing, human resources, management and leadership pathways.",
+"relatedCourseIds": [
+"course-management"
+],
+"careerPaths": [
+{
+"id": "path-business-operations",
+"title": "Business operations",
+"relatedCourseIds": [
+"course-management"
+],
+"exampleRoles": [
+"Operations executive",
+"Business operations analyst",
+"Project coordinator"
+],
+"furtherStudy": [
+"Relevant postgraduate management study",
+"Project management training"
+],
+"skills": [
+"Planning",
+"Process improvement",
+"Communication",
+"Data interpretation"
+],
+"licensingRequired": false,
+"licensingNote": "Requirements depend on the employer, sector and responsibilities."
+},
+{
+"id": "path-marketing",
+"title": "Marketing and sales",
+"relatedCourseIds": [
+"course-management"
+],
+"exampleRoles": [
+"Marketing executive",
+"Digital marketing associate",
+"Sales or business development associate"
+],
+"furtherStudy": [
+"Specialized marketing programmes",
+"Relevant postgraduate management study"
+],
+"skills": [
+"Market research",
+"Content strategy",
+"Customer communication",
+"Campaign analysis"
+],
+"licensingRequired": false,
+"licensingNote": "Requirements depend on the role and employer."
+},
+{
+"id": "path-human-resources",
+"title": "Human resources and talent management",
+"relatedCourseIds": [
+"course-management"
+],
+"exampleRoles": [
+"HR executive",
+"Recruitment coordinator",
+"Talent acquisition associate"
+],
+"furtherStudy": [
+"Human resource management programmes",
+"Relevant postgraduate management study"
+],
+"skills": [
+"Communication",
+"Recruitment coordination",
+"Confidentiality",
+"Workforce administration"
+],
+"licensingRequired": false,
+"licensingNote": "Employment requirements depend on the organization and jurisdiction."
+}
+],
+"note": "Career progression depends on qualifications, experience, performance and employer requirements."
+}
+],
+"displaySettings": {
+"showCareerDescriptions": true,
+"showRelatedCourses": true,
+"showCareerPaths": true,
+"showExampleRoles": true,
+"showSkills": true,
+"showFurtherStudy": true,
+"showLicensingNotes": true,
+"showDisclaimer": true
+},
+"dataIntegrity": {
+"careerOptionIdsMustBeUnique": true,
+"careerPathIdsMustBeUnique": true,
+"relatedCourseIdsMustReferenceExistingCourses": true,
+"unknownLicensingRequirementsMustRemainNull": true,
+"careerExamplesMustNotGuaranteeEmployment": true
+}
 }

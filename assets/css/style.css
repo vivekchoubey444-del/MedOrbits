@@ -1,61 +1,90 @@
 /* =========================================================
-MedOrbits -- Master Stylesheet
-Luxury Aubergine & Champagne Gold
-
-Import shared modules in dependency order.
-Pages should normally load this stylesheet only.
-========================================================= */
-
-/* 1. Design tokens */
-@import url("./variables.css");
-
-/* 2. Browser reset and normalization */
-@import url("./reset.css");
-
-/* 3. Typography and global page foundations */
-@import url("./typography.css");
-
-/* 4. Shared interface components */
-@import url("./components.css");
-
-/* 5. Site-wide layout, header, navigation and footer */
-@import url("./layout.css");
-
-/* 6. Forms and search controls */
-@import url("./forms.css");
-
-/* 7. Education pages and course components */
-@import url("./education.css");
-
-/* 8. Career and employment components */
-@import url("./career.css");
-
-/* 9. Authentication interfaces */
-@import url("./auth.css");
-
-/* 10. Account dashboards */
-@import url("./dashboard.css");
-
-/* 11. Administrative interfaces */
-@import url("./admin.css");
-
-/* 12. Opening screen and reusable animations */
-@import url("./animations.css");
-
-/* 13. Accessibility and reduced-motion support */
-@import url("./accessibility.css");
-
-/* 14. Responsive layouts and breakpoints */
-@import url("./responsive.css");
-
-/* 15. Print-specific presentation */
-@import url("./print.css");
-
+   MedOrbits -- Master Stylesheet
+   Design System: Luxury Aubergine & Champagne Gold
+   Version: 1.1.0
+   Purpose:
+   - Central stylesheet entry point
+   - Dependency-ordered CSS module imports
+   - Shared design system and typography
+   - Responsive and accessible presentation
+   Pages should normally load this stylesheet only.
+   ========================================================= */
 /* =========================================================
-Compatibility notes
-
-Preserve existing homepage selectors and required styles
-in their appropriate modules. Do not duplicate original
-header, footer, or intro-animation rules here unless
-a deliberate, tested override is required.
-========================================================= */
+   1. Design tokens
+   Colors, spacing, borders, shadows, radii and shared tokens
+   ========================================================= */
+@import url("./variables.css");
+/* =========================================================
+   2. Browser reset and normalization
+   ========================================================= */
+@import url("./reset.css");
+/* =========================================================
+   3. Local font assets and typography tokens
+   ========================================================= */
+@import url("./font.css");
+/* =========================================================
+   4. Global typography and page foundations
+   ========================================================= */
+@import url("./typography.css");
+/* =========================================================
+   5. Shared interface components
+   Buttons, cards, badges, alerts and reusable UI
+   ========================================================= */
+@import url("./components.css");
+/* =========================================================
+   6. Site-wide layout
+   Header, navigation, footer and shared containers
+   ========================================================= */
+@import url("./layout.css");
+/* =========================================================
+   7. Forms and search controls
+   ========================================================= */
+@import url("./forms.css");
+/* =========================================================
+   8. Education pages and course components
+   ========================================================= */
+@import url("./education.css");
+/* =========================================================
+   9. Career and employment components
+   ========================================================= */
+@import url("./career.css");
+/* =========================================================
+   10. Authentication interfaces
+   ========================================================= */
+@import url("./auth.css");
+/* =========================================================
+   11. Account dashboards
+   ========================================================= */
+@import url("./dashboard.css");
+/* =========================================================
+   12. Administrative interfaces
+   ========================================================= */
+@import url("./admin.css");
+/* =========================================================
+   13. Opening screen and reusable animations
+   ========================================================= */
+@import url("./animations.css");
+/* =========================================================
+   14. Accessibility and reduced-motion support
+   ========================================================= */
+@import url("./accessibility.css");
+/* =========================================================
+   15. Responsive layouts and breakpoints
+   ========================================================= */
+@import url("./responsive.css");
+/* =========================================================
+   16. Print-specific presentation
+   ========================================================= */
+@import url("./print.css");
+/* =========================================================
+   Compatibility and maintenance notes
+   - Preserve existing homepage selectors.
+   - Keep header and footer rules in layout.css.
+   - Keep opening-screen and animation rules in animations.css.
+   - Keep responsive overrides in responsive.css.
+   - Keep accessibility overrides in accessibility.css.
+   - Keep the existing color palette and design tokens.
+   - Avoid duplicating module rules in this entry point.
+   - Load master.css from each page instead of separately
+     loading every imported stylesheet.
+   ========================================================= */

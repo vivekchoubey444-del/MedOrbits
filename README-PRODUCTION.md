@@ -1,352 +1,617 @@
 MedOrbits — Production Deployment Guide
 
-> **Document:** `README-PRODUCTION.md`  
-> **Project:** MedOrbits  
-> **Purpose:** Production readiness, deployment, security, operations, and recovery checklist
-> 
-> This guide is based on the repository structure supplied for MedOrbits. It describes the intended production workflow; it does not confirm that every listed file, route, integration, or automation is already implemented. Verify each item against the current code and hosting configuration before launch.
+Document: README-PRODUCTION.md
+Project: MedOrbits
+Document type: Production deployment and operations runbook
+Status: Operational guidance — implementation must be verified
+Owner: MedOrbits maintainers
+Review frequency: Before major releases and whenever production architecture changes
 
-────────
+⸻
 
-1. Production objectives
+1. Purpose and Scope
 
-A production deployment should provide:
+This document defines the recommended process for preparing, deploying, validating, monitoring, and recovering a production deployment of MedOrbits.
 
-• A stable, responsive public website for education, admissions, career, and recruitment content.
-• A securely configured Node.js application and API.
-• Controlled access to accounts, applications, uploaded documents, administration, payments, and subscriptions.
-• Reliable database migrations, backups, monitoring, and recovery procedures.
-• Secure handling of environment variables, user data, logs, and uploaded files.
-• Tested deployment and rollback procedures.
+MedOrbits is intended to support education guidance, admissions, study-abroad services, career development, recruitment, user accounts, applications, document management, and related consultancy services.
 
-Do not treat the presence of a file or page in the repository as proof that the corresponding feature is production-ready.
+The objectives of this guide are to establish:
 
-2. Repository overview
+* A controlled and repeatable release process.
+* Secure application, database, and storage configuration.
+* Verified authentication and authorization controls.
+* Reliable database migration and backup procedures.
+* Observable application health and operational failures.
+* Tested recovery and rollback procedures.
+* Clear release ownership and production approval criteria.
 
-|Area                                                                                           |Responsibility                                                                     |
-|————————————————————————————————|————————————————————————————|
-|`index.html`, `pages/`, `education/`, `career/`, `account/`, `admin/`, `legal/`                |Public pages and user-facing interfaces                                            |
-|`assets/css/`, `assets/js/`, `assets/data/`, `assets/images/`, `assets/icons/`, `assets/fonts/`|Frontend styling, scripts, public data, and media                                  |
-|`server.js`, `src/`                                                                            |Server startup, routes, middleware, controllers, services, models, and integrations|
-|`database/`                                                                                    |SQL schema, migrations, seeds, and fixtures                                        |
-|`storage/`                                                                                     |Runtime file storage; private files must not be publicly served                    |
-|`infrastructure/`                                                                              |Deployment, backup, monitoring, database operations, and queue guidance            |
-|`scripts/`                                                                                     |Environment checks, migrations, seeding, data validation, and health checks        |
-|`tests/`                                                                                       |Unit, integration, API, database, security, end-to-end, and accessibility tests    |
-|`docs/`                                                                                        |Architecture, API, database, security, deployment, and operations documentation    |
-|`.github/workflows/`                                                                           |CI, test, security, dependency, secret-scan, and deployment automation             |
-|`Dockerfile`, `docker-compose.yml`                                                             |Container build and local/container orchestration                                  |
-|`.env.example`, `.nvmrc`, `package.json`, `package-lock.json`                                  |Runtime expectations, configuration template, and dependency management            |
+Implementation disclaimer: This guide describes intended operational controls. It does not establish that a listed route, script, service, workflow, security control, or automation has been implemented or verified. Validate each requirement against the actual repository, hosting configuration, and deployed application.
 
-3. Production prerequisites
+2. Production Readiness Principles
 
-Before deploying, confirm all of the following:
+Every production release must follow these principles:
 
-☐ A production domain and HTTPS certificate are configured.
-☐ The supported Node.js version is specified consistently in .nvmrc, package.json, Docker, and the hosting platform.
-☐ Dependencies install from the committed lockfile.
-☐ Production environment variables are configured in the hosting provider’s secret manager.
-☐ The production database exists, is reachable only from approved services, and has a tested backup process.
-☐ Database migrations have been reviewed and tested against a staging copy.
-☐ Authentication, session management, authorization, password reset, email verification, and optional two-factor authentication have been tested.
-☐ Uploads have size/type limits, safe storage paths, access checks, and malware-scanning controls where appropriate.
-☐ Payment webhooks are authenticated and idempotent if payments are enabled.
-☐ Logs avoid passwords, tokens, payment secrets, and unnecessary personal or document data.
-☐ Health checks, alerts, rollback, and restore procedures are documented and tested.
-☐ Legal pages and user-facing claims have been reviewed for accuracy.
-☐ All critical user journeys work on mobile and desktop.
+1. Security before exposure: Protect accounts, private records, uploaded documents, credentials, and administrative functions before enabling public access.
+2. Reproducible deployment: Deploy a reviewed release using a committed lockfile and a traceable build artifact.
+3. Controlled database changes: Review migrations separately from application deployment and understand their recovery implications.
+4. Fail safely: Failed authentication, authorization, payment verification, or required dependency checks must not produce false success.
+5. Observe the system: Monitor application health, errors, storage, database capacity, and critical business workflows.
+6. Recover deliberately: Maintain backups, tested restoration procedures, and a compatible rollback artifact.
+7. Protect user privacy: Minimize data collection, redact sensitive logs, and restrict private data access.
+8. Verify before declaring readiness: A directory, configuration file, successful build, or green health check alone does not prove production readiness.
 
-4. Environment configuration
+3. Repository and Deployment Architecture
 
-Use .env.example as a documentation template, not as a production secrets file. Create production values in the deployment platform’s secret manager. Never commit .env or real credentials.
+The following table describes the intended repository responsibilities. Confirm actual paths and implementation before relying on them operationally.
 
-Review the application’s actual configuration code and document every required variable. Depending on implemented features, the configuration may include:
+Component	Intended responsibility
+index.html, pages/, education/, career/, account/, admin/, legal/	Public pages and user-facing interfaces
+assets/css/, assets/js/, assets/data/, assets/images/, assets/icons/, assets/fonts/	Frontend styles, scripts, reviewed public datasets, and media
+server.js, src/	Server startup, Express application, routes, middleware, controllers, services, and integrations
+database/	Database schema, migrations, seed data, and fixtures
+storage/	Runtime files, private documents, temporary files, and logs
+infrastructure/	Deployment, backup, monitoring, recovery, and operational guidance
+scripts/	Environment checks, migrations, data validation, and operational utilities
+tests/	Unit, integration, API, database, security, end-to-end, and accessibility tests
+docs/	Architecture, API, database, security, and operations documentation
+.github/workflows/	CI, automated checks, dependency review, and approved deployment workflows
+Dockerfile, docker-compose.yml	Container image construction and service orchestration
+.env.example, .nvmrc, package.json, package-lock.json	Configuration template, runtime expectations, package metadata, and dependency lockfile
 
-|Configuration area|Production requirement                                                                                                 |
-|——————|————————————————————————————————————————|
-|Runtime           |`NODE_ENV=production` and the expected port setting for the host                                                       |
-|Application URL   |Canonical public origin and allowed origins                                                                            |
-|Database          |Connection URL or individual connection settings, least-privilege credentials, TLS where supported                     |
-|Sessions          |High-entropy secret, secure cookie settings, expiry, and a suitable shared session store for multi-instance deployments|
-|Authentication    |Password hashing configuration, verification/reset token expiry, and rate limits                                       |
-|Email             |SMTP or provider credentials stored as secrets; sender domain verified                                                 |
-|File storage      |Private storage provider/bucket and access credentials, if file uploads are implemented                                |
-|Payments          |Provider credentials, webhook signing secret, currency and environment mode, if payments are enabled                   |
-|Queues/workers    |Queue connection and retry/dead-letter configuration, if asynchronous jobs are implemented                             |
-|Logging/monitoring|Log level, error-reporting endpoint, and alert configuration without sensitive payloads                                |
+Application entry-point policy
 
-The names above are categories, not a guarantee that the application uses those exact environment-variable names. Confirm exact names in src/config/, server.js, .env.example, and scripts/check-env.js.
+The repository structure identifies both server.js and src/app.js, as well as index.html.
 
-Secret-handling rules
+Document their actual responsibilities before production deployment:
 
-1. Use separate credentials for development, staging, and production.
-2. Grant each credential only the permissions required by its service.
-3. Rotate exposed or suspected-compromised credentials immediately.
-4. Do not expose server-only secrets in frontend JavaScript or public JSON files.
-5. Never log full authorization headers, session cookies, password-reset tokens, uploaded document contents, or payment secrets.
+* server.js should be the designated production bootstrap if that is the chosen entry point.
+* src/app.js may construct and export the Express application, if that matches the implementation.
+* index.html may be served by Express or delivered by a separate static hosting layer.
 
-5. Local pre-deployment checks
+Select and document one production startup command. Do not assume that all three files are independent server entry points.
 
-Run commands from the repository root. Use the package scripts actually defined in package.json; the examples below must be adjusted if script names differ.
+4. Environment Strategy
+
+Maintain separate environments for development, testing, staging, and production.
+
+<box gap={2}>
+  <row align=“start” gap={3}>
+    <box background=“surface-secondary” radius=“lg” padding={2}>
+      <icon name=“laptop” size=“xl” />
+    </box>
+    <box flex=“1” gap={1}>
+      **Development**
+  <text color=“secondary” size=“sm”>Local implementation and debugging using synthetic data, local services, and development-only credentials.</text>
+</box>
+  </row>
+  <divider color=“subtle” />
+  <row align=“start” gap={3}>
+    <box background=“surface-secondary” radius=“lg” padding={2}>
+      <icon name=“flask-conical” size=“xl” />
+    </box>
+    <box flex=“1” gap={1}>
+      **Testing and CI**
+  <text color=“secondary” size=“sm”>Automated verification with isolated test databases, controlled fixtures, mocked or sandboxed external services, and repeatable builds.</text>
+</box>
+  </row>
+  <divider color=“subtle” />
+  <row align=“start” gap={3}>
+    <box background=“surface-secondary” radius=“lg” padding={2}>
+      <icon name=“clipboard-check” size=“xl” />
+    </box>
+    <box flex=“1” gap={1}>
+      **Staging**
+  <text color=“secondary” size=“sm”>Production-like deployment for migrations, end-to-end workflows, release approval, and recovery rehearsal using non-production data.</text>
+</box>
+  </row>
+  <divider color=“subtle” />
+  <row align=“start” gap={3}>
+    <box background=“surface-secondary” radius=“lg” padding={2}>
+      <icon name=“shield-check” size=“xl” />
+    </box>
+    <box flex=“1” gap={1}>
+      **Production**
+  <text color=“secondary” size=“sm”>Restricted credentials, HTTPS, private storage, least-privilege database access, monitored services, backups, and controlled releases.</text>
+</box>
+  </row>
+</box>
+
+Do not share production secrets, databases, or private user records with development, test, or staging environments unless a specifically approved process provides appropriate sanitization and access controls.
+
+5. Pre-Deployment Readiness Gate
+
+Complete this checklist before the first production release.
+
+Application and runtime
+
+* [ ]	Confirm the production entry point and startup command.
+* [ ]	Confirm the supported Node.js version in the runtime configuration, package metadata, Docker image, and hosting environment.
+* [ ]	Install dependencies from the committed lockfile.
+* [ ]	Confirm required runtime dependencies are production dependencies.
+* [ ]	Validate required environment variables at startup.
+* [ ]	Confirm health and readiness endpoints exist and return appropriate results.
+* [ ]	Verify graceful shutdown and request-draining behavior.
+* [ ]	Confirm the production build excludes secrets, test data, and unnecessary development artifacts.
+
+Infrastructure
+
+* [ ]	Configure the production domain and HTTPS.
+* [ ]	Configure a trusted reverse proxy or hosting ingress where required.
+* [ ]	Restrict database and Redis access to approved services.
+* [ ]	Confirm storage persistence, permissions, capacity, and retention.
+* [ ]	Configure log rotation and application monitoring.
+* [ ]	Confirm restart behavior and resource limits.
+* [ ]	Establish database and file-storage backup procedures.
+
+Security and privacy
+
+* [ ]	Test authentication, session handling, and password recovery.
+* [ ]	Verify server-side authorization on private endpoints and individual resources.
+* [ ]	Test administrative access restrictions.
+* [ ]	Verify file upload validation and private document access.
+* [ ]	Verify payment webhooks if payment functionality is enabled.
+* [ ]	Check CORS, CSRF protections where applicable, security headers, and rate limits.
+* [ ]	Verify logs redact credentials and sensitive personal information.
+* [ ]	Review the dependency inventory and resolve or explicitly assess security findings.
+* [ ]	Verify the private security-reporting procedure and relevant legal documentation.
+
+Operations
+
+* [ ]	Test migrations on a staging database copy.
+* [ ]	Confirm a recent successful backup and test restoration.
+* [ ]	Identify a known-good rollback artifact.
+* [ ]	Run the critical smoke tests.
+* [ ]	Confirm monitoring alerts reach a responsible operator.
+* [ ]	Document the release identifier and deployment approval.
+
+Do not proceed when a critical security control, data recovery requirement, or essential user workflow has not been verified.
+
+6. Environment Variables and Secrets
+
+Use .env.example as a documentation template, not as a production secrets file.
+
+Configure production secrets through the hosting provider’s secret manager or another approved secrets-management mechanism.
+
+Review the actual configuration code in server.js, src/config/, and any environment-checking scripts before relying on particular variable names.
+
+Area	Required control
+Runtime	Explicit production mode and the correct application port
+Public URL	Correct canonical origin and allowed browser origins
+Database	Least-privilege credentials, restricted network access, and TLS where supported
+Sessions	High-entropy secrets, secure cookie attributes, appropriate expiry, and shared storage for multiple application instances where necessary
+Authentication	Password hashing, token expiry, verification/reset flows, and abuse protection
+Email	Secret-managed provider credentials and verified sender configuration
+File storage	Private storage configuration and restricted access
+Payments	Provider-specific credentials, webhook verification, and environment separation
+Queues	Secure connections, retry limits, and failure-handling configuration where applicable
+Monitoring	Error-reporting and alert configuration with sensitive-data redaction
+
+Secret-management requirements
+
+1. Use different credentials for each environment.
+2. Apply least privilege to service accounts and database users.
+3. Rotate credentials that are exposed or suspected to be compromised.
+4. Never put server-only secrets in browser-delivered JavaScript or public JSON.
+5. Never log full authorization headers, session cookies, password-reset tokens, private documents, or payment secrets.
+6. Ensure production startup fails safely when required secrets are missing or invalid.
+7. Keep .env and environment-specific secret files out of version control and build artifacts.
+
+Environment variables listed in .env.example are not proof that the application reads or validates them.
+
+7. Pre-Deployment Verification
+
+Run commands from the repository root. First inspect package.json and confirm the relevant scripts exist.
 
 node —version
 npm —version
 npm ci
-npm run lint
 npm test
+npm run lint
 
-If a script is not defined, do not assume the command exists. Inspect package.json first.
+Only run npm test or npm run lint if those scripts are defined and configured.
 
-Run project-specific checks when implemented:
+Where implemented, also run the appropriate checks for:
 
-node scripts/check-env.js
-node scripts/validate-data.js
-node scripts/health-check.js
+* Environment configuration.
+* Public JSON and content validation.
+* Database migrations.
+* API integration tests.
+* Authorization and security regressions.
+* Browser-based end-to-end tests.
+* Accessibility and responsive behavior.
+* Dependency vulnerabilities and accidental secret inclusion.
 
-Validate public JSON files and confirm pages load the correct paths. Check browser console errors, failed network requests, broken images, missing fonts, and invalid links.
+Review the change set
 
-Build and dependency review
+git status —short
+git diff —check
+git diff
 
-• Use npm ci for reproducible installs in CI and deployment.
-• Review npm audit output and resolve or document security findings before launch.
-• Review dependency updates and lockfile changes before merging.
-• Do not run destructive automated dependency upgrades in production without testing.
-• Confirm the deployed artifact does not include local .env files, private storage, test fixtures containing real data, or unnecessary development tools.
+Review staged changes before committing and ensure that .env, database dumps, private documents, logs, and local storage have not been included.
 
-6. Deployment workflow
+Dependency review
 
-Use the same controlled workflow for each release.
+* Review npm audit findings and assess their actual impact.
+* Update dependencies through reviewed changes rather than untested production modifications.
+* Confirm package-lock.json is consistent with package.json.
+* Avoid including development tools in the production image unless specifically required.
+* Build the exact artifact intended for release and retain its identifier.
 
-Step 1 — Prepare a release
+A successful dependency installation does not prove that the application is secure or that all tests pass.
+
+8. Deployment Workflow
+
+Use the following workflow for every release.
+
+Phase A — Prepare the release
 
 1. Merge reviewed changes into the designated release branch.
-2. Confirm CI, automated tests, secret scanning, dependency review, and security checks pass.
-3. Update CHANGELOG.md and relevant documentation.
-4. Verify package-lock.json is consistent with package.json.
-5. Confirm database migrations are backward-compatible where possible.
-6. Record the commit hash and release identifier.
+2. Confirm required CI checks pass.
+3. Review the diff for secrets and unrelated changes.
+4. Update CHANGELOG.md and relevant documentation.
+5. Verify the dependency lockfile and production build.
+6. Identify required environment-variable changes.
+7. Review database migrations and recovery implications.
+8. Record the commit hash, build identifier, and intended release version.
 
-Step 2 — Deploy to staging
+Phase B — Deploy to staging
 
-1. Deploy the release to a staging environment with production-like configuration.
-2. Use separate staging credentials and non-production user data.
-3. Apply migrations using the approved migration procedure.
-4. Test the homepage, navigation, education pages, search, account flows, career pages, admin authorization, uploads, emails, and payment flows that are actually enabled.
-5. Review logs and health checks.
-6. Obtain release approval before production rollout.
+1. Deploy the candidate release to staging.
+2. Use separate credentials and non-production data.
+3. Apply migrations through the approved migration process.
+4. Verify health and readiness endpoints.
+5. Test critical workflows supported by the implementation.
+6. Inspect logs, resource usage, and external-service failures.
+7. Confirm the rollback procedure remains viable.
+8. Obtain release approval.
 
-Step 3 — Deploy to production
+Phase C — Deploy to production
 
-1. Confirm a recent, successful database backup and verify that restoration is possible.
-2. Confirm the rollback release or previous image/artifact is available.
-3. Apply the approved deployment for the chosen hosting platform.
-4. Run migrations once using the designated migration job or operator—not independently on every app instance unless the migration system explicitly supports it.
-5. Verify the application starts and health endpoints return the expected status.
+1. Confirm the latest backup completed successfully.
+2. Verify that the recovery procedure and rollback artifact are available.
+3. Deploy the approved artifact.
+4. Apply migrations once through a designated migration job or operator unless the migration system explicitly supports safe coordinated execution.
+5. Wait for the application to become ready.
 6. Run smoke tests against the production domain.
-7. Monitor errors, latency, resource usage, authentication, queues, and database health.
-8. Record the release, migration status, and verification results.
+7. Monitor errors, latency, database connections, storage, queues, and critical workflows.
+8. Record the release, migration status, verification results, and any follow-up work.
 
-Hosting-platform notes
+Hosting-specific instructions
 
-The repository includes infrastructure/deployment/render.md, staging.md, production.md, and rollback.md. Follow the instructions matching the actual host. Do not assume a Render, Docker, or other deployment configuration is correct merely because a related file exists.
+If the repository contains instructions for Render, Docker Compose, or another hosting platform, use the instructions matching the actual deployment target. A configuration file existing in the repository does not prove that the corresponding infrastructure is deployed or correctly configured.
 
-7. Database operations
+9. Docker and Container Deployment
 
-The repository lists database/schema.sql, migrations, seeds, and fixtures. Confirm which database engine the application actually uses before running commands. Do not mix MySQL and PostgreSQL instructions or connection settings.
+If MedOrbits is deployed through Docker, verify the actual Dockerfile and docker-compose.yml before using them in production.
 
-Production database rules:
+* Use a maintained, supported Node.js runtime and a reviewed base image.
+* Prefer reproducible image references for release deployments.
+* Run the application as a non-root user.
+* Keep environment files and secrets out of the image build context.
+* Ensure production dependencies are installed correctly.
+* Verify mounted storage permissions.
+* Restrict published ports to those intentionally exposed.
+* Keep MySQL and Redis inaccessible from the public internet.
+* Apply reasonable CPU, memory, and process limits.
+* Configure log rotation and graceful shutdown.
+* Verify that the health check matches the actual Express route.
+* Review the impact of read-only filesystem settings before enabling them.
 
-• Use a dedicated database and least-privilege application account.
-• Restrict network access to approved application and administrative hosts.
-• Encrypt connections and backups where supported.
-• Apply schema changes through reviewed, version-controlled migrations.
-• Keep seeds and fixtures separate from production data.
-• Do not run destructive seed scripts against production.
-• Define retention, capacity, connection-pool, indexing, and maintenance policies.
-• Monitor connection saturation, slow queries, storage capacity, and failed migrations.
-• Avoid manual schema edits unless they are documented and reconciled with migration history.
+For Compose deployments, validate the configuration before starting services:
 
-Before a migration, identify its locking, downtime, data-loss, and rollback implications. A down-migration is not always safe; use a tested recovery plan.
+docker compose config -q
+docker compose build app
+docker compose up -d
+docker compose ps
+docker compose logs —tail=200 app
 
-8. Uploaded documents and storage
+These commands apply only if the corresponding services and Compose configuration exist.
 
-MedOrbits may handle application documents and account-related files. Treat these as private by default.
+Do not treat a running container as proof that the application is ready to serve traffic.
 
-• Store private files outside the public web root or in a private object-storage bucket.
-• Authorize every upload, view, download, replacement, and deletion request on the server.
-• Use generated storage keys rather than trusting user-supplied filenames or paths.
-• Enforce file size limits and allowlisted formats; validate file content as well as extensions.
-• Prevent path traversal, executable uploads, and public directory listing.
-• Use short-lived signed URLs only when appropriate and avoid exposing permanent public links to private files.
-• Apply malware scanning where required by the risk profile and hosting capabilities.
-• Keep temporary files on a scheduled cleanup policy.
-• Encrypt backups and restrict access to backup artifacts.
-• Define retention and deletion policies, including any legal or audit retention requirements.
+10. Database Operations and Migrations
 
-The storage/private/, storage/temporary/, and storage/logs/ directories must not be exposed as public static directories. Confirm .gitignore, server static-file configuration, and deployment packaging enforce this.
+First confirm which database engine the application actually uses. If MySQL is selected, keep connection settings, SQL syntax, migration tooling, backup procedures, and operational instructions consistent with MySQL.
 
-9. Security requirements
+Database requirements
 
-Application and API
+* Use a dedicated production database and least-privilege application account.
+* Restrict database network access.
+* Use encrypted connections where supported by the deployment architecture.
+* Apply schema changes through reviewed, version-controlled migrations.
+* Separate production migrations from development seed scripts and test fixtures.
+* Monitor slow queries, connection-pool saturation, storage capacity, and failed migrations.
+* Avoid manual schema changes that cannot be reconciled with migration history.
+* Define retention, maintenance, indexing, and capacity policies.
 
-• Enforce authentication on private endpoints and authorization on every protected resource.
-• Apply server-side input validation and output encoding.
-• Use CSRF protection where cookie-based authentication and state-changing requests require it.
-• Configure secure headers, an explicit CORS allowlist, and suitable content security policy.
-• Apply rate limits to login, registration, password reset, verification, search, upload, and other abuse-prone endpoints.
-• Use secure, HttpOnly, and appropriate SameSite cookies; enable Secure in HTTPS production.
-• Rotate session identifiers after authentication or privilege changes.
-• Prevent user-controlled role assignment and enforce role checks server-side.
-• Verify webhook signatures and prevent replay or duplicate processing.
-• Return generic client-facing errors while retaining safe diagnostic details in server logs.
-• Keep the runtime, operating system image, and dependencies patched.
+Migration release procedure
+
+Before a migration:
+
+1. Review the SQL and expected data changes.
+2. Test it against a representative staging database.
+3. Assess locks, execution time, downtime, and compatibility.
+4. Confirm the backup and recovery plan.
+5. Identify whether the application can operate safely during the transition.
+6. Record the migration identifier and execution result.
+
+Prefer backward-compatible, expand-and-contract migrations for changes requiring multiple deployment stages.
+
+A rollback is not always equivalent to running a reverse migration. Destructive schema or data changes may require restoration or a forward-fix migration.
+
+Never run an unverified migration against production.
+
+11. Private Documents and Storage
+
+Treat application records, identity documents, educational certificates, and other user uploads as private unless there is a documented reason for public access.
+
+Required controls include:
+
+* Store private files outside the public web root or in private object storage.
+* Authorize each upload, view, download, replacement, and deletion operation.
+* Use generated storage identifiers instead of trusting user-supplied paths.
+* Enforce upload size limits and file-type allowlists.
+* Validate file content rather than relying only on extensions or browser MIME types.
+* Prevent path traversal, executable uploads, and public directory listing.
+* Use malware scanning or quarantine where required by the risk assessment.
+* Avoid permanent public links to private documents.
+* Apply suitable retention and deletion policies.
+* Encrypt and restrict access to backups.
+* Clean up temporary files according to a documented policy.
+
+If the deployment uses storage/private/, storage/temporary/, or storage/logs/, ensure these locations are not exposed through static-file middleware.
+
+A Docker volume or private directory alone does not enforce application-level authorization.
+
+12. Authentication, Authorization, and Application Security
+
+Accounts and APIs
+
+* Enforce authentication on private endpoints.
+* Verify authorization for each protected resource.
+* Validate request bodies, route parameters, and query parameters on the server.
+* Use parameterized database queries.
+* Apply context-appropriate output encoding.
+* Configure CSRF protection where applicable.
+* Restrict CORS to approved origins.
+* Configure security headers and a suitable Content Security Policy.
+* Apply rate limits to sensitive and abuse-prone endpoints.
+* Use secure, HttpOnly cookies with appropriate SameSite settings.
+* Use Secure cookies in HTTPS production.
+* Rotate session identifiers after authentication and privilege changes.
+* Do not trust client-supplied roles, ownership, payment status, or subscription status.
+* Avoid exposing stack traces or internal implementation details in client responses.
 
 Administrative access
 
-• Protect /admin/ pages and their backing API routes independently; hiding links is not authorization.
-• Require strong authentication for administrators and enable multi-factor authentication where available.
-• Apply least privilege and separate duties for sensitive operations.
-• Record security-relevant actions in audit logs, while avoiding unnecessary sensitive data.
-• Review administrator access periodically and revoke access promptly when no longer needed.
+* Protect both administrative pages and their backing API routes.
+* Require strong authentication and use multi-factor authentication where available.
+* Apply least privilege and review administrative access periodically.
+* Record security-relevant administrative activity without unnecessarily logging personal information.
+* Revoke access promptly when it is no longer required.
 
 Payments and subscriptions
 
 If payment functionality is enabled:
 
-• Use the payment provider’s supported hosted or tokenized payment flow; do not store raw card data.
-• Verify webhook signatures using the provider’s documented method.
-• Make webhook processing idempotent and safe for retries.
-• Reconcile local payment/subscription states with provider records.
-• Keep test and live credentials separate.
-• Verify cancellation, refund, failed-payment, renewal, and dispute flows.
-• Do not treat a frontend redirect or client-provided status as proof of payment.
+* Use supported hosted or tokenized payment flows.
+* Do not store raw card data.
+* Verify webhook signatures using the provider’s documented method and the exact request bytes required.
+* Make event processing idempotent and safe for retries.
+* Validate transaction identity, amount, currency, and expected state.
+* Reconcile local records with provider records.
+* Keep test and live credentials separate.
+* Test duplicate events, failed payments, renewals, refunds, cancellations, and interrupted processing where relevant.
 
-Security incident reporting
+A browser redirect or client-supplied payment status is not proof of successful payment.
 
-Follow SECURITY.md and the security contact defined there. Do not publish vulnerability details or secrets in public issue trackers.
+13. Privacy and Legal Readiness
 
-10. Privacy and legal readiness
+Before launch, review the published legal content against actual product behavior and applicable requirements.
 
-Before public launch, verify that the published legal and privacy content matches the real product behavior and applicable law. In particular, review:
+Relevant documents may include:
 
-• Privacy policy, terms, cookie policy, consent preferences, data deletion, and grievance handling.
-• Job-service, employer, payment, subscription, and refund terms where those services are offered.
-• Data collection, purpose, retention, access controls, deletion, and third-party processors.
-• Consent and permission for testimonials, photographs, and other personal information.
-• Accuracy of claims about admissions, recognition, jobs, salaries, scholarships, loans, and outcomes.
+* Privacy policy and terms of service.
+* Cookie policy and consent preferences.
+* Data deletion and grievance procedures.
+* Refund and payment terms.
+* Employer and job-service terms.
+* Accessibility statements.
+* Relevant disclosures for external services and data processors.
 
-Do not describe a feature as guaranteed, available, or compliant unless the implementation and relevant evidence support that statement. Obtain qualified legal advice where needed.
+Verify data collection, purposes, retention, deletion, access controls, consent, and third-party sharing.
 
-11. Monitoring, logs, and alerts
+Ensure that claims about admission, accreditation, fees, scholarships, employment, salaries, loans, or outcomes are accurate and supported by appropriate evidence.
 
-Use the documentation in infrastructure/monitoring/ and src/config/logger.js as applicable.
+Do not promise guaranteed admissions, jobs, or financial outcomes without a valid and documented basis. Seek qualified legal advice when required.
 
-Monitor at minimum:
+14. Monitoring, Logging, and Alerts
 
-• Application uptime and health-check failures.
-• HTTP 5xx rates, latency, and repeated 4xx abuse patterns.
-• Authentication failures and suspicious account activity.
-• Database availability, pool saturation, slow queries, and disk capacity.
-• Upload failures, storage capacity, and unauthorized access attempts.
-• Email delivery failures.
-• Payment webhook failures and reconciliation mismatches, if enabled.
-• Queue backlog, retries, dead-letter volume, and worker failures, if enabled.
-• Backup success and backup age.
+Monitoring must cover both technical health and critical business workflows.
 
-Logs should be structured, access-controlled, retained according to policy, and protected from tampering. Redact credentials, tokens, personal data, and document contents. Define alert owners and an escalation path; an alert without an owner is not an operational control.
+Area	Monitor
+Availability	Health-check failures, uptime, restart loops
+Application	HTTP 5xx rate, latency, error trends
+Authentication	Repeated failures, suspicious account activity
+Database	Availability, connection saturation, slow queries, disk capacity
+Storage	Capacity, failed uploads, access-denied events
+Email	Delivery failures and provider errors
+Payments	Webhook failures, reconciliation mismatches, duplicate processing
+Queues	Backlog, retries, failed jobs, dead-letter volume
+Backups	Job failures, backup age, storage availability
 
-12. Backups and disaster recovery
+Configure alert thresholds based on the actual workload and service objectives. Assign an owner and escalation path for each critical alert.
 
-Use the procedures under infrastructure/backup/ and docs/operations/backup-recovery.md after verifying they match the selected database and storage systems.
+Logs should be structured, access-controlled, appropriately retained, and protected from unauthorized modification. Redact secrets, session data, payment credentials, and unnecessary personal information.
 
-• Set documented recovery point objective (RPO) and recovery time objective (RTO).
-• Back up the database and required private object storage.
-• Encrypt backups and restrict access independently from application credentials.
-• Store recovery copies separately from the primary failure domain where feasible.
-• Monitor backup jobs and alert on failures.
-• Test restoration on a regular schedule in an isolated environment.
-• Document restore order, required secrets, DNS steps, validation checks, and responsible operators.
-• Record the result of each restore drill.
+A monitoring dashboard without actionable alerts and responsible ownership is insufficient.
 
-A successful backup job is not proof of recoverability. A tested restore is required.
+15. Backups and Disaster Recovery
 
-13. Rollback and incident response
+Define recovery requirements before launch.
+
+Document:
+
+* Recovery Point Objective (RPO): the maximum acceptable amount of data loss, expressed as a time interval.
+* Recovery Time Objective (RTO): the target time to restore service after an incident.
+
+Back up the database and any required private file storage. Keep recovery copies protected from the primary environment and encrypt them where appropriate.
+
+Recovery requirements
+
+1. Monitor scheduled backup jobs.
+2. Alert on backup failures or excessive backup age.
+3. Restrict access to backup files and recovery credentials.
+4. Keep copies separate from the primary failure domain where feasible.
+5. Test restoration in an isolated environment.
+6. Verify restored data, application compatibility, and access controls.
+7. Document restoration order, required secrets, DNS changes, and validation steps.
+8. Record restore-test dates, results, and corrective actions.
+
+A successful backup job does not prove recoverability. A tested restore is required.
+
+Do not select RPO or RTO targets without considering business impact, storage capacity, recovery tooling, and operational resources.
+
+16. Rollback and Incident Response
+
+Before deployment, identify a known-good application artifact and determine whether it remains compatible with the current database schema.
 
 For a failed release:
 
-1. Identify the impact and pause further rollout.
-2. Use infrastructure/deployment/rollback.md for the hosting platform.
-3. Roll back the application artifact if the previous version is compatible with the current schema.
-4. Do not blindly reverse a database migration if it could destroy data.
-5. Restore from backup only under the approved recovery procedure and after assessing data-loss implications.
-6. Verify health checks and critical user flows.
-7. Preserve relevant logs and deployment metadata.
-8. Document the incident, user impact, root cause, corrective action, and follow-up owner.
+1. Assess impact and stop further rollout.
+2. Follow the approved platform-specific rollback procedure.
+3. Restore the previous application artifact if compatible with the database state.
+4. Do not blindly reverse destructive migrations.
+5. Evaluate data-loss implications before restoring a backup.
+6. Verify health checks and critical workflows.
+7. Preserve relevant logs and release metadata.
+8. Document the incident, user impact, root cause, corrective actions, and follow-up owner.
 
-For security incidents, follow docs/operations/incident-response.md and SECURITY.md. Revoke or rotate exposed credentials, contain access, preserve evidence, and assess notification obligations.
+For suspected security incidents:
 
-14. Frontend, accessibility, and SEO checks
+* Contain the affected access or service.
+* Rotate exposed credentials and revoke compromised sessions where appropriate.
+* Preserve relevant evidence.
+* Assess affected systems and information.
+* Follow SECURITY.md and applicable incident-response procedures.
+* Determine notification obligations with qualified guidance where necessary.
 
-Before release:
+17. Frontend, Accessibility, and SEO
 
-☐ Confirm the canonical URL and environment-specific origins are correct.
-☐ Verify robots.txt, sitemap.xml, manifest.json, and security contact files are accurate.
-☐ Ensure staging and preview deployments are not accidentally indexed.
-☐ Check page titles, descriptions, headings, canonical links, and internal links.
-☐ Verify images, fonts, CSS, JavaScript, JSON data, and videos load from the intended paths.
-☐ Test mobile navigation, forms, keyboard access, visible focus, labels, contrast, and reduced-motion behavior.
-☐ Check 404, 500, and offline pages where the hosting architecture supports them.
-☐ Validate that public JSON contains no secrets or private user data.
-☐ Confirm the visual design and opening animation do not prevent access to content or controls.
+Before release, verify:
 
-15. Release smoke-test checklist
+* [ ]	The canonical domain and allowed origins are correct.
+* [ ]	HTTPS and certificate renewal are working.
+* [ ]	robots.txt, sitemap.xml, web manifests, and security contact files are accurate where present.
+* [ ]	Staging and preview environments are not unintentionally indexed.
+* [ ]	Page titles, descriptions, headings, and canonical links are appropriate.
+* [ ]	CSS, JavaScript, JSON, images, and fonts load from the intended paths.
+* [ ]	Mobile navigation, forms, and interactive controls work.
+* [ ]	Keyboard navigation and visible focus are preserved.
+* [ ]	Forms have meaningful labels and accessible validation messages.
+* [ ]	Text and controls meet applicable contrast expectations.
+* [ ]	Reduced-motion preferences are respected where relevant.
+* [ ]	Error and offline pages work where supported by the architecture.
+* [ ]	Public JSON does not expose secrets or private user data.
 
-Perform checks against the deployed environment after each release:
+Automated accessibility tests should be supplemented with manual keyboard and interaction checks.
 
-☐ Homepage loads over HTTPS.
-☐ Main navigation, dropdowns, opening animation, and footer work.
-☐ Education, course, college, university, admissions, and resource pages load.
-☐ Career, job, internship, and employer pages load.
-☐ Search and filters behave as expected.
-☐ Login, logout, registration, verification, and password reset work if implemented.
-☐ Account and admin routes enforce server-side permissions.
-☐ Forms show validation errors and safe success/failure messages.
-☐ Uploads and downloads enforce access controls.
-☐ Email delivery works for enabled workflows.
-☐ Payment and subscription flows pass provider test/reconciliation checks if enabled.
-☐ Database reads/writes and migration status are healthy.
-☐ Health endpoints, logs, alerts, and backups are functioning.
-☐ No critical browser-console, server, or accessibility errors remain.
+18. Production Smoke Tests
 
-16. Production change management
+Run smoke tests against the deployed environment after every release.
 
-Every production change should have:
+* [ ]	Homepage loads over HTTPS.
+* [ ]	Navigation and footer work across supported screen sizes.
+* [ ]	Education, admissions, course, college, and university pages load where implemented.
+* [ ]	Career, job, internship, and employer pages load where implemented.
+* [ ]	Search and filters return expected results.
+* [ ]	Registration, login, logout, verification, and password recovery work where implemented.
+* [ ]	Account and administrative endpoints enforce authorization.
+* [ ]	Forms validate input and display appropriate success or error states.
+* [ ]	Private uploads and downloads enforce access checks.
+* [ ]	Email workflows work where enabled.
+* [ ]	Payment and subscription flows work where enabled.
+* [ ]	Database reads, writes, and migration state are healthy.
+* [ ]	Health endpoints and alerts behave as expected.
+* [ ]	No unresolved critical application, browser, or accessibility errors remain.
 
-• A reviewed pull request and linked issue or change request.
-• Passing CI, tests, lint, security and dependency checks as applicable.
-• A migration plan when data or schema changes.
-• A staging verification record.
-• A release identifier and rollback plan.
-• Post-deployment smoke-test results.
-• Updated documentation and CHANGELOG.md when relevant.
+Do not perform destructive tests against real users or live payment transactions without an approved procedure.
 
-Emergency changes should be documented retrospectively and reviewed after the incident is contained.
+19. Change Management and Release Records
 
-17. Ownership and maintenance
+Each production release should have:
 
-Assign named owners for:
+* A reviewed pull request or change record.
+* Passing required automated checks.
+* A commit hash and identifiable build artifact.
+* A documented migration plan where applicable.
+* Staging verification and approval.
+* A rollback plan and known-good artifact.
+* Post-deployment smoke-test results.
+* Updated documentation and changelog entries where appropriate.
 
-• Application releases and rollback.
-• Database administration and migrations.
-• Security alerts and vulnerability response.
-• Backup monitoring and restore drills.
-• Payment and subscription reconciliation, if enabled.
-• User support, privacy requests, and incident communication.
+Emergency changes should be documented and reviewed after the immediate incident has been contained.
 
-Review this guide whenever the deployment platform, database engine, authentication model, storage design, payment provider, or production architecture changes.
+20. Operational Ownership
 
-────────
+Assign a responsible owner for each critical operational function.
 
-Final production gate
+Function	Responsibility
+Application releases	Release approval, deployment, and rollback
+Database	Migrations, capacity, backups, and recovery
+Security	Vulnerability handling, access review, and incident response
+Storage	Private files, retention, capacity, and recovery
+Payments	Reconciliation and provider incident handling, if enabled
+Monitoring	Alert configuration, triage, and escalation
+Privacy and support	User requests, data handling, and applicable communication
 
-Do not declare MedOrbits production-ready until the deployed implementation—not only the repository structure—has passed security review, functional tests, access-control checks, backup restoration, monitoring verification, and a documented rollback rehearsal.
+Document the actual people or teams responsible in the private operational runbook. Do not publish personal contact details unnecessarily.
+
+21. Final Production Approval
+
+Use the following release gate before declaring MedOrbits production-ready.
+
+{@body const gateItems = [
+“Production configuration and secrets have been verified.”,
+“Authentication, authorization, and private document access have been tested.”,
+“Critical automated tests and release checks have passed.”,
+“Database migrations have been reviewed and staged.”,
+“Backup restoration has been demonstrated.”,
+“Health checks, logs, alerts, and ownership are in place.”,
+“A compatible rollback artifact and procedure are available.”,
+“Critical user journeys have passed production smoke tests.”,
+“Privacy, licensing, and public-facing claims have been reviewed.”,
+“Release identifier and verification results have been recorded.”
+]}
+{@body const [gateChecked, setGateChecked] = DIL.useState([])}
+Release readiness
+{gateChecked.length} of {gateItems.length}
+<box background=“surface-inverted” height=“6px” radius=“full” width={${gateChecked.length / gateItems.length * 100}%} />
+{#each gateItems as item, i}
+<checkbox key={item} checked={gateChecked.includes(i)} onChange={(checked) => setGateChecked(previous => checked ? […previous, i] : previous.filter(index => index !== i))}>{item}
+{/each}
+{#if gateChecked.length === gateItems.length}
+All checklist items have been marked. Verify supporting evidence before approving the release.
+{:else}
+This checklist tracks your selections only; it does not test the application or independently verify deployment readiness.
+{/if}
+Do not declare MedOrbits production-ready until the deployed implementation has passed the required security, functional, recovery, monitoring, and operational checks. Any unresolved critical risk must have an explicit decision from the authorized release owner.
+
+22. Document Maintenance
+
+Review this guide whenever the following changes:
+
+* Hosting platform or deployment architecture.
+* Node.js runtime or dependency management.
+* Database engine, schema, or migration system.
+* Authentication, session, or authorization design.
+* Private file storage or retention policies.
+* Payment provider or subscription behavior.
+* Backup, monitoring, or recovery procedures.
+* Production release and rollback processes.
+
+Keep this document consistent with the actual implementation. Remove obsolete instructions, identify unimplemented controls, and do not describe proposed infrastructure as deployed infrastructure.
+
+⸻
+
+End of production deployment guide.

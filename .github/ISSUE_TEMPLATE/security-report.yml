@@ -3,46 +3,47 @@ description: Read the private reporting instructions for suspected MedOrbits vul
 title: "[Security]: "
 labels: []
 assignees: []
+
 body:
-  - type: markdown
+
+* type: markdown
     attributes:
-      value: |
-        ## Important: protect sensitive information
-        **This form creates a public GitHub issue. It is not a private
-        vulnerability reporting channel.**
-        Do not submit exploit steps, proof-of-concept code, credentials,
-        tokens, private user data, payment information, or other sensitive
-        technical details here.
-        First read the repository's SECURITY.md file for reporting
-        instructions. If no private reporting channel is available,
-        ask a maintainer through a non-public channel to provide one
-        before sharing sensitive information.
-  - type: checkboxes
+    value: |
+    # Important: Protect Sensitive Information
+
+**This form creates a publicly visible GitHub issue. It is NOT a private vulnerability reporting channel.**
+Do not disclose exploit steps, proof-of-concept code, credentials, access tokens, private user data, payment information, exposed secrets, or other sensitive technical details.
+Before proceeding, read the repository's `SECURITY.md` file and follow its private vulnerability reporting instructions.
+If no private reporting channel is available, contact a repository maintainer through a non-public channel and request secure reporting instructions before sharing vulnerability details.
+
+* type: checkboxes
     id: acknowledgment
     attributes:
-      label: Required acknowledgment
-      options:
-        - label: I understand that this form creates a publicly visible issue.
-          required: true
-        - label: I will not include sensitive technical details or personal data.
-          required: true
-  - type: textarea
+    label: Required acknowledgment
+    description: Confirm both statements before submitting this public issue.
+    options:
+    - label: I understand that this issue will be publicly visible.
+    required: true
+    - label: I will not include exploit details, credentials, confidential information, or personal data.
+    required: true
+* type: textarea
     id: summary
     attributes:
-      label: Non-sensitive summary (optional)
-      description: |
-        Only provide a general summary if it is safe to disclose publicly.
-        Otherwise, leave this blank and contact a maintainer privately.
-      placeholder: General topic only; do not include exploit details.
+    label: Non-sensitive summary (optional)
+    description: |
+    Provide only a general description if public disclosure is safe.
+    Otherwise, leave this field blank and contact a maintainer privately.
+    Do not include affected account details, exploit instructions, payloads, or sensitive endpoint information.
+    placeholder: "General topic only, such as a suspected authentication security concern."
     validations:
-      required: false
-  - type: markdown
+    required: false
+* type: markdown
     attributes:
-      value: |
-        ## Next steps
-        1. Read `SECURITY.md` in the repository.
-        2. Use an explicitly published private reporting channel, if available.
-        3. If no private channel is available, request one privately before
-           sending sensitive technical details.
-        Do not assume that a contact address or private reporting feature
-        exists unless it is explicitly available.
+    value: |
+    ## Next steps
+
+1. Read `SECURITY.md` in the repository.
+2. Use a private reporting channel explicitly documented by the project, if available.
+3. If no private channel is documented, request secure reporting instructions through a non-public channel before sharing sensitive details.
+4. Avoid posting further vulnerability details in this public issue.
+**Important:** Do not assume that a security contact, email address, or private reporting feature exists unless the repository or GitHub settings explicitly provide it.

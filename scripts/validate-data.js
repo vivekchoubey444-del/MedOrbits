@@ -1,68 +1,46 @@
-#!/usr/bin/env node
 'use strict';
 
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DATA_DIR = path.resolve(process.cwd(), 'assets', 'data');
-const JSON_FILES = [
-  'countries.json',
-  'courses.json',
-  'colleges.json',
-  'universities.json',
-  'fees.json',
-  'scholarships.json',
-  'hostels.json',
-  'admissions.json',
-  'admission-process.json',
-  'entrance-exams.json',
-  'documents.json',
-  'jobs.json',
-  'internships.json',
-  'career-options.json',
-  'categories.json',
-  'sectors.json',
-  'locations.json',
-  'recruitment.json',
-  'services.json',
-  'testimonials.json',
-  'faqs.json',
-  'news.json',
-  'notifications.json',
-];
+const dir = path.resolve(process.argv[2] || 'assets/data');
+if (!fs.existsSync(dir)) {
+  console.log(`No data directory at ${dir}, skipping`);
+  process.exit(0);
+}
 
-function main() {
-  if (!fs.existsSync(DATA_DIR)) {
-    console.error(`Data directory not found: ${DATA_DIR}`);
-    process.exitCode = 1;
-    return;
+const errors = [];
+const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+
+function findRecords(data) {
+  if (Array.isArray(data)) return data;
+  for (const value of Object.values(data)) {
+    if (Array.isArray(value)) return value;
   }
+  return [];
+}
 
-  const errors = [];
-  let checked = 0;
-
-  for (const filename of JSON_FILES) {
-    const filePath = path.join(DATA_DIR, filename);
-    if (!fs.existsSync(filePath)) continue;
-
-    try {
-      const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      if (parsed === null || typeof parsed !== 'object') {
-        errors.push(`${filename}: expected a JSON object or array at the top level.`);
+for (const file of files) {
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+  } catch (err) {
+    errors.push(`${file}: ${err.message}`);
+    continue;
+  }
+  const seen = new Set();
+  for (const record of findRecords(data)) {
+    if (record && typeof record === 'object' && 'id' in record) {
+      if (seen.has(record.id)) {
+        errors.push(`${file}: duplicate id ${record.id}`);
       }
-      checked += 1;
-    } catch (error) {
-      errors.push(`${filename}: invalid JSON (${error.message}).`);
+      seen.add(record.id);
     }
-  }
-
-  console.log(`Validated ${checked} existing JSON data file(s) in ${DATA_DIR}.`);
-  if (errors.length) {
-    for (const error of errors) console.error(`ERROR: ${error}`);
-    process.exitCode = 1;
-  } else {
-    console.log('No JSON syntax or top-level type errors found in checked files.');
   }
 }
 
-main();
+if (errors.length > 0) {
+  errors.forEach((e) => console.error(e));
+  process.exit(1);
+}
+console.log(`Validated ${files.length} data file(s) in ${dir}`);

@@ -9,18 +9,24 @@ on:
       - main
       - develop
   schedule:
-    - cron: "0 4 * * 1"
+    # Every Monday at 04:00 UTC
+    - cron: '0 4 * * 1'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: security-${{ github.workflow }}-${{ github.ref }}
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  # ======================================================
+  # 1. VALIDATE JSON CONFIGURATION
+  # ======================================================
   validate-json:
     name: Validate JSON configuration
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,24 +36,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate all tracked JSON files
+      - name: Validate tracked JSON files
         shell: bash
         run: |
           set -euo pipefail
-          files="$(git ls-files '*.json')"
-          if [ -z "$files" ]; then
-            echo "No tracked JSON files found."
-            exit 0
-          fi
-          while IFS= read -r file; do
-            [ -n "$file" ] || continue
+          count=0
+          while IFS= read -r -d '' file; do
             echo "Validating: $file"
-            node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$file"
-          done <<< "$files"
+            node -e '
+              const fs = require("node:fs");
+              const file = process.argv[1];
+              try {
+                JSON.parse(fs.readFileSync(file, "utf8"));
+              } catch (error) {
+                console.error(`${file}: ${error.message}`);
+                process.exit(1);
+              }
+            ' "$file"
+            count=$((count + 1))
+          done < <(
+            git ls-files -z -- '*.json'
+          )
+          echo "Validated $count tracked JSON files."
+  # ======================================================
+  # 2. AUDIT NPM DEPENDENCIES
+  # ======================================================
   dependency-audit:
-    name: npm dependency audit
+    name: Audit npm dependencies
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -58,18 +77,27 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Verify lockfile exists
-        run: test -f package-lock.json
+          cache-dependency-path: package-lock.json
+      - name: Verify npm manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f package.json
+          test -f package-lock.json
       - name: Install locked dependencies
         run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
+      - name: Audit all dependencies
+        run: npm audit --audit-level=high
+  # ======================================================
+  # 3. CODEQL STATIC ANALYSIS
+  # ======================================================
   codeql:
-    name: CodeQL JavaScript analysis
+    name: CodeQL JavaScript and TypeScript analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
-      actions: read
       contents: read
       security-events: write
     steps:
@@ -84,10 +112,17 @@ jobs:
           build-mode: none
       - name: Analyze code
         uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+  # ======================================================
+  # 4. SCAN FOR EXPOSED SECRETS
+  # ======================================================
   secret-scan:
     name: Gitleaks secret scan
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository history
         uses: actions/checkout@v4

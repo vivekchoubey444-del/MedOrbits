@@ -1,105 +1,235 @@
 {
-  "schemaVersion": "1.0.0",
-  "updatedAt": null,
-  "countries": [
-    {
-      "id": "IN",
-      "name": "India",
-      "slug": "india",
-      "region": "South Asia",
-      "currency": "INR",
-      "studyAbroad": false,
-      "active": true
-    },
-    {
-      "id": "RU",
-      "name": "Russia",
-      "slug": "russia",
-      "region": "Europe/Asia",
-      "currency": "RUB",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "GE",
-      "name": "Georgia",
-      "slug": "georgia",
-      "region": "Europe/Asia",
-      "currency": "GEL",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "KZ",
-      "name": "Kazakhstan",
-      "slug": "kazakhstan",
-      "region": "Central Asia",
-      "currency": "KZT",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "UZ",
-      "name": "Uzbekistan",
-      "slug": "uzbekistan",
-      "region": "Central Asia",
-      "currency": "UZS",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "KG",
-      "name": "Kyrgyzstan",
-      "slug": "kyrgyzstan",
-      "region": "Central Asia",
-      "currency": "KGS",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "GB",
-      "name": "United Kingdom",
-      "slug": "united-kingdom",
-      "region": "Europe",
-      "currency": "GBP",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "US",
-      "name": "United States",
-      "slug": "united-states",
-      "region": "North America",
-      "currency": "USD",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "CA",
-      "name": "Canada",
-      "slug": "canada",
-      "region": "North America",
-      "currency": "CAD",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "AU",
-      "name": "Australia",
-      "slug": "australia",
-      "region": "Oceania",
-      "currency": "AUD",
-      "studyAbroad": true,
-      "active": true
-    },
-    {
-      "id": "DE",
-      "name": "Germany",
-      "slug": "germany",
-      "region": "Europe",
-      "currency": "EUR",
-      "studyAbroad": true,
-      "active": true
-    }
-  ]
+"schemaVersion": "1.1.0",
+"updatedAt": null,
+"metadata": {
+"title": "MedOrbits Country Directory",
+"description": "Country reference data for education discovery, international admissions and study-abroad guidance.",
+"defaultCountryCode": "IN",
+"countryCodeStandard": "ISO 3166-1 alpha-2",
+"currencyCodeStandard": "ISO 4217",
+"language": "en",
+"disclaimer": "Country listings are informational. Admission, qualification recognition, visa, immigration and employment requirements must be verified through the relevant official authorities."
+},
+"countries": [
+{
+"id": "IN",
+"name": "India",
+"officialName": "Republic of India",
+"slug": "india",
+"region": "South Asia",
+"currency": "INR",
+"studyAbroad": false,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "RU",
+"name": "Russia",
+"officialName": "Russian Federation",
+"slug": "russia",
+"region": "Europe/Asia",
+"currency": "RUB",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "GE",
+"name": "Georgia",
+"officialName": "Georgia",
+"slug": "georgia",
+"region": "Europe/Asia",
+"currency": "GEL",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "KZ",
+"name": "Kazakhstan",
+"officialName": "Republic of Kazakhstan",
+"slug": "kazakhstan",
+"region": "Central Asia",
+"currency": "KZT",
+"studyAbroad": true,
+"active": true,
+"featured": false,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "UZ",
+"name": "Uzbekistan",
+"officialName": "Republic of Uzbekistan",
+"slug": "uzbekistan",
+"region": "Central Asia",
+"currency": "UZS",
+"studyAbroad": true,
+"active": true,
+"featured": false,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "KG",
+"name": "Kyrgyzstan",
+"officialName": "Kyrgyz Republic",
+"slug": "kyrgyzstan",
+"region": "Central Asia",
+"currency": "KGS",
+"studyAbroad": true,
+"active": true,
+"featured": false,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "GB",
+"name": "United Kingdom",
+"officialName": "United Kingdom of Great Britain and Northern Ireland",
+"slug": "united-kingdom",
+"region": "Europe",
+"currency": "GBP",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "US",
+"name": "United States",
+"officialName": "United States of America",
+"slug": "united-states",
+"region": "North America",
+"currency": "USD",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "CA",
+"name": "Canada",
+"officialName": "Canada",
+"slug": "canada",
+"region": "North America",
+"currency": "CAD",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "AU",
+"name": "Australia",
+"officialName": "Commonwealth of Australia",
+"slug": "australia",
+"region": "Oceania",
+"currency": "AUD",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+},
+{
+"id": "DE",
+"name": "Germany",
+"officialName": "Federal Republic of Germany",
+"slug": "germany",
+"region": "Europe",
+"currency": "EUR",
+"studyAbroad": true,
+"active": true,
+"featured": true,
+"officialSources": {
+"education": null,
+"immigration": null
+},
+"verificationStatus": "unverified",
+"verifiedAt": null
+}
+],
+"allowedValues": {
+"verificationStatus": [
+"unverified",
+"pending_review",
+"verified",
+"outdated",
+"rejected"
+]
+},
+"displaySettings": {
+"showCountryName": true,
+"showRegion": true,
+"showCurrency": true,
+"showFeaturedCountries": true,
+"showInactiveCountries": false,
+"enableCountrySearch": true,
+"enableRegionFiltering": true,
+"showOfficialSourcesWhenAvailable": true,
+"showVerificationStatus": true
+},
+"validationRules": [
+"Every country must have a unique ISO alpha-2 ID and a unique slug.",
+"Currency values must use valid ISO 4217 currency codes.",
+"Region values must follow the project’s documented regional classification.",
+"Country IDs must match the country codes used in colleges.json and admissions.json.",
+"studyAbroad indicates a destination classification for the platform, not visa eligibility or admission availability.",
+"Only active countries should appear in normal public selection controls.",
+"Official source URLs must be checked before publication.",
+"A country must not be marked verified unless its relevant data has actually been checked.",
+"verifiedAt must remain null until verification has occurred.",
+"Do not infer admission eligibility, visa approval, degree recognition or employment eligibility from a country’s presence in this directory."
+],
+"note": "Use authoritative government and education sources for country-specific information. Add countries only when the platform is prepared to maintain accurate and useful information for them."
 }

@@ -1,17 +1,38 @@
-MedOrbits CODEOWNERS
+MedOrbits -- CODEOWNERS
 
-Default owner: repository owner
+Purpose: Define default code ownership and review responsibility.
+
+Default owner: Repository owner
 
 GitHub username: @vivekchoubey444-del
 
-Default owner for all files
+IMPORTANT:
+
+- CODEOWNERS assigns review responsibility; it does not grant repository permissions.
+
+- GitHub uses the last matching rule for each file.
+
+- Keep the default rule at the top and specific rules below it.
+
+- Ensure the listed GitHub account has access to this repository.
+
+============================================================
+
+DEFAULT OWNER -- ALL REPOSITORY FILES
+
+============================================================
 
 * @vivekchoubey444-del
 
-Repository documentation and policies
+============================================================
+
+REPOSITORY DOCUMENTATION AND POLICIES
+
+============================================================
 
 /README.md @vivekchoubey444-del
 /README-PRODUCTION.md @vivekchoubey444-del
+/PACKAGE-NOTES.md @vivekchoubey444-del
 /CONTRIBUTING.md @vivekchoubey444-del
 /CODE_OF_CONDUCT.md @vivekchoubey444-del
 /CHANGELOG.md @vivekchoubey444-del
@@ -20,20 +41,33 @@ Repository documentation and policies
 /NOTICE @vivekchoubey444-del
 /LICENSE @vivekchoubey444-del
 
-GitHub workflows and repository governance
+============================================================
+
+GITHUB WORKFLOWS AND REPOSITORY GOVERNANCE
+
+============================================================
 
 /.github/ @vivekchoubey444-del
 /.editorconfig @vivekchoubey444-del
 /.prettierrc.json @vivekchoubey444-del
 /.eslintrc.json @vivekchoubey444-del
 /.gitignore @vivekchoubey444-del
+/.gitattributes @vivekchoubey444-del
 
-Backend application
+============================================================
+
+BACKEND APPLICATION
+
+============================================================
 
 /server.js @vivekchoubey444-del
 /src/ @vivekchoubey444-del
 
-Frontend assets and website pages
+============================================================
+
+FRONTEND ASSETS AND WEBSITE PAGES
+
+============================================================
 
 /assets/ @vivekchoubey444-del
 /pages/ @vivekchoubey444-del
@@ -41,27 +75,83 @@ Frontend assets and website pages
 /career/ @vivekchoubey444-del
 /account/ @vivekchoubey444-del
 /admin/ @vivekchoubey444-del
+/legal/ @vivekchoubey444-del
 
-API, database, and migrations
+============================================================
+
+API, DATABASE, AND MIGRATIONS
+
+============================================================
 
 /database/ @vivekchoubey444-del
+/migrations/ @vivekchoubey444-del
+/prisma/ @vivekchoubey444-del
 
-Tests and quality assurance
+============================================================
+
+TESTS AND QUALITY ASSURANCE
+
+============================================================
 
 /tests/ @vivekchoubey444-del
+/test/ @vivekchoubey444-del
+/tests/ @vivekchoubey444-del
+/jest.config.js @vivekchoubey444-del
+/vitest.config.js @vivekchoubey444-del
 
-Technical documentation
+============================================================
+
+TECHNICAL DOCUMENTATION
+
+============================================================
 
 /docs/ @vivekchoubey444-del
 
-Deployment and infrastructure
+============================================================
+
+DEPLOYMENT AND INFRASTRUCTURE
+
+============================================================
 
 /infrastructure/ @vivekchoubey444-del
 /Dockerfile @vivekchoubey444-del
 /docker-compose.yml @vivekchoubey444-del
+/docker-compose.yaml @vivekchoubey444-del
 /.dockerignore @vivekchoubey444-del
+/render.yaml @vivekchoubey444-del
 
-Dependency manifests and lockfiles
+============================================================
+
+DEPENDENCY MANIFESTS AND LOCKFILES
+
+============================================================
 
 /package.json @vivekchoubey444-del
 /package-lock.json @vivekchoubey444-del
+/yarn.lock @vivekchoubey444-del
+/pnpm-lock.yaml @vivekchoubey444-del
+/bun.lockb @vivekchoubey444-del
+/bun.lock @vivekchoubey444-del
+
+============================================================
+
+ENVIRONMENT AND CONFIGURATION TEMPLATES
+
+============================================================
+
+/.env.example @vivekchoubey444-del
+/.env.*.example @vivekchoubey444-del
+/config/ @vivekchoubey444-del
+
+============================================================
+
+SECURITY-SENSITIVE APPLICATION COMPONENTS
+
+============================================================
+
+/src/auth/ @vivekchoubey444-del
+/src/middleware/ @vivekchoubey444-del
+/src/validators/ @vivekchoubey444-del
+/src/controllers/ @vivekchoubey444-del
+/src/services/ @vivekchoubey444-del
+/src/repositories/ @vivekchoubey444-del

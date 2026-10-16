@@ -1,12 +1,19 @@
 MEDORBITS
 Study · Career · Consultancy
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 {{heading}}
 
 {{message}}
 
-{{actionLabel}}: {{actionUrl}}
+{{actionLabel}}
+{{actionUrl}}
 
-If you did not expect this message, ignore it or contact MedOrbits through the official website.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you did not expect this message, you can ignore it or contact MedOrbits through the official website.
+
+For your security, never share your password, verification codes, or authentication tokens with anyone.
 
 © {{year}} MedOrbits · Study · Work · Grow

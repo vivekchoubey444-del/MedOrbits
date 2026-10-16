@@ -1,4 +1,3 @@
-
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Synthetic MedOrbits application fixtures aligned with the MySQL application schema. Development and automated testing only; never use real applicant data.",

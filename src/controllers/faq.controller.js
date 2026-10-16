@@ -1,16 +1,20 @@
+
 'use strict';
 
-const { asyncHandler, sendSuccess, httpError } = require('../utils/http');
-const { unavailable } = require('./controller.helpers');
+const {
+  crudController,
+} = require('./controller.helpers');
 
-const controller = {};
+const repository = require('../repositories/faq.repository');
 
-controller.list = asyncHandler(async (req, res) => {
-  unavailable('Faq list');
-});
-
-controller.get = asyncHandler(async (req, res) => {
-  unavailable('Faq get');
-});
+const controller = crudController(
+  repository,
+  null,
+  {
+    writable: false,
+    removeAllowed: false,
+    validate: false,
+  }
+);
 
 module.exports = controller;

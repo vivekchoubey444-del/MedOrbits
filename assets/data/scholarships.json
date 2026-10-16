@@ -1,20 +1,425 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
-  "scholarships": [],
+  "metadata": {
+    "title": "MedOrbits Scholarships Database",
+    "description": "Scholarships, fellowships and funding schemes for health courses. Records are added only from the provider's official notice.",
+    "defaultCountryCode": "IN",
+    "defaultCurrency": "INR",
+    "dateFormat": "YYYY-MM-DD",
+    "verificationPolicy": "Verify provider, eligibility, amount, deadlines and application steps against the provider's official notice before publication. Never invent them."
+  },
   "fields": [
     "id",
     "name",
-    "provider",
+    "slug",
+    "providerName",
+    "providerType",
+    "providerUrl",
+    "scholarshipType",
+    "fundingKind",
     "countryCode",
-    "eligibleCourseIds",
-    "eligibility",
-    "benefit",
-    "deadline",
+    "stateIds",
+    "courseIds",
+    "courseLevels",
+    "institutionIds",
+    "eligibilitySummary",
+    "eligibilityCriteria",
+    "eligibilitySourceUrl",
+    "awardAmount",
+    "awardAmountNote",
+    "awardFrequency",
+    "durationYears",
+    "numberOfAwards",
+    "renewable",
+    "renewalConditions",
+    "selectionProcess",
+    "requiredDocumentIds",
+    "applicationMode",
+    "academicYear",
+    "applicationStart",
+    "applicationEnd",
+    "applicationStatus",
     "applicationUrl",
+    "officialUrl",
     "sourceUrl",
+    "noticeTitle",
+    "noticeDate",
+    "contactEmail",
+    "fundingCovers",
+    "obligations",
+    "notes",
+    "verificationStatus",
     "verifiedAt",
-    "active"
+    "verifiedBy",
+    "reviewDueAt",
+    "publicationStatus",
+    "active",
+    "createdAt",
+    "updatedAt"
   ],
-  "note": "Add only current scholarship details verified from the provider."
+  "fieldDefinitions": {
+    "id": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "example": "schol-provider-name-2026"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "note": "Official scheme name."
+    },
+    "providerName": {
+      "type": "string",
+      "required": true
+    },
+    "providerType": {
+      "type": "string",
+      "enum": "allowedValues.providerType"
+    },
+    "scholarshipType": {
+      "type": "array",
+      "itemEnum": "scholarshipTypeCatalogue[].type"
+    },
+    "fundingKind": {
+      "type": "string",
+      "enum": "allowedValues.fundingKind"
+    },
+    "courseIds": {
+      "type": "array",
+      "references": "courses.id"
+    },
+    "courseLevels": {
+      "type": "array",
+      "itemEnum": "courses.allowedValues.level"
+    },
+    "institutionIds": {
+      "type": "array",
+      "references": "universities.id"
+    },
+    "eligibilityCriteria": {
+      "type": "array",
+      "itemShape": {
+        "criterion": "enum allowedValues.criterionType",
+        "description": "string",
+        "value": "string or number or null",
+        "sourceUrl": "https URL"
+      }
+    },
+    "awardAmount": {
+      "type": "number",
+      "nullable": true,
+      "note": "Plain number in awardCurrency; only as published."
+    },
+    "awardCurrency": {
+      "type": "string",
+      "nullable": true,
+      "format": "ISO 4217"
+    },
+    "awardFrequency": {
+      "type": "string",
+      "nullable": true,
+      "enum": "allowedValues.awardFrequency"
+    },
+    "numberOfAwards": {
+      "type": "integer",
+      "nullable": true
+    },
+    "renewable": {
+      "type": "boolean",
+      "nullable": true
+    },
+    "selectionProcess": {
+      "type": "array",
+      "itemEnum": "allowedValues.selectionStep"
+    },
+    "requiredDocumentIds": {
+      "type": "array",
+      "references": "documents.id",
+      "note": "Only as listed in the official notice."
+    },
+    "applicationStatus": {
+      "type": "string",
+      "enum": "allowedValues.applicationStatus",
+      "default": "awaiting_notification"
+    },
+    "fundingCovers": {
+      "type": "array",
+      "itemEnum": "allowedValues.fundingCovers"
+    },
+    "obligations": {
+      "type": "string",
+      "nullable": true,
+      "note": "Bond, service or repayment conditions as stated officially."
+    }
+  },
+  "allowedValues": {
+    "providerType": [
+      "central_government",
+      "state_government",
+      "institution",
+      "trust_or_foundation",
+      "corporate",
+      "international_body",
+      "ngo",
+      "other"
+    ],
+    "fundingKind": [
+      "scholarship",
+      "fellowship",
+      "grant",
+      "fee_waiver",
+      "interest_subsidy",
+      "loan_scheme",
+      "stipend",
+      "other"
+    ],
+    "criterionType": [
+      "minimum_marks",
+      "entrance_exam_rank",
+      "exam_qualification",
+      "family_income_limit",
+      "category",
+      "domicile",
+      "gender",
+      "disability",
+      "age_limit",
+      "course_enrolment",
+      "year_of_study",
+      "nationality",
+      "other"
+    ],
+    "awardFrequency": [
+      "one_time",
+      "monthly",
+      "per_semester",
+      "per_year",
+      "other"
+    ],
+    "selectionStep": [
+      "merit_list",
+      "entrance_exam",
+      "interview",
+      "document_verification",
+      "financial_assessment",
+      "other"
+    ],
+    "fundingCovers": [
+      "tuition",
+      "hostel",
+      "books",
+      "living_allowance",
+      "travel",
+      "research_costs",
+      "exam_fees",
+      "other"
+    ],
+    "applicationMode": [
+      "online",
+      "offline",
+      "hybrid",
+      "through_institution",
+      "not_applicable"
+    ],
+    "applicationStatus": [
+      "upcoming",
+      "open",
+      "closed",
+      "extended",
+      "awaiting_notification",
+      "not_applicable"
+    ],
+    "publicationStatus": [
+      "draft",
+      "in_review",
+      "published",
+      "archived"
+    ],
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ]
+  },
+  "scholarshipTypeCatalogue": [
+    {
+      "type": "merit_based",
+      "label": "Merit-based",
+      "description": "Awarded for academic or exam performance.",
+      "typicalDocumentIds": [
+        "doc-class-12-marksheet",
+        "doc-exam-scorecard",
+        "doc-photo-id",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "need_based",
+      "label": "Need-based",
+      "description": "Awarded based on financial circumstances.",
+      "typicalDocumentIds": [
+        "doc-income-certificate",
+        "doc-class-12-marksheet",
+        "doc-photo-id",
+        "doc-bank-proof",
+        "doc-address-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "merit_cum_means",
+      "label": "Merit-cum-means",
+      "description": "Combines academic performance with financial need.",
+      "typicalDocumentIds": [
+        "doc-income-certificate",
+        "doc-class-12-marksheet",
+        "doc-exam-scorecard",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "category_based",
+      "label": "Category-based",
+      "description": "For reserved categories as defined by the provider.",
+      "typicalDocumentIds": [
+        "doc-category-certificate",
+        "doc-income-certificate",
+        "doc-class-12-marksheet",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "disability_based",
+      "label": "Disability-related",
+      "description": "For persons with disabilities.",
+      "typicalDocumentIds": [
+        "doc-disability-certificate",
+        "doc-class-12-marksheet",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "gender_based",
+      "label": "Gender-focused",
+      "description": "Aimed at supporting a particular gender, where offered.",
+      "typicalDocumentIds": [
+        "doc-class-12-marksheet",
+        "doc-photo-id",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "regional",
+      "label": "State or regional",
+      "description": "Offered to residents of a state or region.",
+      "typicalDocumentIds": [
+        "doc-domicile-certificate",
+        "doc-class-12-marksheet",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "institutional",
+      "label": "Institution-offered",
+      "description": "Offered by a university, college or trust.",
+      "typicalDocumentIds": [
+        "doc-class-12-marksheet",
+        "doc-photo-id",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "armed_forces_wards",
+      "label": "Defence-related",
+      "description": "For dependants of serving or former defence personnel, where offered.",
+      "typicalDocumentIds": [
+        "doc-class-12-marksheet",
+        "doc-photo-id",
+        "doc-bank-proof"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "international",
+      "label": "International or study-abroad",
+      "description": "Funding for study abroad or for international students.",
+      "typicalDocumentIds": [
+        "doc-passport",
+        "doc-english-proficiency",
+        "doc-statement-of-purpose",
+        "doc-recommendation-letters"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "research_fellowship",
+      "label": "Research fellowship",
+      "description": "Funding for research or postgraduate study.",
+      "typicalDocumentIds": [
+        "doc-statement-of-purpose",
+        "doc-recommendation-letters",
+        "doc-class-12-marksheet"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    },
+    {
+      "type": "loan_or_interest_subsidy",
+      "label": "Education loan support",
+      "description": "Interest subsidy or loan-linked schemes.",
+      "typicalDocumentIds": [
+        "doc-income-certificate",
+        "doc-fee-payment-receipt",
+        "doc-bank-proof",
+        "doc-photo-id"
+      ],
+      "note": "Typical documents are indicative only; each scholarship's official notice decides."
+    }
+  ],
+  "dataRules": [
+    "Every scholarship must have a unique id and slug, and name must be the provider's official name.",
+    "Never invent scholarships, providers, amounts, eligibility, deadlines or links; use null when unknown.",
+    "Publish a scholarship only from the provider's official notice or website; sourceUrl or officialUrl is required for verification.",
+    "awardAmount requires awardCurrency and awardFrequency; amounts are plain numbers as published, never estimated.",
+    "Eligibility must be taken from the official notice; eligibilityCriteria entries should each carry a source.",
+    "courseIds, institutionIds, stateIds and requiredDocumentIds must reference existing records.",
+    "applicationEnd must not precede applicationStart; dates use YYYY-MM-DD or null.",
+    "Expired deadlines must be reviewed before display, and closed schemes must not be shown as open.",
+    "Never state or imply a scholarship is guaranteed; selection is by the provider.",
+    "Never promote or link to anyone charging fees to 'secure' a scholarship; show only the official application channel.",
+    "State obligations such as bonds, service conditions or repayment where the notice lists them.",
+    "Verified status requires verifiedAt, verifiedBy and a source; verifiedAt and verifiedBy are set together.",
+    "scholarshipTypeCatalogue.typicalDocumentIds are indicative only and must not be shown as mandatory for a specific scholarship.",
+    "The active field controls display only; it does not mean applications are open."
+  ],
+  "displayRules": {
+    "alwaysShow": [
+      "providerName",
+      "academicYear",
+      "applicationEnd",
+      "verificationStatus"
+    ],
+    "hideFromPublicWhen": [
+      "active == false",
+      "verificationStatus == 'rejected'",
+      "publicationStatus != 'published'"
+    ],
+    "showStaleWarningWhen": [
+      "applicationEnd < today",
+      "reviewDueAt < today",
+      "verificationStatus == 'outdated'"
+    ],
+    "unverifiedLabel": "Unverified - confirm eligibility, amount and deadline with the official provider.",
+    "disclaimer": "Scholarships are not guaranteed. Eligibility, amounts and deadlines are set by the provider and can change. Apply only through the official channel and never pay anyone to secure a scholarship."
+  },
+  "scholarships": []
 }

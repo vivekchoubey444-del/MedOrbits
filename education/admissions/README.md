@@ -1,14 +1,14 @@
-Admissions Module — MedOrbits
+MedOrbits Admissions Module
 
 Directory: education/admissions/
 
-Overview
+1. Overview
 
 The Admissions module organizes admission guidance for students exploring educational opportunities through MedOrbits. It provides information about eligibility, entrance examinations, counselling, application procedures, and required documents.
 
-Implementation note: This directory documents the intended organization of admission resources. Actual admission services, application processing, counselling workflows, and integrations depend on the implemented frontend and backend code.
+Implementation note: This document describes the intended organization of admission resources. Actual admission services, application processing, counselling workflows, data integrations, and document-submission features depend on the implemented frontend and backend code.
 
-Directory Structure
+2. Directory Structure
 
 education/admissions/
 ├── README.md
@@ -19,21 +19,21 @@ education/admissions/
 ├── exams.html
 └── process.html
 
-Page Responsibilities
+3. Page Responsibilities
 
-1. index.html — Admissions Homepage
+3.1 index.html — Admissions Homepage
 
 The main entry point for admission-related guidance.
 
-Expected content:
+Expected content may include:
 
 * Admission categories and academic pathways.
 * Links to eligibility and entrance examination information.
 * Counselling guidance.
 * Application process overview.
-* Document checklists and useful resources.
+* Document checklists and relevant resources.
 
-2. eligibility.html — Eligibility Criteria
+3.2 eligibility.html — Eligibility Criteria
 
 Explains general eligibility requirements for different courses and institutions.
 
@@ -45,11 +45,11 @@ Potential content:
 * Age criteria, where applicable.
 * Course-specific and institution-specific conditions.
 
-Always distinguish general guidance from the official eligibility criteria published by the relevant institution or authority.
+Distinguish general guidance from official eligibility criteria published by the relevant institution or authority.
 
-3. exams.html — Entrance Examinations
+3.3 exams.html — Entrance Examinations
 
-Provides information about entrance examinations relevant to education pathways.
+Provides information about entrance examinations relevant to different education pathways.
 
 Potential content:
 
@@ -59,9 +59,9 @@ Potential content:
 * Important dates and deadlines.
 * Admit cards, results, and counselling links.
 
-Verify examination schedules and requirements against official examination websites.
+Verify examination schedules, eligibility requirements, and registration instructions against official examination websites.
 
-4. counselling.html — Admission Counselling
+3.4 counselling.html — Admission Counselling
 
 Explains counselling processes and student decision-making.
 
@@ -72,13 +72,13 @@ Potential content:
 * Seat allotment and reporting.
 * Document verification.
 * Fee payment and admission confirmation.
-* Guidance for subsequent rounds, where applicable.
+* Subsequent counselling rounds, where applicable.
 
-Clearly distinguish informational guidance from official seat-allotment or counselling services.
+Clearly distinguish informational guidance from official counselling, registration, and seat-allotment services.
 
-5. documents.html — Required Documents
+3.5 documents.html — Required Documents
 
-Provides checklists of documents commonly needed during admissions.
+Provides checklists of documents commonly required during admissions.
 
 Potential content:
 
@@ -87,12 +87,12 @@ Potential content:
 * Identity and address documents.
 * Category or eligibility certificates, where applicable.
 * Photographs and signatures.
-* Transfer, migration, or other institution-specific certificates.
+* Transfer, migration, or institution-specific certificates.
 * Payment receipts and allotment letters.
 
-Document requirements vary by course, institution, counselling authority, and applicant category. Avoid collecting sensitive documents unless an authorized, secure workflow is available.
+Requirements vary by course, institution, counselling authority, and applicant category. Do not collect sensitive documents unless an authorized and secure submission workflow is available.
 
-6. process.html — Admission Process
+3.6 process.html — Admission Process
 
 Explains the admission journey from initial research through enrolment.
 
@@ -100,31 +100,32 @@ A typical informational sequence is:
 
 1. Explore courses and institutions.
 2. Review eligibility criteria.
-3. Identify required entrance examinations.
-4. Complete the relevant application or registration.
-5. Prepare the required documents.
+3. Identify the relevant entrance examinations.
+4. Complete the required application or registration.
+5. Prepare the necessary documents.
 6. Participate in counselling or selection, where applicable.
 7. Review the official allotment or offer.
 8. Complete document verification and fee payment.
 9. Confirm admission with the institution.
 
-The exact sequence depends on the admission pathway.
+The actual sequence depends on the relevant course, institution, and admission pathway.
 
-Integration with MedOrbits
+4. Integration with MedOrbits
 
-The Admissions module may connect to:
+The Admissions module may connect to the following areas:
 
-* education/study-in-india/ for Indian education pathways.
-* education/study-abroad/ for international admissions.
-* education/colleges.html for college discovery.
-* education/courses.html for course discovery.
-* education/universities.html for university information.
-* assets/data/ for public education catalogues.
-* Backend APIs for authorized applications, document submissions, and user-specific workflows, where implemented.
+Resource	Purpose
+education/study-in-india/	Indian education pathways.
+education/study-abroad/	International education and admissions.
+education/colleges.html	College discovery.
+education/courses.html	Course discovery.
+education/universities.html	University information.
+assets/data/	Public education catalogues, where available.
+Backend APIs	Authorized applications, document submissions, and user-specific workflows, where implemented.
 
-Verify page paths, data schemas, and API endpoints before enabling integrations.
+Verify actual page paths, data schemas, API endpoints, and access requirements before enabling integrations.
 
-Frontend Standards
+5. Frontend Standards
 
 * Reuse the shared MedOrbits navigation, footer, typography, and design system.
 * Maintain responsive layouts for mobile, tablet, and desktop.
@@ -132,29 +133,41 @@ Frontend Standards
 * Provide visible keyboard focus states.
 * Use descriptive links and meaningful image alternative text.
 * Respect reduced-motion preferences.
-* Ensure every internal link resolves to a valid page or route.
+* Ensure internal links resolve to valid pages or routes.
+* Provide appropriate loading, empty, validation, and error states for dynamic features.
 
-Accuracy and Security
+6. Accuracy and Security
 
-* Keep eligibility criteria and admission dates current.
-* Link to official examination and counselling authorities.
-* Clearly identify informational content that is not an official admission decision.
+* Keep eligibility criteria, examination schedules, and admission dates current.
+* Link to official examination, counselling, and institutional authorities.
+* Clearly identify informational content that does not constitute an official admission decision.
 * Never guarantee admission, seat allotment, or examination outcomes.
-* Validate all submitted information on the server.
-* Enforce authentication and authorization for private application records.
+* Validate submitted information on the server.
+* Enforce authentication, authorization, and resource-ownership checks for private application records.
 * Store uploaded identity and academic documents securely.
-* Do not expose private applicant data through public JSON files or URLs.
+* Do not expose private applicant data through public JSON files, unrestricted APIs, or public URLs.
+* Avoid collecting unnecessary personal information.
 
-Maintenance Checklist
+7. Testing and Quality Assurance
+
+Before releasing changes to the Admissions module, verify the following:
 
 * [ ]	All six HTML pages exist.
-* [ ]	Internal navigation works.
+* [ ]	Internal navigation and cross-module links work.
 * [ ]	Eligibility and examination information is reviewed regularly.
 * [ ]	Counselling instructions reflect the relevant authority’s process.
 * [ ]	Document checklists identify applicable requirements.
-* [ ]	Official resources and deadlines are linked correctly.
-* [ ]	Mobile responsiveness and accessibility are tested.
-* [ ]	Any application or document APIs enforce appropriate authorization.
+* [ ]	Official resources and deadlines link correctly.
+* [ ]	Responsive layouts and accessibility are tested.
+* [ ]	API integrations handle errors and invalid responses.
+* [ ]	Private application and document endpoints enforce appropriate authorization.
+* [ ]	No sensitive applicant information or credentials are exposed.
+
+8. Maintenance
+
+Update this document whenever the directory structure, admission pages, data sources, API integrations, or admission workflows change.
+
+Verify filenames and relative links against the current repository. Document implemented functionality separately from planned enhancements, and review time-sensitive admission information before publication.
 
 ⸻
 

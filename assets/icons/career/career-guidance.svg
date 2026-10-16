@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Career Guidance</title>
+  <desc id="desc">MedOrbits career icon for career guidance.</desc>
+  <g stroke="#6B1838" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 4.5 1.8c-1.1 1-2 1.2-2 2.7"/><path d="M12 17h.01"/><path d="M3.5 12H2M22 12h-1.5"/>
+  </g>
+  <circle cx="20.5" cy="3.5" r="1.1" fill="#C9A66B"/>
+</svg>

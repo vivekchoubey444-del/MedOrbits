@@ -1,87 +1,30 @@
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-    with:
-      persist-credentials: false
+name: CI
 
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: "20"
+on:
+  push:
+    branches: [main]
+  pull_request:
 
-  - name: Validate package.json
-    shell: bash
-    run: |
-      if [ -f package.json ]; then
-        node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
-        echo "package.json is valid."
-      else
-        echo "No root package.json found; skipping Node.js project checks."
-      fi
+permissions:
+  contents: read
 
-  - name: Validate JSON files
-    shell: bash
-    run: |
-      node <<'NODE'
-      const fs = require('fs');
-      const path = require('path');
-
-      const ignored = new Set([
-        '.git',
-        'node_modules',
-        '.next',
-        'dist',
-        'build',
-        'coverage'
-      ]);
-
-      let checked = 0;
-      const errors = [];
-
-      function walk(dir) {
-        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-          if (ignored.has(entry.name)) continue;
-
-          const file = path.join(dir, entry.name);
-
-          if (entry.isDirectory()) {
-            walk(file);
-          } else if (entry.isFile() && entry.name.endsWith('.json')) {
-            try {
-              JSON.parse(fs.readFileSync(file, 'utf8'));
-              checked++;
-            } catch (error) {
-              errors.push(`${file}: ${error.message}`);
-            }
-          }
-        }
-      }
-
-      walk('.');
-      console.log(`Validated ${checked} JSON file(s).`);
-
-      if (errors.length) {
-        console.error(errors.join('\n'));
-        process.exitCode = 1;
-      }
-      NODE
-
-  - name: Install dependencies
-    if: hashFiles('package.json') != ''
-    run: |
-      if [ -f package-lock.json ]; then
-        npm ci
-      else
-        echo "::warning::No package-lock.json found; using npm install."
-        npm install
-      fi
-
-  - name: Run tests
-    if: hashFiles('package.json') != ''
-    shell: bash
-    run: |
-      if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
-        npm test
-      else
-        echo "::notice::No test script configured in package.json; skipping tests."
-      fi
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run check:node
+      - run: npm run check:json
+      - run: npm run check:data
+      - run: npm run check:security
+      - run: npm run lint:check
+      - run: npm run format:check
+      - run: npm run test:coverage
+      - run: npm run security:audit:production

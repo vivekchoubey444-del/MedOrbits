@@ -1,10 +1,15 @@
-# Dependabot configuration for MedOrbits
-# https://docs.github.com/code-security/dependabot
+# ============================================================
+# MedOrbits -- Dependabot Configuration
+# File: .github/dependabot.yml
+# Purpose: Automated dependency updates and maintenance
+# ============================================================
 version: 2
 updates:
-  # Node.js dependencies
+  # ----------------------------------------------------------
+  # 1. NPM -- Node.js application dependencies
+  # ----------------------------------------------------------
   - package-ecosystem: npm
-    directory: "/"
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -15,9 +20,18 @@ updates:
     labels:
       - dependencies
       - npm
+      - automated-update
     commit-message:
       prefix: "deps"
+      prefix-development: "deps-dev"
       include: scope
+    # Cooldown applies to routine version updates.
+    # Security updates are not delayed by this policy.
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     groups:
       production-dependencies:
         dependency-type: production
@@ -29,9 +43,12 @@ updates:
         update-types:
           - minor
           - patch
-  # GitHub Actions workflow dependencies
+    # Major updates remain separate for focused review.
+  # ----------------------------------------------------------
+  # 2. GITHUB ACTIONS -- CI/CD workflow dependencies
+  # ----------------------------------------------------------
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -41,11 +58,23 @@ updates:
     labels:
       - dependencies
       - github-actions
+      - ci
     commit-message:
       prefix: "ci"
-  # Docker dependencies (only if a Dockerfile exists in the repository root)
+      include: scope
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  # ----------------------------------------------------------
+  # 3. DOCKER -- Container image dependencies
+  # ----------------------------------------------------------
+  # Keep this entry only if a supported Dockerfile or other
+  # Docker dependency definition exists at the repository root.
   - package-ecosystem: docker
-    directory: "/"
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -55,5 +84,9 @@ updates:
     labels:
       - dependencies
       - docker
+      - infrastructure
     commit-message:
       prefix: "docker"
+      include: scope
+    cooldown:
+      default-days: 7

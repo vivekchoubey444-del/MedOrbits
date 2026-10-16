@@ -1,17 +1,131 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
-  "notifications": [],
+  "metadata": {
+    "title": "MedOrbits Notifications",
+    "description": "Site-wide banners, alerts and reminder templates shown to visitors. Official admission notices live in news.json; notifications point to them.",
+    "defaultLanguage": "en",
+    "dateFormat": "YYYY-MM-DD",
+    "datetimeFormat": "ISO 8601 with UTC offset",
+    "privacyPolicy": "Notifications must not contain personal data. Delivery to individuals requires consent and an opt-out."
+  },
   "fields": [
-    "id",
-    "title",
-    "message",
-    "type",
-    "audience",
-    "startsAt",
-    "expiresAt",
-    "targetUrl",
-    "active"
+    "id", "title", "message", "notificationType", "severity", "channel", "audience",
+    "countryCode", "stateIds", "examIds", "courseIds", "admissionIds", "newsId",
+    "cta", "startsAt", "endsAt", "dismissible", "showOnce", "priority", "templateId",
+    "sourceUrl", "publicationStatus", "verificationStatus", "verifiedAt", "verifiedBy",
+    "active", "createdAt", "updatedAt"
   ],
-  "note": "Do not put private or sensitive user information in public notification data."
+  "fieldDefinitions": {
+    "id": { "type": "string", "required": true, "unique": true, "example": "notif-site-maintenance" },
+    "title": { "type": "string", "required": true, "maxLength": 80 },
+    "message": { "type": "string", "required": true, "maxLength": 240, "note": "Plain text, original wording." },
+    "notificationType": { "type": "string", "required": true, "enum": "allowedValues.notificationType" },
+    "severity": { "type": "string", "required": true, "default": "info", "enum": "allowedValues.severity" },
+    "channel": { "type": "array", "required": true, "itemEnum": "allowedValues.channel" },
+    "audience": { "type": "string", "required": false, "default": "all_visitors", "enum": "allowedValues.audience" },
+    "countryCode": { "type": "string", "required": false, "nullable": true, "format": "ISO 3166-1 alpha-2" },
+    "stateIds": { "type": "array", "default": [], "references": "locations.states.id" },
+    "examIds": { "type": "array", "default": [], "references": "entrance-exams.exams.id" },
+    "courseIds": { "type": "array", "default": [], "references": "courses.id" },
+    "admissionIds": { "type": "array", "default": [], "references": "admissions.id" },
+    "newsId": { "type": "string", "required": false, "nullable": true, "references": "news.id" },
+    "cta": { "type": "object", "required": false, "nullable": true, "shape": { "label": "string", "url": "https URL or site path", "opensInNewTab": "boolean" } },
+    "startsAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
+    "endsAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
+    "dismissible": { "type": "boolean", "default": true },
+    "showOnce": { "type": "boolean", "default": false },
+    "priority": { "type": "integer", "default": 0, "note": "Higher shows first." },
+    "templateId": { "type": "string", "required": false, "nullable": true, "references": "templates.id" },
+    "sourceUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
+    "publicationStatus": { "type": "string", "required": true, "enum": "allowedValues.publicationStatus", "default": "draft" },
+    "verificationStatus": { "type": "string", "required": true, "enum": "allowedValues.verificationStatus", "default": "unverified" },
+    "verifiedAt": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
+    "verifiedBy": { "type": "string", "required": false, "nullable": true },
+    "active": { "type": "boolean", "required": true, "default": true },
+    "createdAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
+    "updatedAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" }
+  },
+  "allowedValues": {
+    "notificationType": [
+      "deadline_reminder",
+      "new_update",
+      "schedule_change",
+      "result_alert",
+      "counselling_alert",
+      "document_reminder",
+      "site_announcement",
+      "maintenance",
+      "disclaimer",
+      "other"
+    ],
+    "severity": ["info", "success", "warning", "critical"],
+    "channel": ["banner", "toast", "inbox", "email", "push"],
+    "audience": ["all_visitors", "registered_users", "subscribers", "admins"],
+    "publicationStatus": ["draft", "scheduled", "live", "expired", "cancelled"],
+    "verificationStatus": ["unverified", "pending_review", "verified", "outdated", "rejected"]
+  },
+  "templates": [
+    {
+      "id": "tpl-deadline-reminder",
+      "notificationType": "deadline_reminder",
+      "title": "Deadline approaching",
+      "message": "The listed deadline for {{admissionName}} may be approaching. Check the official notice for the current date.",
+      "placeholders": ["admissionName"],
+      "note": "Never insert a deadline date unless it comes from a verified record."
+    },
+    {
+      "id": "tpl-new-update",
+      "notificationType": "new_update",
+      "title": "New update available",
+      "message": "A new update about {{topic}} has been added. Review the official notice before taking action.",
+      "placeholders": ["topic"]
+    },
+    {
+      "id": "tpl-schedule-change",
+      "notificationType": "schedule_change",
+      "title": "Schedule may have changed",
+      "message": "The schedule for {{topic}} has been updated. Confirm the latest dates on the official website.",
+      "placeholders": ["topic"]
+    },
+    {
+      "id": "tpl-document-reminder",
+      "notificationType": "document_reminder",
+      "title": "Prepare your documents",
+      "message": "Review the official notice for the documents required for {{admissionName}}.",
+      "placeholders": ["admissionName"]
+    },
+    {
+      "id": "tpl-unverified-warning",
+      "notificationType": "disclaimer",
+      "title": "Information not yet verified",
+      "message": "Some details here are not yet verified. Confirm with the official source before acting.",
+      "placeholders": []
+    }
+  ],
+  "dataRules": [
+    "Every notification must have a unique id; templateId, when set, must reference an existing template.",
+    "title and message are required; keep messages short, factual and in plain text.",
+    "Never invent dates, deadlines, results or eligibility; deadline-related messages must link to a verified admission or news record.",
+    "A deadline_reminder, schedule_change or result_alert must reference at least one of newsId or admissionIds.",
+    "startsAt and endsAt use ISO 8601 with offset; endsAt must not precede startsAt.",
+    "Notifications past endsAt must be treated as expired and not shown.",
+    "channel 'email' or 'push' requires audience 'subscribers' or 'registered_users' and recorded user consent with an opt-out.",
+    "Never include personal data, phone numbers or email addresses in notification content.",
+    "Do not use urgency or fear to pressure users; severity 'critical' is reserved for outages and verified, time-sensitive official changes.",
+    "Notifications must not promise admission, jobs, funding or outcomes.",
+    "cta urls must be https or a site-relative path, and external links must point to official sources where an official notice exists.",
+    "Referenced ids (stateIds, examIds, courseIds, admissionIds, newsId) must exist.",
+    "verificationStatus 'verified' is required before a notification about an official change goes live.",
+    "The active field controls display only; it does not mean anything is open or in force."
+  ],
+  "displayRules": {
+    "defaultSort": ["priority desc", "startsAt desc"],
+    "maxBannersAtOnce": 1,
+    "maxToastsPerSession": 3,
+    "hideWhen": ["active == false", "publicationStatus in ['draft','expired','cancelled']", "endsAt < now", "startsAt > now"],
+    "respectDismissal": true,
+    "accessibility": "Banners use role=status; critical alerts use role=alert; never rely on colour alone."
+  },
+  "notifications": []
 }

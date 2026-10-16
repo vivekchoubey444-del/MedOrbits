@@ -1,36 +1,89 @@
 /* =========================================================
-MedOrbits -- Design Tokens
-Extracted from the existing homepage
-Theme: Luxury Aubergine & Champagne Gold
-========================================================= */
-
+   MedOrbits -- Design Tokens
+   Theme: Luxury Aubergine & Champagne Gold
+   Purpose: Global CSS variables and design foundations
+   ========================================================= */
 :root {
-/* Browser theme */
-color-scheme: dark;
-
-/* Background colours */
-–bg: #100a17;
-–bg-2: #191023;
-
-/* Surface colours */
-–panel: #21172b;
-–panel-2: #2b1d36;
-
-/* Brand accents */
-–gold: #c9a96e;
-–gold-light: #e4d0a1;
-
-/* Typography colours */
-–lav: #d9cce4;
-–muted: #b7acbf;
-–white: #f7f1fa;
-
-/* Borders */
-–line: rgba(201, 169, 110, 0.24);
-
-/* Shape */
-–radius: 18px;
-
-/* Elevation */
-–shadow: 0 22px 65px rgba(0, 0, 0, 0.25);
+  /* Browser theme */
+  color-scheme: dark;
+  /* Background colours */
+  --bg: #100a17;
+  --bg-2: #191023;
+  /* Surface colours */
+  --panel: #21172b;
+  --panel-2: #2b1d36;
+  /* Brand accents */
+  --gold: #c9a96e;
+  --gold-light: #e4d0a1;
+  /* Typography colours */
+  --lav: #d9cce4;
+  --muted: #b7acbf;
+  --white: #f7f1fa;
+  /* Borders */
+  --line: rgba(201, 169, 110, 0.24);
+  /* Shape */
+  --radius: 18px;
+  /* Elevation */
+  --shadow: 0 22px 65px rgba(0, 0, 0, 0.25);
+  /* Extended design tokens */
+  --bg-overlay: rgba(16, 10, 23, 0.88);
+  --panel-glass: rgba(33, 23, 43, 0.78);
+  --gold-soft: rgba(201, 169, 110, 0.12);
+  --gold-border: rgba(201, 169, 110, 0.35);
+  --focus-ring: rgba(228, 208, 161, 0.7);
+  /* Typography */
+  --font-body: "DM Sans", sans-serif;
+  --font-heading: "Playfair Display", Georgia, serif;
+  --font-ui: "DM Sans", sans-serif;
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  /* Layout */
+  --container-width: 1200px;
+  --container-gutter: 24px;
+  --header-height: 82px;
+  /* Motion */
+  --transition-fast: 160ms ease;
+  --transition-base: 240ms ease;
+  --transition-slow: 360ms ease;
+  /* Layering */
+  --z-dropdown: 100;
+  --z-sticky: 1000;
+  --z-modal: 2000;
+  --z-toast: 3000;
+}
+/* =========================================================
+   Responsive design tokens
+   ========================================================= */
+@media (max-width: 760px) {
+  :root {
+    --container-gutter: 14px;
+    --header-height: 70px;
+    --radius: 15px;
+    --space-12: 40px;
+    --space-16: 52px;
+  }
+}
+/* =========================================================
+   Accessibility: reduce motion
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-base: 0ms;
+    --transition-slow: 0ms;
+  }
 }

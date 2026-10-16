@@ -1,31 +1,382 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
-  "services": [
+  "metadata": {
+    "title": "MedOrbits Recruitment Drives",
+    "description": "Recruitment drives and cycles run by public bodies, hospitals and employers for health roles. Drives group one or more posts and link to individual job records.",
+    "defaultCountryCode": "IN",
+    "defaultCurrency": "INR",
+    "dateFormat": "YYYY-MM-DD",
+    "relationToJobs": "jobs.json holds individual posts. This file holds the drive or notice that advertises them; each drive lists jobIds.",
+    "verificationPolicy": "Publish only from the official recruitment notice. Verify dates, posts, eligibility, fees and application channel before publication. Never invent them."
+  },
+  "fields": [
+    "id",
+    "title",
+    "slug",
+    "recruitingBodyName",
+    "recruitingBodyType",
+    "recruitingBodyUrl",
+    "employerName",
+    "noticeNumber",
+    "noticeTitle",
+    "noticeDate",
+    "noticeUrl",
+    "advertisementType",
+    "countryCode",
+    "stateIds",
+    "jobIds",
+    "courseIds",
+    "totalVacancies",
+    "vacancyBreakdown",
+    "eligibilitySummary",
+    "eligibilitySourceUrl",
+    "ageLimit",
+    "applicationFee",
+    "stages",
+    "selectionProcess",
+    "requiredDocumentIds",
+    "applicationMode",
+    "applicationStart",
+    "applicationEnd",
+    "applicationStatus",
+    "applicationUrl",
+    "officialUrl",
+    "sourceUrl",
+    "helpdeskEmail",
+    "helpdeskPhone",
+    "corrigendumIds",
+    "supersedesId",
+    "importantNotes",
+    "notes",
+    "verificationStatus",
+    "verifiedAt",
+    "verifiedBy",
+    "reviewDueAt",
+    "publicationStatus",
+    "active",
+    "createdAt",
+    "updatedAt"
+  ],
+  "fieldDefinitions": {
+    "id": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "example": "recruit-body-notice-2026"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "recruitingBodyType": {
+      "type": "string",
+      "enum": "recruitingBodyCatalogue[].type"
+    },
+    "employerName": {
+      "type": "string",
+      "nullable": true,
+      "note": "The employer when different from the recruiting body."
+    },
+    "advertisementType": {
+      "type": "string",
+      "enum": "allowedValues.advertisementType"
+    },
+    "jobIds": {
+      "type": "array",
+      "references": "jobs.id"
+    },
+    "courseIds": {
+      "type": "array",
+      "references": "courses.id"
+    },
+    "totalVacancies": {
+      "type": "integer",
+      "nullable": true,
+      "note": "Only as published; do not sum unless the notice does."
+    },
+    "vacancyBreakdown": {
+      "type": "array",
+      "itemShape": {
+        "postName": "string",
+        "vacancies": "integer or null",
+        "reservationNote": "string or null",
+        "payLevelNote": "string or null"
+      }
+    },
+    "ageLimit": {
+      "type": "object",
+      "nullable": true,
+      "shape": {
+        "minYears": "integer or null",
+        "maxYears": "integer or null",
+        "asOnDate": "YYYY-MM-DD or null",
+        "relaxationNote": "string or null"
+      }
+    },
+    "applicationFee": {
+      "type": "object",
+      "nullable": true,
+      "shape": {
+        "amount": "number or null",
+        "currency": "ISO 4217 or null",
+        "exemptionNote": "string or null",
+        "refundable": "boolean or null"
+      }
+    },
+    "stages": {
+      "type": "array",
+      "itemShape": {
+        "stage": "enum stageCatalogue[].key",
+        "startDate": "YYYY-MM-DD or null",
+        "endDate": "YYYY-MM-DD or null",
+        "status": "enum allowedValues.stageStatus",
+        "noticeUrl": "https URL or null"
+      }
+    },
+    "selectionProcess": {
+      "type": "array",
+      "itemEnum": "stageCatalogue[].key"
+    },
+    "requiredDocumentIds": {
+      "type": "array",
+      "references": "documents.id",
+      "note": "Only as listed in the official notice."
+    },
+    "applicationStatus": {
+      "type": "string",
+      "enum": "allowedValues.applicationStatus",
+      "default": "awaiting_notification"
+    },
+    "corrigendumIds": {
+      "type": "array",
+      "references": "recruitment.id",
+      "note": "Records that amend this drive."
+    },
+    "supersedesId": {
+      "type": "string",
+      "nullable": true,
+      "references": "recruitment.id"
+    }
+  },
+  "allowedValues": {
+    "advertisementType": [
+      "regular",
+      "contract",
+      "walk_in",
+      "campus",
+      "apprenticeship",
+      "corrigendum",
+      "other"
+    ],
+    "applicationMode": [
+      "online",
+      "offline",
+      "hybrid",
+      "walk_in",
+      "not_applicable"
+    ],
+    "applicationStatus": [
+      "upcoming",
+      "open",
+      "closed",
+      "extended",
+      "awaiting_notification",
+      "not_applicable"
+    ],
+    "stageStatus": [
+      "scheduled",
+      "ongoing",
+      "completed",
+      "postponed",
+      "cancelled",
+      "unknown"
+    ],
+    "publicationStatus": [
+      "draft",
+      "in_review",
+      "published",
+      "archived"
+    ],
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ]
+  },
+  "recruitingBodyCatalogue": [
     {
-      "id": "recruitment-sourcing",
-      "name": "Candidate Sourcing",
-      "slug": "candidate-sourcing",
-      "description": "Support employers in defining role requirements and sourcing relevant candidates.",
-      "audience": "employers",
-      "active": true
+      "type": "public_service_commission",
+      "label": "Public service commission",
+      "description": "Constitutional or statutory body recruiting for government posts."
     },
     {
-      "id": "recruitment-screening",
-      "name": "Recruitment Coordination",
-      "slug": "recruitment-coordination",
-      "description": "Coordinate candidate screening and recruitment communication where agreed.",
-      "audience": "employers",
-      "active": true
+      "type": "recruitment_board",
+      "label": "Recruitment board or selection board",
+      "description": "Dedicated board conducting recruitment for departments or services."
     },
     {
-      "id": "recruitment-career",
-      "name": "Candidate Career Support",
-      "slug": "candidate-career-support",
-      "description": "Provide career preparation resources and application guidance.",
-      "audience": "candidates",
-      "active": true
+      "type": "health_department",
+      "label": "Health department or directorate",
+      "description": "Government health department recruiting directly."
+    },
+    {
+      "type": "national_health_programme",
+      "label": "National or state health programme",
+      "description": "Programme or mission recruiting on contract."
+    },
+    {
+      "type": "hospital_or_medical_college",
+      "label": "Hospital or medical college",
+      "description": "Government or private hospital or college recruiting directly."
+    },
+    {
+      "type": "armed_forces_medical",
+      "label": "Armed forces medical services",
+      "description": "Defence medical recruitment channels."
+    },
+    {
+      "type": "research_organisation",
+      "label": "Research organisation",
+      "description": "Research bodies recruiting scientists and staff."
+    },
+    {
+      "type": "university",
+      "label": "University",
+      "description": "University recruiting teaching and non-teaching staff."
+    },
+    {
+      "type": "private_employer",
+      "label": "Private employer",
+      "description": "Private hospital, company or chain recruiting directly."
+    },
+    {
+      "type": "ngo_or_international_body",
+      "label": "NGO or international organisation",
+      "description": "Non-profit or international recruiters."
+    },
+    {
+      "type": "other",
+      "label": "Other",
+      "description": "Other recruiting body."
     }
   ],
-  "disclaimer": "Service scope, fees and availability must be confirmed in written terms. Recruitment outcomes are not guaranteed."
+  "stageCatalogue": [
+    {
+      "key": "notification",
+      "label": "Notification published",
+      "description": "Official recruitment notice released by the recruiting body."
+    },
+    {
+      "key": "registration",
+      "label": "Online registration",
+      "description": "Candidates register on the official portal."
+    },
+    {
+      "key": "application",
+      "label": "Application submission",
+      "description": "Application form and fee submission, where applicable."
+    },
+    {
+      "key": "application_correction",
+      "label": "Correction window",
+      "description": "Period to correct application details, where offered."
+    },
+    {
+      "key": "admit_card",
+      "label": "Admit card release",
+      "description": "Admit card or call letter issued."
+    },
+    {
+      "key": "written_test",
+      "label": "Written or computer-based test",
+      "description": "Screening or main examination."
+    },
+    {
+      "key": "skill_or_practical_test",
+      "label": "Skill or practical test",
+      "description": "Practical assessment, where applicable."
+    },
+    {
+      "key": "interview",
+      "label": "Interview or personality test",
+      "description": "Panel interview or viva."
+    },
+    {
+      "key": "document_verification",
+      "label": "Document verification",
+      "description": "Original document check."
+    },
+    {
+      "key": "medical_examination",
+      "label": "Medical examination",
+      "description": "Fitness check, where required."
+    },
+    {
+      "key": "merit_list",
+      "label": "Merit or selection list",
+      "description": "Provisional or final list published."
+    },
+    {
+      "key": "appointment",
+      "label": "Appointment or joining",
+      "description": "Offer or appointment letter and joining formalities."
+    }
+  ],
+  "commonDocumentIds": [
+    "doc-class-10-marksheet",
+    "doc-class-12-marksheet",
+    "doc-photo-id",
+    "doc-passport-photograph",
+    "doc-signature",
+    "doc-category-certificate",
+    "doc-ews-certificate",
+    "doc-disability-certificate",
+    "doc-domicile-certificate",
+    "doc-address-proof",
+    "doc-medical-fitness-certificate",
+    "doc-undertaking-affidavit",
+    "doc-fee-payment-receipt"
+  ],
+  "commonDocumentNote": "Indicative only. The official notice decides which documents are required for a given drive.",
+  "dataRules": [
+    "Every drive must have a unique id and slug; jobIds, courseIds, stateIds, requiredDocumentIds, corrigendumIds and supersedesId must reference existing records.",
+    "Publish only from the recruiting body's official notice; noticeUrl or officialUrl is required, and noticeNumber must be copied exactly when present.",
+    "Never invent vacancies, posts, pay levels, age limits, fees, dates, helpdesk details or links; use null when unknown.",
+    "totalVacancies must be as published; do not compute or round it.",
+    "applicationEnd must not precede applicationStart; stage dates must be consistent with the notice; dates use YYYY-MM-DD or null.",
+    "When a corrigendum, extension or revised schedule is issued, create a record with supersedesId and mark the earlier record outdated rather than silently editing.",
+    "Closed or expired drives must be reviewed before display, and must not appear as open.",
+    "Show the official application channel only; never link to third parties who offer to 'guarantee' selection or charge to apply.",
+    "Application fees must be shown exactly as published with currency and exemptions; never imply a fee is required unless the notice says so.",
+    "Age limits and eligibility must be quoted from the notice, with asOnDate where stated; never infer eligibility.",
+    "Reservation and category rules must be stated only as published, without interpretation.",
+    "Do not publish personal data of candidates or officials beyond official helpdesk contacts printed in the notice.",
+    "verifiedAt and verifiedBy must be null until verified, and set together; 'verified' requires noticeUrl or sourceUrl.",
+    "The active field controls display only; it does not mean applications are open."
+  ],
+  "displayRules": {
+    "alwaysShow": [
+      "recruitingBodyName",
+      "noticeNumber",
+      "applicationEnd",
+      "verificationStatus"
+    ],
+    "hideFromPublicWhen": [
+      "active == false",
+      "verificationStatus == 'rejected'",
+      "publicationStatus != 'published'"
+    ],
+    "showStaleWarningWhen": [
+      "applicationEnd < today",
+      "reviewDueAt < today",
+      "verificationStatus == 'outdated'"
+    ],
+    "unverifiedLabel": "Unverified - confirm this recruitment with the official notice.",
+    "scamWarning": "Genuine recruitment never requires payment to 'secure' a job. Apply only through the official channel named in the notice.",
+    "disclaimer": "Recruitment details are informational and can change. MedOrbits does not recruit, guarantee selection, or replace the official notice."
+  },
+  "recruitments": []
 }
