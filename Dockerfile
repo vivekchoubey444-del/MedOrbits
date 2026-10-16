@@ -6,7 +6,7 @@ MEDORBITS -- HARDENED PRODUCTION DOCKERFILE
 
 Stage 1: Install production dependencies.
 
-FROM node:20-alpine AS dependencies
+FROM node:25-alpine AS dependencies
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ RUN npm ci –omit=dev
 
 Stage 2: Assemble the production image.
 
-FROM node:20-alpine AS production
+FROM node:25-alpine AS production
 
 WORKDIR /app
 
