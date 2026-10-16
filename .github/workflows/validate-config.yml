@@ -184,3 +184,54 @@ jobs:
           fi
       - name: Verify clean dependency installation
         run: npm ci --ignore-scripts --no-audit --no-fund
+- name: Validate JSON files
+  shell: bash
+  run: |
+    set -euo pipefail
+    errors=0
+    count=0
+    while IFS= read -r -d '' file; do
+      count=$((count + 1))
+      echo "Checking JSON: $file"
+      node <<'NODE' "$file"
+      try {
+        const fs = require('node:fs');
+        JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+      } catch (err) {
+        console.error(`${process.argv[1]}: ${err.message}`);
+        process.exit(1);
+      }
+      NODE
+      if [ $? -ne 0 ]; then
+        errors=$((errors + 1))
+      fi
+    done < <(
+      find . \
+        -type d \( -name node_modules -o -name .git -o -name coverage \) -prune \
+        -o -type f -name '*.json' -print0
+    )
+
+    echo "Validated $count JSON file(s). Errors: $errors"
+    if [ "$errors" -ne 0 ]; then
+      echo "::error ::JSON validation failed ($errors file(s))"
+      exit 1
+    fi
+
+- name: Validate YAML syntax
+  shell: ruby
+  run: |
+    require 'yaml'
+    require 'find'
+    count = 0
+    Find.find('.') do |path|
+      if File.directory?(path) &&
+         %w[.git node_modules coverage].include?(File.basename(path))
+        Find.prune
+      elsif File.file?(path) &&
+            path.match?(/\.(yml|yaml)\z/i)
+        puts "Checking YAML: #{path}"
+        YAML.parse_file(path)
+        count += 1
+      end
+    end
+    puts "Validated #{count} YAML file(s)."
