@@ -43,4 +43,4 @@ steps:
   - name: Analyze code
     uses: github/codeql-action/analyze@v4
     with:
-      category: /language:javascript-typescript
+      category: /language:javascript-typescript 
