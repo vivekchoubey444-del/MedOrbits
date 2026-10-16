@@ -173,6 +173,7 @@ jobs:
       # 12. UPLOAD TEST ARTIFACTS
       # --------------------------------------------------
       - name: Upload test coverage and results
+        if: always()
         if: ${{ always() && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
