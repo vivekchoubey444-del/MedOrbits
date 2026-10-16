@@ -1,76 +1,9 @@
-============================================================
-
-MEDORBITS SOURCE FILES -- KEEP TRACKED
-
-============================================================
-
-These rules only override earlier ignore rules.
-
-Git cannot re-include a file if its parent directory remains ignored.
-
-Source and application directories
-
-!/account/
-!/admin/
-!/assets/
-!/career/
-!/education/
-!/legal/
-!/pages/
-!/public/
-!/src/
-!/database/
-!/docs/
-!/scripts/
-!/tests/
-
-Repository tooling
-
-!/.github/
-!/.husky/
-
-Root project configuration and documentation
-
-!/.env.example
-!/.gitignore
-!/.nvmrc
-!/.dockerignore
-!/.editorconfig
-!/.prettierrc.json
-!/.eslintrc.json
-!/Dockerfile
-!/docker-compose.yml
-!/package.json
-!/package-lock.json
-!/README.md
-!/README-PRODUCTION.md
-!/LICENSE
-!/NOTICE
-!/SECURITY.md
-!/CONTRIBUTING.md
-!/CODE_OF_CONDUCT.md
-!/CHANGELOG.md
-!/SUPPORT.md
-!/server.js
-
-Database schemas, migrations, seeds and documentation
-
-!/database/.sql
-!/database/**/.sql
-!/database/.md
-!/database/**/.md
-
-GitHub documentation and automation
-
-!/.github/.md
-!/.github/.yml
-!/.github/*.yaml
-!/.github/ISSUE_TEMPLATE/
-!/.github/workflows/
-
-Husky hooks and documentation
-
-!/.husky/README.md
-!/.husky/commit-msg
-!/.husky/pre-commit
-!/.husky/pre-push
+node_modules/
+coverage/
+dist/
+logs/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
