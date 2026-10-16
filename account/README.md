@@ -1,324 +1,214 @@
 MedOrbits Account Module
 
-The account/ directory contains the user-facing account,
-authentication, security, application-tracking, document, payment, and
-support pages for MedOrbits.
+Directory: account/
+Page directory: account/main/
+Purpose: User account management, authentication, security, education applications, career services, payments, and support.
 
-> **Implementation note:** This README documents the intended purpose
-> and integration expectations for each page. A page existing in the
-> frontend does not, by itself, mean its API, authentication, payment
-> processing, email delivery, or security controls are implemented.
-> Verify each feature against the deployed backend before production
-> use.
+1. Overview
 
-Directory structure
+The MedOrbits Account Module provides the frontend pages through which users access their accounts, manage authentication and security, track applications, manage documents, review payments, and access supported education and career services.
+
+This README documents the intended responsibilities of the pages and their integration requirements. The existence of an HTML file does not establish that its API, authentication, payment processing, email delivery, or security controls are implemented.
+
+Verify each feature against the actual frontend code and deployed backend before production use.
+
+2. Directory Structure
 
 account/
 ├── README.md
-├── login.html
-├── register.html
-├── logout.html
-├── forgot-password.html
-├── reset-password.html
-├── verify-email.html
-├── resend-verification.html
-├── change-password.html
-├── two-factor.html
-├── security.html
-├── delete-account.html
-├── dashboard.html
-├── profile.html
-├── settings.html
-├── applications.html
-├── counselling.html
-├── documents.html
-├── notifications.html
-├── payments.html
-├── subscriptions.html
-├── saved-jobs.html
-├── internships.html
-├── support.html
-└── activity.html
+└── main/
+    ├── README.md
+    ├── activity.html
+    ├── applications.html
+    ├── change-password.html
+    ├── counselling.html
+    ├── dashboard-2.html
+    ├── dashboard.html
+    ├── delete-account.html
+    ├── documents.html
+    ├── forgot-password.html
+    ├── internships.html
+    ├── login.html
+    ├── logout.html
+    ├── payments.html
+    ├── README.md
+    ├── resend-verification.html
+    ├── reset-password.html
+    ├── saved-jobs.html
+    ├── security.html
+    ├── settings.html
+    ├── support.html
+    ├── two-factor.html
+    └── verify-email.html
 
-Page guide
+Directory note: This structure is based on the files visible in the supplied screenshots. Confirm whether register.html, profile.html, notifications.html, and subscriptions.html exist elsewhere or need to be added. The screenshots do not establish their presence.
 
-────────
+The two dashboard files should be reviewed to determine whether they serve distinct user journeys or represent duplicate implementations. Document their intended differences before removing or merging either page.
 
-Page                                Intended responsibility
+3. Page Responsibilities
 
-────────
+File	Intended responsibility
+activity.html	Display recorded account activity, such as sign-ins and account changes, when supported by the backend.
+applications.html	View and track education, admission, or service applications belonging to the signed-in user.
+change-password.html	Change the current password after the required authentication or re-authentication checks.
+counselling.html	Review counselling requests, appointments, status, and related guidance.
+dashboard.html	Provide an overview of account status, applications, documents, payments, and relevant notifications.
+dashboard-2.html	Provide an alternate dashboard experience if intentionally supported; document its distinction from dashboard.html.
+delete-account.html	Initiate a secure account-deletion request and explain its consequences.
+documents.html	Manage permitted document uploads, listings, reviews, and downloads.
+forgot-password.html	Request a password-reset link without disclosing whether an email address is registered.
+internships.html	Browse or review internship opportunities and related user activity supported by the platform.
+login.html	Authenticate users using the configured sign-in mechanism.
+logout.html	Initiate logout and invalidate the applicable server-side session or authentication state.
+payments.html	Display payment records, receipts, and transaction status provided by the backend.
+resend-verification.html	Request another account-verification message with suitable rate limiting.
+reset-password.html	Set a new password using a valid, single-use, expiring reset token.
+saved-jobs.html	Display jobs saved by the authenticated user.
+security.html	Present supported security controls, authentication methods, and session-management options.
+settings.html	Manage supported account preferences and communication settings.
+support.html	Submit support requests and review the signed-in user’s support cases.
+two-factor.html	Enrol, verify, use, or manage multi-factor authentication when implemented.
+verify-email.html	Verify an email address using the application’s supported verification flow.
 
-login.html                        Sign in using the account’s
-accepted credentials. Include clear
-validation and safe error messages.
-
-register.html                     Create a new account and collect
-only the information required to
-register.
-
-logout.html                       End the current session and return
-the user to a safe public page.
-Prefer a backend logout endpoint
-that invalidates the session.
-
-forgot-password.html              Request a password-reset email
-without revealing whether an email
-address is registered.
-
-reset-password.html               Set a new password using a valid,
-single-use, expiring reset token.
-
-verify-email.html                 Verify an email address using a
-token or verification link.
-
-resend-verification.html          Request another verification email,
-with rate limiting and
-privacy-preserving responses.
-
-change-password.html              Change the signed-in user’s
-password; require current-password
-verification or an equivalent
-secure re-authentication step.
-
-two-factor.html                   Enrol, verify, manage, or use
-multi-factor authentication,
-according to the implemented flow.
-
-security.html                     Review account-security options,
-active sessions, authentication
-methods, and relevant security
-controls.
-
-delete-account.html               Request account deletion and
-explain consequences, confirmation
-requirements, retention
-obligations, and any recovery
-window.
-
-dashboard.html                    Provide an overview of the user’s
-account, recent activity,
-applications, counselling,
-documents, payments, and
-notifications.
-
-profile.html                      View and edit personal and contact
-details permitted by the
-application.
-
-settings.html                     Manage preferences such as
-communication choices, display
-options, and account preferences.
-
-applications.html                 View and track submitted education,
-admission, or service applications.
-
-counselling.html                  Review counselling requests,
-appointments, status, and related
-guidance information.
-
-documents.html                    Upload, list, view, or manage
-account documents according to
-access permissions and
-file-validation rules.
-
-notifications.html                View account notifications and
-manage read/unread state or
-supported notification preferences.
-
-payments.html                     Review payment records, receipts,
-and transaction status returned by
-the payment backend.
-
-subscriptions.html                View or manage subscription plans,
-billing state, renewals, and
-cancellation options if supported.
-
-saved-jobs.html                   View jobs saved by the signed-in
-user.
-
-internships.html                  Review internship opportunities,
-saved items, or internship
-applications supported by the
-platform.
-
-support.html                      Submit support requests and view
-the user’s own support cases or
-replies.
-
-activity.html                     Show the signed-in user’s account activity, such as sign-ins, security events, enquiries, and account changes, when recorded by the backend.
-
-Recommended user journeys
+4. Recommended User Journeys
 
 Account access
 
-1. A new user opens register.html and submits registration details.
-2. The backend creates the account and sends a verification message if
-email verification is required.
-3. The user opens verify-email.html from the verification link.
+1. The user registers through the registration page provided by the application, if available.
+2. The backend creates the account and initiates email verification when required.
+3. The user verifies the email address through the supported verification flow.
 4. The user signs in through login.html.
-5. The user is redirected to dashboard.html or another authorized
-destination.
+5. The application redirects the user to an authorized destination, such as dashboard.html.
 
 Password recovery
 
-1. The user submits an email address on forgot-password.html.
-2. The backend sends a reset link when appropriate and returns a
-non-enumerating response.
-3. The user opens reset-password.html with a valid token and chooses
-a new password.
-4. The backend invalidates the reset token and applies the configured
-session-revocation policy.
+1. The user submits an email address through forgot-password.html.
+2. The backend responds without revealing whether the address belongs to an account.
+3. When appropriate, the backend sends a reset link.
+4. The user opens reset-password.html and submits a new password with a valid token.
+5. The backend invalidates the token and applies its configured session-revocation policy.
 
-Account and security management
+Account security
 
-1. Signed-in users manage their details in profile.html and
-preferences in settings.html.
-2. They manage password and authentication controls through
-change-password.html, two-factor.html, and security.html.
-3. They review recorded events in activity.html.
-4. Account deletion is initiated through delete-account.html and must
-be confirmed and processed by the backend.
+1. The user changes their password through change-password.html.
+2. The user manages supported security options through security.html and two-factor.html.
+3. The user reviews recorded events through activity.html.
+4. The user initiates account deletion through delete-account.html, subject to the backend’s confirmation and retention rules.
 
 Education and career services
 
-The dashboard can link to applications.html, counselling.html,
-documents.html, notifications.html, payments.html,
-subscriptions.html, saved-jobs.html, internships.html, and
-support.html. Each page must retrieve data for the authenticated user
-only.
+The dashboard may link to applications.html, counselling.html, documents.html, internships.html, and saved-jobs.html.
 
-Integration expectations
+The user may also access payments.html and support.html for the corresponding services.
 
-Shared frontend conventions
+Every private record must be retrieved and modified through authorized backend operations.
 
-• Use the existing MedOrbits visual system and responsive layout
-conventions.
-• Keep the account area consistent with its royal midnight-blue and
-platinum theme where that theme is used by the account pages.
-• Reuse the shared assets and scripts where appropriate, including
-files under /assets/css/, /assets/js/, and /assets/images/.
-• Use root-relative URLs consistently when the site is deployed at the
-domain root.
-• Provide visible loading, empty, success, and failure states for
-data-driven pages.
-• Label inputs, associate validation messages with their fields,
-preserve keyboard navigation, and support reduced-motion
-preferences.
-• Do not put passwords, authentication tokens, payment secrets, or
-private document contents in browser logs or URLs unless a
-short-lived token is specifically required for a secure verification
-flow.
+5. Frontend Integration Standards
 
-Backend and API
+Design and usability
 
-The frontend should call documented backend endpoints rather than
-treating client-side state as authoritative. Confirm the exact routes
-and request/response formats in the backend before connecting pages.
+* Follow the existing MedOrbits design system and responsive layout conventions.
+* Maintain the account area’s royal midnight-blue and platinum visual direction where that theme is already implemented.
+* Reuse shared stylesheets, scripts, images, and components where appropriate.
+* Use consistent navigation and page titles.
+* Provide visible loading, empty, success, and error states.
+* Support keyboard navigation, accessible form labels, visible focus indicators, and reduced-motion preferences.
+* Avoid exposing passwords, authentication tokens, payment secrets, or private document contents in browser logs or unnecessary URL parameters.
 
-Expected API capabilities may include:
+URL and navigation conventions
 
-• Authentication: register, login, logout, current-user/session
-lookup.
-• Verification: send and verify email-verification tokens.
-• Password recovery: request reset and redeem reset tokens.
-• Security: change password, manage multi-factor authentication,
-review/revoke sessions.
-• Profile and settings: read and update permitted account fields and
-preferences.
-• Account data: applications, counselling requests, documents,
-notifications, saved jobs, internships, and support tickets.
-• Billing: payment history, receipts, subscription status, and plan
-changes.
-• Activity: retrieve a user’s own recorded account events.
-• Account deletion: submit, confirm, and track deletion requests.
+Use paths that match the actual deployment structure. If the account pages are hosted under /account/main/, ensure links, redirects, stylesheets, scripts, and API configuration resolve correctly.
 
-The current application may use different endpoint names. Treat examples
-or expectations in this README as integration guidance, not proof that a
-specific endpoint exists.
+Do not assume that every page is deployed at /account/ or at the domain root. Test navigation from the actual hosting environment.
 
-Security requirements
+6. Backend and API Integration
 
-Before production release, verify the following:
+The frontend must use documented backend endpoints. Verify route names, authentication requirements, request formats, and response schemas against the implemented server.
 
-• Enforce authentication and authorization on the server for every
-private endpoint and resource.
-• Check ownership on every application, counselling record, document,
-payment, subscription, saved job, support ticket, and activity
-record.
-• Store passwords using a modern, purpose-built password-hashing
-algorithm; never store plaintext passwords.
-• Use HTTPS and secure session or token handling. If cookies are used,
-configure Secure, HttpOnly, and an appropriate SameSite
-policy.
-• Apply CSRF protection where relevant, rate-limit authentication and
-recovery endpoints, and use generic responses for login and
-password-recovery failures.
-• Make verification and password-reset tokens random, short-lived,
-single-use, and stored safely.
-• Validate uploaded files by type, size, content, and authorization.
-Store private documents outside a publicly browsable directory and
-use controlled access for downloads.
-• Verify payment status server-side with the payment provider. Never
-trust a client-side success message as proof of payment.
-• Require re-authentication or strong confirmation for sensitive
-changes and account deletion.
-• Record security-relevant events without logging passwords, full
-tokens, or unnecessary sensitive data.
-• Apply a documented retention and deletion policy, including any
-legally required records.
-• Test authorization boundaries, expired sessions, invalid tokens,
-duplicate submissions, and failure states.
+Expected capabilities may include:
 
-Accessibility and usability checklist
+* Authentication: registration, login, logout, and current-session lookup.
+* Email verification: issue and redeem verification tokens.
+* Password recovery: request and redeem password-reset tokens.
+* Account security: change passwords, manage multi-factor authentication, and revoke sessions.
+* Profile and preferences: retrieve and update authorized user fields.
+* Applications and counselling: retrieve user-owned records and supported status updates.
+* Documents: upload, validate, list, and securely retrieve permitted files.
+* Payments: retrieve transaction status and payment history.
+* Career services: retrieve saved jobs and internship-related records.
+* Support: submit and retrieve user-owned support cases.
+* Activity: retrieve recorded account events.
+* Account deletion: submit, confirm, and track deletion requests.
 
-☐ Each page has a meaningful title and one clear primary heading.
-☐ Every input has a visible or programmatic label.
-☐ Keyboard users can reach all controls and see focus indicators.
-☐ Validation errors explain how to correct the problem.
-☐ Loading and empty states are understandable without color alone.
-☐ Sensitive actions have clear consequences and confirmation
-steps.
-☐ Layouts work on small screens and at increased text sizes.
-☐ Motion respects prefers-reduced-motion.
-☐ Authentication failures do not disclose whether another user’s
-account exists.
+These are integration expectations, not confirmation that the corresponding routes exist.
 
-Testing checklist
+7. Security Requirements
 
-☐ Test registration, sign-in, sign-out, and session expiry.
-☐ Test email verification, expired tokens, reused tokens, and
-resend throttling.
-☐ Test password reset, password-change validation, and session
-revocation.
-☐ Test multi-factor enrolment, challenge, recovery, and removal if
-implemented.
-☐ Confirm unauthenticated visitors cannot access account data.
-☐ Confirm one user cannot read or modify another user’s records.
-☐ Test document upload/download restrictions and invalid files.
-☐ Test payment pending, failed, successful, refunded, and
-duplicate-callback scenarios where applicable.
-☐ Test subscription cancellation and renewal states where
-applicable.
-☐ Test activity filters, pagination, empty results, and API
-failures.
-☐ Test mobile navigation, keyboard operation, and reduced-motion
-behavior.
+Before production release, verify that:
 
-Maintenance
+* Every private backend endpoint enforces authentication and authorization.
+* Users cannot access another user’s applications, documents, payments, support cases, or activity records by changing an identifier.
+* Passwords are stored using an appropriate password-hashing algorithm, never as plaintext.
+* HTTPS and secure session or token handling are configured.
+* Cookie-based sessions use appropriate Secure, HttpOnly, and SameSite settings.
+* CSRF protection is applied where relevant.
+* Login, verification, and password-recovery endpoints use suitable rate limits.
+* Verification and password-reset tokens are random, short-lived, single-use, and stored safely.
+* File uploads are validated for type, size, content, and ownership, and private documents are not publicly accessible.
+* Payment status is confirmed server-side; client-side success messages are not treated as proof of payment.
+* Sensitive changes and account deletion require suitable confirmation or re-authentication.
+* Logs exclude passwords, complete authentication tokens, and unnecessary sensitive information.
+* Account deletion and retention policies account for applicable legal and operational requirements.
+
+8. Accessibility Checklist
+
+* [ ]	Every page has a meaningful document title and primary heading.
+* [ ]	Every form field has an accessible label.
+* [ ]	Keyboard users can reach all interactive controls.
+* [ ]	Focus indicators remain visible.
+* [ ]	Validation messages explain how to correct errors.
+* [ ]	Loading and empty states do not rely on color alone.
+* [ ]	Sensitive actions explain their consequences.
+* [ ]	Pages work on mobile screens and at increased text sizes.
+* [ ]	Motion respects prefers-reduced-motion.
+* [ ]	Authentication errors do not reveal whether another user’s account exists.
+
+9. Testing Checklist
+
+* [ ]	Test login, logout, session expiry, and unauthorized access.
+* [ ]	Test invalid, expired, and reused verification tokens.
+* [ ]	Test password-reset expiration and token reuse.
+* [ ]	Test password-change validation and session revocation.
+* [ ]	Test multi-factor authentication if implemented.
+* [ ]	Confirm users cannot read or modify other users’ records.
+* [ ]	Test document upload, download authorization, and invalid files.
+* [ ]	Test pending, successful, failed, and refunded payment states where applicable.
+* [ ]	Test duplicate payment-provider callbacks where applicable.
+* [ ]	Test saved jobs, internship pages, support cases, and application lists.
+* [ ]	Test pagination, empty results, API failures, and retry behavior.
+* [ ]	Test mobile layouts, keyboard interaction, and reduced-motion behavior.
+* [ ]	Verify all navigation links and asset paths in the deployed environment.
+
+10. Maintenance
 
 When adding or changing an account page:
 
-1. Update this directory tree and page guide.
-2. Document the backend endpoint(s), required authentication, and
-expected response.
-3. Add loading, empty, success, and error states.
-4. Verify access control and sensitive-data handling.
+1. Update the directory structure and page guide.
+2. Document the actual backend endpoints and required authorization.
+3. Add appropriate loading, empty, success, and error states.
+4. Review data ownership and sensitive-data handling.
 5. Test desktop and mobile layouts.
-6. Update relevant automated tests and deployment documentation.
+6. Update automated tests and related documentation.
+7. Verify all links and assets against the deployment path.
 
-────────
+Important Notes
+
+* The actual HTML, JavaScript, server routes, and deployment configuration determine implemented behavior.
+* Pages listed as intended responsibilities may require additional implementation or integration.
+* dashboard.html and dashboard-2.html should have documented, distinct purposes if both are retained.
+* Confirm the actual location of registration, profile, notification, and subscription pages before documenting them as part of this directory.
+* Keep frontend navigation, backend authorization, and API behavior consistent.
 
 Ownership: MedOrbits
-Scope: Frontend account pages and their integration expectations
-Production readiness: Confirm backend routes, security controls, and
-actual page behavior before launch.
+Scope: Account frontend pages and backend integration expectations
+Production readiness: Verify actual routes, security controls, page behavior, and deployment paths before launch.

@@ -1,166 +1,206 @@
-'use strict';
+#!/usr/bin/env node
+‘use strict’;
+
 /**
- * MedOrbits Security Preflight
- *
- * Checks:
- * 1. JSON syntax
- * 2. Required security files
- * 3. Potential hard-coded secrets
- * 4. Accidentally tracked environment files
- *
- * Note: This is a lightweight heuristic, not a replacement
- * for Gitleaks or GitHub secret scanning.
- */
-const fs = require('node:fs');
-const path = require('node:path');
-const ROOT = path.resolve(__dirname, '..');
-const SKIP_DIRECTORIES = new Set([
-  '.git',
-  'node_modules',
-  'dist',
-  'build',
-  'coverage',
-  '.next',
-  '.venv'
-]);
-const TEXT_EXTENSIONS = new Set([
-  '.js', '.cjs', '.mjs', '.ts', '.tsx', '.jsx',
-  '.json', '.yml', '.yaml', '.env', '.md',
-  '.html', '.css', '.sh', '.sql', '.toml',
-  '.xml', '.txt'
-]);
-const REQUIRED_FILES = [
-  'package.json',
-  '.github/workflows/ci.yml',
-  '.github/workflows/secret-scan.yml',
-  '.github/workflows/codeql.yml',
-  '.github/dependabot.yml'
+
+* MedOrbits -- Security Configuration Checker
+* Checks selected runtime security settings without displaying secret values.
+* Usage:
+* node scripts/security-check.js
+* Optional package.json script:
+* "check:security": "node scripts/security-check.js"
+* Scope:
+* This checks selected environment variables only. It does not replace
+* dependency auditing, static analysis, penetration testing, or a security audit.
+    */
+
+const REQUIRED_SECRETS = [
+‘SESSION_SECRET’,
 ];
-const SECRET_PATTERNS = [
-  {
-    name: 'Private key',
-    pattern:
-      /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/
-  },
-  {
-    name: 'Possible AWS access key',
-    pattern: /\bAKIA[0-9A-Z]{16}\b/
-  },
-  {
-    name: 'Possible GitHub token',
-    pattern: /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/
-  },
-  {
-    name: 'Possible hard-coded credential',
-    pattern:
-      /\b(?:password|passwd|secret|api[_-]?key|access[_-]?token)\b\s*[:=]\s*['"][^'"\r\n]{8,}['"]/i
-  }
+
+const PLACEHOLDER_PATTERNS = [
+/^change[-_ ]?me$/i,
+/^replace[-_ ]?me$/i,
+/^your[-_ ].+$/i,
+/^example$/i,
+/^placeholder$/i,
+/^secret$/i,
+/^password$/i,
+/^test$/i,
 ];
-const failures = [];
-const warnings = [];
-function relative(filePath) {
-  return path.relative(ROOT, filePath) || '.';
+
+const MIN_SESSION_SECRET_LENGTH = 32;
+const MIN_DISTINCT_SECRET_CHARACTERS = 8;
+
+const PRODUCTION_FORBIDDEN_SETTINGS = [
+{
+name: ‘DEBUG’,
+value: ‘true’,
+message: ‘DEBUG=true is configured in production.’,
+},
+{
+name: ‘NODE_TLS_REJECT_UNAUTHORIZED’,
+value: ‘0’,
+message:
+‘TLS certificate verification is disabled. Remove NODE_TLS_REJECT_UNAUTHORIZED=0.’,
+},
+];
+
+const SUSPICIOUS_GENERIC_NAMES =
+/^(PASSWORD|PASSWD|SECRET|PRIVATE_KEY|API_KEY)$/i;
+
+function isPresent(value) {
+return typeof value === ‘string’ && value.trim().length > 0;
 }
-function checkJson(filePath) {
-  try {
-    JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    console.log(`PASS JSON: ${relative(filePath)}`);
-  } catch (error) {
-    failures.push(
-      `Invalid JSON in ${relative(filePath)}: ${error.message}`
-    );
-  }
+
+function isPlaceholder(value) {
+const normalized = value.trim();
+
+return PLACEHOLDER_PATTERNS.some((pattern) =>
+pattern.test(normalized)
+);
 }
-function inspectText(filePath) {
-  let content;
-  try {
-    content = fs.readFileSync(filePath, 'utf8');
-  } catch (error) {
-    warnings.push(
-      `Could not read ${relative(filePath)}: ${error.message}`
-    );
-    return;
-  }
-  for (const item of SECRET_PATTERNS) {
-    if (item.pattern.test(content)) {
-      warnings.push(
-        `Possible ${item.name} in ${relative(filePath)}. Review manually.`
-      );
-    }
-  }
+
+function isWeakSecret(value) {
+if (!isPresent(value)) {
+return true;
 }
-function inspectFile(filePath) {
-  const name = path.basename(filePath);
-  const extension = path.extname(filePath).toLowerCase();
-  if (
-    name === '.env' ||
-    /^\.env\.(?!example$|sample$|template$)/i.test(name)
-  ) {
-    warnings.push(
-      `Environment file found: ${relative(filePath)}. ` +
-      'Ensure it is not tracked and contains no real credentials.'
-    );
-  }
-  if (extension === '.json') {
-    checkJson(filePath);
-  }
-  if (TEXT_EXTENSIONS.has(extension) || name.startsWith('.env')) {
-    inspectText(filePath);
-  }
+
+const normalized = value.trim();
+
+return (
+normalized.length < MIN_SESSION_SECRET_LENGTH ||
+isPlaceholder(normalized) ||
+new Set(normalized).size < MIN_DISTINCT_SECRET_CHARACTERS
+);
 }
-function walk(directory) {
-  let entries;
-  try {
-    entries = fs.readdirSync(directory, {
-      withFileTypes: true
-    });
-  } catch (error) {
-    failures.push(
-      `Cannot read ${relative(directory)}: ${error.message}`
-    );
-    return;
-  }
-  for (const entry of entries) {
-    if (SKIP_DIRECTORIES.has(entry.name)) {
-      continue;
-    }
-    const fullPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      walk(fullPath);
-    } else if (entry.isFile()) {
-      inspectFile(fullPath);
-    }
-  }
+
+function reportIssue(issues, severity, message) {
+issues.push({ severity, message });
 }
-function main() {
-  console.log('MedOrbits Security Preflight');
-  console.log('============================\n');
-  for (const requiredFile of REQUIRED_FILES) {
-    const fullPath = path.join(ROOT, requiredFile);
-    if (!fs.existsSync(fullPath)) {
-      failures.push(`Required file missing: ${requiredFile}`);
-    } else {
-      console.log(`PASS Required file: ${requiredFile}`);
-    }
-  }
-  walk(ROOT);
-  if (warnings.length > 0) {
-    console.log('\nSecurity warnings:');
-    for (const warning of [...new Set(warnings)]) {
-      console.warn(`WARN: ${warning}`);
-    }
-  }
-  if (failures.length > 0) {
-    console.error('\nSecurity preflight FAILED:');
-    for (const failure of failures) {
-      console.error(`ERROR: ${failure}`);
-    }
-    process.exitCode = 1;
-    return;
-  }
-  console.log('\nSecurity preflight PASSED.');
-  console.log(
-    'Review any warnings and use Gitleaks for dedicated secret scanning.'
+
+function checkRequiredSecrets(issues) {
+for (const name of REQUIRED_SECRETS) {
+const value = process.env[name];
+
+if (!isPresent(value)) {
+  reportIssue(
+    issues,
+    'ERROR',
+    `Required security variable ${name} is missing or empty.`
+  );
+  continue;
+}
+if (isWeakSecret(value)) {
+  reportIssue(
+    issues,
+    'ERROR',
+    `${name} appears weak or may contain a placeholder. Use a strong, randomly generated secret.`
   );
 }
+
+}
+}
+
+function checkEnvironment(issues) {
+const nodeEnv = process.env.NODE_ENV?.trim();
+
+if (!nodeEnv) {
+reportIssue(
+issues,
+‘WARNING’,
+‘NODE_ENV is not set; the runtime environment cannot be verified.’
+);
+return;
+}
+
+if (nodeEnv !== ‘production’) {
+return;
+}
+
+for (const setting of PRODUCTION_FORBIDDEN_SETTINGS) {
+if (process.env[setting.name] === setting.value) {
+reportIssue(issues, ‘ERROR’, setting.message);
+}
+}
+
+if (process.env.ALLOW_MIGRATIONS === ‘true’) {
+reportIssue(
+issues,
+‘WARNING’,
+‘ALLOW_MIGRATIONS=true is configured in production. Confirm that migration execution is separately controlled and approved.’
+);
+}
+
+if (process.env.DEBUG?.toLowerCase() === ‘true’) {
+// The DEBUG=true case is already reported above. Avoid duplicate reports.
+}
+
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (isPresent(sessionSecret) && isWeakSecret(sessionSecret)) {
+// The required-secret check already reports this issue.
+}
+}
+
+function checkSensitiveEnvironmentNames(issues) {
+const suspiciousNames = Object.keys(process.env)
+.filter((name) => SUSPICIOUS_GENERIC_NAMES.test(name))
+.sort();
+
+if (suspiciousNames.length > 0) {
+reportIssue(
+issues,
+‘WARNING’,
+Review generic secret variable names: ${suspiciousNames.join(', ')}. Confirm that the application uses the intended configuration variables.
+);
+}
+}
+
+function printReport(issues) {
+const errors = issues.filter((issue) => issue.severity === ‘ERROR’);
+const warnings = issues.filter(
+(issue) => issue.severity === ‘WARNING’
+);
+
+console.log(’\nMedOrbits Security Configuration Check’);
+console.log(’–––––––––––––––––––’);
+
+if (issues.length === 0) {
+console.log(‘PASS: No issues detected by the configured checks.’);
+} else {
+for (const issue of issues) {
+const output =
+issue.severity === ‘ERROR’ ? console.error : console.warn;
+
+  output(`[${issue.severity}] ${issue.message}`);
+}
+
+}
+
+console.log(’\nSummary’);
+console.log(Errors: ${errors.length});
+console.log(Warnings: ${warnings.length});
+console.log(‘Secret values are never displayed.’);
+
+if (errors.length > 0) {
+console.error(’\nFAIL: Resolve the security errors before proceeding.’);
+process.exitCode = 1;
+} else if (warnings.length > 0) {
+console.log(’\nPASS WITH WARNINGS: Review the warnings above.’);
+} else {
+console.log(’\nPASS: All configured checks passed.’);
+}
+}
+
+function main() {
+const issues = [];
+
+checkRequiredSecrets(issues);
+checkEnvironment(issues);
+checkSensitiveEnvironmentNames(issues);
+
+printReport(issues);
+}
+
 main();

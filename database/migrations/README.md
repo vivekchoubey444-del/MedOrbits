@@ -1,258 +1,538 @@
+MedOrbits Database Migrations
 
-# MedOrbits Database Migrations
+Directory: database/migrations/
+Database: MySQL 8.0.16+
+Storage engine: InnoDB
+Character set: utf8mb4
+Collation: utf8mb4_0900_ai_ci
 
-## Overview
+⸻
 
-This directory contains versioned SQL migrations for the MedOrbits application database.
+1. Overview
 
-Migrations define the database structure used by authentication, role-based access control, education guidance, college and university discovery, student applications, document management, recruitment, payments, subscriptions, notifications, and audit logging.
+The database/migrations/ directory contains versioned SQL migrations that define the relational database structure for the MedOrbits platform.
 
-**Database target:** MySQL 8.0.16+  
-**Storage engine:** InnoDB  
-**Character set:** utf8mb4  
-**Collation:** utf8mb4_0900_ai_ci
+Migrations establish the tables, relationships, indexes, constraints, and database-level rules required by authentication, role-based access control, education guidance, college and university discovery, student applications, document management, recruitment, subscriptions, payments, notifications, and audit logging.
 
-Execute migrations in numerical order using the project’s configured migration runner.
+Migrations are the controlled mechanism for evolving the database schema across development, testing, staging, and production environments.
 
-> Important: Do not execute these MySQL migrations against PostgreSQL. Do not mix PostgreSQL SQL syntax with the MySQL migration set.
+Configuration	Standard
+Database engine	MySQL
+Minimum target version	MySQL 8.0.16+
+Storage engine	InnoDB
+Character set	utf8mb4
+Collation	utf8mb4_0900_ai_ci
+Migration format	Sequential SQL files
+Migration history	schema_migrations
+Primary key convention	BIGINT UNSIGNED AUTO_INCREMENT
+Public identifier convention	Application-generated UUID
+Timestamp convention	DATETIME(3) where appropriate
 
-## Directory Structure
+Important: These migrations target MySQL and must not be executed against PostgreSQL without an explicit database-platform conversion.
 
-```text
+The intended migration sequence is not a substitute for inspecting the actual SQL files, their dependencies, and the migration runner.
+
+⸻
+
+2. Directory structure
+
+Expected structure:
+
 database/
-└── migrations/
-    ├── README.md
-    ├── 001_create_users.sql
-    ├── 002_create_roles_permissions.sql
-    ├── 003_create_courses.sql
-    ├── 004_create_colleges_universities.sql
-    ├── 005_create_applications.sql
-    ├── 006_create_documents.sql
-    ├── 007_create_employers_jobs.sql
-    ├── 008_create_subscriptions_payments.sql
-    ├── 009_create_notifications.sql
-    └── 010_create_audit_logs.sql
-```
+├── migrations/
+│   ├── README.md
+│   ├── 001_create_users.sql
+│   ├── 002_create_roles_permissions.sql
+│   ├── 003_create_courses.sql
+│   ├── 004_create_colleges_universities.sql
+│   ├── 005_create_applications.sql
+│   ├── 006_create_documents.sql
+│   ├── 007_create_jobs_employers.sql
+│   ├── 008_create_payments_subscriptions.sql
+│   ├── 009_create_notifications.sql
+│   └── 010_create_audit_logs.sql
+│
+├── seeds/
+│   ├── README.md
+│   ├── seed-roles.sql
+│   ├── seed-courses.sql
+│   ├── seed-colleges.sql
+│   └── seed-demo-data.sql
+│
+├── fixtures/
+│   ├── applications.fixture.json
+│   ├── colleges.fixture.json
+│   ├── courses.fixture.json
+│   ├── payments.fixture.json
+│   └── users.fixture.json
+│
+├── schema.sql
+└── schema.txt
 
-Verify the actual filenames in your repository before relying on this inventory.
+This is the intended layout. Confirm that each file exists at the specified path before executing commands.
 
-## Migration Reference
+Filename consistency
 
-| Migration | Description |
-|—|—|
-| `001_create_users.sql` | Creates user accounts, credentials, account statuses, and verification fields. |
-| `002_create_roles_permissions.sql` | Creates roles, permissions, role-permission mappings, user-role mappings, and system authorization records. |
-| `003_create_courses.sql` | Creates education course records. |
-| `004_create_colleges_universities.sql` | Creates university and college records and their relationship. |
-| `005_create_applications.sql` | Creates student application records and review workflow fields. |
-| `006_create_documents.sql` | Creates document metadata and review status records. |
-| `007_create_employers_jobs.sql` | Creates employer profiles and job listings. |
-| `008_create_subscriptions_payments.sql` | Creates subscription and payment records. |
-| `009_create_notifications.sql` | Creates in-app and delivery-channel notification records. |
-| `010_create_audit_logs.sql` | Creates security and application activity audit records. |
+Migration filenames are part of the migration history contract. Keep them stable after they have been applied in a shared environment.
 
-## Execution Order and Dependencies
+The following names have appeared in project documentation and must be reconciled against the repository:
 
-Apply migrations in numerical order:
+* 007_create_jobs_employers.sql
+* 007_create_employers_jobs.sql
+* 008_create_payments_subscriptions.sql
+* 008_create_subscriptions_payments.sql
 
-1. **Users** — establishes the base user table.
-2. **Roles and permissions** — establishes authorization tables and system role records.
-3. **Courses** — establishes course records.
-4. **Colleges and universities** — establishes education institution records.
-5. **Applications** — references users, courses, and colleges.
-6. **Documents** — references users and applications.
-7. **Employers and jobs** — establishes employer profiles and job listings.
-8. **Subscriptions and payments** — references users and subscriptions.
-9. **Notifications** — references users.
-10. **Audit logs** — references users and preserves historical actor information when a user is deleted.
+Choose the filename that matches the actual migration file and runner. Do not create multiple files with the same numeric prefix.
 
-Check every migration’s foreign keys before changing this order. Ensure all referenced tables exist before creating dependent tables.
+⸻
 
-## Migration Standards
+3. Migration inventory
 
-- Use sequential, zero-padded migration filenames.
-- Keep applied migrations immutable in shared environments.
-- Create a new migration to modify an existing schema.
-- Define foreign keys, indexes, and database constraints for data integrity.
-- Keep schema changes consistent with application models, repositories, validators, and services.
-- Separate schema creation from seed data where practical.
-- Review destructive operations before execution.
-- Never store credentials, production secrets, or real personal information in migration files.
-- Generate application-facing UUIDs in Node.js using `crypto.randomUUID()` when the schema expects application-generated UUID values.
-- Use `BIGINT UNSIGNED` consistently for primary and foreign keys where the referenced tables use that type.
-- Use `DATETIME(3)` consistently for millisecond-precision timestamps.
-- Use InnoDB for tables participating in foreign-key relationships.
+Migration	Responsibility
+001_create_users.sql	User accounts, credentials, account status, and verification metadata.
+002_create_roles_permissions.sql	Roles, permissions, user-role assignments, and role-permission mappings.
+003_create_courses.sql	Course catalogue and education metadata.
+004_create_colleges_universities.sql	Universities, colleges, and institutional relationships.
+005_create_applications.sql	Student applications and application review workflows.
+006_create_documents.sql	Document metadata, ownership, storage references, and verification status.
+007_create_jobs_employers.sql	Employer profiles and job listings. Employment application records require explicit schema confirmation.
+008_create_payments_subscriptions.sql	Subscription records, payment transactions, refunds, and provider references, according to the final SQL.
+009_create_notifications.sql	Notifications, preferences, templates, delivery scheduling, retries, and provider-event tracking, according to the final SQL.
+010_create_audit_logs.sql	Security events, administrative actions, and audit history.
 
-## Running Migrations
+The inventory describes intended responsibilities. It does not establish that every listed feature has been implemented in the corresponding SQL file.
 
-Inspect the scripts defined in `package.json`:
+Before deployment, inspect the actual migration definitions and compare them with application requirements.
 
-```bash
-npm run
-```
+⸻
 
-Run the migration command configured by the project. For example, if the project defines a `migrate` script:
+4. Migration dependencies
 
-```bash
-npm run migrate
-```
+Apply migrations in numerical order unless a reviewed dependency plan explicitly requires otherwise.
 
-The command is illustrative; verify that the script exists before running it.
+1. Users: Creates the foundational user records.
+2. Roles and permissions: Establishes authorization structures referencing users.
+3. Courses: Creates the education course catalogue.
+4. Colleges and universities: Creates institutional records and relationships.
+5. Applications: References users, courses, and colleges.
+6. Documents: References users and applications.
+7. Employers and jobs: Creates employer profiles and job listings.
+8. Payments and subscriptions: Creates subscription and payment records.
+9. Notifications: Creates notification infrastructure.
+10. Audit logs: Creates audit records and actor references.
+
+Dependency requirements
+
+* Every referenced table must exist before a foreign key is created.
+* Referenced and referencing columns must use compatible data types and attributes.
+* Foreign-key columns must be indexed as required by MySQL.
+* Deletion behavior must be selected deliberately.
+* Migration dependencies must be reflected in the migration runner where supported.
+
+A foreign key ensures referential integrity; it does not replace application authorization or business-rule validation.
+
+⸻
+
+5. Migration development standards
+
+Every new migration must follow these conventions.
+
+5.1 File naming and scope
+
+* Use sequential, zero-padded numeric prefixes.
+* Use descriptive, stable filenames.
+* Give each migration one clearly defined purpose.
+* Avoid reusing an existing numeric prefix.
+* Do not silently rename or rewrite migrations already applied to shared environments.
+* Prefer forward migrations for subsequent schema changes.
+
+5.2 Data types
+
+Use consistent types across related tables.
+
+Purpose	Preferred convention
+Internal primary keys	BIGINT UNSIGNED AUTO_INCREMENT
+Related foreign keys	BIGINT UNSIGNED
+Public UUIDs	CHAR(36)
+Names and titles	Appropriate VARCHAR lengths
+Structured metadata	JSON, when justified
+Monetary values	Integer minor units where the payment design requires them
+Currency codes	CHAR(3) with validation
+Timestamps	DATETIME(3) where millisecond precision is required
+Soft deletion	Nullable deleted_at, where appropriate
+
+Do not change a column’s type without checking existing data, foreign keys, indexes, and application expectations.
+
+5.3 Storage and constraints
+
+* Use InnoDB for tables requiring foreign keys and transactional operations.
+* Use utf8mb4 consistently.
+* Define primary keys, unique constraints, and supporting indexes explicitly.
+* Add CHECK constraints for stable database-level invariants.
+* Keep business rules that require multiple-table state checks in application logic or a carefully designed transactional workflow.
+* Use JSON only for structured, variable metadata rather than core relational fields.
+* Avoid indexing long text columns indiscriminately.
+
+5.4 Constraint naming
+
+Use descriptive names where practical:
+
+pk_<table>
+uq_<table>_<column>
+idx_<table>_<columns>
+fk_<table>_<referenced_table>
+chk_<table>_<condition>
+
+These are naming conventions, not a requirement to rename existing constraints without a migration plan.
+
+5.5 Security and privacy
+
+* Never store production credentials, passwords, access tokens, session cookies, or payment secrets in migration files.
+* Do not include real personal data in migrations or demonstration seeds.
+* Store uploaded documents in private storage, not in the public web directory.
+* Define foreign-key deletion behavior based on retention and compliance requirements.
+* Restrict access to sensitive financial, document, and audit records.
+* Avoid logging unnecessary personal information in JSON metadata.
+
+⸻
+
+6. Migration history and runner requirements
+
+The schema_migrations table is intended to record applied migration files.
 
 A production-ready migration runner should:
 
-1. Create a migration-history table if one does not exist.
-2. Discover migration files in a deterministic order.
-3. Record each successfully applied migration.
-4. Prevent accidental duplicate execution.
-5. Stop when a migration fails.
-6. Report the failed migration and underlying database error.
-7. Support deployment-safe locking so two instances cannot apply migrations concurrently.
-8. Verify the expected database engine before executing SQL.
-9. Avoid treating a partially applied MySQL DDL migration as fully rolled back.
+1. Discover eligible SQL migration files deterministically.
+2. Validate filenames and numeric prefixes.
+3. Sort migrations in ascending order.
+4. Compare discovered migrations against recorded migration history.
+5. Execute each unapplied migration in the correct order.
+6. Record successful completion only after the migration’s success criteria are met.
+7. Stop on failure and report the failed filename and database error.
+8. Prevent concurrent migration processes from applying the same migration.
+9. Detect unexpected modifications to previously applied migrations, preferably using checksums.
+10. Verify the database engine and version before execution.
+11. Distinguish failed, partially applied, and successfully recorded migrations where the implementation supports it.
+12. Provide an operational recovery procedure for partial schema changes.
 
-MySQL DDL statements can implicitly commit. Do not assume a transaction can reverse an entire schema migration after a failure.
+Migration history recommendations
 
-## MySQL Requirements
+A history table may include:
 
-These migrations target **MySQL 8.0.16 or later**.
+* Migration version or filename.
+* Checksum of the migration file.
+* Application timestamp.
+* Execution duration.
+* Execution status, if supported.
+* Error details for failed attempts, with sensitive information excluded.
 
-The migration set uses MySQL-compatible features such as:
+The exact columns must match the implementation in schema_migrations and the migration runner.
 
-- `BIGINT UNSIGNED AUTO_INCREMENT`
-- `CHAR(36)` for application-generated UUID strings
-- `DATETIME(3)` for timestamp storage
-- `JSON` for structured metadata
-- InnoDB foreign keys
-- `CHECK` constraints
-- MySQL-compatible indexes
-- `ON DELETE RESTRICT`, `ON DELETE CASCADE`, and `ON DELETE SET NULL`
+Important: Creating schema_migrations does not itself implement migration discovery, locking, execution, checksum verification, or recovery.
 
-Some MySQL versions support JSON expression defaults, such as `DEFAULT (JSON_OBJECT())`, while others have different restrictions. Validate these expressions against the exact MySQL version used in development, testing, and production.
+⸻
 
-PostgreSQL-specific syntax such as `JSONB`, `TIMESTAMPTZ`, `INET`, `GENERATED BY DEFAULT AS IDENTITY`, `gen_random_uuid()`, `ON CONFLICT`, and partial indexes must not remain in the MySQL migration files unless deliberately replaced with MySQL-compatible implementations.
+7. Executing migrations
 
-## Database Configuration
+First inspect the available npm scripts:
 
-Keep the migration engine aligned with the application’s database adapter.
+npm run
 
-Typical environment configuration:
+If a migration script exists and its implementation has been reviewed, use the documented command. For example:
 
-```dotenv
-DB_CLIENT=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=medorbits
-DB_USER=medorbits_app
-DB_PASSWORD=replace_with_a_secure_secret
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT=10000
-```
+npm run migrate
 
-These values are examples. Use the actual variable names and configuration parser defined by `src/config/env.js` and `src/config/database.js`.
+This command is illustrative; it must not be assumed to exist.
 
-Do not commit real database credentials. Use a least-privilege application account and a separately controlled deployment or migration account when appropriate.
+Manual execution for a new development database
 
-## Important Integration Considerations
+A migration may be executed individually using the MySQL client if the database configuration is correct and the dependency order is respected.
 
-### User roles
+Example for migration 001:
 
-Migration `002` introduces normalized role assignments while the initial users table may also contain a `role` column.
+mysql \
+  —host=“$DB_HOST” \
+  —port=“${DB_PORT:-3306}” \
+  —user=“$DB_USER” \
+  —password \
+  “$DB_NAME” \
+  < database/migrations/001_create_users.sql
 
-Define one authoritative source for authorization. If both representations remain, document the synchronization strategy and test for inconsistencies. Authorization decisions must be enforced by the backend.
+The MySQL client prompts for the password. Do not put database passwords directly in shell commands, source code, or committed configuration files.
 
-### Updated timestamps
+Repeat for the remaining migrations in sequence only after reviewing each file and checking the previous migration’s result.
 
-Use `ON UPDATE CURRENT_TIMESTAMP(3)` where configured by the schema, or update timestamps explicitly in application services.
+For production, prefer the reviewed migration runner rather than an ad hoc shell loop.
 
-Do not assume every table automatically updates `updated_at`; verify each table definition.
+⸻
 
-### UUIDs and identifiers
+8. MySQL compatibility
 
-If `public_id` has no database-generated default, the application must provide it on insertion.
+The migration set targets MySQL 8.0.16 or later.
 
-Validate UUID format at the application boundary and avoid exposing internal numeric database IDs unnecessarily.
+Use MySQL-compatible definitions and syntax, including:
 
-### Documents
+* BIGINT UNSIGNED AUTO_INCREMENT
+* CHAR(36) for application-generated UUID strings
+* DATETIME(3) for millisecond precision
+* JSON for structured metadata
+* InnoDB foreign keys
+* Enforced CHECK constraints
+* MySQL-compatible index definitions
+* ON DELETE RESTRICT, ON DELETE CASCADE, and ON DELETE SET NULL
 
-Store uploaded files in private storage. The database should hold storage identifiers and metadata rather than public filesystem paths.
+Test version-sensitive features against the exact MySQL version used in deployment, including JSON defaults, CHECK constraints, regular-expression checks, collations, and index-length limitations.
 
-Validate file signatures, size, permitted MIME types, ownership, and access permissions. Do not trust the original filename or the client-supplied content type.
+The collation utf8mb4_0900_ai_ci is MySQL 8-specific and may not be available on older MySQL releases or some compatible database products.
 
-### Payments and subscriptions
+Do not execute this migration set against PostgreSQL without explicitly converting its syntax, data types, constraints, and migration logic.
 
-Use integer minor currency units consistently. For INR, ₹1,500.00 is represented as `150000` paise when the application uses paise-based amounts.
+⸻
 
-Verify provider webhook signatures and payment status transitions on the backend. Never treat a client-side success redirect as authoritative payment confirmation.
+9. Schema and application integration
 
-Implement idempotency and provider transaction reconciliation. Add a dedicated refunds table if the application requires individual refund records, partial-refund amounts, and refund audit history.
+Migrations must remain consistent with application models, repositories, services, validators, authorization middleware, workers, seed scripts, and fixtures.
 
-### Notifications
+9.1 Users and authorization
 
-Make notification workers idempotent and safe under concurrent execution. Implement retry limits, backoff, delivery failure handling, and scheduling rules.
+* Define one authoritative mechanism for role assignment.
+* If roles are stored in user_roles, ensure authorization middleware uses that relationship consistently.
+* Keep any legacy role column synchronized only if the application explicitly requires it.
+* Assign administrative privileges only through authorized workflows.
+* Avoid granting every future permission automatically without an explicit authorization policy.
 
-A database status alone does not guarantee exactly-once delivery.
+9.2 Courses and institutions
 
-### Audit logs
+* Keep course, college, and university identifiers and slugs consistent with the education catalogue.
+* Ensure foreign keys reference the intended internal IDs.
+* Treat institutional existence, verification, and publication as distinct concepts.
+* Confirm that seed scripts use columns actually defined in the migrations.
 
-Restrict access to audit records and avoid recording passwords, session cookies, authentication tokens, payment credentials, or unnecessary sensitive personal information.
+9.3 Applications
 
-Consider append-only application permissions and protected external log storage for stronger tamper resistance.
+* Enforce unique public identifiers and application numbers.
+* Align application status values with service logic and validators.
+* Ensure review timestamps and reviewer IDs are populated consistently.
+* Confirm that course and college deletion behavior is appropriate for historical applications.
 
-### Fixtures
+9.4 Documents
 
-Ensure records in `database/fixtures/` match the actual schema, required fields, status values, foreign keys, identifier formats, and JSON column expectations.
+* Store document metadata and private storage references in the database.
+* Validate file contents, size, extension, and MIME type on the server.
+* Enforce ownership and authorization on every read, download, update, and deletion.
+* Define verification and rejection workflows that match the allowed database states.
+* Keep retention requirements separate from ordinary soft deletion.
 
-JSON fixture validation does not validate SQL migrations. Test migrations directly against MySQL.
+9.5 Employers and jobs
 
-## Validation and Testing
+* Validate employer verification and activation before allowing job publication.
+* Align employment types, workplace types, job statuses, and salary fields across the database and application.
+* Keep job applications separate unless the final migration explicitly includes them.
+* Do not expose private employer or applicant data in public listings.
 
-Before deploying migrations:
+9.6 Payments and subscriptions
 
-1. Confirm the configured database engine and version.
-2. Back up important databases before production schema changes.
-3. Apply the migrations to an isolated MySQL database.
-4. Test the complete sequence on a clean database.
-5. Verify foreign keys, indexes, uniqueness rules, and check constraints.
-6. Test application registration, authentication, authorization, applications, document handling, recruitment, payments, and notifications.
-7. Confirm the migration-history table accurately records applied files.
-8. Test deployment against a representative existing database.
-9. Review migration logs and confirm that every migration completed successfully.
-10. Test backup restoration and recovery procedures.
+* Use a consistent monetary representation throughout the application.
+* Convert integer minor units and provider amounts explicitly.
+* Verify provider webhooks and reconcile payment states server-side.
+* Implement idempotency for payment creation and webhook processing.
+* Record refunds separately when partial or multiple refunds are supported.
+* Never store card numbers, CVVs, UPI PINs, or provider credentials.
 
-## Rollback and Recovery
+9.7 Notifications
 
-Do not assume every migration can be reversed safely.
+* Align notification status values with the worker and job implementation.
+* Handle scheduling, retries, and failed deliveries explicitly.
+* Deduplicate provider events where supported.
+* Distinguish logical notifications from individual channel deliveries if the schema uses separate delivery records.
+* Treat delivery as an external side effect; database status values alone cannot guarantee exactly-once delivery.
 
-- Define explicit rollback procedures where required.
-- Review data-loss risks before dropping columns or tables.
-- Prefer forward-fix migrations in shared environments when rollback could destroy data.
-- Account for MySQL’s implicit DDL commits when designing recovery procedures.
-- Never delete migration history merely to force a migration to run again.
-- Back up data before destructive schema changes.
+9.8 Audit logs
 
-## Security
+* Restrict access to audit records.
+* Use stable action names and request correlation identifiers.
+* Avoid recording credentials, authentication tokens, session cookies, or unnecessary personal information.
+* Define retention and archival policies.
+* Do not assume that application-level append-only behavior makes database records tamper-proof.
 
-- Never commit production database passwords or connection strings.
-- Use least-privilege database accounts.
-- Restrict production migration execution to authorized deployment processes.
-- Protect user documents, payment records, and audit logs.
-- Enforce authorization in backend services and middleware.
-- Keep database backups and logs appropriately protected.
-- Avoid exposing SQL errors, internal database details, or sensitive identifiers to public API responses.
+⸻
 
-## Maintenance
+10. Seed data and fixtures
 
-When the database schema changes:
+The related seed directory is:
 
-1. Add the next sequential migration file.
-2. Document its purpose and dependencies.
-3. Update related models, repositories, validators, and services.
-4. Update fixtures and automated tests where necessary.
-5. Test against both a clean database and a representative existing database.
-6. Review indexes, constraints, and recovery implications.
-7. Update this README when the migration inventory, engine, or execution process changes.
+database/seeds/
+├── README.md
+├── seed-roles.sql
+├── seed-courses.sql
+├── seed-colleges.sql
+└── seed-demo-data.sql
 
-—
+Test fixtures are maintained separately:
 
-**Maintainer note:** This README documents the intended MySQL migration strategy. Verify the actual SQL files, database engine, migration runner, environment configuration, and application schema before treating the directory as production-ready.
+database/fixtures/
+├── applications.fixture.json
+├── colleges.fixture.json
+├── courses.fixture.json
+├── payments.fixture.json
+└── users.fixture.json
+
+Before executing seed scripts:
+
+* Apply the required migrations.
+* Confirm every referenced column exists.
+* Confirm unique constraints and foreign keys match seed assumptions.
+* Create or verify required synthetic users before inserting dependent records.
+* Keep demonstration data fictional and distinguishable from real records.
+* Check whether repeated execution is safe.
+* Review ON DUPLICATE KEY UPDATE behavior to prevent unintended overwrites.
+* Never use production credentials or real personal information as sample data.
+
+Do not assume seed scripts and migrations are compatible merely because their filenames correspond.
+
+⸻
+
+11. Validation and testing
+
+Before deployment, verify the complete migration sequence on a clean, disposable database.
+
+Schema validation checklist
+
+* [ ]	Confirm the MySQL engine and version.
+* [ ]	Confirm the database character set and collation.
+* [ ]	Execute all migrations in numerical order.
+* [ ]	Verify expected tables and columns.
+* [ ]	Verify primary keys and unique constraints.
+* [ ]	Verify foreign-key targets and deletion rules.
+* [ ]	Verify indexes and enforced CHECK constraints.
+* [ ]	Confirm timestamp defaults and update behavior.
+* [ ]	Confirm monetary precision and currency handling.
+* [ ]	Confirm application status values match the SQL constraints.
+* [ ]	Execute seed scripts in their documented order.
+* [ ]	Verify fixture compatibility with the actual schema.
+* [ ]	Test the application against the resulting database.
+* [ ]	Test failure reporting and partial-migration recovery.
+* [ ]	Verify the migration history and checksum behavior, if implemented.
+* [ ]	Confirm an already-applied migration is not rerun unexpectedly.
+
+Additional test scenarios
+
+Test both valid and invalid records, including:
+
+* Missing required fields.
+* Duplicate public identifiers.
+* Invalid status values.
+* Invalid foreign-key references.
+* Negative or inconsistent monetary amounts.
+* Invalid review-state combinations.
+* Unauthorized access to user-owned documents.
+* Duplicate payment and notification requests.
+* Failed provider webhooks.
+* Concurrent migration attempts.
+
+Use a disposable database for destructive or recovery testing.
+
+⸻
+
+12. Failure handling and recovery
+
+MySQL DDL statements can implicitly commit. A transaction does not guarantee that an entire multi-statement schema migration can be rolled back after a failure.
+
+If a migration fails:
+
+1. Stop the migration process.
+2. Identify the failed filename, statement, and database error.
+3. Inspect which tables, indexes, constraints, and columns were successfully created.
+4. Compare the actual database state with migration history.
+5. Determine whether the migration partially applied.
+6. Restore from backup or use a reviewed forward-recovery migration when appropriate.
+7. Resume only after the database state and recovery plan are understood.
+
+Do not delete migration-history records merely to force a migration to execute again.
+
+For production systems, maintain tested backups and a documented restoration procedure. A backup that has never been restored in testing should not be treated as a verified recovery mechanism.
+
+⸻
+
+13. Production deployment
+
+Before applying migrations to production:
+
+* Review the SQL in source control.
+* Test the migration against the target MySQL version.
+* Back up the database and verify restoration procedures.
+* Assess locks, table rebuilds, data volume, and downtime risks.
+* Use a dedicated, authorized migration process.
+* Prevent concurrent migration execution.
+* Review destructive operations and data transformations.
+* Confirm application compatibility during rolling deployments.
+* Monitor execution and inspect the resulting schema.
+* Record the deployed migration version.
+* Maintain a documented recovery procedure.
+
+Prefer backward-compatible changes when application and database deployments occur separately:
+
+1. Add compatible schema elements.
+2. Deploy application code that supports the new schema.
+3. Backfill or migrate data if required.
+4. Verify behavior and remove obsolete schema elements in a later migration.
+
+⸻
+
+14. Maintenance and change management
+
+Whenever the schema changes:
+
+* Add a new migration instead of silently rewriting an applied migration.
+* Update application models, repositories, services, and validators.
+* Update seed scripts and fixtures.
+* Review indexes, constraints, and foreign keys.
+* Test against both a clean database and a representative existing database.
+* Update this README when the migration inventory or process changes.
+* Document recovery steps for changes that can affect existing data.
+* Review migration checksums and history before releases.
+
+If a migration must be corrected after it has been shared or deployed, prefer a new forward migration unless the migration is known to be unapplied in every relevant environment.
+
+⸻
+
+15. Current repository review
+
+The migration inventory currently describes files 001 through 010. The actual repository must be inspected before the sequence is considered complete.
+
+Priority verification items:
+
+1. Confirm the actual filename for migration 007 and use it consistently in the repository and migration runner.
+2. Confirm the actual filename for migration 008 and update all documentation to match.
+3. Verify that 009_create_notifications.sql contains the agreed notification schema and is not empty.
+4. Compare migration 010 with the final audit-log design.
+5. Compare database/schema.sql with the migration sequence to identify schema drift.
+6. Verify that schema_migrations is created and maintained by the actual migration implementation.
+7. Confirm whether the runner supports checksums, concurrency protection, failure reporting, and recovery.
+8. Compare seed scripts and fixtures with the real migration columns, constraints, and status values.
+9. Confirm that the jobs/employers schema and any employment application tables match the application’s intended workflows.
+10. Verify that payment, refund, notification-delivery, and provider-event tables match the current services and workers.
+
+An empty SQL file, a documented filename, or a migration-history table alone does not establish that the corresponding schema has been successfully applied.
+
+⸻
+
+16. Final operational checklist
+
+Before declaring the MedOrbits database migration system production-ready:
+
+* [ ]	All migration filenames match the repository.
+* [ ]	The complete sequence succeeds on a clean MySQL database.
+* [ ]	The application starts successfully against the migrated schema.
+* [ ]	Seed scripts execute in the documented order.
+* [ ]	Foreign keys, indexes, and constraints have been verified.
+* [ ]	Migration history accurately reflects completed migrations.
+* [ ]	The migration runner prevents concurrent execution.
+* [ ]	Failure and recovery procedures have been tested.
+* [ ]	Backups and restoration procedures have been verified.
+* [ ]	Database credentials are managed outside committed source files.
+* [ ]	Production deployment has a documented approval and monitoring process.
+
+Disclaimer
+
+This README defines the intended MedOrbits migration standards and operating procedures. Actual behavior depends on the SQL files, the migration runner, the database configuration, and the deployed MySQL version. Verify these components before production deployment.

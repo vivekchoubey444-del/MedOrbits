@@ -1,13 +1,19 @@
+MedOrbits -- Storage Ignore Rules
 
-# Ignore all runtime content by default
-*
+Keep runtime data, uploaded files, generated artifacts, and backups
 
-# Keep directory documentation and placeholders
+out of Git by default.
+
+Ignore all storage contents by default.
+
+Preserve Git configuration and directory documentation.
+
 !.gitignore
 !.gitkeep
 !README.md
 
-# Keep the intended storage directories
+Preserve intended runtime directories.
+
 !tmp/
 !uploads/
 !documents/
@@ -19,7 +25,8 @@
 !quarantine/
 !backups/
 
-# Ignore all files inside runtime directories
+Ignore all contents inside runtime directories.
+
 tmp/*
 uploads/*
 documents/*
@@ -31,7 +38,8 @@ exports/*
 quarantine/*
 backups/*
 
-# Preserve placeholders
+Preserve directory placeholders.
+
 !tmp/.gitkeep
 !uploads/.gitkeep
 !documents/.gitkeep

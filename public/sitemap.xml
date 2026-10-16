@@ -1,131 +1,134 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<!-- ================================================== -->
-<!-- MEDORBITS -- OFFICIAL XML SITEMAP                   -->
-<!-- Canonical Domain: https://medorbits.in/            -->
-<!-- ================================================== -->
-<!-- 1. MAIN WEBSITE -->
-<url>
+  <!--
+    MedOrbits Official XML Sitemap
+    Canonical domain: https://medorbits.in/
+    Purpose: Search-engine discovery of eligible public pages.
+    Include only canonical URLs that are live, publicly accessible,
+    indexable, and return the expected successful response.
+  -->
+  <!-- 1. Main Website -->
+  <url>
     <loc>https://medorbits.in/</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/pages/about.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/pages/contact.html</loc>
-</url>
-<!-- 2. EDUCATION HUB -->
-<url>
+  </url>
+  <!-- 2. Education Hub -->
+  <url>
     <loc>https://medorbits.in/education/index.html</loc>
-</url>
-<!-- 3. STUDY IN INDIA -->
-<url>
+  </url>
+  <!-- 3. Study in India -->
+  <url>
     <loc>https://medorbits.in/education/study-india/index.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/mbbs.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/bds.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/ayush.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/nursing.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/pharmacy.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/paramedical.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/engineering.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/management.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/law.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/pg-medical.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/pg-others.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-india/more-courses.html</loc>
-</url>
-<!-- 4. STUDY ABROAD -->
-<url>
+  </url>
+  <!-- 4. Study Abroad -->
+  <url>
     <loc>https://medorbits.in/education/study-abroad/index.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/education/study-abroad/other-countries.html</loc>
-</url>
-<!-- 5. CAREERS, JOBS AND INTERNSHIPS -->
-<url>
+  </url>
+  <!-- 5. Careers, Jobs and Internships -->
+  <url>
     <loc>https://medorbits.in/jobs.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/job-categories.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/internships.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/employer-services.html</loc>
-</url>
-<!-- 6. SERVICES AND GUIDANCE -->
-<url>
+  </url>
+  <!-- 6. Services and Guidance -->
+  <url>
     <loc>https://medorbits.in/services/index.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/pages/request-guidance.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/pages/help-centre.html</loc>
-</url>
-<!-- 7. LEGAL AND TRANSPARENCY -->
-<url>
+  </url>
+  <!-- 7. Legal and Transparency -->
+  <url>
     <loc>https://medorbits.in/legal/index.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/privacy-policy.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/terms.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/refund-policy.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/disclaimer.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/cookie-policy.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/accessibility-statement.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/data-deletion.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/consent-preferences.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/job-service-terms.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/employer-terms.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/payment-terms.html</loc>
-</url>
-<url>
+  </url>
+  <url>
     <loc>https://medorbits.in/legal/grievance-redressal.html</loc>
-</url>
+  </url>
 </urlset>

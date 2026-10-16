@@ -1,10 +1,17 @@
-MedOrbits Website
+MedOrbits Website Pages
+
+Directory: pages/
+Project: MedOrbits
+
+1. Overview
 
 MedOrbits is an education and career consultancy website designed to help visitors explore courses, colleges, admissions, study-abroad destinations, career resources, internships, and recruitment services.
 
-Project Structure
+The pages/ directory contains general website pages, search and enquiry interfaces, informational pages, and custom error or offline pages.
 
-This README reflects the pages/ directory shown in the supplied screenshot. The screenshot confirms the following files and folder:
+This README documents the directory structure visible in the supplied screenshots and the homepage details provided for MedOrbits. Page purposes are inferred from filenames unless otherwise specified.
+
+2. Directory Structure
 
 pages/
 ├── Status/
@@ -19,91 +26,148 @@ pages/
 ├── offline.html
 ├── search.html
 ├── services.html
-└── testimonials.html
+├── testimonials.html
+└── README.md
 
-Page Overview
+Note: The Status/ directory is visible in the screenshots, but its contents are not established by the supplied material.
 
-|File                |Intended purpose                            |
-|———————|———————————————|
-|`404.html`          |Custom page for URLs that cannot be found   |
-|`500.html`          |Custom internal-server-error page           |
-|`about.html`        |Information about MedOrbits                 |
-|`accessibility.html`|Accessibility information and commitments   |
-|`apply.html`        |Guidance or application enquiry entry point |
-|`careers.html`      |Career resources and opportunities          |
-|`contact.html`      |Contact information and enquiries           |
-|`courses.html`      |Course discovery and education pathways     |
-|`offline.html`      |Offline or unavailable-network fallback page|
-|`search.html`       |Search interface or results                 |
-|`services.html`     |Overview of consultancy services            |
-|`testimonials.html` |Client or student testimonials              |
+3. Page Responsibilities
 
-The purposes above are inferred from the filenames; the screenshot does not show each page’s contents.
+File	Intended purpose
+404.html	Custom page for URLs that cannot be found.
+500.html	Custom internal-server-error page.
+about.html	Information about MedOrbits, its purpose, and its services.
+accessibility.html	Accessibility information and commitments.
+apply.html	Guidance or application-enquiry entry point.
+careers.html	Career resources and opportunities.
+contact.html	Contact information and enquiry options.
+courses.html	Course discovery and education pathways.
+offline.html	Offline or unavailable-network fallback page.
+search.html	Search interface or search results.
+services.html	Overview of consultancy services.
+testimonials.html	Client or student testimonials.
 
-Main Website Design
+The table describes intended responsibilities; the screenshots do not establish the actual implementation or functionality of each page.
 
-The MedOrbits homepage code supplied in this conversation uses a premium dark visual theme:
+4. Main Website Design
 
-• Deep aubergine and burgundy backgrounds
-• Antique-gold highlights
-• Lavender and muted text colours
-• DM Sans for body text and Playfair Display for display headings
-• Responsive layout for desktop and mobile
-• Sticky navigation with dropdown menus
-• Education, admissions, study-abroad, career-support, and recruitment sections
-• An opening logo animation
-• A shared footer and reusable asset paths
+The supplied MedOrbits homepage code uses a premium dark visual direction with the following characteristics:
 
-Shared Asset Paths
+* Deep aubergine and burgundy backgrounds.
+* Antique-gold highlights.
+* Lavender and muted supporting text.
+* DM Sans for body text and Playfair Display for display headings.
+* Responsive layouts for desktop and mobile.
+* Sticky navigation with dropdown menus.
+* Education, admissions, study-abroad, career-support, and recruitment sections.
+* An opening logo animation.
+* A shared footer and reusable asset paths.
 
-The homepage references these shared assets and scripts:
+Maintain visual consistency with the established MedOrbits design system when developing or updating pages in this directory.
 
-/assets/css/style.css
-/assets/images/logo/medorbits-logo.png
-/assets/images/hero/hero-home.jpg
-/assets/images/placeholders/image-placeholder.svg
-/assets/videos/
-assets/js/constants.js
-assets/js/config.js
-assets/js/utils.js
-assets/js/navigation.js
-assets/js/search.js
-assets/js/animations.js
-assets/js/app.js
+5. Shared Asset References
 
-It also references /public/manifest.json.
+The supplied homepage references the following paths:
 
-These paths are references used by the supplied HTML. Confirm that each file exists in the deployed project before relying on it.
+assets/
+├── css/
+│   └── style.css
+├── images/
+│   ├── logo/
+│   │   └── medorbits-logo.png
+│   ├── hero/
+│   │   └── hero-home.jpg
+│   └── placeholders/
+│       └── image-placeholder.svg
+├── videos/
+└── js/
+    ├── constants.js
+    ├── config.js
+    ├── utils.js
+    ├── navigation.js
+    ├── search.js
+    ├── animations.js
+    └── app.js
+public/
+└── manifest.json
 
-Local Development
+These are references from the supplied HTML, not confirmation that every file exists in the current repository.
 
-1. Keep the website files in the expected directory structure.
-2. Serve the project through a local web server or your chosen hosting platform.
-3. Open the homepage and test the navigation, page links, images, video files, and search form.
-4. Test the site at both mobile and desktop widths.
-5. Check the browser console and server logs for missing files or JavaScript errors.
+Before using them, verify that the actual files, capitalization, and directory locations match the references.
 
-For a quick static preview, use any local static web server appropriate for your environment. Root-relative paths such as /assets/... expect the website to be served from the domain root; they may not work correctly if the site is opened directly as a file:// URL or deployed under a nested subdirectory.
+6. Local Development
 
-Error Pages
+1. Keep website pages and shared assets in their expected repository locations.
+2. Run the project through the configured local development server or an appropriate static web server.
+3. Open the homepage and test navigation to the pages in this directory.
+4. Verify images, videos, stylesheets, JavaScript files, and search functionality.
+5. Test the layout at mobile, tablet, and desktop widths.
+6. Inspect browser developer tools and server logs for missing resources, JavaScript errors, and failed requests.
 
-The files 404.html and 500.html provide custom error-page documents, but creating the HTML files alone does not configure the server to serve them automatically. Configure the hosting provider or web server to use the appropriate file for HTTP 404 and HTTP 500 responses.
+Path Considerations
 
-Before Deployment
+Root-relative asset paths such as /assets/css/style.css expect the website to be served from the domain root. They may not resolve correctly when pages are opened directly using a file:// URL or when the website is hosted under a nested subdirectory.
 
-☐ Confirm all internal links point to existing pages.
-☐ Confirm all image and video assets exist at their referenced paths.
-☐ Confirm the logo file is present.
-☐ Confirm shared CSS and JavaScript files load successfully.
-☐ Test dropdowns, mobile navigation, and the opening animation.
-☐ Test forms and verify their submission endpoints are implemented.
-☐ Configure custom 404 and 500 responses in the hosting environment.
-☐ Verify canonical URLs, metadata, and the production domain.
-☐ Review privacy, terms, refund, and disclaimer pages before launch.
-☐ Test keyboard navigation and reduced-motion behaviour.
+7. Error and Offline Pages
 
-Important Notes
+404.html
 
-• This README documents the visible directory listing and the homepage structure provided in the conversation.
-• The screenshot does not confirm the contents of the Status/ folder or whether every listed page is complete.
-• Course admissions, recognition, eligibility, fees, employment, and outcomes should be checked against the relevant official institution or authority.
+Provides the intended interface for a page that cannot be found.
+
+Verify that internal navigation, search results, and links do not lead users to unexpected missing pages.
+
+500.html
+
+Provides the intended interface for an internal server error.
+
+Ensure the error page does not expose stack traces, environment variables, database details, or other sensitive diagnostics.
+
+offline.html
+
+Provides an intended fallback interface when network connectivity is unavailable or the application cannot reach required resources.
+
+Verify its behavior against the actual offline mechanism, service worker, or hosting configuration, where applicable.
+
+Important: Creating these HTML files does not automatically configure the web server or hosting platform to serve them for the corresponding HTTP responses. Configure custom error handling in the actual hosting environment.
+
+8. Accessibility and User Experience
+
+* Use semantic HTML and a logical heading hierarchy.
+* Provide descriptive link text and accessible form labels.
+* Ensure keyboard navigation and visible focus indicators.
+* Maintain adequate text contrast across the dark visual palette.
+* Respect prefers-reduced-motion for animations.
+* Verify responsive layouts and touch interactions.
+* Provide clear form validation, loading, empty, success, and error states where applicable.
+* Ensure error pages offer useful navigation back to relevant content.
+
+9. Testing Checklist
+
+* [ ]	Every documented page exists at the expected path.
+* [ ]	Internal links point to the correct pages.
+* [ ]	Shared CSS and JavaScript files load successfully.
+* [ ]	Logo, hero images, placeholders, and referenced video assets exist.
+* [ ]	Navigation, dropdown menus, and mobile layouts work correctly.
+* [ ]	Search and application forms use implemented endpoints.
+* [ ]	Form submissions handle validation and failures appropriately.
+* [ ]	Custom 404 and 500 responses are configured in the hosting environment.
+* [ ]	Offline behavior is tested against the implemented mechanism.
+* [ ]	Keyboard navigation and reduced-motion behavior are verified.
+* [ ]	Page titles, metadata, and production URLs are accurate.
+* [ ]	Privacy, terms, refund, and disclaimer pages are reviewed before launch.
+
+10. Related Documentation
+
+* ../legal/README.md — Legal and policy documentation, if legal/ is located at the repository root.
+* ../education/README.md — Education section documentation, if present at the repository root.
+* ../README.md — Main project documentation, if present at the repository root.
+
+Verify these relative paths against the actual repository structure before relying on the links.
+
+11. Maintenance
+
+Update this README whenever pages are added, renamed, removed, or reassigned to another directory.
+
+Review referenced assets and scripts whenever the shared design system, navigation, search functionality, or deployment configuration changes.
+
+Important: This README documents the visible directory listing and the supplied homepage references. It does not confirm that every page, asset, form endpoint, or hosting configuration is complete or operational. Verify these components against the current MedOrbits repository before deployment.

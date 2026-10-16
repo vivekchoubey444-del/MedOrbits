@@ -1,4 +1,3 @@
-
 -- =============================================================================
 -- MedOrbits: Seed Illustrative Education Courses
 -- File: database/seeds/seed-courses.sql
@@ -8,15 +7,28 @@
 --   003_create_courses.sql
 --
 -- Purpose:
---   Insert sample education course catalogue records for development/testing.
+--   Insert baseline education course catalogue records for development,
+--   testing, local demonstrations, and automated test environments.
+--
+-- SAFETY AND DATA QUALITY:
+--   - Records are illustrative, not official admission guidance.
+--   - Verify eligibility, duration, entrance examinations, and regulations
+--     with the relevant official authorities before publishing.
+--   - Do not use this seed as a substitute for production catalogue management.
+--   - Existing course records are not overwritten by this script.
+--
+-- IDEMPOTENCY:
+--   Re-running this script must not create duplicate course slugs.
+--   The courses.slug column should have a UNIQUE constraint.
 --
 -- IMPORTANT:
---   These are illustrative catalogue records, not official admission guidance.
---   Verify eligibility, duration and entrance requirements with official sources.
+--   This script does not create or modify the courses table.
+--   Run the required migration before executing this seed.
 -- =============================================================================
-
 START TRANSACTION;
-
+-- ---------------------------------------------------------------------------
+-- 1. Insert baseline education courses
+-- ---------------------------------------------------------------------------
 INSERT INTO courses (
     public_id,
     name,
@@ -38,7 +50,7 @@ VALUES
         'MBBS',
         'Medical',
         'Undergraduate',
-        'Illustrative medical course catalog entry.',
+        'Illustrative medical course catalogue entry.',
         66,
         'Verify current eligibility and applicable regulations with official authorities.',
         'NEET-UG',
@@ -51,7 +63,7 @@ VALUES
         'BDS',
         'Dental',
         'Undergraduate',
-        'Illustrative dental course catalog entry.',
+        'Illustrative dental course catalogue entry.',
         60,
         'Verify current eligibility and applicable regulations with official authorities.',
         'NEET-UG',
@@ -64,7 +76,7 @@ VALUES
         'BAMS',
         'AYUSH',
         'Undergraduate',
-        'Illustrative Ayurveda course catalog entry.',
+        'Illustrative Ayurveda course catalogue entry.',
         66,
         'Verify current eligibility and applicable regulations with official authorities.',
         'NEET-UG',
@@ -77,7 +89,7 @@ VALUES
         'BPHARM',
         'Pharmacy',
         'Undergraduate',
-        'Illustrative pharmacy course catalog entry.',
+        'Illustrative pharmacy course catalogue entry.',
         48,
         'Verify eligibility with the relevant institution and regulator.',
         NULL,
@@ -90,7 +102,7 @@ VALUES
         'BSCN',
         'Nursing',
         'Undergraduate',
-        'Illustrative nursing course catalog entry.',
+        'Illustrative nursing course catalogue entry.',
         48,
         'Verify eligibility and admission requirements with the relevant institution.',
         NULL,
@@ -103,14 +115,46 @@ VALUES
         'BTECH-CSE',
         'Engineering',
         'Undergraduate',
-        'Illustrative engineering course catalog entry.',
+        'Illustrative engineering course catalogue entry.',
         48,
         'Verify eligibility and entrance requirements with the relevant institution.',
         NULL,
         TRUE
     )
-AS incoming
 ON DUPLICATE KEY UPDATE
     id = id;
-
+-- ---------------------------------------------------------------------------
+-- 2. Verify baseline course records
+-- ---------------------------------------------------------------------------
+-- This query displays the seeded course slugs and their current status.
+-- It does not automatically abort the transaction if a record is missing.
+SELECT
+    id,
+    public_id,
+    name,
+    slug,
+    code,
+    category,
+    qualification_level,
+    duration_months,
+    entrance_exam,
+    is_active
+FROM courses
+WHERE slug IN (
+    'mbbs',
+    'bds',
+    'bams',
+    'b-pharm',
+    'bsc-nursing',
+    'btech-computer-science'
+)
+ORDER BY FIELD(
+    slug,
+    'mbbs',
+    'bds',
+    'bams',
+    'b-pharm',
+    'bsc-nursing',
+    'btech-computer-science'
+);
 COMMIT;

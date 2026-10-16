@@ -1,63 +1,225 @@
 name: MedOrbits CI
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
+push:
+branches:
+- main
+- develop
+pull_request:
+branches:
+- main
+- develop
+workflow_dispatch:
 
 permissions:
-  contents: read
+contents: read
 
 concurrency:
-  group: "ci-${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
+group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate and test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+validate:
+name: Validate and Test
+runs-on: ubuntu-latest
+timeout-minutes: 20
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-
-      - name: Verify required project files
-        run: |
-          test -f package.json
-          test -f package-lock.json
-          test -f server.js
-          test -f .gitignore
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check server JavaScript syntax
-        run: node --check server.js
-
-      - name: Check application JavaScript syntax
-        run: |
-          find src -type f -name '*.js' -print0 |
-            xargs -0 -n 1 node --check
-
-      - name: Run lint
-        run: npm run lint --if-present
-
-      - name: Check formatting
-        run: npm run format:check --if-present
-
-      - name: Run tests
-        run: npm run test --if-present
+steps:
+  # 1. Checkout repository
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  # 2. Set up Node.js
+  - name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
+      cache: npm
+      cache-dependency-path: package-lock.json
+  # 3. Verify required project files
+  - name: Verify required project files
+    shell: bash
+    run: |
+      set -euo pipefail
+      for file in package.json package-lock.json server.js; do
+        if [[ ! -f "$file" ]]; then
+          echo "::error::Required file is missing: $file"
+          exit 1
+        fi
+      done
+      node --version
+      npm --version
+  # 4. Validate package.json syntax BEFORE npm ci
+  - name: Validate package.json syntax
+    shell: bash
+    run: |
+      set -euo pipefail
+      node <<'NODE'
+      const fs = require('node:fs');
+      let pkg;
+      try {
+        pkg = JSON.parse(
+          fs.readFileSync('package.json', 'utf8').replace(/^\uFEFF/, '')
+        );
+      } catch (error) {
+        console.error('::error file=package.json::Invalid JSON syntax.');
+        console.error(error.message);
+        process.exit(1);
+      }
+      if (
+        !pkg ||
+        typeof pkg !== 'object' ||
+        Array.isArray(pkg)
+      ) {
+        throw new Error('package.json must contain a JSON object.');
+      }
+      console.log(
+        `package.json syntax is valid: ${pkg.name || 'unnamed package'}`
+      );
+      NODE
+  # 5. Validate lockfile syntax and dependency synchronization
+  - name: Validate package metadata and lockfile
+    shell: bash
+    run: |
+      set -euo pipefail
+      node <<'NODE'
+      const fs = require('node:fs');
+      function readJson(file) {
+        try {
+          return JSON.parse(
+            fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')
+          );
+        } catch (error) {
+          console.error(`::error file=${file}::Invalid JSON.`);
+          console.error(error.message);
+          process.exit(1);
+        }
+      }
+      const pkg = readJson('package.json');
+      const lock = readJson('package-lock.json');
+      if (!pkg.name || !pkg.version) {
+        throw new Error(
+          'package.json must define name and version.'
+        );
+      }
+      if (!pkg.scripts || typeof pkg.scripts !== 'object') {
+        throw new Error(
+          'package.json must define a scripts object.'
+        );
+      }
+      if (lock.lockfileVersion !== 3) {
+        throw new Error(
+          'Expected package-lock.json lockfileVersion 3.'
+        );
+      }
+      if (!lock.packages || typeof lock.packages !== 'object') {
+        throw new Error(
+          'package-lock.json must contain a packages object.'
+        );
+      }
+      const root = lock.packages[''];
+      if (!root) {
+        throw new Error(
+          'package-lock.json has no root package entry.'
+        );
+      }
+      if (
+        pkg.name !== lock.name ||
+        pkg.version !== lock.version ||
+        pkg.name !== root.name ||
+        pkg.version !== root.version
+      ) {
+        throw new Error(
+          'package.json and package-lock.json metadata mismatch.'
+        );
+      }
+      for (const field of ['dependencies', 'devDependencies']) {
+        const expected = pkg[field] || {};
+        const actual = root[field] || {};
+        for (const [name, range] of Object.entries(expected)) {
+          if (actual[name] !== range) {
+            throw new Error(
+              `Lockfile mismatch: ${field}.${name}; ` +
+              `expected ${range}, got ${actual[name] ?? 'missing'}.`
+            );
+          }
+        }
+        for (const name of Object.keys(actual)) {
+          if (!(name in expected)) {
+            throw new Error(
+              `Unexpected lockfile entry: ${field}.${name}.`
+            );
+          }
+        }
+      }
+      const placeholders = Object.entries(lock.packages)
+        .filter(([name, entry]) =>
+          name !== '' &&
+          typeof entry?.integrity === 'string' &&
+          entry.integrity.includes('PLACEHOLDER')
+        )
+        .map(([name]) => name);
+      if (placeholders.length > 0) {
+        throw new Error(
+          'Placeholder integrity hashes detected: ' +
+          placeholders.join(', ')
+        );
+      }
+      console.log(
+        `Validated ${pkg.name}@${pkg.version} and lockfile metadata.`
+      );
+      NODE
+  # 6. Install exact locked dependencies
+  - name: Install dependencies
+    run: npm ci
+    env:
+      CI: true
+  # 7. Validate repository JSON files
+  - name: Validate JSON files
+    run: npm run check:json
+  # 8. Check backend JavaScript syntax
+  - name: Check backend JavaScript syntax
+    shell: bash
+    run: |
+      set -euo pipefail
+      node --check server.js
+      for directory in src scripts; do
+        if [[ -d "$directory" ]]; then
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(
+            find "$directory" -type f \
+              \( -name '*.js' -o -name '*.cjs' \) \
+              -not -path '*/node_modules/*' \
+              -print0
+          )
+        fi
+      done
+      echo "Backend JavaScript syntax checks passed."
+  # 9. Validate application data when the validator exists
+  - name: Validate application data
+    if: ${{ hashFiles('scripts/validate-data.js') != '' }}
+    run: npm run check:data
+  # 10. ESLint
+  - name: Lint JavaScript
+    run: npm run lint:check
+  # 11. Prettier
+  - name: Check formatting
+    run: npm run format:check
+  # 12. Unit and integration tests
+  - name: Run tests and coverage
+    env:
+      CI: true
+      NODE_ENV: test
+    run: npm run test:coverage
+  # 13. Upload coverage even if earlier steps fail
+  - name: Upload coverage report
+    if: ${{ always() && hashFiles('coverage/**') != '' }}
+    uses: actions/upload-artifact@v4
+    with:
+      name: medorbits-ci-coverage
+      path: coverage/
+      if-no-files-found: ignore
+      retention-days: 14

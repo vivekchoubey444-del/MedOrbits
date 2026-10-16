@@ -1,6 +1,4 @@
-============================================================
-
-MedOrbits - Search Engine Crawling Policy
+MedOrbits -- Search Engine Crawling Policy
 
 Website: https://medorbits.in/
 
@@ -8,26 +6,22 @@ File: https://medorbits.in/robots.txt
 
 Purpose: Guide compliant search engine crawlers
 
-============================================================
+IMPORTANT:
 
-----------------------------------------
+Robots directives are crawl guidance, not access controls.
 
-1. DEFAULT POLICY FOR ALL CRAWLERS
+Protect private resources using server-side authentication
 
-----------------------------------------
+and authorization.
+
+1. Default policy for all crawlers
 
 User-agent: *
 Allow: /
 
-----------------------------------------
+2. Administrative, private, and internal routes
 
-2. RESTRICTED APPLICATION AND ADMINISTRATIVE ROUTES
-
-Keep private or internal pages out of normal crawling.
-
-Enforce access control separately on the server.
-
-----------------------------------------
+Confirm these paths against the deployed application.
 
 Disallow: /admin/
 Disallow: /account/
@@ -40,27 +34,17 @@ Disallow: /config/
 Disallow: /includes/
 Disallow: /vendor/
 
-----------------------------------------
-
-3. API AND SYSTEM ENDPOINTS
-
-----------------------------------------
+3. API and system endpoints
 
 Disallow: /api/
-Disallow: /api
 Disallow: /health
-Disallow: /health/
 Disallow: /debug/
 Disallow: /test/
 Disallow: /tmp/
 
-----------------------------------------
+4. User-specific and transactional pages
 
-4. USER-SPECIFIC AND TRANSACTIONAL PAGES
-
-Review these paths against the actual website routes.
-
-----------------------------------------
+Retain only rules matching actual application routes.
 
 Disallow: /account/login/
 Disallow: /account/register/
@@ -71,31 +55,25 @@ Disallow: /payments/checkout/
 Disallow: /payments/receipt/
 Disallow: /messages/private/
 
-----------------------------------------
+5. Search, sorting, and filtered URL variants
 
-5. SEARCH, FILTER, AND DUPLICATE URL CONTROL
-
-Enable these restrictions only if these URL patterns exist.
-
-----------------------------------------
+Optional: enable only after reviewing actual URL patterns.
 
 Disallow: /*?sort=
+
 Disallow: /?filter=
+
 Disallow: /?page=
+
 Disallow: /?search=
-Disallow: /?*utm_
 
-----------------------------------------
+Disallow: /*?utm_
 
-6. ALLOW PUBLIC WEBSITE CONTENT AND ASSETS
+6. Public content and assets
 
-----------------------------------------
+Allow public pages and resources needed for rendering.
 
 Allow: /assets/
-Allow: /assets/css/
-Allow: /assets/js/
-Allow: /assets/images/
-Allow: /assets/fonts/
 Allow: /education/
 Allow: /careers/
 Allow: /jobs/
@@ -105,16 +83,6 @@ Allow: /services/
 Allow: /pages/
 Allow: /legal/
 
-----------------------------------------
-
-7. SITEMAP DISCOVERY
-
-----------------------------------------
+7. Sitemap discovery
 
 Sitemap: https://medorbits.in/sitemap.xml
-
-============================================================
-
-END OF ROBOTS.TXT
-
-============================================================

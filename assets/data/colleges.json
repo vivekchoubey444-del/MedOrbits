@@ -1,20 +1,180 @@
 {
-  "schemaVersion": "1.0.0",
-  "updatedAt": null,
-  "colleges": [],
-  "fields": [
-    "id",
-    "name",
-    "slug",
-    "countryCode",
-    "state",
-    "city",
-    "address",
-    "website",
-    "courses",
-    "recognitionAuthority",
-    "verifiedAt",
-    "active"
-  ],
-  "note": "Add only verified institution records. Do not invent recognition, fees, rankings or contact details."
+"schemaVersion": "1.1.0",
+"updatedAt": null,
+"metadata": {
+"title": "MedOrbits College Directory",
+"description": "Structured directory of educational institutions for college discovery, admissions guidance and course comparisons.",
+"language": "en",
+"defaultCountryCode": "IN",
+"supportedCountryCodes": [
+"IN"
+],
+"defaultCurrency": "INR",
+"dateFormat": "YYYY-MM-DD",
+"disclaimer": "College information is provided for guidance. Confirm recognition, eligibility, fees, admission deadlines and course availability with the relevant institution and official authorities."
+},
+"colleges": [],
+"recordSchema": {
+"id": "Unique stable college identifier, such as college-example-001.",
+"slug": "URL-friendly unique identifier.",
+"name": "Official institution name.",
+"shortName": "Common abbreviation, if applicable.",
+"institutionType": "Government, private, deemed, public, autonomous or other applicable classification.",
+"countryCode": "ISO 3166-1 alpha-2 country code.",
+"stateCode": "State or region identifier, where applicable.",
+"location": {
+"address": null,
+"city": null,
+"district": null,
+"state": null,
+"postalCode": null,
+"country": null,
+"latitude": null,
+"longitude": null
+},
+"contact": {
+"officialWebsite": null,
+"admissionsUrl": null,
+"email": null,
+"phone": null
+},
+"officialSources": [
+{
+"title": "Source title",
+"url": null,
+"sourceType": "institution | regulator | government | counselling_authority",
+"verifiedAt": null
+}
+],
+"recognition": {
+"status": "unverified",
+"recognizingAuthority": null,
+"recognitionNumber": null,
+"sourceUrl": null,
+"verifiedAt": null
+},
+"courseIds": [],
+"admissions": {
+"admissionTypes": [],
+"entranceExamIds": [],
+"officialApplicationUrl": null,
+"admissionProcessId": null,
+"academicYears": [],
+"eligibilitySummary": null,
+"applicationStatus": "unknown",
+"applicationStart": null,
+"applicationEnd": null,
+"officialNotificationUrl": null,
+"verifiedAt": null
+},
+"fees": {
+"currency": "INR",
+"minimumAmount": null,
+"maximumAmount": null,
+"period": null,
+"academicYear": null,
+"feeComponents": [],
+"officialFeeUrl": null,
+"verifiedAt": null
+},
+"facilities": [],
+"accreditation": [],
+"studentServices": [],
+"media": {
+"logoUrl": null,
+"coverImageUrl": null,
+"gallery": []
+},
+"status": {
+"active": true,
+"featured": false,
+"verificationStatus": "unverified",
+"lastReviewedAt": null
+},
+"createdAt": null,
+"updatedAt": null,
+"notes": []
+},
+"allowedValues": {
+"institutionType": [
+"government",
+"private",
+"deemed",
+"public",
+"autonomous",
+"public_private",
+"other",
+"unknown"
+],
+"recognitionStatus": [
+"unverified",
+"verified",
+"pending_review",
+"outdated",
+"not_recognized",
+"unknown"
+],
+"applicationStatus": [
+"upcoming",
+"open",
+"closed",
+"extended",
+"awaiting_notification",
+"not_applicable",
+"unknown"
+],
+"verificationStatus": [
+"unverified",
+"pending_review",
+"verified",
+"outdated",
+"rejected"
+],
+"feePeriod": [
+"per_year",
+"per_semester",
+"per_month",
+"entire_program",
+"one_time",
+"other",
+"unknown"
+]
+},
+"validationRules": [
+"Every college record must have a unique id and slug.",
+"College names must match the institution’s official name or clearly identify an approved display name.",
+"All courseIds must reference existing records in courses.json.",
+"Entrance exam IDs must reference existing examination records when such a dataset is available.",
+"Admission process IDs must reference existing admission-process records when used.",
+"Official websites and application links must be checked before publication.",
+"Recognition claims must be supported by an authoritative source.",
+"Fees must identify the currency, relevant academic year and fee period when known.",
+"Unknown values must remain null or use the explicitly defined unknown status.",
+"Dates must use YYYY-MM-DD or null.",
+"Application end dates must not precede application start dates when both are provided.",
+"Verification dates must reflect actual checks and must never be fabricated.",
+"A featured or active record must not be represented as verified solely because it is enabled for display.",
+"Outdated admission details must be reviewed before being displayed as current.",
+"Never invent college names, affiliations, recognition, fees, rankings or admission deadlines."
+],
+"displaySettings": {
+"showCollegeLogo": true,
+"showLocation": true,
+"showOfficialWebsite": true,
+"showAvailableCourses": true,
+"showAdmissionStatus": true,
+"showFeesWhenVerified": true,
+"showRecognitionStatus": true,
+"showVerificationDate": true,
+"showDisclaimer": true
+},
+"dataGovernance": {
+"requireOfficialSourceForRecognition": true,
+"requireOfficialSourceForAdmissionDeadlines": true,
+"requireOfficialSourceForPublishedFees": true,
+"hideUnverifiedClaims": true,
+"preserveSourceAttribution": true,
+"reviewOutdatedRecords": true
+},
+"note": "Populate college records using current institutional, regulator and government sources. Verify course availability and admission details for each relevant academic year before publishing them as confirmed information."
 }

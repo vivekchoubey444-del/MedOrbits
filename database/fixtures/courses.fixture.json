@@ -1,6 +1,4 @@
-
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Synthetic MedOrbits course fixtures for local development and automated tests. These are not official course listings or admission requirements.",
   "courses": [
     {

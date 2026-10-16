@@ -1,55 +1,302 @@
 {
-  "schemaVersion": "1.0.0",
-  "updatedAt": null,
-  "categories": [
-    {
-      "id": "medical",
-      "name": "Medical",
-      "slug": "medical",
-      "description": "Medical education and related pathways",
-      "active": true
-    },
-    {
-      "id": "dental",
-      "name": "Dental",
-      "slug": "dental",
-      "description": "Dental education pathways",
-      "active": true
-    },
-    {
-      "id": "ayush",
-      "name": "AYUSH",
-      "slug": "ayush",
-      "description": "Traditional and complementary healthcare programmes",
-      "active": true
-    },
-    {
-      "id": "healthcare",
-      "name": "Healthcare",
-      "slug": "healthcare",
-      "description": "Nursing, pharmacy and healthcare-related courses",
-      "active": true
-    },
-    {
-      "id": "allied-health",
-      "name": "Allied Health",
-      "slug": "allied-health",
-      "description": "Diagnostic and allied-health pathways",
-      "active": true
-    },
-    {
-      "id": "technology",
-      "name": "Technology",
-      "slug": "technology",
-      "description": "Engineering and technical study pathways",
-      "active": true
-    },
-    {
-      "id": "business",
-      "name": "Business",
-      "slug": "business",
-      "description": "Management and business education",
-      "active": true
-    }
-  ]
+"schemaVersion": "1.0.0",
+"updatedAt": null,
+"metadata": {
+"title": "MedOrbits Platform Categories",
+"description": "Centralized category definitions for education, admissions, career development, recruitment and related services.",
+"language": "en",
+"defaultCountryCode": "IN"
+},
+"categories": [
+{
+"id": "category-education",
+"name": "Education",
+"slug": "education",
+"description": "Explore academic programmes, qualifications and educational pathways.",
+"icon": "graduation-cap",
+"parentId": null,
+"sortOrder": 1,
+"active": true,
+"featured": true,
+"route": "/education/",
+"subcategories": [
+{
+"id": "category-study-india",
+"name": "Study in India",
+"slug": "study-india",
+"description": "Explore courses and institutions across India.",
+"icon": "landmark",
+"route": "/education/study-india/",
+"relatedCourseIds": [
+"course-mbbs",
+"course-bds",
+"course-nursing",
+"course-pharmacy",
+"course-paramedical",
+"course-engineering",
+"course-management"
+],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-study-abroad",
+"name": "Study Abroad",
+"slug": "study-abroad",
+"description": "Explore international study destinations and admission pathways.",
+"icon": "globe",
+"route": "/education/study-abroad/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+},
+{
+"id": "category-colleges",
+"name": "Colleges and Universities",
+"slug": "colleges-universities",
+"description": "Discover institutions, programmes and official admission information.",
+"icon": "school",
+"route": "/colleges/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 3
+}
+]
+},
+{
+"id": "category-admissions",
+"name": "Admissions",
+"slug": "admissions",
+"description": "Access admission guidance, eligibility information, application steps and counselling resources.",
+"icon": "clipboard-check",
+"parentId": null,
+"sortOrder": 2,
+"active": true,
+"featured": true,
+"route": "/admissions/",
+"subcategories": [
+{
+"id": "category-ug-admissions",
+"name": "Undergraduate Admissions",
+"slug": "undergraduate",
+"description": "Explore undergraduate admission pathways and requirements.",
+"icon": "book-open",
+"route": "/admissions/undergraduate/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-pg-admissions",
+"name": "Postgraduate Admissions",
+"slug": "postgraduate",
+"description": "Explore postgraduate programmes and admission processes.",
+"icon": "book-marked",
+"route": "/admissions/postgraduate/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+},
+{
+"id": "category-admission-guidance",
+"name": "Admission Guidance",
+"slug": "admission-guidance",
+"description": "Understand application procedures, required documents and official deadlines.",
+"icon": "file-check",
+"route": "/admissions/guidance/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 3
+}
+]
+},
+{
+"id": "category-careers",
+"name": "Careers",
+"slug": "careers",
+"description": "Explore career pathways, professional skills and career-development resources.",
+"icon": "compass",
+"parentId": null,
+"sortOrder": 3,
+"active": true,
+"featured": true,
+"route": "/career/",
+"subcategories": [
+{
+"id": "category-career-options",
+"name": "Career Options",
+"slug": "career-options",
+"description": "Discover possible roles and career pathways related to educational qualifications.",
+"icon": "route",
+"route": "/career/options/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-career-resources",
+"name": "Career Resources",
+"slug": "career-resources",
+"description": "Access career-planning resources, checklists and professional guidance.",
+"icon": "folder-open",
+"route": "/career/resources/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+},
+{
+"id": "category-career-development",
+"name": "Career Development",
+"slug": "career-development",
+"description": "Build professional skills, improve employability and plan career progression.",
+"icon": "trending-up",
+"route": "/career/development/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 3
+}
+]
+},
+{
+"id": "category-jobs",
+"name": "Jobs and Internships",
+"slug": "jobs-internships",
+"description": "Explore job opportunities, internships and employment-related services.",
+"icon": "briefcase-business",
+"parentId": null,
+"sortOrder": 4,
+"active": true,
+"featured": true,
+"route": "/jobs/",
+"subcategories": [
+{
+"id": "category-full-time-jobs",
+"name": "Full-Time Jobs",
+"slug": "full-time",
+"description": "Explore full-time employment opportunities.",
+"icon": "briefcase",
+"route": "/jobs/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-internships",
+"name": "Internships",
+"slug": "internships",
+"description": "Discover internship opportunities and practical work experience.",
+"icon": "graduation-cap",
+"route": "/internships/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+},
+{
+"id": "category-employer-services",
+"name": "Employer Services",
+"slug": "employer-services",
+"description": "Support employers with recruitment and talent discovery.",
+"icon": "users",
+"route": "/employer-services/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 3
+}
+]
+},
+{
+"id": "category-documents",
+"name": "Documents and Resources",
+"slug": "documents-resources",
+"description": "Access document checklists, downloadable guides and educational resources.",
+"icon": "files",
+"parentId": null,
+"sortOrder": 5,
+"active": true,
+"featured": false,
+"route": "/resources/",
+"subcategories": [
+{
+"id": "category-document-checklists",
+"name": "Document Checklists",
+"slug": "document-checklists",
+"description": "Review documents commonly requested during applications and career preparation.",
+"icon": "list-check",
+"route": "/resources/checklists/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-downloadable-guides",
+"name": "Downloadable Guides",
+"slug": "downloadable-guides",
+"description": "Browse educational and career-development guides.",
+"icon": "download",
+"route": "/resources/guides/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+}
+]
+},
+{
+"id": "category-support",
+"name": "Help and Support",
+"slug": "help-support",
+"description": "Find platform guidance, frequently asked questions and support resources.",
+"icon": "circle-help",
+"parentId": null,
+"sortOrder": 6,
+"active": true,
+"featured": false,
+"route": "/help-centre/",
+"subcategories": [
+{
+"id": "category-faqs",
+"name": "Frequently Asked Questions",
+"slug": "faqs",
+"description": "Find answers to common questions about MedOrbits services.",
+"icon": "message-circle-question",
+"route": "/faqs/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 1
+},
+{
+"id": "category-contact-support",
+"name": "Contact Support",
+"slug": "contact-support",
+"description": "Find available support channels and assistance information.",
+"icon": "headset",
+"route": "/contact/",
+"relatedCourseIds": [],
+"active": true,
+"sortOrder": 2
+}
+]
+}
+],
+"displaySettings": {
+"showIcons": true,
+"showDescriptions": true,
+"showFeaturedCategories": true,
+"showInactiveCategories": false,
+"showBreadcrumbs": true,
+"enableCategorySearch": true,
+"enableCategoryFiltering": true
+},
+"validationRules": [
+"Every category and subcategory must have a unique id.",
+"Every slug must be unique within its applicable routing namespace.",
+"Routes must match actual application pages.",
+"relatedCourseIds must reference existing course records.",
+"sortOrder must be a non-negative integer.",
+"active and featured must be Boolean values.",
+"Inactive categories must not appear in public navigation.",
+"Featured categories must also be active.",
+"Icons must use supported icon identifiers.",
+"Do not publish links to pages that do not exist."
+],
+"note": "Category definitions organize MedOrbits navigation and content. Verify route availability, course references and icon support before enabling this configuration in production."
 }

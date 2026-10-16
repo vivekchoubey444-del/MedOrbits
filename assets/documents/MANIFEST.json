@@ -1,0 +1,157 @@
+
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": "1.0.0",
+  "manifestVersion": "1.0.0",
+  "metadata": {
+    "name": "MedOrbits Document Library",
+    "description": "Central registry for MedOrbits public document resources, including checklists, admission guides, fee guides, and other approved downloadable educational resources.",
+    "brand": "MedOrbits",
+    "designSystem": "Royal Burgundy and Champagne Gold",
+    "directory": "assets/documents/",
+    "classification": "public-frontend-assets",
+    "access": "public",
+    "maintainedBy": "MedOrbits",
+    "language": "en",
+    "defaultFormat": "application/pdf",
+    "lastReviewedAt": null,
+    "readme": "assets/documents/README.md",
+    "disclaimer": "Documents are informational resources. Users must independently confirm current requirements, eligibility, fees, deadlines, and procedures with the relevant official authority."
+  },
+  "categories": [
+    {
+      "id": "checklists",
+      "title": "Checklists Library",
+      "path": "checklists/",
+      "readme": "checklists/README.md",
+      "manifest": "checklists/MANIFEST.json",
+      "schema": "checklists/manifest.schema.json",
+      "description": "Printable planning checklists for admissions, applications, education, examinations, career development, general organization, and study abroad."
+    },
+    {
+      "id": "admission-guides",
+      "title": "Admission Guides",
+      "path": "admission-guides/",
+      "readme": "admission-guides/README.md",
+      "manifest": "admission-guides/MANIFEST.json",
+      "description": "Educational admission guides covering general admissions and programme-specific pathways."
+    },
+    {
+      "id": "fee-guides",
+      "title": "Fee Guides",
+      "path": "fee-guides/",
+      "readme": "fee-guides/README.md",
+      "manifest": "fee-guides/manifest.json",
+      "description": "Planning guides for education fees, living costs, scholarships, education loans, counselling charges, and refund terms."
+    }
+  ],
+  "publicationPolicy": {
+    "allowedStatuses": [
+      "planned",
+      "draft",
+      "in_review",
+      "approved",
+      "published",
+      "under_review",
+      "outdated",
+      "archived",
+      "withdrawn"
+    ],
+    "allowedVerificationStatuses": [
+      "not_verified",
+      "content_reviewed",
+      "official_sources_checked",
+      "officially_verified"
+    ],
+    "publicDownloadStatuses": [
+      "published"
+    ],
+    "requirements": [
+      "Each category must have a valid README and its own manifest where specified.",
+      "Each resource manifest must conform to the applicable JSON schema.",
+      "Every published resource must exist at its declared path.",
+      "Resource paths must not traverse outside the approved assets/documents directory.",
+      "Documents must pass content, privacy, accessibility, and file-quality reviews before publication.",
+      "Time-sensitive information must be reviewed against relevant official sources.",
+      "Verification claims must be supported by documented evidence.",
+      "Public download links must be tested after deployment.",
+      "Retired or outdated resources must not be presented as current guidance."
+    ]
+  },
+  "resources": [
+    {
+      "id": "checklists-library",
+      "title": "MedOrbits Checklists Library",
+      "category": "checklists",
+      "path": "checklists/README.md",
+      "format": "text/markdown",
+      "description": "Library documentation and index for downloadable checklist resources.",
+      "intendedUse": "Discovering and maintaining the checklist collection.",
+      "status": "draft",
+      "verificationStatus": "not_verified",
+      "version": "1.0.0",
+      "language": "en",
+      "keywords": [
+        "checklists",
+        "planning",
+        "education",
+        "career",
+        "study abroad"
+      ],
+      "officialSources": [],
+      "lastReviewedAt": null,
+      "reviewDueAt": null
+    },
+    {
+      "id": "admission-guides-library",
+      "title": "MedOrbits Admission Guides",
+      "category": "admission-guides",
+      "path": "admission-guides/README.md",
+      "format": "text/markdown",
+      "description": "Library documentation and index for programme-specific and general admission guides.",
+      "intendedUse": "Discovering and maintaining admission guidance resources.",
+      "status": "draft",
+      "verificationStatus": "not_verified",
+      "version": "1.0.0",
+      "language": "en",
+      "keywords": [
+        "admissions",
+        "MBBS",
+        "BDS",
+        "AYUSH",
+        "engineering",
+        "law",
+        "management",
+        "nursing",
+        "pharmacy"
+      ],
+      "officialSources": [],
+      "lastReviewedAt": null,
+      "reviewDueAt": null
+    },
+    {
+      "id": "fee-guides-library",
+      "title": "MedOrbits Fee Guides",
+      "category": "fee-guides",
+      "path": "fee-guides/README.md",
+      "format": "text/markdown",
+      "description": "Library documentation and index for education fee and financial planning guides.",
+      "intendedUse": "Discovering and maintaining education cost and financing resources.",
+      "status": "draft",
+      "verificationStatus": "not_verified",
+      "version": "1.0.0",
+      "language": "en",
+      "keywords": [
+        "education fees",
+        "tuition",
+        "living costs",
+        "scholarships",
+        "education loans",
+        "refunds"
+      ],
+      "officialSources": [],
+      "lastReviewedAt": null,
+      "reviewDueAt": null
+    }
+  ]
+}

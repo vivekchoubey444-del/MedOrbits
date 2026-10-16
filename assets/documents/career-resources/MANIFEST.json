@@ -1,15 +1,34 @@
 {
+"package": "MedOrbits Career Resources",
 "schemaVersion": "1.0.0",
-"manifestVersion": "1.0.0",
-"root": "career-resources/",
+"manifestVersion": "1.1.0",
+"root": "assets/documents/career-resources/",
 "name": "MedOrbits Career Resources",
 "description": "Public career guidance resources for resumes, cover letters, interviews, job searches, internships, and workplace skills.",
 "maintainer": "MedOrbits Project Team",
 "accessLevel": "public-resources-only",
+"brand": {
+"name": "MedOrbits",
+"designDirection": "Rosewood Elite",
+"principles": [
+"Consistent premium visual identity",
+"Readable and accessible documents",
+"Accurate and responsible career guidance",
+"Privacy-conscious public resources"
+]
+},
+"supportedFormats": [
+"PDF",
+"DOCX",
+"XLSX",
+"MD"
+],
 "categories": [
 {
-"name": "cover-letters",
+"id": "cover-letters",
+"name": "Cover Letters",
 "path": "cover-letters/",
+"description": "Guidance and templates for professional cover letters and job application emails.",
 "files": [
 "cover-letters/README.md",
 "cover-letters/cover-letter-template.docx",
@@ -18,8 +37,10 @@
 ]
 },
 {
-"name": "internships",
+"id": "internships",
+"name": "Internships",
 "path": "internships/",
+"description": "Resources for internship applications, preparation, interviews, and resumes.",
 "files": [
 "internships/README.md",
 "internships/internship-application-guide.pdf",
@@ -29,8 +50,10 @@
 ]
 },
 {
-"name": "interview-preparation",
+"id": "interview-preparation",
+"name": "Interview Preparation",
 "path": "interview-preparation/",
+"description": "Resources for interview preparation, practice, common questions, and professional follow-up.",
 "files": [
 "interview-preparation/README.md",
 "interview-preparation/common-interview-questions.pdf",
@@ -40,8 +63,10 @@
 ]
 },
 {
-"name": "job-search",
+"id": "job-search",
+"name": "Job Search",
 "path": "job-search/",
+"description": "Tools for organizing applications, evaluating offers, searching safely, and planning a job search.",
 "files": [
 "job-search/README.md",
 "job-search/job-application-tracker.xlsx",
@@ -51,8 +76,10 @@
 ]
 },
 {
-"name": "resume-cv",
+"id": "resume-cv",
+"name": "Resume and CV",
 "path": "resume-cv/",
+"description": "Guides, checklists, and editable templates for creating and improving resumes and CVs.",
 "files": [
 "resume-cv/README.md",
 "resume-cv/freshers-resume-guide.pdf",
@@ -62,8 +89,10 @@
 ]
 },
 {
-"name": "workplace-skills",
+"id": "workplace-skills",
+"name": "Workplace Skills",
 "path": "workplace-skills/",
+"description": "Resources for professional communication, teamwork, workplace etiquette, and first-job readiness.",
 "files": [
 "workplace-skills/README.md",
 "workplace-skills/first-job-readiness-checklist.pdf",
@@ -105,27 +134,55 @@
 "workplace-skills/teamwork-and-collaboration-guide.pdf",
 "workplace-skills/workplace-etiquette-guide.pdf"
 ],
-"count": 30,
-"resourceCount": 24,
+"counts": {
+"totalFiles": 30,
+"resourceFiles": 23,
 "categoryCount": 6,
-"readmeCount": 7,
-"supportedFormats": [
-"PDF",
-"DOCX",
-"XLSX",
-"MD"
-],
+"readmeCount": 7
+},
 "validation": {
 "requireUniquePaths": true,
 "requireExistingFiles": true,
 "requireRelativePaths": true,
 "allowPathsOutsideRoot": false,
-"excludeGeneratedFiles": true
+"excludeGeneratedFiles": true,
+"validateFileExtensions": true,
+"validateCategoryDirectories": true,
+"validateManifestCounts": true,
+"requireReadmePerCategory": true
 },
-"maintenance": {
+"publication": {
 "reviewBeforePublication": true,
 "verifyExternalLinks": true,
 "protectPersonalInformation": true,
-"updateManifestWhenFilesChange": true
+"updateManifestWhenFilesChange": true,
+"publishOnlyApprovedResources": true,
+"removeBrokenDownloadLinks": true
+},
+"contentStandards": [
+"Use accurate, practical, and responsible career guidance.",
+"Distinguish general guidance from legal, financial, or employer-specific requirements.",
+"Do not guarantee interviews, employment, salary, or recruitment outcomes.",
+"Verify external links and third-party claims before publication.",
+"Clearly identify templates and illustrative examples.",
+"Keep resources readable, accessible, and suitable for their intended audience."
+],
+"privacy": {
+"publicResourcesOnly": true,
+"prohibitedContent": [
+"Private resumes containing personal contact details",
+"Student identity documents",
+"Confidential employment applications",
+"Passwords and access tokens",
+"Private employer or candidate records"
+],
+"privateRecordsStorage": "Use secure backend storage with appropriate authentication and authorization."
+},
+"maintenance": {
+"reviewBeforePublication": true,
+"reviewExternalLinksPeriodically": true,
+"updateManifestWhenFilesChange": true,
+"keepReadmesSynchronized": true,
+"removeOrMarkOutdatedResources": true
 }
 }

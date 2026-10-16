@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Soft Skills</title>
+  <desc id="desc">MedOrbits career icon for soft skills.</desc>
+  <g stroke="#6B1838" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="8.5" r="2.5"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M14 15a4 4 0 0 1 7.5 3"/><path d="M10 8h1"/>
+  </g>
+  <circle cx="20.5" cy="3.5" r="1.1" fill="#C9A66B"/>
+</svg>

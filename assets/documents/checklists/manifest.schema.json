@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://medorbits.in/schemas/checklists-manifest.schema.json",
+  "title": "MedOrbits Checklists Manifest",
+  "description": "Validation schema for assets/documents/checklists/MANIFEST.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "manifestVersion",
+    "metadata",
+    "categories",
+    "publicationPolicy",
+    "resources"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./manifest.schema.json"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "manifestVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "brand",
+        "designSystem",
+        "directory",
+        "classification",
+        "access",
+        "maintainedBy",
+        "language",
+        "defaultFormat",
+        "lastReviewedAt",
+        "disclaimer"
+      ],
+      "properties": {
+        "name": {
+          "const": "MedOrbits Checklists Library"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "brand": {
+          "const": "MedOrbits"
+        },
+        "designSystem": {
+          "const": "Royal Burgundy and Champagne Gold"
+        },
+        "directory": {
+          "const": "assets/documents/checklists/"
+        },
+        "classification": {
+          "const": "public-frontend-assets"
+        },
+        "access": {
+          "const": "public"
+        },
+        "maintainedBy": {
+          "const": "MedOrbits"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 10
+        },
+        "defaultFormat": {
+          "const": "application/pdf"
+        },
+        "lastReviewedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "disclaimer": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "path",
+          "readme",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "admissions",
+              "applications",
+              "career",
+              "education",
+              "examinations",
+              "general",
+              "study-abroad"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(admissions|applications|career|education|examinations|general|study-abroad)/$"
+          },
+          "readme": {
+            "type": "string",
+            "pattern": "^(admissions|applications|career|education|examinations|general|study-abroad)/README\\.md$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "publicationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowedStatuses",
+        "allowedVerificationStatuses",
+        "publicDownloadStatuses",
+        "requirements"
+      ],
+      "properties": {
+        "allowedStatuses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "draft",
+              "in_review",
+              "approved",
+              "published",
+              "under_review",
+              "outdated",
+              "archived",
+              "withdrawn"
+            ]
+          }
+        },
+        "allowedVerificationStatuses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "not_verified",
+              "content_reviewed",
+              "official_sources_checked",
+              "officially_verified"
+            ]
+          }
+        },
+        "publicDownloadStatuses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "published"
+            ]
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "category",
+          "path",
+          "format",
+          "description",
+          "intendedUse",
+          "status",
+          "verificationStatus",
+          "version",
+          "language",
+          "keywords",
+          "officialSources",
+          "lastReviewedAt",
+          "reviewDueAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": [
+              "admissions",
+              "applications",
+              "career",
+              "education",
+              "examinations",
+              "general",
+              "study-abroad"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(admissions|applications|career|education|examinations|general|study-abroad)/[a-z0-9]+(?:-[a-z0-9]+)*\\.pdf$",
+            "not": {
+              "pattern": "(^/|(^|/)\\.\\.(/|$)|\\\\)"
+            }
+          },
+          "format": {
+            "const": "application/pdf"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "intendedUse": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "in_review",
+              "approved",
+              "published",
+              "under_review",
+              "outdated",
+              "archived",
+              "withdrawn"
+            ]
+          },
+          "verificationStatus": {
+            "enum": [
+              "not_verified",
+              "content_reviewed",
+              "official_sources_checked",
+              "officially_verified"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "language": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 10
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "officialSources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "title",
+                "url",
+                "checkedAt"
+              ],
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                },
+                "checkedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "lastReviewedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "reviewDueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      }
+    }
+  }
+}

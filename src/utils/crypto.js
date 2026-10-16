@@ -1,4 +1,24 @@
+
 'use strict';
+
+/**
+ * MedOrbits -- Cryptographic Utilities
+ *
+ * File: src/utils/crypto.js
+ *
+ * Provides:
+ * - Cryptographically secure random tokens.
+ * - SHA-256 digests.
+ * - HMAC-SHA-256 signatures.
+ * - Timing-safe string comparisons.
+ * - Scrypt password hashing and verification.
+ *
+ * Security:
+ * - Never store plaintext passwords.
+ * - Store password hashes, not password-reset tokens.
+ * - Use a separate secret for each HMAC purpose.
+ * - Keep cryptographic secrets in environment variables or a secret manager.
+ */
 
 const nodeCrypto = require('node:crypto');
 const { promisify } = require('node:util');
@@ -11,6 +31,14 @@ const DEFAULT_SCRYPT_COST = 16384;
 const DEFAULT_SCRYPT_BLOCK_SIZE = 8;
 const DEFAULT_SCRYPT_PARALLELIZATION = 1;
 const DEFAULT_SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
+const DEFAULT_SALT_LENGTH = 16;
+const MAX_PASSWORD_BYTES = 1024;
+
+function assertString(value, name) {
+  if (typeof value !== 'string') {
+    throw new TypeError(`${name} must be a string.`);
+  }
+}
 
 function randomToken(bytes = DEFAULT_TOKEN_BYTES) {
   if (
@@ -23,23 +51,22 @@ function randomToken(bytes = DEFAULT_TOKEN_BYTES) {
     );
   }
 
-  return nodeCrypto
-    .randomBytes(bytes)
-    .toString('base64url');
+  return nodeCrypto.randomBytes(bytes).toString('base64url');
 }
 
 function sha256(value) {
+  assertString(value, 'Hash input');
+
   return nodeCrypto
     .createHash('sha256')
-    .update(value)
+    .update(value, 'utf8')
     .digest('hex');
 }
 
 function hmacSha256(value, secret) {
-  if (
-    typeof secret !== 'string' ||
-    secret.length === 0
-  ) {
+  assertString(value, 'HMAC input');
+
+  if (typeof secret !== 'string' || secret.length === 0) {
     throw new TypeError(
       'A non-empty HMAC secret is required.'
     );
@@ -47,7 +74,7 @@ function hmacSha256(value, secret) {
 
   return nodeCrypto
     .createHmac('sha256', secret)
-    .update(value)
+    .update(value, 'utf8')
     .digest('hex');
 }
 
@@ -72,29 +99,16 @@ function safeEqual(left, right) {
   );
 }
 
-async function hashPassword(password) {
-  if (
-    typeof password !== 'string' ||
-    password.length < 1
-  ) {
-    throw new TypeError(
-      'A non-empty password is required.'
-    );
-  }
+function isValidPasswordInput(password) {
+  return (
+    typeof password === 'string' &&
+    password.length > 0 &&
+    Buffer.byteLength(password, 'utf8') <= MAX_PASSWORD_BYTES
+  );
+}
 
-  /*
-   * Avoid silent truncation or accidental excessive input.
-   * Apply your password policy in the registration validator.
-   */
-  if (Buffer.byteLength(password, 'utf8') > 1024) {
-    throw new RangeError(
-      'Password exceeds the maximum supported byte length.'
-    );
-  }
-
-  const salt = nodeCrypto.randomBytes(16);
-
-  const derivedKey = await scryptAsync(
+async function derivePasswordKey(password, salt) {
+  return scryptAsync(
     password,
     salt,
     DEFAULT_SCRYPT_KEY_LENGTH,
@@ -105,6 +119,21 @@ async function hashPassword(password) {
       maxmem: DEFAULT_SCRYPT_MAX_MEMORY,
     }
   );
+}
+
+async function hashPassword(password) {
+  if (typeof password !== 'string' || password.length === 0) {
+    throw new TypeError('A non-empty password is required.');
+  }
+
+  if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
+    throw new RangeError(
+      'Password exceeds the maximum supported byte length.'
+    );
+  }
+
+  const salt = nodeCrypto.randomBytes(DEFAULT_SALT_LENGTH);
+  const derivedKey = await derivePasswordKey(password, salt);
 
   return [
     'scrypt',
@@ -116,9 +145,32 @@ async function hashPassword(password) {
   ].join('$');
 }
 
+function decodeBase64UrlStrict(value) {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    !/^[A-Za-z0-9_-]+$/.test(value)
+  ) {
+    return null;
+  }
+
+  try {
+    const decoded = Buffer.from(value, 'base64url');
+
+    // Reject non-canonical or malformed encodings.
+    if (decoded.toString('base64url') !== value) {
+      return null;
+    }
+
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 async function verifyPassword(password, storedHash) {
   if (
-    typeof password !== 'string' ||
+    !isValidPasswordInput(password) ||
     typeof storedHash !== 'string'
   ) {
     return false;
@@ -126,10 +178,7 @@ async function verifyPassword(password, storedHash) {
 
   const parts = storedHash.split('$');
 
-  if (
-    parts.length !== 6 ||
-    parts[0] !== 'scrypt'
-  ) {
+  if (parts.length !== 6 || parts[0] !== 'scrypt') {
     return false;
   }
 
@@ -137,10 +186,7 @@ async function verifyPassword(password, storedHash) {
   const blockSize = Number(parts[2]);
   const parallelization = Number(parts[3]);
 
-  /*
-   * Only accept parameters within an explicitly permitted range.
-   * Never blindly allocate memory based on an untrusted stored hash.
-   */
+  // Never derive resource limits from untrusted hash parameters.
   if (
     cost !== DEFAULT_SCRYPT_COST ||
     blockSize !== DEFAULT_SCRYPT_BLOCK_SIZE ||
@@ -149,35 +195,20 @@ async function verifyPassword(password, storedHash) {
     return false;
   }
 
-  let salt;
-  let expectedKey;
-
-  try {
-    salt = Buffer.from(parts[4], 'base64url');
-    expectedKey = Buffer.from(parts[5], 'base64url');
-  } catch {
-    return false;
-  }
+  const salt = decodeBase64UrlStrict(parts[4]);
+  const expectedKey = decodeBase64UrlStrict(parts[5]);
 
   if (
-    salt.length !== 16 ||
+    !salt ||
+    !expectedKey ||
+    salt.length !== DEFAULT_SALT_LENGTH ||
     expectedKey.length !== DEFAULT_SCRYPT_KEY_LENGTH
   ) {
     return false;
   }
 
   try {
-    const actualKey = await scryptAsync(
-      password,
-      salt,
-      DEFAULT_SCRYPT_KEY_LENGTH,
-      {
-        N: cost,
-        r: blockSize,
-        p: parallelization,
-        maxmem: DEFAULT_SCRYPT_MAX_MEMORY,
-      }
-    );
+    const actualKey = await derivePasswordKey(password, salt);
 
     return nodeCrypto.timingSafeEqual(
       Buffer.from(actualKey),
@@ -188,11 +219,11 @@ async function verifyPassword(password, storedHash) {
   }
 }
 
-module.exports = {
+module.exports = Object.freeze({
   randomToken,
   sha256,
   hmacSha256,
   safeEqual,
   hashPassword,
   verifyPassword,
-};
+});

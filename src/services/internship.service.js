@@ -1,18 +1,99 @@
-'use strict';
-const { ServiceError, requireDependency, requiredId, requiredString, plainObject, assertFound, createCrudService, audit } = require('./service-utils');
 
-function createInternshipService({ internshipRepository, auditService }) {
+'use strict';
+
+const {
+  ServiceError,
+  requireDependency,
+  requiredId,
+  assertFound,
+  createCrudService,
+  audit,
+} = require('./service-utils');
+
+const ALLOWED_STATUSES = new Set([
+  'draft',
+  'published',
+  'paused',
+  'closed',
+  'filled',
+]);
+
+function createInternshipService({
+  internshipRepository,
+  auditService,
+}) {
   requireDependency(internshipRepository, 'internshipRepository');
-  const crud = createCrudService({ repository: internshipRepository, entity: 'Internship', auditService });
-  return { ...crud,
+
+  const crud = createCrudService({
+    repository: internshipRepository,
+    entity: 'Internship',
+    auditService,
+  });
+
+  async function updateInternship(id, changes, action, actor = {}) {
+    requiredId(id);
+
+    if (typeof internshipRepository.updateById !== 'function') {
+      throw new TypeError(
+        'Internship repository must implement updateById().',
+      );
+    }
+
+    const record = assertFound(
+      await internshipRepository.updateById(id, changes),
+      'Internship',
+    );
+
+    await audit(auditService, {
+      action,
+      entity: 'Internship',
+      entityId: record.id ?? id,
+      actorId: actor.id,
+      metadata: changes.status
+        ? { status: changes.status }
+        : {},
+    });
+
+    return record;
+  }
+
+  return {
+    ...crud,
+
     async setStatus(id, status, actor = {}) {
-      requiredId(id);
-      if (!['draft', 'published', 'paused', 'closed', 'filled'].includes(status)) throw new ServiceError('Unsupported internship status.', { code: 'VALIDATION_ERROR', status: 422 });
-      const record = assertFound(await internshipRepository.updateById(id, { status }), 'Internship');
-      await audit(auditService, { action: 'internship.status_changed', entity: 'Internship', entityId: id, actorId: actor.id, metadata: { status } });
-      return record;
+      if (!ALLOWED_STATUSES.has(status)) {
+        throw new ServiceError(
+          'Unsupported internship status.',
+          {
+            code: 'VALIDATION_ERROR',
+            status: 422,
+            details: {
+              allowed: [...ALLOWED_STATUSES],
+            },
+          },
+        );
+      }
+
+      return updateInternship(
+        id,
+        { status },
+        'internship.status_changed',
+        actor,
+      );
     },
-    async publish(id, actor = {}) { const record = assertFound(await internshipRepository.updateById(id, { status: 'published', publishedAt: new Date() }), 'Internship'); await audit(auditService, { action: 'internship.published', entity: 'Internship', entityId: id, actorId: actor.id }); return record; },
+
+    async publish(id, actor = {}) {
+      return updateInternship(
+        id,
+        {
+          status: 'published',
+          publishedAt: new Date(),
+        },
+        'internship.published',
+        actor,
+      );
+    },
   };
 }
+
 module.exports = { createInternshipService };

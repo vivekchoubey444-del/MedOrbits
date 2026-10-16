@@ -1,202 +1,330 @@
 MedOrbits Repository Hardening Guide
 
 Project: MedOrbits
-Purpose: Improve repository security, protect source code, reduce credential exposure, and strengthen CI/CD controls.
+Scope: GitHub repository, source code, credentials, CI/CD, application security, and production infrastructure
+Purpose: Reduce unauthorized access, prevent credential exposure, strengthen software supply-chain security, and improve deployment reliability.
+
+Security status: This document defines recommended controls and verification procedures. It does not certify that MedOrbits is secure. Mark a control complete only after verifying the actual setting, workflow, code, or deployment configuration and recording appropriate evidence.
 
 ⸻
 
 1. Repository Access and Account Security
 
-* [ ]	Confirm the GitHub repository visibility is set to Private.
+Required controls
+
+* [ ]	Confirm that the GitHub repository is private.
 * [ ]	Enable two-factor authentication (2FA) or a passkey on the GitHub account.
-* [ ]	Review collaborators and remove users who no longer require access.
-* [ ]	Review organization and team permissions, if applicable.
+* [ ]	Review repository collaborators and remove unnecessary access.
+* [ ]	Review organization membership, team permissions, and inherited access where applicable.
 * [ ]	Audit GitHub Apps, OAuth authorizations, personal access tokens, deploy keys, and SSH keys.
-* [ ]	Revoke unused credentials and authorizations.
-* [ ]	Use a separate account or deployment identity for automated production access where practical.
-* [ ]	Never share private SSH keys, recovery codes, access tokens, or passwords.
+* [ ]	Revoke unused or unnecessarily privileged credentials.
+* [ ]	Use a dedicated deployment identity or GitHub App for automation where practical.
+* [ ]	Apply least-privilege permissions to human and automated identities.
+* [ ]	Never share passwords, private SSH keys, recovery codes, or access tokens.
 
-Important: A private repository prevents public browsing but does not prevent authorized users from cloning or copying its contents.
+Verification
 
-2. Protect the Main Branch
+Open the repository’s Settings and review visibility, access management, installed applications, and security-related account settings.
 
-Open:
+Repository: https://github.com/vivekchoubey444-del/MedOrbits
+
+Important: A private repository limits access to authorized users, but authorized users may still clone, download, or copy its contents. Repository privacy is not copy prevention.
+
+2. Main Branch Protection
+
+Configure a branch ruleset targeting main:
 
 https://github.com/vivekchoubey444-del/MedOrbits/settings/rules
 
-Create a branch ruleset targeting main.
+Recommended rules
 
-* [ ]	Require pull requests before merging changes.
-* [ ]	Require at least one approval when a trusted reviewer is available.
-* [ ]	Dismiss stale approvals when new commits materially change the reviewed code.
+* [ ]	Require pull requests before merging.
+* [ ]	Require at least one approval when an appropriate reviewer is available.
+* [ ]	Dismiss stale approvals when new commits materially change reviewed code.
 * [ ]	Require conversation resolution before merging.
 * [ ]	Require applicable CI and security status checks.
 * [ ]	Block force pushes.
 * [ ]	Prevent branch deletion.
-* [ ]	Restrict bypass permissions to trusted administrators.
-* [ ]	Protect develop similarly if it is used for ongoing development.
+* [ ]	Restrict bypass permissions to explicitly trusted administrators.
+* [ ]	Protect develop similarly if it is an active development branch.
+* [ ]	Review ruleset bypasses and exceptions periodically.
 
-Do not make a status check mandatory until it has run successfully and its exact check name has been verified.
+Status-check policy
+
+Do not make a check mandatory until it has run successfully and its exact check name has been verified.
+
+Start with checks that the repository actually provides, such as tests, linting, dependency review, or secret scanning. Avoid requiring nonexistent or duplicated checks.
+
+Verification evidence: Record the ruleset name, target branch, required checks, approval requirements, and bypass permissions.
 
 3. Secrets and Environment Variables
 
 * [ ]	Keep production credentials outside the Git repository.
-* [ ]	Add .env and real environment-specific files to .gitignore.
-* [ ]	Commit only sanitized examples such as .env.example.
-* [ ]	Never commit API keys, database passwords, payment-provider secrets, private keys, or session-signing secrets.
-* [ ]	Store production secrets in the deployment platform’s secret manager.
-* [ ]	Use GitHub Actions secrets or environment secrets only when workflows need them.
-* [ ]	Apply least-privilege access to each credential.
-* [ ]	Rotate credentials immediately if they are exposed.
-* [ ]	Review Git history if a secret was committed; removing the latest copy does not invalidate it.
-* [ ]	Never print secrets in CI logs or error responses.
+* [ ]	Add .env, environment-specific files, private keys, and local credential files to .gitignore as appropriate.
+* [ ]	Commit only sanitized templates such as .env.example.
+* [ ]	Never commit API keys, database passwords, session-signing secrets, payment-provider secrets, or private keys.
+* [ ]	Store production credentials in the deployment platform’s secret manager.
+* [ ]	Use GitHub Actions secrets or environment secrets only for workflows that need them.
+* [ ]	Apply least privilege and restrict access to production environments.
+* [ ]	Rotate credentials immediately after confirmed exposure.
+* [ ]	Review Git history when investigating previously committed secrets.
+* [ ]	Never print secrets in CI logs, application responses, or diagnostic output.
+
+Important distinction
+
+Removing a credential from the latest version of a file does not invalidate it or remove historical copies. Revoke or rotate the credential first, then assess whether repository-history remediation is necessary.
+
+Verification evidence: Review ignore rules, tracked files, environment configuration, workflow references, and deployment secret settings. Do not paste secret values into reports or logs.
 
 4. GitHub Actions Security
 
-* [ ]	Set workflow permissions to read-only by default.
-* [ ]	Grant write permissions only to jobs that require them.
+* [ ]	Set workflow permissions to read-only by default where possible.
+* [ ]	Grant write permissions only to jobs that need them.
 * [ ]	Avoid executing untrusted pull-request code with privileged secrets.
-* [ ]	Review third-party actions before using them.
+* [ ]	Review third-party actions and their maintenance and security history.
 * [ ]	Pin third-party actions to full commit SHAs where practical.
-* [ ]	Keep persist-credentials: false on checkout steps that do not need authenticated Git operations.
-* [ ]	Use supported Node.js versions consistent with the project and deployment platform.
+* [ ]	Set persist-credentials: false on checkout steps that do not require authenticated Git operations.
+* [ ]	Use a supported Node.js runtime compatible with the project and deployment platform.
 * [ ]	Set job timeouts and avoid unnecessary workflow privileges.
-* [ ]	Review workflow changes before merging them.
-* [ ]	Keep CI checks focused, maintainable, and free from duplicate jobs where possible.
+* [ ]	Review changes to workflow files before merging.
+* [ ]	Remove duplicate checks and unnecessary privileged jobs.
+* [ ]	Restrict deployment jobs to trusted branches and approved environments.
+* [ ]	Prevent untrusted workflows from obtaining production deployment credentials.
+* [ ]	Review artifact contents before publishing or deploying them.
+
+Example: read-only workflow permissions
+
+permissions:
+  contents: read
+
+Place this at the workflow level when read-only access is sufficient. A job that needs additional permissions should declare only the specific permissions it requires.
+
+This example is not a complete workflow. Validate the permissions required by each action and job before adopting it.
+
+Verification evidence: Inspect every workflow under .github/workflows/, including event triggers, permissions, secrets, checkout settings, deployment conditions, and third-party actions.
 
 5. Dependency Security
 
-Open:
+Review repository security settings:
 
 https://github.com/vivekchoubey444-del/MedOrbits/settings/security_analysis
 
-Enable the features available to the repository:
+Enable the available features supported by the repository and its GitHub plan:
 
 * [ ]	Dependency graph.
 * [ ]	Dependabot alerts.
 * [ ]	Dependabot security updates.
-* [ ]	Secret scanning and push protection, if available.
-* [ ]	Code scanning and CodeQL, if available.
-* [ ]	Dependency Review, if supported by the repository and plan.
+* [ ]	Secret scanning and push protection, where available.
+* [ ]	Code scanning and CodeQL, where available.
+* [ ]	Dependency Review, where supported and appropriate.
 
-Additional checks:
+Dependency management
 
 * [ ]	Commit the correct lockfile for the package manager in use.
-* [ ]	Use npm ci in CI when package-lock.json is maintained.
-* [ ]	Review dependency audit results and assess the actual impact of vulnerabilities.
+* [ ]	Use npm ci in CI when maintaining package-lock.json.
+* [ ]	Review dependency audit findings and assess actual exposure and impact.
 * [ ]	Review major-version updates separately.
 * [ ]	Remove unused dependencies.
-* [ ]	Do not automatically merge dependency updates without suitable tests and review.
+* [ ]	Test dependency changes before deployment.
+* [ ]	Avoid automatic merging without appropriate testing and review.
+* [ ]	Maintain an appropriate runtime and dependency update policy.
+
+For npm projects, review available information with:
+
+npm ci
+npm audit
+npm outdated
+
+npm audit reports known dependency advisories; it does not prove that the application is exploitable or that the repository is otherwise secure. Investigate the affected package, dependency path, applicable code, and available remediation.
+
+Do not automatically run npm audit fix —force in production branches without reviewing the resulting version changes and compatibility impact.
 
 6. Secret Scanning
 
 * [ ]	Run Gitleaks or an equivalent secret scanner in CI.
-* [ ]	Scan repository history when investigating possible previously committed secrets.
-* [ ]	Review suspected findings manually to distinguish real credentials from examples and false positives.
+* [ ]	Scan repository history when investigating possible historical exposure.
+* [ ]	Review findings manually to distinguish real credentials from false positives.
 * [ ]	Revoke or rotate confirmed exposed credentials immediately.
-* [ ]	Remove exposed secrets from repository history when necessary, coordinating with collaborators.
-* [ ]	Do not rely solely on regular expressions or a custom security-check script.
+* [ ]	Remove exposed material from repository history when necessary.
+* [ ]	Coordinate history rewriting with collaborators and deployment systems.
+* [ ]	Avoid relying solely on regular expressions or custom security scripts.
+* [ ]	Document approved scanner exceptions and periodically review them.
 
-Secret scanning detects potential exposure; it does not prevent authorized copying.
+Example local scan
+
+If Gitleaks is installed and its version supports these commands:
+
+gitleaks git .
+gitleaks dir .
+
+Check the installed version and current CLI documentation before incorporating scanner commands into CI. Scanner options and defaults can vary between versions.
+
+Secret scanning detects potential exposure; it does not prevent authorized copying or guarantee detection of every secret.
 
 7. Application Security
 
 * [ ]	Validate untrusted input on the server.
-* [ ]	Enforce authorization on every protected API operation.
-* [ ]	Apply authentication and session-management controls appropriate to the application.
-* [ ]	Use secure password hashing and safe authentication practices.
-* [ ]	Configure rate limits for sensitive endpoints.
-* [ ]	Prevent injection vulnerabilities using parameterized database queries and safe output handling.
-* [ ]	Apply appropriate security headers and a restrictive Content Security Policy where practical.
+* [ ]	Enforce authentication and authorization on every protected API operation.
+* [ ]	Check resource ownership and permissions for individual records.
+* [ ]	Use secure password hashing and appropriate authentication practices.
+* [ ]	Configure sessions and cookies securely for the deployment environment.
+* [ ]	Apply rate limits to authentication, verification, password-reset, and other abuse-prone endpoints.
+* [ ]	Use parameterized queries and safe output handling to prevent injection vulnerabilities.
+* [ ]	Configure appropriate security headers and a restrictive Content Security Policy where practical.
 * [ ]	Avoid exposing stack traces, internal paths, credentials, or sensitive records to clients.
-* [ ]	Keep administrative operations restricted to authorized roles.
-* [ ]	Test access-control boundaries and failure cases.
+* [ ]	Restrict administrative actions to authorized roles.
+* [ ]	Test both permitted and denied access paths.
+* [ ]	Review CSRF protections for state-changing requests where applicable.
+* [ ]	Keep production debug mode disabled.
+* [ ]	Log security-relevant events without recording sensitive values.
+
+MedOrbits-specific security considerations
+
+For education applications, recruitment workflows, and account-based services, verify that users cannot access another user’s applications, uploaded documents, account information, or transaction records by changing a record identifier.
+
+Hiding a frontend link is not access control. Every protected backend operation must enforce the appropriate permissions.
 
 8. File Uploads and Documents
 
-* [ ]	Authenticate users before protected uploads or downloads.
-* [ ]	Verify authorization for each document operation.
-* [ ]	Validate file size, type, and content rather than trusting the supplied filename or MIME type alone.
+* [ ]	Authenticate users before protected uploads and downloads.
+* [ ]	Authorize each document operation independently.
+* [ ]	Validate file size, file type, and file content.
+* [ ]	Do not trust client-supplied filenames or MIME types.
 * [ ]	Generate safe server-side storage names.
 * [ ]	Store private documents outside publicly served directories.
 * [ ]	Prevent path traversal and unsafe file execution.
-* [ ]	Consider malware scanning for uploaded files.
+* [ ]	Consider malware scanning and quarantine for uploaded files.
 * [ ]	Apply retention and deletion rules to sensitive documents.
-* [ ]	Avoid placing real user documents in source control or test fixtures.
+* [ ]	Avoid storing real user documents in source control, public assets, or test fixtures.
+* [ ]	Restrict document access to authorized users and purposes.
+* [ ]	Review temporary-file cleanup and storage permissions.
+
+Verification evidence: Test unauthorized downloads, cross-user document access, oversized files, misleading extensions, malformed uploads, and unsafe filenames.
 
 9. Payments and Financial Data
 
-* [ ]	Verify payment-provider webhook signatures.
-* [ ]	Implement idempotency to prevent duplicate processing.
-* [ ]	Validate payment amounts and transaction states on the server.
+* [ ]	Verify payment-provider webhook signatures using the provider’s documented verification method.
+* [ ]	Implement idempotency to prevent duplicate payment processing.
+* [ ]	Validate transaction amounts, currency, and state on the server.
 * [ ]	Do not trust payment success messages supplied by the browser.
-* [ ]	Keep provider secrets on the server.
+* [ ]	Keep payment-provider secrets on the server.
 * [ ]	Avoid storing card security codes or unnecessary payment information.
-* [ ]	Log transaction references and status changes without exposing sensitive payment data.
+* [ ]	Record transaction references and status changes without exposing sensitive payment data.
 * [ ]	Test webhook retries, duplicate events, and failure recovery.
+* [ ]	Reconcile payment records against the payment provider where appropriate.
+* [ ]	Restrict access to refunds, payment adjustments, and subscription administration.
+
+Verification evidence: Use the provider’s test environment to confirm signature verification, duplicate-event handling, failed payments, retries, and transaction-state transitions. Never test with real charges unless explicitly authorized and necessary.
 
 10. Database and Production Deployment
 
 * [ ]	Store database credentials in deployment secrets.
-* [ ]	Use a restricted database account for application operations.
-* [ ]	Use separate development, testing, and production environments.
-* [ ]	Review database migrations before deployment.
-* [ ]	Plan rollback or recovery procedures for schema changes.
-* [ ]	Back up critical data and test restoration procedures.
-* [ ]	Apply appropriate database network access restrictions.
-* [ ]	Keep production debug mode disabled.
-* [ ]	Configure HTTPS and secure cookie settings for production.
+* [ ]	Use a restricted database account for routine application operations.
+* [ ]	Separate development, testing, staging, and production environments.
+* [ ]	Review migrations before deployment.
+* [ ]	Plan recovery or rollback procedures for schema changes.
+* [ ]	Back up critical data and test restoration.
+* [ ]	Restrict database network access.
+* [ ]	Disable production debug mode.
+* [ ]	Enforce HTTPS and secure cookie settings in production.
 * [ ]	Monitor application errors and security-relevant events without logging sensitive data.
+* [ ]	Verify health checks and deployment readiness checks.
+* [ ]	Document incident contacts and escalation procedures.
+
+Production deployment gate
+
+Before releasing a change, confirm:
+
+1. The approved code revision is the one being deployed.
+2. Required CI checks have passed.
+3. Production secrets are configured in the appropriate secret manager.
+4. Database migrations have been reviewed.
+5. Backups and recovery procedures are available.
+6. Private documents and administrative endpoints are protected.
+7. A rollback or recovery plan exists.
+8. Post-deployment checks can verify the release.
+
+Do not treat a successful container build or HTTP health check as proof that all security controls work.
 
 11. Frontend Source-Code Limitations
 
-* [ ]	Never embed API secrets or private credentials in browser-delivered JavaScript.
-* [ ]	Move proprietary business logic requiring confidentiality to server-side services.
-* [ ]	Enforce access control on the backend rather than hiding UI elements.
-* [ ]	Remove source maps from public deployment when they are not intentionally published.
-* [ ]	Minification and obfuscation may increase copying effort but do not prevent copying.
-* [ ]	Review public assets and frontend bundles for accidentally exposed configuration or data.
+* [ ]	Never embed private credentials or API secrets in browser-delivered JavaScript.
+* [ ]	Move confidential business logic to server-side services.
+* [ ]	Enforce backend authorization instead of relying on hidden UI elements.
+* [ ]	Review frontend bundles and public assets for exposed configuration or private data.
+* [ ]	Review source maps before publishing them publicly.
+* [ ]	Publish source maps only when their exposure is intentional and appropriate.
+* [ ]	Avoid including internal endpoints, test credentials, or private data in public JSON files.
 
-HTML, CSS, JavaScript, images, and other assets delivered to a browser can be inspected or copied. Repository privacy does not change that.
+HTML, CSS, JavaScript, images, and other assets delivered to a browser can be inspected or copied. Minification and obfuscation may increase copying effort but do not prevent it.
+
+Keeping the GitHub repository private does not make deployed frontend code private.
 
 12. Incident Response
 
 If a credential or sensitive file is exposed:
 
-1. Revoke or rotate the affected credential immediately.
-2. Determine which systems and data may have been affected.
-3. Review relevant access logs and audit events.
-4. Remove the exposed material from the repository and history where appropriate.
-5. Update deployment secrets and affected services.
-6. Notify impacted parties when legally or operationally required.
-7. Document the cause and preventive actions.
+1. Contain the exposure. Revoke or rotate the affected credential immediately. Disable compromised access where appropriate.
+2. Assess impact. Identify the affected systems, accounts, data, and time window.
+3. Review evidence. Inspect relevant access logs, audit events, and deployment activity.
+4. Remediate the source. Remove exposed material from the working tree and, when appropriate, repository history.
+5. Update dependent systems. Replace deployment secrets and verify that affected services use the new credentials.
+6. Notify appropriately. Inform affected parties when legally, contractually, or operationally required.
+7. Recover safely. Verify the affected systems and data before restoring normal operation.
+8. Prevent recurrence. Document the cause, remediation, and follow-up actions.
 
-Do not assume that deleting a file or making a repository private invalidates a leaked credential.
+Do not assume that deleting a file, rewriting Git history, or making the repository private invalidates a leaked credential.
+
+Preserve relevant evidence and coordinate history rewriting with collaborators before proceeding. Follow applicable incident-response and legal requirements.
 
 13. Ongoing Maintenance
 
-* [ ]	Review collaborators and access permissions regularly.
-* [ ]	Review Dependabot pull requests and security alerts.
+* [ ]	Review repository collaborators and access permissions regularly.
+* [ ]	Review Dependabot alerts and dependency-update pull requests.
 * [ ]	Investigate failed CI and security workflows.
 * [ ]	Update supported runtimes and dependencies.
-* [ ]	Review the security policy and supported-version policy.
-* [ ]	Test backup recovery and incident-response procedures.
-* [ ]	Reassess this checklist after significant architecture or deployment changes.
+* [ ]	Review security policy and supported-version policy.
+* [ ]	Test backup restoration and incident-response procedures.
+* [ ]	Review GitHub Apps, tokens, deploy keys, and automated identities.
+* [ ]	Reassess deployment permissions and secret access.
+* [ ]	Review scanner findings and approved exceptions.
+* [ ]	Reassess this checklist after significant architecture or infrastructure changes.
 
 ⸻
 
-Completion Record
+Verification and Completion Record
 
-Use this section to record implementation progress.
+Record evidence for each control. Use Verified, Not applicable, or Pending verification as appropriate. A control should not be marked verified based solely on the existence of a related file.
 
-Area	Status
-Repository privacy and access	Pending verification
-Branch protection	Pending verification
-Secret management	Pending verification
-CI/CD permissions	Pending verification
-Dependency security	Pending verification
-Secret scanning	Pending verification
-Application security	Pending verification
-Production deployment	Pending verification
+Area	Status	Evidence or reference
+Repository privacy and access	Pending verification	
+Main branch protection	Pending verification	
+Secret management	Pending verification	
+CI/CD permissions	Pending verification	
+Dependency security	Pending verification	
+Secret scanning	Pending verification	
+Application security	Pending verification	
+File uploads and documents	Pending verification	
+Payments and financial data	Pending verification	
+Database and production deployment	Pending verification	
+Frontend exposure review	Pending verification	
+Incident response	Pending verification	
+Ongoing maintenance	Pending verification	
 
-Security statement: This guide provides hardening recommendations, not a guarantee that MedOrbits is secure or that its source code cannot be copied. Verify each control in the actual repository and deployment environment before marking it complete.
+Review record
+
+* Review date: Pending
+* Reviewed by: Pending
+* Repository revision or commit: Pending
+* Outstanding high-risk findings: Pending
+* Remediation owner and target date: Pending
+
+⸻
+
+Security Statement
+
+This guide provides repository-hardening recommendations and verification steps. It is not a security certification, penetration-test report, or guarantee that MedOrbits is secure or that its source code cannot be copied.
+
+Verify each control against the actual GitHub settings, source code, CI/CD workflows, dependencies, and production deployment before marking it complete.
+
+MedOrbits — Education · Admissions · Careers · Recruitment

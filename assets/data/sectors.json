@@ -1,48 +1,898 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
+  "metadata": {
+    "title": "MedOrbits Health Sectors",
+    "description": "Career and study sectors within health and life sciences, linking courses, job types and employer types. Seed descriptions are general and must not be read as guarantees.",
+    "defaultCountryCode": "IN",
+    "defaultLanguage": "en",
+    "note": "Sector groupings are editorial. A course may belong to several sectors. Salary, demand and regulatory details stay null until sourced."
+  },
+  "fields": [
+    "id",
+    "name",
+    "slug",
+    "description",
+    "courseIds",
+    "jobTypes",
+    "employerTypes",
+    "exampleRoles",
+    "keySkills",
+    "careerStages",
+    "relatedCategories",
+    "relatedFaqIds",
+    "regulatoryNote",
+    "salaryInfo",
+    "demandInfo",
+    "sourceUrl",
+    "icon",
+    "sortOrder",
+    "featured",
+    "verificationStatus",
+    "verifiedAt",
+    "verifiedBy",
+    "reviewDueAt",
+    "active",
+    "createdAt",
+    "updatedAt"
+  ],
+  "fieldDefinitions": {
+    "courseIds": {
+      "type": "array",
+      "references": "courses.id",
+      "note": "Courses that commonly lead into this sector; not a guarantee of eligibility or employment."
+    },
+    "jobTypes": {
+      "type": "array",
+      "itemEnum": "jobs.allowedValues.jobType"
+    },
+    "employerTypes": {
+      "type": "array",
+      "itemEnum": "jobs.allowedValues.employerType"
+    },
+    "careerStages": {
+      "type": "array",
+      "itemShape": {
+        "stage": "string",
+        "description": "string",
+        "typicalCourseIds": "array of courses.id"
+      },
+      "note": "Sourced, general descriptions only."
+    },
+    "salaryInfo": {
+      "type": "object",
+      "nullable": true,
+      "shape": {
+        "currency": "ISO 4217",
+        "min": "number",
+        "max": "number",
+        "frequency": "enum",
+        "year": "integer",
+        "sourceUrl": "https URL"
+      },
+      "note": "Only from a published official source with year; never estimated."
+    },
+    "demandInfo": {
+      "type": "object",
+      "nullable": true,
+      "shape": {
+        "summary": "string",
+        "year": "integer",
+        "sourceUrl": "https URL"
+      },
+      "note": "Only from a published source; never speculative."
+    },
+    "regulatoryNote": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "allowedValues": {
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ]
+  },
+  "dataRules": [
+    "id and slug must be unique; slug is lowercase kebab-case.",
+    "Every courseId must exist in courses.json; jobTypes and employerTypes must use values defined in jobs.json.",
+    "A course may appear in multiple sectors; sector membership never implies eligibility, recognition or employment.",
+    "Never invent salaries, demand figures, growth rates or placement statistics; salaryInfo and demandInfo stay null until sourced with a year.",
+    "Descriptions must stay general and must not promise outcomes.",
+    "regulatoryNote must always point users to the relevant official regulator rather than stating rules from memory.",
+    "verifiedAt and verifiedBy must be null until verified, and set together.",
+    "The active field controls display only."
+  ],
+  "displayRules": {
+    "alwaysShow": [
+      "regulatoryNote"
+    ],
+    "unverifiedLabel": "Unverified - confirm pathways and requirements with official sources.",
+    "disclaimer": "Sector overviews are general guidance, not career advice or a guarantee of jobs, income or admission."
+  },
   "sectors": [
     {
-      "id": "healthcare",
-      "name": "Healthcare",
-      "slug": "healthcare",
-      "active": true
+      "id": "sector-clinical-medicine",
+      "name": "Clinical medicine",
+      "slug": "clinical-medicine",
+      "description": "Diagnosing and treating patients in hospitals, clinics and primary care settings.",
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-dnb",
+        "course-pg-diploma-medical",
+        "course-dm",
+        "course-mch"
+      ],
+      "jobTypes": [
+        "clinical"
+      ],
+      "employerTypes": [
+        "government",
+        "public_sector",
+        "private_hospital",
+        "armed_forces",
+        "ngo"
+      ],
+      "exampleRoles": [
+        "Medical officer",
+        "Resident doctor",
+        "Consultant",
+        "Surgeon",
+        "General practitioner"
+      ],
+      "keySkills": [
+        "Clinical reasoning",
+        "Communication",
+        "Teamwork",
+        "Decision-making under pressure"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 1,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "education",
-      "name": "Education",
-      "slug": "education",
-      "active": true
+      "id": "sector-dentistry",
+      "name": "Dentistry and oral health",
+      "slug": "dentistry",
+      "description": "Preventive and restorative oral care, oral surgery and dental public health.",
+      "courseIds": [
+        "course-bds",
+        "course-mds"
+      ],
+      "jobTypes": [
+        "clinical",
+        "teaching",
+        "public_health"
+      ],
+      "employerTypes": [
+        "government",
+        "private_hospital",
+        "private_company",
+        "academic_institution"
+      ],
+      "exampleRoles": [
+        "Dental surgeon",
+        "Orthodontist",
+        "Oral health educator"
+      ],
+      "keySkills": [
+        "Manual dexterity",
+        "Patient communication",
+        "Infection control"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 2,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "technology",
-      "name": "Technology",
-      "slug": "technology",
-      "active": true
+      "id": "sector-ayush",
+      "name": "AYUSH systems of medicine",
+      "slug": "ayush",
+      "description": "Practice and teaching of Ayurveda, Yoga and Naturopathy, Unani, Siddha and Homoeopathy.",
+      "courseIds": [
+        "course-bams",
+        "course-bhms",
+        "course-bums",
+        "course-bsms",
+        "course-bnys",
+        "course-md-ayurveda"
+      ],
+      "jobTypes": [
+        "clinical",
+        "teaching",
+        "research"
+      ],
+      "employerTypes": [
+        "government",
+        "private_hospital",
+        "private_company",
+        "academic_institution",
+        "research_organisation"
+      ],
+      "exampleRoles": [
+        "AYUSH medical officer",
+        "Practitioner",
+        "Lecturer",
+        "Wellness consultant"
+      ],
+      "keySkills": [
+        "Traditional-system knowledge",
+        "Patient counselling",
+        "Evidence-informed practice"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 3,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "engineering",
-      "name": "Engineering",
-      "slug": "engineering",
-      "active": true
+      "id": "sector-nursing-and-midwifery",
+      "name": "Nursing and midwifery",
+      "slug": "nursing-and-midwifery",
+      "description": "Patient care, maternal and child health, and nursing education and leadership.",
+      "courseIds": [
+        "course-bsc-nursing",
+        "course-gnm",
+        "course-anm",
+        "course-msc-nursing"
+      ],
+      "jobTypes": [
+        "clinical",
+        "teaching",
+        "public_health"
+      ],
+      "employerTypes": [
+        "government",
+        "private_hospital",
+        "ngo",
+        "armed_forces",
+        "academic_institution"
+      ],
+      "exampleRoles": [
+        "Staff nurse",
+        "Nursing officer",
+        "Midwife",
+        "Nurse educator"
+      ],
+      "keySkills": [
+        "Patient care",
+        "Empathy",
+        "Attention to detail",
+        "Team coordination"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 4,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "business",
-      "name": "Business and Management",
-      "slug": "business-management",
-      "active": true
+      "id": "sector-pharmacy-and-pharma-industry",
+      "name": "Pharmacy and pharmaceutical industry",
+      "slug": "pharmacy-and-pharma-industry",
+      "description": "Dispensing, clinical pharmacy, drug regulation, manufacturing, quality and research.",
+      "courseIds": [
+        "course-b-pharm",
+        "course-pharm-d",
+        "course-d-pharm",
+        "course-m-pharm"
+      ],
+      "jobTypes": [
+        "clinical",
+        "technical",
+        "pharma_industry",
+        "research"
+      ],
+      "employerTypes": [
+        "private_company",
+        "private_hospital",
+        "government",
+        "research_organisation",
+        "academic_institution"
+      ],
+      "exampleRoles": [
+        "Pharmacist",
+        "Clinical pharmacist",
+        "Quality analyst",
+        "Regulatory affairs associate"
+      ],
+      "keySkills": [
+        "Pharmacology",
+        "Compliance awareness",
+        "Analytical skills"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 5,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "hospitality",
-      "name": "Hospitality",
-      "slug": "hospitality",
-      "active": true
+      "id": "sector-diagnostics-and-imaging",
+      "name": "Diagnostics and imaging",
+      "slug": "diagnostics-and-imaging",
+      "description": "Laboratory testing and medical imaging that support diagnosis and treatment.",
+      "courseIds": [
+        "course-bmlt",
+        "course-bsc-radiology-imaging"
+      ],
+      "jobTypes": [
+        "technical",
+        "clinical"
+      ],
+      "employerTypes": [
+        "private_hospital",
+        "private_company",
+        "government",
+        "public_sector"
+      ],
+      "exampleRoles": [
+        "Laboratory technologist",
+        "Radiographer",
+        "Imaging technologist"
+      ],
+      "keySkills": [
+        "Technical accuracy",
+        "Equipment handling",
+        "Safety protocols"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 6,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
-      "id": "retail",
-      "name": "Retail and Customer Service",
-      "slug": "retail-customer-service",
-      "active": true
+      "id": "sector-rehabilitation-and-therapy",
+      "name": "Rehabilitation and therapy",
+      "slug": "rehabilitation-and-therapy",
+      "description": "Restoring function and communication through therapy, assistive devices and training.",
+      "courseIds": [
+        "course-bpt",
+        "course-bot",
+        "course-bpo",
+        "course-baslp"
+      ],
+      "jobTypes": [
+        "clinical",
+        "technical"
+      ],
+      "employerTypes": [
+        "private_hospital",
+        "government",
+        "ngo",
+        "private_company"
+      ],
+      "exampleRoles": [
+        "Physiotherapist",
+        "Occupational therapist",
+        "Prosthetist and orthotist",
+        "Audiologist and speech-language pathologist"
+      ],
+      "keySkills": [
+        "Patient motivation",
+        "Assessment skills",
+        "Manual therapy or device skills"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 7,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-critical-and-emergency-care",
+      "name": "Critical and emergency care",
+      "slug": "critical-and-emergency-care",
+      "description": "Operation theatre, anaesthesia support, dialysis and emergency medical response.",
+      "courseIds": [
+        "course-bsc-anaesthesia-ot",
+        "course-bsc-dialysis",
+        "course-bsc-emergency-care"
+      ],
+      "jobTypes": [
+        "technical",
+        "clinical"
+      ],
+      "employerTypes": [
+        "private_hospital",
+        "government",
+        "public_sector",
+        "ngo"
+      ],
+      "exampleRoles": [
+        "OT technologist",
+        "Dialysis technologist",
+        "Emergency medical technician"
+      ],
+      "keySkills": [
+        "Calm under pressure",
+        "Equipment skills",
+        "Rapid response"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 8,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-optometry-and-eye-care",
+      "name": "Optometry and eye care",
+      "slug": "optometry-and-eye-care",
+      "description": "Vision testing, eye-care support and optical services.",
+      "courseIds": [
+        "course-bsc-optometry"
+      ],
+      "jobTypes": [
+        "clinical",
+        "technical"
+      ],
+      "employerTypes": [
+        "private_hospital",
+        "private_company",
+        "government",
+        "ngo"
+      ],
+      "exampleRoles": [
+        "Optometrist",
+        "Vision therapist"
+      ],
+      "keySkills": [
+        "Refraction skills",
+        "Patient counselling"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 9,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-nutrition-and-dietetics",
+      "name": "Nutrition and dietetics",
+      "slug": "nutrition-and-dietetics",
+      "description": "Clinical nutrition, diet planning and community nutrition programmes.",
+      "courseIds": [
+        "course-bsc-nutrition-dietetics"
+      ],
+      "jobTypes": [
+        "clinical",
+        "public_health"
+      ],
+      "employerTypes": [
+        "private_hospital",
+        "government",
+        "ngo",
+        "private_company"
+      ],
+      "exampleRoles": [
+        "Clinical dietitian",
+        "Community nutritionist"
+      ],
+      "keySkills": [
+        "Nutrition science",
+        "Counselling",
+        "Programme design"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 10,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-public-health-and-community",
+      "name": "Public health and community health",
+      "slug": "public-health-and-community",
+      "description": "Disease prevention, health programmes, epidemiology and policy at population level.",
+      "courseIds": [
+        "course-bph",
+        "course-mph"
+      ],
+      "jobTypes": [
+        "public_health",
+        "administrative",
+        "research"
+      ],
+      "employerTypes": [
+        "government",
+        "public_sector",
+        "ngo",
+        "research_organisation",
+        "academic_institution"
+      ],
+      "exampleRoles": [
+        "Public health officer",
+        "Programme manager",
+        "Epidemiology analyst"
+      ],
+      "keySkills": [
+        "Data analysis",
+        "Communication",
+        "Programme management"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 11,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-medical-education-and-academia",
+      "name": "Medical education and academia",
+      "slug": "medical-education-and-academia",
+      "description": "Teaching and training of health professionals and academic leadership.",
+      "courseIds": [
+        "course-md",
+        "course-ms-surgery",
+        "course-mds",
+        "course-msc-nursing",
+        "course-m-pharm",
+        "course-md-ayurveda"
+      ],
+      "jobTypes": [
+        "teaching",
+        "research"
+      ],
+      "employerTypes": [
+        "academic_institution",
+        "government",
+        "private_hospital"
+      ],
+      "exampleRoles": [
+        "Lecturer",
+        "Assistant professor",
+        "Clinical tutor"
+      ],
+      "keySkills": [
+        "Teaching",
+        "Mentoring",
+        "Curriculum design"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 12,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-biomedical-research",
+      "name": "Biomedical and clinical research",
+      "slug": "biomedical-research",
+      "description": "Laboratory, clinical and translational research and clinical trial operations.",
+      "courseIds": [
+        "course-md",
+        "course-dm",
+        "course-mch",
+        "course-pharm-d",
+        "course-m-pharm",
+        "course-mph"
+      ],
+      "jobTypes": [
+        "research",
+        "technical"
+      ],
+      "employerTypes": [
+        "research_organisation",
+        "academic_institution",
+        "private_company",
+        "government"
+      ],
+      "exampleRoles": [
+        "Research associate",
+        "Clinical research coordinator",
+        "Scientist"
+      ],
+      "keySkills": [
+        "Research methods",
+        "Data handling",
+        "Ethics and compliance"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 13,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-veterinary-and-animal-health",
+      "name": "Veterinary and animal health",
+      "slug": "veterinary-and-animal-health",
+      "description": "Animal care, livestock health, and One Health links to public health.",
+      "courseIds": [
+        "course-bvsc-ah"
+      ],
+      "jobTypes": [
+        "clinical",
+        "public_health",
+        "research"
+      ],
+      "employerTypes": [
+        "government",
+        "private_company",
+        "ngo",
+        "academic_institution"
+      ],
+      "exampleRoles": [
+        "Veterinary officer",
+        "Veterinary clinician"
+      ],
+      "keySkills": [
+        "Animal handling",
+        "Diagnosis",
+        "Field work"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 14,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-health-administration-and-policy",
+      "name": "Health administration and policy",
+      "slug": "health-administration-and-policy",
+      "description": "Hospital management, health systems, insurance and regulation.",
+      "courseIds": [
+        "course-mph",
+        "course-md"
+      ],
+      "jobTypes": [
+        "administrative"
+      ],
+      "employerTypes": [
+        "government",
+        "public_sector",
+        "private_hospital",
+        "private_company",
+        "ngo"
+      ],
+      "exampleRoles": [
+        "Hospital administrator",
+        "Quality manager",
+        "Health policy analyst"
+      ],
+      "keySkills": [
+        "Management",
+        "Regulation awareness",
+        "Data literacy"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 15,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "sector-international-practice",
+      "name": "International practice and licensing",
+      "slug": "international-practice",
+      "description": "Pathways for those who train abroad or plan to practise in another country.",
+      "courseIds": [
+        "course-mbbs-abroad"
+      ],
+      "jobTypes": [
+        "clinical"
+      ],
+      "employerTypes": [
+        "government",
+        "private_hospital"
+      ],
+      "exampleRoles": [
+        "Foreign medical graduate preparing for licensing"
+      ],
+      "keySkills": [
+        "Regulatory awareness",
+        "Planning"
+      ],
+      "careerStages": [],
+      "relatedCategories": [],
+      "relatedFaqIds": [],
+      "regulatoryNote": "Practice, registration and licensing rules vary by profession and location. Verify with the relevant official regulator before relying on any pathway.",
+      "salaryInfo": null,
+      "demandInfo": null,
+      "sourceUrl": null,
+      "icon": null,
+      "sortOrder": 16,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     }
   ]
 }

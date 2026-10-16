@@ -1,200 +1,268 @@
 /* =========================================================
-MedOrbits -- Opening Animations
-Intro screen, logo reveal, orbital rings, and keyframes
-========================================================= */
-
-/* Full-screen intro overlay */
+   MedOrbits -- Opening Animations
+   Theme: Luxury Aubergine & Champagne Gold
+   Purpose: Intro screen, logo reveal, orbital rings,
+   and reusable keyframes
+   ========================================================= */
+/* =========================================================
+   1. Full-Screen Intro Overlay
+   ========================================================= */
 .intro-screen {
-position: fixed;
-inset: 0;
-z-index: 10000;
-display: grid;
-place-items: center;
-overflow: hidden;
-background:
-radial-gradient(
-ellipse at 50% 42%,
-rgba(84, 30, 50, 0.42),
-transparent 42%
-),
-linear-gradient(145deg, #100a17, #1a1024 58%, #0b0710);
-opacity: 1;
-visibility: visible;
-transition:
-opacity 0.75s ease,
-visibility 0.75s ease;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 24px;
+  background:
+    radial-gradient(
+      ellipse at 50% 42%,
+      rgba(84, 30, 50, 0.42),
+      transparent 42%
+    ),
+    linear-gradient(
+      145deg,
+      #100a17,
+      #1a1024 58%,
+      #0b0710
+    );
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 750ms ease,
+    visibility 750ms ease;
 }
-
-/* Decorative orbital rings */
+/* =========================================================
+   2. Decorative Orbital Rings
+   ========================================================= */
 .intro-screen::before,
 .intro-screen::after {
-content: "";
-position: absolute;
-width: min(62vw, 420px);
-aspect-ratio: 1;
-border: 1px solid rgba(201, 169, 110, 0.2);
-border-radius: 50%;
-animation: intro-orbit 2.6s ease-out both;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(62vw, 420px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(201, 169, 110, 0.2);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: intro-orbit 2.6s ease-out both;
 }
-
 .intro-screen::after {
-width: min(48vw, 320px);
-border-color: rgba(201, 169, 110, 0.32);
-animation-delay: 0.12s;
+  width: min(48vw, 320px);
+  border-color: rgba(201, 169, 110, 0.32);
+  animation-delay: 120ms;
 }
-
-/* Hidden state controlled by the existing application logic */
+/* =========================================================
+   3. Hidden State
+   Controlled by existing application logic
+   ========================================================= */
 .intro-screen.is-hidden {
-opacity: 0;
-visibility: hidden;
-pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
-
-/* Intro content */
+/* =========================================================
+   4. Intro Content
+   ========================================================= */
 .intro-content {
-position: relative;
-z-index: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 24px;
-text-align: center;
-animation: intro-rise 0.9s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 520px);
+  padding: 24px;
+  text-align: center;
+  animation: intro-rise 900ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
-
-/* Brand logo */
+/* =========================================================
+   5. Brand Logo
+   ========================================================= */
 .intro-logo {
-width: 76px;
-height: 76px;
-margin-bottom: 17px;
-object-fit: contain;
-filter: drop-shadow(0 0 22px rgba(201, 169, 110, 0.24));
-animation: intro-logo-in 1.1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  display: block;
+  width: 76px;
+  height: 76px;
+  max-width: 100%;
+  margin: 0 0 17px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(201, 169, 110, 0.24));
+  animation: intro-logo-in 1100ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
-
-/* Brand wordmark */
+/* =========================================================
+   6. Brand Wordmark
+   ========================================================= */
 .intro-wordmark {
-color: #e4d0a1;
-font: 600 clamp(22px, 4vw, 31px) / 1.2 "Playfair Display", Georgia, serif;
-letter-spacing: 0.23em;
-text-indent: 0.23em;
+  margin: 0;
+  color: var(--gold-light, #e4d0a1);
+  font-family: var(--font-heading, "Playfair Display", Georgia, serif);
+  font-size: clamp(22px, 4vw, 31px);
+  font-weight: var(--weight-semibold, 600);
+  line-height: 1.2;
+  letter-spacing: 0.23em;
+  text-indent: 0.23em;
+  overflow-wrap: anywhere;
 }
-
-/* Intro tagline */
+/* =========================================================
+   7. Intro Tagline
+   ========================================================= */
 .intro-tagline {
-margin-top: 12px;
-color: #b7acbf;
-font-size: 9px;
-letter-spacing: 0.24em;
-text-indent: 0.24em;
-text-transform: uppercase;
-animation: intro-fade-in 1.2s 0.25s both;
+  max-width: 100%;
+  margin: 12px 0 0;
+  color: var(--muted, #b7acbf);
+  font-family: var(--font-ui, "DM Sans", sans-serif);
+  font-size: 9px;
+  font-weight: var(--weight-medium, 500);
+  line-height: 1.8;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  text-transform: uppercase;
+  animation: intro-fade-in 1200ms 250ms both;
 }
-
-/* Animated gold divider */
+/* =========================================================
+   8. Animated Gold Divider
+   ========================================================= */
 .intro-rule {
-width: 0;
-height: 1px;
-margin-top: 22px;
-background: linear-gradient(
-90deg,
-transparent,
-#c9a96e,
-transparent
-);
-animation: intro-rule-in 0.8s 0.35s ease-out forwards;
+  width: 0;
+  max-width: 100%;
+  height: 1px;
+  flex: 0 0 auto;
+  margin-top: 22px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--gold, #c9a96e),
+    transparent
+  );
+  animation: intro-rule-in 800ms 350ms ease-out forwards;
 }
-
-/* Orbital ring animation */
+/* =========================================================
+   9. Orbital Ring Animation
+   ========================================================= */
 @keyframes intro-orbit {
-from {
-transform: scale(0.72) rotate(-25deg);
-opacity: 0;
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72) rotate(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
 }
-
-to {
-transform: scale(1) rotate(0);
-opacity: 1;
-}
-}
-
-/* Content entrance */
+/* =========================================================
+   10. Content Entrance
+   ========================================================= */
 @keyframes intro-rise {
-from {
-transform: translateY(12px);
-opacity: 0;
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
-
-to {
-transform: translateY(0);
-opacity: 1;
-}
-}
-
-/* Logo entrance */
+/* =========================================================
+   11. Logo Entrance
+   ========================================================= */
 @keyframes intro-logo-in {
-from {
-transform: scale(0.72);
-opacity: 0;
+  from {
+    transform: scale(0.72);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-
-to {
-transform: scale(1);
-opacity: 1;
-}
-}
-
-/* Tagline reveal */
+/* =========================================================
+   12. Tagline Reveal
+   ========================================================= */
 @keyframes intro-fade-in {
-from {
-opacity: 0;
-letter-spacing: 0.42em;
+  from {
+    opacity: 0;
+    letter-spacing: 0.42em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.24em;
+  }
 }
-
-to {
-opacity: 1;
-letter-spacing: 0.24em;
-}
-}
-
-/* Divider reveal */
+/* =========================================================
+   13. Divider Reveal
+   ========================================================= */
 @keyframes intro-rule-in {
-to {
-width: 150px;
+  from {
+    width: 0;
+  }
+  to {
+    width: 150px;
+  }
 }
+/* =========================================================
+   14. Responsive Intro Screen
+   ========================================================= */
+@media (max-width: 480px) {
+  .intro-screen {
+    padding: 18px;
+  }
+  .intro-content {
+    padding: 18px 10px;
+  }
+  .intro-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 15px;
+  }
+  .intro-wordmark {
+    font-size: clamp(19px, 6vw, 25px);
+    letter-spacing: 0.16em;
+    text-indent: 0.16em;
+  }
+  .intro-tagline {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-indent: 0.14em;
+  }
+  .intro-screen::before {
+    width: min(82vw, 360px);
+  }
+  .intro-screen::after {
+    width: min(64vw, 280px);
+  }
 }
-
-/* Respect reduced-motion preferences */
+/* =========================================================
+   15. Reduced-Motion Accessibility
+   ========================================================= */
 @media (prefers-reduced-motion: reduce) {
-.intro-screen,
-.intro-screen::before,
-.intro-screen::after,
-.intro-content,
-.intro-logo,
-.intro-tagline,
-.intro-rule {
-animation: none !important;
-transition: none !important;
-}
-
-.intro-screen::before,
-.intro-screen::after {
-opacity: 1;
-transform: none;
-}
-
-.intro-content,
-.intro-logo,
-.intro-tagline {
-opacity: 1;
-transform: none;
-}
-
-.intro-tagline {
-letter-spacing: 0.24em;
-}
-
-.intro-rule {
-width: 150px;
-}
+  .intro-screen,
+  .intro-screen::before,
+  .intro-screen::after,
+  .intro-content,
+  .intro-logo,
+  .intro-tagline,
+  .intro-rule {
+    animation: none !important;
+    transition: none !important;
+  }
+  .intro-screen::before,
+  .intro-screen::after {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  .intro-content,
+  .intro-logo,
+  .intro-tagline {
+    opacity: 1;
+    transform: none;
+  }
+  .intro-tagline {
+    letter-spacing: 0.14em;
+  }
+  .intro-rule {
+    width: 150px;
+  }
 }

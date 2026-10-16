@@ -1,11 +1,5 @@
-
-
-
-
-⸻
-
 name: Bug report
-about: Report a reproducible bug in MedOrbits
+description: Report a reproducible bug in MedOrbits
 title: “[Bug]: “
 labels:
 
@@ -13,86 +7,192 @@ labels:
 * triage
     assignees: []
 
-⸻
+body:
 
-Bug Summary
+* type: markdown
+    attributes:
+    value: |
+    Thank you for helping improve MedOrbits.
+    Provide enough detail to reproduce the issue. Do not include passwords, access tokens, payment-card details, identity documents, or other confidential information.
+* type: textarea
+    id: summary
+    attributes:
+    label: Bug summary
+    description: Describe the problem clearly and concisely.
+    placeholder: What happened, and what part of MedOrbits is affected?
+    validations:
+    required: true
+* type: dropdown
+    id: affected_area
+    attributes:
+    label: Affected area
+    description: Select the area most closely related to this issue.
+    multiple: true
+    options:
+    - Website / user interface
+    - Authentication or account
+    - Education / admissions
+    - Applications or documents
+    - Careers / jobs
+    - Payments or subscriptions
+    - Notifications or email
+    - Admin dashboard
+    - API / backend
+    - Database
+    - Deployment / infrastructure
+    - Other
+    validations:
+    required: true
+* type: textarea
+    id: steps
+    attributes:
+    label: Steps to reproduce
+    description: List the exact steps needed to reproduce the issue.
+    placeholder: |
+    Open …
+    Navigate to …
+    Select …
+    Observe the problem.
+    value: |
+    validations:
+    required: true
+* type: textarea
+    id: expected
+    attributes:
+    label: Expected behavior
+    description: Explain what should have happened.
+    placeholder: Describe the expected result.
+    validations:
+    required: true
+* type: textarea
+    id: actual
+    attributes:
+    label: Actual behavior
+    description: Explain what happened instead.
+    placeholder: Describe the observed result.
+    validations:
+    required: true
+* type: dropdown
+    id: reproducibility
+    attributes:
+    label: Reproducibility
+    options:
+    - Happens every time
+    - Happens intermittently
+    - Happened once
+    - Unable to determine
+    validations:
+    required: true
+* type: dropdown
+    id: environment
+    attributes:
+    label: Environment
+    description: Where did the issue occur?
+    options:
+    - Local development
+    - Staging
+    - Production
+    - Other / unknown
+    validations:
+    required: true
+* type: input
+    id: page_endpoint
+    attributes:
+    label: Page or API endpoint
+    description: Provide the affected page path or API route. Do not include private query parameters.
+    placeholder: “/education/mbbs.html or /api/…”
+    validations:
+    required: false
+* type: input
+    id: browser
+    attributes:
+    label: Browser and version
+    placeholder: “Chrome 140, Safari 26, or not applicable”
+    validations:
+    required: false
+* type: input
+    id: device_os
+    attributes:
+    label: Operating system and device
+    placeholder: “Windows 11, Android, iOS, macOS, or Linux”
+    validations:
+    required: false
+* type: input
+    id: app_version
+    attributes:
+    label: App version or commit
+    description: Include a release version or Git commit hash if known.
+    placeholder: “v1.0.0 or commit SHA”
+    validations:
+    required: false
+* type: textarea
+    id: logs
+    attributes:
+    label: Error messages and logs
+    description: Remove credentials, tokens, personal data, and other secrets before sharing logs.
+    placeholder: Paste sanitized error messages or stack traces here.
+    render: text
+    validations:
+    required: false
+* type: textarea
+    id: screenshots
+    attributes:
+    label: Screenshots or recordings
+    description: Attach relevant evidence if useful. Redact personal, confidential, and account information first.
+    placeholder: Describe the attachment or relevant visual evidence.
+    validations:
+    required: false
+* type: dropdown
+    id: impact_level
+    attributes:
+    label: Impact
+    description: Select the closest description of the impact.
+    options:
+    - Critical workflow blocked
+    - Incorrect behavior or results
+    - Limited feature affected
+    - Cosmetic or minor issue
+    - Unknown
+    validations:
+    required: true
+* type: textarea
+    id: impact_details
+    attributes:
+    label: Impact details
+    description: Explain who or what is affected and whether a critical workflow is blocked.
+    placeholder: Describe the practical consequences.
+    validations:
+    required: true
+* type: textarea
+    id: workaround
+    attributes:
+    label: Possible workaround
+    description: If no workaround is known, enter “Unknown”.
+    placeholder: Describe a safe workaround, or enter “Unknown”.
+    validations:
+    required: false
+* type: textarea
+    id: additional_context
+    attributes:
+    label: Additional context
+    description: Include relevant details that have not been covered above.
+    placeholder: Add related issues, recent changes, or other useful context.
+    validations:
+    required: false
+* type: checkboxes
+    id: confirmations
+    attributes:
+    label: Submission checklist
+    options:
+    - label: I have searched existing issues for a duplicate.
+    required: true
+    - label: I have removed credentials, secrets, and confidential personal information.
+    required: true
+    - label: This report does not disclose a security vulnerability publicly.
+    required: true
+* type: markdown
+    attributes:
+    value: |
+    Security reminder
 
-<!— Provide a clear, concise description of the problem. —>
-
-Affected Area
-
-Select all that apply:
-
-* [ ]	Website / user interface
-* [ ]	Authentication or account
-* [ ]	Education / admissions
-* [ ]	Applications or documents
-* [ ]	Careers / jobs
-* [ ]	Payments or subscriptions
-* [ ]	Notifications or email
-* [ ]	Admin dashboard
-* [ ]	API / backend
-* [ ]	Database
-* [ ]	Deployment / infrastructure
-* [ ]	Other
-
-Steps to Reproduce
-
-Expected Behavior
-
-<!— What did you expect to happen? —>
-
-Actual Behavior
-
-<!— What happened instead? —>
-
-Reproducibility
-
-Select one:
-
-* [ ]	Happens every time
-* [ ]	Happens intermittently
-* [ ]	Happened once
-
-Environment
-
-* Page or endpoint:
-* Browser and version:
-* Operating system/device:
-* App version or commit, if known:
-* Environment: Local / Staging / Production / Other
-
-Error Messages and Logs
-
-<!— Include relevant logs with secrets and personal information removed. —>
-
-Paste sanitized error messages here.
-
-Screenshots or Recordings
-
-<!— Attach screenshots or recordings if useful. Remove personal or confidential information first. —>
-
-Impact
-
-Select the closest option:
-
-* [ ]	Blocks a critical workflow
-* [ ]	Causes incorrect behavior or results
-* [ ]	Affects a limited feature
-* [ ]	Cosmetic or minor issue
-
-Describe the impact:
-
-<!— Explain who or what is affected. —>
-
-Possible Workaround
-
-<!— If known, describe a safe workaround. Otherwise write “Unknown”. —>
-
-Additional Context
-
-<!— Add other relevant details. Never include credentials, tokens, payment-card data, identity documents, or another person’s private information. —>
-
-Security Reminder
-
-Do not report security vulnerabilities in a public issue. Follow the private reporting instructions in the root SECURITY.md file. If no private reporting channel is available, request one from a maintainer through a non-public channel before sharing sensitive technical details.
+Do not report security vulnerabilities in a public issue. Follow the private reporting instructions in the root `SECURITY.md` file. If no private reporting channel is available, request one from a maintainer through a non-public channel before sharing sensitive technical details.

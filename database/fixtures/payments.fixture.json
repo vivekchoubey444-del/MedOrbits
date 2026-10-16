@@ -1,6 +1,4 @@
-
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Synthetic MedOrbits payment fixtures for local development and automated tests. No real payment credentials or transactions are included. Never use fixtures to confirm real payment or refund status.",
   "payments": [
     {
