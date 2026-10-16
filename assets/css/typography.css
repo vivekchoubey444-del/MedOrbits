@@ -1,42 +1,75 @@
 /* =========================================================
-MedOrbits -- Typography Foundations
-Original homepage rules preserved
-========================================================= */
-
-/* Global typography and page background */
+   MedOrbits -- Typography Foundations
+   File: assets/css/typography.css
+   Design System: Luxury Aubergine & Champagne Gold
+   Purpose:
+   - Preserve original homepage foundations
+   - Maintain the existing page background
+   - Apply global text and link defaults
+   - Integrate with font.css design tokens
+   ========================================================= */
+/* =========================================================
+   1. Global typography and page background
+   ========================================================= */
 body {
-margin: 0;
-background:
-radial-gradient(
-ellipse at 12% 0%,
-rgba(87, 57, 105, 0.22),
-transparent 35%
-),
-radial-gradient(
-ellipse at 92% 32%,
-rgba(201, 169, 110, 0.07),
-transparent 28%
-),
-linear-gradient(
-135deg,
-#100a17,
-#1a1024 55%,
-#21172b
-);
-color: var(–white);
-font: 400 15px/1.7 "DM Sans", sans-serif;
+  margin: 0;
+  background:
+    radial-gradient(
+      ellipse at 12% 0%,
+      rgba(87, 57, 105, 0.22),
+      transparent 35%
+    ),
+    radial-gradient(
+      ellipse at 92% 32%,
+      rgba(201, 169, 110, 0.07),
+      transparent 28%
+    ),
+    linear-gradient(
+      135deg,
+      #100a17,
+      #1a1024 55%,
+      #21172b
+    );
+  color: var(--white, #f7f2fa);
+  font-family: var(--font-body, "DM Sans", sans-serif);
+  font-size: var(--font-size-base, 15px);
+  font-weight: var(--font-weight-regular, 400);
+  line-height: var(--line-height-normal, 1.7);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-
-/* Links */
+/* =========================================================
+   2. Links
+   ========================================================= */
 a {
-color: inherit;
-text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
-
-/* Heading and paragraph spacing */
+/* =========================================================
+   3. Heading and paragraph spacing
+   Preserve original homepage spacing behavior.
+   ========================================================= */
 h1,
 h2,
 h3,
 p {
-margin-top: 0;
+  margin-top: 0;
+}
+/* =========================================================
+   4. Global media overflow protection
+   Prevent oversized media from expanding page layouts.
+   ========================================================= */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+/* =========================================================
+   5. Text selection
+   Uses the existing brand palette where available.
+   ========================================================= */
+::selection {
+  color: var(--white, #ffffff);
+  background: var(--burgundy, #54243f);
 }

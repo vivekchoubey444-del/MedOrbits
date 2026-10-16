@@ -1,14 +1,14 @@
-Configuration Module — MedOrbits
+MedOrbits — Configuration Module
 
-Path: src/config/
+Directory: src/config/
 
 Overview
 
-The configuration module centralizes application environment settings, database connectivity, email delivery, logging, payment processing, queue management, security policies, and file storage configuration.
+The configuration module centralizes environment settings, database connectivity, email delivery, logging, payment processing, queue management, security policies, CORS, and file storage configuration.
 
 It provides a consistent configuration layer for the MedOrbits Node.js/Express backend.
 
-Implementation note: The presence of a configuration file does not guarantee that its settings are validated, secure, or used by the application. Verify each module’s implementation and its imports before relying on it.
+Implementation note: The presence of a configuration file does not guarantee that its settings are validated, secure, or used by the application. Verify each module’s implementation, environment variables, exports, and imports before relying on it.
 
 Directory Structure
 
@@ -27,61 +27,65 @@ src/config/
 Module Responsibilities
 
 File	Responsibility
-cors.js	Configures permitted cross-origin requests and allowed origins.
-database.js	Configures database connections, connection pools, and database options.
-email.js	Provides application-level email configuration and delivery settings.
 env.js	Loads, validates, and exposes environment variables.
-logger.js	Configures application logging, log levels, and output formats.
-payment.js	Defines application-level payment settings and provider selection.
-queue.js	Configures background job queues, concurrency, and processing options.
-security.js	Centralizes security-related application settings.
-storage.js	Configures file storage options and the selected storage provider.
+database.js	Configures database connections, connection pools, queries, and transaction options.
+email.js	Manages application-level email settings and delivery configuration.
+logger.js	Configures log levels, structured logging, and output destinations.
+cors.js	Defines permitted cross-origin requests, origins, methods, and headers.
+payment.js	Defines payment settings, provider selection, and credential validation.
+queue.js	Configures background job queues, processing options, and queue connectivity.
+security.js	Configures HTTP security headers and Content Security Policy.
+storage.js	Defines storage paths, upload limits, allowed MIME types, and storage-provider settings.
 
-Configuration Principles
+1. Environment Configuration
 
-1. Environment Variables
-
-Use environment variables for deployment-specific values, credentials, and secrets.
+Use environment variables for deployment-specific settings, credentials, and secrets.
 
 Typical configuration categories include:
 
-* Application environment and port.
+* Application environment, host, and port.
 * Database connection settings.
-* Session and authentication secrets.
-* CORS allowed origins.
+* Authentication and session secrets.
+* CORS origins and security policies.
 * SMTP credentials and email sender information.
-* Payment provider keys and webhook secrets.
-* Queue and worker settings.
-* File storage credentials and locations.
-* Logging and monitoring settings.
+* Payment provider credentials and webhook signing secrets.
+* Redis, queue, and worker settings.
+* File storage paths and upload restrictions.
+* Logging and monitoring options.
 * AI provider credentials, when applicable.
 
-Document the required variable names in .env.example, without including real credentials.
+Maintain an .env.example file containing variable names and safe placeholder values. Never commit real credentials or production secrets.
 
 2. Centralized Validation
 
-Validate required environment variables during application startup.
+Validate required configuration before initializing dependent services.
 
 Configuration validation should:
 
 * Identify missing required variables.
-* Validate expected types and formats.
-* Reject invalid production settings.
-* Avoid logging secret values.
-* Fail clearly when essential configuration is unavailable.
+* Validate types, formats, ranges, and permitted values.
+* Reject invalid or contradictory production settings.
+* Avoid logging secrets or sensitive configuration values.
+* Distinguish required settings from optional integrations.
+* Fail clearly when an essential dependency cannot be initialized.
+* Avoid insecure production defaults.
 
-Do not silently substitute insecure production defaults.
+The environment module should be the authoritative source for shared application settings. Other configuration modules should consume validated values rather than independently parsing the same variables.
 
-3. Separate Configuration from Integrations
+3. Separation of Configuration and Integrations
 
-Keep application-wide configuration in src/config/ and provider-specific implementation in src/integrations/.
+Keep application-wide configuration in src/config/ and provider-specific implementations in src/integrations/.
 
-For example:
+Example architecture:
 
 src/
 ├── config/
-│   ├── payment.js
+│   ├── env.js
+│   ├── database.js
 │   ├── email.js
+│   ├── payment.js
+│   ├── queue.js
+│   ├── security.js
 │   └── storage.js
 │
 └── integrations/
@@ -90,91 +94,150 @@ src/
     ├── ai/
     └── storage/
 
-The configuration layer defines settings; the integration layer implements communication with external providers.
+The configuration layer defines and validates settings. The integration layer implements communication with external services.
 
-Avoid duplicating provider credentials or maintaining conflicting configuration sources.
+Avoid duplicating provider credentials, mixing configuration with business logic, or maintaining conflicting configuration sources.
 
-Security Requirements
+4. Security Requirements
 
 * Never commit .env files containing secrets.
-* Use a secret manager or hosting-platform environment settings in production.
-* Restrict CORS to trusted origins.
+* Store production credentials in the hosting platform’s secure environment settings or a dedicated secrets manager.
+* Restrict CORS to explicitly trusted origins.
 * Use least-privilege database credentials.
-* Keep payment secrets and webhook signing keys private.
-* Redact credentials, tokens, and sensitive personal information from logs.
+* Protect payment API keys and webhook signing secrets.
+* Redact passwords, tokens, session identifiers, and sensitive personal information from logs.
 * Store private uploads outside publicly served directories.
-* Use secure session and cookie settings appropriate to the deployment.
-* Validate configuration before starting production services.
+* Validate uploaded files using content inspection in addition to MIME-type and extension checks.
+* Configure secure session and cookie settings appropriate to the deployment.
+* Use HTTPS in production.
+* Review Content Security Policy and other security headers against actual frontend requirements.
+* Never disable security controls merely to bypass a configuration or browser error.
 
-Integration with the Application
+5. Application Startup and Initialization
 
-The application startup process should load and validate configuration before initializing dependent services.
+Initialize configuration before starting services that depend on it.
 
-Recommended startup sequence:
+Recommended sequence:
 
 1. Load environment variables.
-2. Validate required configuration.
+2. Validate required environment settings.
 3. Initialize logging.
-4. Initialize database connectivity.
-5. Configure middleware and routes.
-6. Initialize required integrations and background workers.
-7. Start listening for HTTP requests.
+4. Initialize required infrastructure, including the database and Redis where applicable.
+5. Configure security middleware and CORS.
+6. Initialize application integrations.
+7. Register routes and error-handling middleware.
+8. Start required background workers.
+9. Start accepting HTTP requests after essential startup checks succeed.
 
-Adapt this sequence to the actual initialization requirements of server.js and src/app.js.
+Adapt this sequence to the actual initialization requirements of server.js, src/app.js, and the application’s worker entry points.
 
-Development and Production
+Optional services should follow an explicitly defined policy: either remain disabled cleanly or cause startup to fail when the application requires them.
+
+6. Environment-Specific Configuration
 
 Development
 
 * Use a local .env file excluded from version control.
 * Use isolated development databases and test credentials.
 * Enable useful diagnostic logging without exposing secrets.
+* Use payment sandbox credentials and test integrations.
+* Verify storage paths and upload restrictions locally.
+
+Testing
+
+* Use dedicated test credentials and isolated test data.
+* Avoid production payment, email, and database resources unless a controlled integration test explicitly requires them.
+* Reset test state predictably.
+* Test invalid and missing environment variables.
+
+Staging
+
+* Use production-like configuration without exposing production secrets unnecessarily.
+* Validate migrations, integrations, security headers, uploads, and background workers.
+* Test startup failures and graceful shutdown.
+* Verify deployment and rollback procedures.
 
 Production
 
-* Supply secrets through the hosting platform’s secure configuration.
-* Validate required settings before accepting requests.
-* Restrict database and storage access.
+* Supply secrets through secure deployment configuration.
+* Validate essential settings before accepting requests.
+* Restrict database, Redis, and storage access.
 * Use production-appropriate logging and error handling.
+* Enforce HTTPS and review security middleware.
 * Test configuration changes in staging before deployment.
 
-Troubleshooting
+7. Troubleshooting
 
 Application fails during startup
 
-Check missing environment variables, configuration validation errors, and module imports.
+Check environment variables, validation errors, module imports, missing dependencies, and initialization order.
 
 Database connection fails
 
-Verify the database engine, connection settings, credentials, network access, and connection-pool options.
+Verify the database engine, host, port, credentials, network permissions, connection-pool settings, and service availability.
 
 Email delivery fails
 
-Check SMTP settings, provider authentication, sender configuration, and connectivity.
+Verify SMTP settings, authentication, sender configuration, TLS requirements, and connectivity.
 
 Payment integration fails
 
-Verify provider configuration, API credentials, webhook signing secrets, and sandbox versus production settings.
+Verify provider credentials, sandbox versus live mode, webhook signing secrets, and provider-specific configuration requirements.
 
 Queue processing fails
 
-Check queue connectivity, worker initialization, concurrency, retry settings, and job error logs.
+Check Redis connectivity, queue initialization, worker startup, concurrency settings, retry policies, and failed-job logs.
 
 CORS errors occur
 
 Verify the frontend origin, allowed methods, allowed headers, credentials policy, and middleware order.
 
-Maintenance
+Content Security Policy blocks resources
+
+Inspect browser console violations and adjust the policy only for verified, required origins or resources. Prefer narrowly scoped permissions over broad source allowances.
+
+File uploads fail
+
+Verify storage permissions, configured paths, upload limits, accepted MIME types, available disk space, and the upload middleware’s validation rules.
+
+8. Maintenance and Change Management
 
 When modifying configuration:
 
-1. Update the relevant module.
-2. Update .env.example if new variables are introduced.
-3. Update tests and configuration documentation.
-4. Verify local and staging startup.
-5. Review security implications before production deployment.
+1. Update the relevant configuration module.
+2. Update .env.example when introducing or changing environment variables.
+3. Update environment validation and configuration documentation.
+4. Add or update automated tests.
+5. Verify compatibility with dependent modules.
+6. Test startup and shutdown locally.
+7. Verify behavior in staging.
+8. Review security and operational implications before production deployment.
 
 Keep this README synchronized with the actual implementation.
+
+9. Operational Notes
+
+Configuration modules do not replace operational monitoring, secret rotation, backup procedures, dependency maintenance, or access-control enforcement.
+
+Review the following areas when applicable:
+
+* Database health and connection-pool saturation.
+* Redis availability and queue backlog.
+* Email delivery failures.
+* Payment webhook failures.
+* Storage capacity and temporary-file cleanup.
+* Application error rates and structured logs.
+* Security configuration changes.
+* Configuration drift between development, staging, and production.
+
+Related Documentation
+
+* docs/README.md — Project documentation index.
+* docs/security/ — Security policies and implementation guidance.
+* docs/database/ — Database architecture and operational procedures.
+* docs/deployment/ — Deployment configuration and procedures.
+* infrastructure/monitoring/ — Health checks and alerting.
+* infrastructure/backup/ — Backup and restore procedures.
 
 ⸻
 

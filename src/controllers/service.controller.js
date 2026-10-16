@@ -1,16 +1,17 @@
 'use strict';
 
-const { asyncHandler, sendSuccess, httpError } = require('../utils/http');
-const { unavailable } = require('./controller.helpers');
+const { crudController } = require('./controller.helpers');
+const repository = require('../repositories/service.repository');
+const validator = require('../validators/service.validator');
 
-const controller = {};
-
-controller.list = asyncHandler(async (req, res) => {
-  unavailable('Service list');
+const controller = crudController(repository, validator, {
+  writable: true,
+  removeAllowed: false,
 });
 
-controller.get = asyncHandler(async (req, res) => {
-  unavailable('Service get');
-});
-
-module.exports = controller;
+module.exports = {
+  list: controller.list,
+  get: controller.get,
+  create: controller.create,
+  update: controller.update,
+};

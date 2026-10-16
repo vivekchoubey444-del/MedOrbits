@@ -1,21 +1,123 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
-  "fees": [],
+  "metadata": {
+    "title": "MedOrbits Fees Database",
+    "description": "Structured fee information for courses, institutions and academic years. Amounts are added only from official sources.",
+    "defaultCountryCode": "IN",
+    "defaultCurrency": "INR",
+    "dateFormat": "YYYY-MM-DD",
+    "verificationPolicy": "Verify every amount, currency and fee component against the official fee notification or institution before publication."
+  },
   "fields": [
-    "id",
-    "courseId",
-    "institutionId",
-    "countryCode",
-    "academicYear",
-    "tuitionMin",
-    "tuitionMax",
-    "currency",
-    "hostelMin",
-    "hostelMax",
-    "otherCosts",
-    "sourceUrl",
-    "verifiedAt"
+    "id", "courseId", "institutionId", "countryCode", "academicYear",
+    "quotaCategory", "currency", "components", "totalAnnualFee", "totalCourseFee",
+    "feeNotes", "refundPolicyUrl", "officialUrl", "sourceUrl", "notificationTitle", "notificationDate",
+    "verificationStatus", "verifiedAt", "verifiedBy", "reviewDueAt",
+    "active", "createdAt", "updatedAt"
   ],
-  "note": "No fee amounts are prefilled because costs vary by institution, intake and year. Populate with dated official sources."
+  "fieldDefinitions": {
+    "id": { "type": "string", "required": true, "unique": true, "example": "fee-course-institution-2026-27-quota" },
+    "courseId": { "type": "string", "required": true, "references": "courses.id" },
+    "institutionId": { "type": "string", "required": false, "nullable": true, "references": "institutions.id" },
+    "countryCode": { "type": "string", "required": true, "format": "ISO 3166-1 alpha-2" },
+    "academicYear": { "type": "string", "required": true, "format": "YYYY or YYYY-YY" },
+    "quotaCategory": { "type": "string", "required": false, "nullable": true, "enum": "allowedValues.quotaCategory" },
+    "currency": { "type": "string", "required": true, "format": "ISO 4217", "example": "INR" },
+    "components": {
+      "type": "array",
+      "required": true,
+      "itemShape": {
+        "type": "enum allowedValues.componentType",
+        "label": "string",
+        "amount": "number or null",
+        "frequency": "enum allowedValues.frequency",
+        "refundable": "boolean or null",
+        "notes": "string or null"
+      }
+    },
+    "totalAnnualFee": { "type": "number", "required": false, "nullable": true, "note": "Only set if published by the official source; do not compute silently." },
+    "totalCourseFee": { "type": "number", "required": false, "nullable": true, "note": "Only set if published by the official source." },
+    "feeNotes": { "type": "string", "required": false, "nullable": true },
+    "refundPolicyUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
+    "officialUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
+    "sourceUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
+    "notificationTitle": { "type": "string", "required": false, "nullable": true },
+    "notificationDate": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
+    "verificationStatus": { "type": "string", "required": true, "enum": "allowedValues.verificationStatus", "default": "unverified" },
+    "verifiedAt": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
+    "verifiedBy": { "type": "string", "required": false, "nullable": true },
+    "reviewDueAt": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
+    "active": { "type": "boolean", "required": true, "default": true },
+    "createdAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
+    "updatedAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" }
+  },
+  "allowedValues": {
+    "componentType": [
+      "tuition",
+      "admission",
+      "registration",
+      "counselling",
+      "security_deposit",
+      "hostel",
+      "mess",
+      "library",
+      "laboratory",
+      "examination",
+      "uniform_and_books",
+      "caution_money",
+      "insurance",
+      "internship",
+      "visa_and_travel",
+      "other"
+    ],
+    "frequency": ["one_time", "per_semester", "per_year", "per_course", "other"],
+    "quotaCategory": [
+      "government",
+      "management",
+      "nri",
+      "deemed_university",
+      "private",
+      "international",
+      "other"
+    ],
+    "verificationStatus": ["unverified", "pending_review", "verified", "outdated", "rejected"]
+  },
+  "feeComponentCatalogue": [
+    { "type": "tuition", "label": "Tuition fee", "description": "Instruction fee for the course." },
+    { "type": "admission", "label": "Admission fee", "description": "Charged by the institution at admission." },
+    { "type": "registration", "label": "Registration fee", "description": "Registration with the institution, authority or university." },
+    { "type": "counselling", "label": "Counselling fee", "description": "Registration or participation fee for a counselling process." },
+    { "type": "security_deposit", "label": "Security deposit", "description": "Deposit that may be refundable under the official policy." },
+    { "type": "hostel", "label": "Hostel fee", "description": "Accommodation charges, where offered." },
+    { "type": "mess", "label": "Mess fee", "description": "Food charges, where offered." },
+    { "type": "library", "label": "Library fee", "description": "Library access charges." },
+    { "type": "laboratory", "label": "Laboratory fee", "description": "Practical or laboratory charges." },
+    { "type": "examination", "label": "Examination fee", "description": "University or board examination charges." },
+    { "type": "uniform_and_books", "label": "Uniform and books", "description": "Study materials and uniform, where charged." },
+    { "type": "caution_money", "label": "Caution money", "description": "Refundable deposit held by the institution." },
+    { "type": "insurance", "label": "Insurance", "description": "Health or accident insurance, where required." },
+    { "type": "internship", "label": "Internship fee", "description": "Charges during internship, where applicable." },
+    { "type": "visa_and_travel", "label": "Visa and travel", "description": "Relevant mainly to international admissions." }
+  ],
+  "dataRules": [
+    "Every fee record must have a unique id.",
+    "courseId must reference an existing course; institutionId may be null for centrally managed fees.",
+    "countryCode must be ISO 3166-1 alpha-2 and currency must be ISO 4217.",
+    "Amounts must be numbers in the stated currency, never strings with symbols.",
+    "Never invent, estimate or average fee amounts; use null when unknown.",
+    "totalAnnualFee and totalCourseFee must come from the official source or be null; do not present computed totals as official.",
+    "Each component must state its frequency so annual, one-time and per-semester amounts are not confused.",
+    "Fees differ by institution, quota and year; never display a fee without its academicYear and quotaCategory.",
+    "Fee records must link to the official notification or institution page in sourceUrl before being marked verified.",
+    "verifiedAt and verifiedBy must be null until verified, and set together; 'verified' requires sourceUrl.",
+    "Outdated fee records must be reviewed before display, and unverified records must be labelled as such.",
+    "The active field controls display only."
+  ],
+  "displayRules": {
+    "alwaysShow": ["academicYear", "quotaCategory", "currency", "verificationStatus"],
+    "unverifiedLabel": "Unverified - confirm fees with the official institution or authority.",
+    "disclaimer": "Fees are indicative and can change. Confirm the latest amounts and refund terms with the official source before paying."
+  },
+  "fees": []
 }

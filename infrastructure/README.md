@@ -1,14 +1,14 @@
-# MedOrbits Infrastructure
+MedOrbits Infrastructure
 
-**Directory:** `infrastructure/`
+Directory: infrastructure/
+Project: MedOrbits
 
-## Purpose
+Purpose
 
-This directory documents and supports operational practices for the MedOrbits platform, including database backups and recovery, database capacity and maintenance, application monitoring, Render deployment, and background queue operations.
+This directory documents operational practices for the MedOrbits platform, including database backups and recovery, database capacity planning and maintenance, application monitoring, Render deployment, and background queue operations.
 
-## Directory Structure
+Directory Structure
 
-```text
 infrastructure/
 ├── README.md
 ├── backup/
@@ -35,25 +35,72 @@ infrastructure/
     ├── retry-policy.md
     ├── dead-letter-policy.md
     └── worker-scaling.md
-```
 
-## Operating Principles
+Directory Guide
 
-- Keep credentials in environment variables or a managed secret store; never commit secrets.
-- Test backups by restoring them into an isolated environment.
-- Prefer staged, observable deployments with a documented rollback path.
-- Alert on user-impacting symptoms and actionable thresholds, not every transient event.
-- Make background jobs idempotent and bound retries to prevent retry storms.
-- Restrict access to production systems and sensitive data using least privilege.
-- Record operational changes and review this documentation whenever the deployment architecture changes.
+Directory	Responsibility
+backup/	MySQL backup, restoration, retention, and recovery testing.
+database/	Database capacity planning and maintenance practices.
+monitoring/	Health checks, observability, alerting, and escalation.
+deployment/	Render configuration, staging validation, production releases, and rollback.
+queues/	Retry behavior, dead-letter handling, and worker scaling.
 
-## Before Production Use
+Operating Principles
 
-1. Confirm the actual MySQL host, database, user privileges, backup destination, and retention requirements.
-2. Confirm the health endpoint and Render service names.
-3. Configure secrets and alerts in the deployment platform.
-4. Run a backup and a restore drill in a non-production environment.
-5. Validate queue persistence, retry behavior, and graceful shutdown.
-6. Assign owners for incident response, backup verification, and release approval.
+* Secret management: Store credentials in environment variables or a managed secret store. Never commit secrets to the repository.
+* Backup verification: Test backups by restoring them into an isolated, non-production environment.
+* Controlled deployments: Prefer staged, observable releases with a documented rollback procedure.
+* Actionable monitoring: Alert on user-impacting symptoms and meaningful thresholds rather than every transient event.
+* Reliable background processing: Design jobs to be idempotent and use bounded retries to prevent retry storms.
+* Least privilege: Restrict access to production systems, operational controls, and sensitive data.
+* Operational accountability: Record significant infrastructure changes and assign responsibility for critical operational tasks.
+* Documentation maintenance: Review these documents whenever the deployment architecture, infrastructure, or operational requirements change.
 
-**Important:** These files provide an operational baseline. Adapt commands and thresholds to the actual MedOrbits environment before using them in production.
+Before Production Use
+
+Complete the following checks before relying on these procedures in production.
+
+1. Database and Backup Configuration
+
+* [ ]	Confirm the actual MySQL host, database name, user privileges, and connection settings.
+* [ ]	Verify the backup destination, retention requirements, and available storage.
+* [ ]	Confirm backup credentials are managed securely.
+* [ ]	Run a backup and verify the resulting archive.
+* [ ]	Complete a restore drill in a non-production environment.
+
+2. Deployment and Monitoring
+
+* [ ]	Confirm Render service names and deployment branch.
+* [ ]	Verify the application’s actual health-check endpoint.
+* [ ]	Confirm build and start commands match the repository.
+* [ ]	Configure required secrets and environment variables in the hosting platform.
+* [ ]	Configure monitoring, alert thresholds, notification channels, and escalation ownership.
+* [ ]	Verify rollback instructions against the current deployment workflow.
+
+3. Background Processing
+
+* [ ]	Confirm the actual queue technology and persistence mechanism.
+* [ ]	Validate retry limits, backoff behavior, and failed-job handling.
+* [ ]	Verify idempotency safeguards for operations with external side effects.
+* [ ]	Test graceful worker shutdown and job recovery.
+* [ ]	Confirm queue failures and processing delays are monitored where supported.
+
+4. Operational Ownership
+
+* [ ]	Assign an owner for incident response.
+* [ ]	Assign responsibility for backup verification and recovery.
+* [ ]	Identify the production release approver and rollback decision-maker.
+* [ ]	Ensure relevant operators can access the required runbooks.
+* [ ]	Document escalation contacts and recovery responsibilities.
+
+Related Documentation
+
+* backup/README.md — Backup and recovery operations.
+* database/README.md — Database operations.
+* monitoring/README.md — Monitoring and observability.
+* deployment/README.md — Deployment operations.
+* queues/README.md — Background queue operations.
+
+Important
+
+These files provide an operational baseline, not confirmation that every described capability is implemented or configured. Verify all commands, endpoint paths, queue behavior, environment variables, permissions, and operational thresholds against the actual MedOrbits codebase and hosting environment before using them in production.

@@ -1,33 +1,180 @@
-/* =========================================================
+/* ==========================================================================
 MedOrbits -- Accessibility Helpers
-Focus visibility, hidden states, and reduced motion
-========================================================= */
+File: assets/css/accessibility.css
+Theme: Luxury Aubergine & Champagne Gold
+Version: 1.2.0
 
-/* Visible keyboard focus */
+Purpose:
+
+* Keyboard focus visibility
+* Screen-reader-only content
+* Skip navigation
+* Native hidden-state support
+* Reduced-motion preferences
+* Forced-colors and high-contrast support
+
+Compatibility:
+
+* Existing MedOrbits selectors
+* Navigation and dashboard components
+    ========================================================================== */
+
+/* ==========================================================================
+
+1. Visible Keyboard Focus
+    ========================================================================== */
+
 :focus-visible {
 outline: 2px solid var(–gold-light, #e4d0a1);
 outline-offset: 3px;
 }
 
-/* Avoid clipping keyboard focus on interactive controls */
+/* Keep focus visible on common interactive controls. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+summary:focus-visible,
 [tabindex]:focus-visible {
+outline: 2px solid var(–gold-light, #e4d0a1);
 outline-offset: 3px;
 }
 
-/* Respect the native hidden attribute */
+/* Focus within important navigation and content components. */
+.dashboard-nav a:focus-visible,
+.card .card-link:focus-visible,
+.nav a:focus-visible,
+.nav button:focus-visible {
+outline-color: var(–gold-light, #e4d0a1);
+outline-offset: 3px;
+}
+
+/* Do not remove outlines without providing a visible replacement. */
+
+/* ==========================================================================
+2. Native Hidden Attribute
+========================================================================== */
+
+/*
+Preserve the browser’s hidden behavior even when another stylesheet
+assigns display values to the same element.
+*/
+
 [hidden] {
 display: none !important;
 }
 
-/* Reduced-motion support */
+/* ==========================================================================
+3. Screen-Reader-Only Content
+========================================================================== */
+
+/*
+Visually hides content while keeping it available to assistive technology.
+Use for accessible names, supplementary instructions, and announcements.
+*/
+
+.sr-only,
+.visually-hidden {
+position: absolute !important;
+width: 1px !important;
+height: 1px !important;
+padding: 0 !important;
+margin: -1px !important;
+overflow: hidden !important;
+clip: rect(0, 0, 0, 0) !important;
+clip-path: inset(50%) !important;
+white-space: nowrap !important;
+border: 0 !important;
+}
+
+/*
+Reveal a visually hidden element when it receives keyboard focus.
+Useful for accessible skip links that use these utility classes.
+*/
+
+.sr-only:focus,
+.sr-only:active,
+.sr-only:focus-visible,
+.visually-hidden:focus,
+.visually-hidden:active,
+.visually-hidden:focus-visible {
+position: static !important;
+width: auto !important;
+height: auto !important;
+padding: initial !important;
+margin: 0 !important;
+overflow: visible !important;
+clip: auto !important;
+clip-path: none !important;
+white-space: normal !important;
+}
+
+/* ==========================================================================
+4. Skip Navigation Link
+========================================================================== */
+
+.skip-link {
+position: absolute;
+top: 10px;
+left: 10px;
+z-index: var(–z-toast, 3000);
+max-width: calc(100% - 20px);
+padding: 12px 16px;
+transform: translateY(calc(-100% - 20px));
+border: 1px solid var(–gold, #c9a96e);
+border-radius: 8px;
+background: var(–panel, #21172b);
+color: var(–white, #f7f1fa);
+font-family: var(–font-ui, "DM Sans", Arial, sans-serif);
+font-weight: var(–font-weight-semibold, 600);
+line-height: 1.4;
+text-decoration: none;
+overflow-wrap: break-word;
+box-shadow: var(–shadow, 0 8px 24px rgba(0, 0, 0, 0.25));
+transition: transform var(–transition-fast, 160ms ease);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+transform: translateY(0);
+outline: 2px solid var(–gold-light, #e4d0a1);
+outline-offset: 3px;
+}
+
+/* ==========================================================================
+5. Accessible Interactive States
+========================================================================== */
+
+/*
+Disabled controls should remain visibly distinguishable.
+Native disabled behavior must still be implemented in HTML or JavaScript.
+*/
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+cursor: not-allowed;
+}
+
+/*
+Prevent focused elements from being hidden behind a sticky header when
+the browser scrolls them into view.
+*/
+
+:target {
+scroll-margin-top: calc(var(–header-height, 82px) + 18px);
+}
+
+/* ==========================================================================
+6. Reduced-Motion Support
+========================================================================== */
+
 @media (prefers-reduced-motion: reduce) {
+html,
 html:focus-within {
-scroll-behavior: auto;
+scroll-behavior: auto !important;
 }
 
 *,
@@ -39,3 +186,50 @@ transition-duration: 0.01ms !important;
 scroll-behavior: auto !important;
 }
 }
+
+/* ==========================================================================
+7. Windows High-Contrast and Forced-Colors Support
+========================================================================== */
+
+@media (forced-colors: active) {
+:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+outline: 2px solid Highlight;
+outline-offset: 3px;
+}
+
+.skip-link {
+border: 1px solid ButtonText;
+background: Canvas;
+color: CanvasText;
+box-shadow: none;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+color: GrayText;
+}
+}
+
+/* ==========================================================================
+8. Accessibility Maintenance Notes
+========================================================================== */
+
+/*
+
+* Do not use tabindex values greater than zero.
+* Prefer native buttons, links, labels, and form controls.
+* Ensure every skip link points to an existing page landmark.
+* Keep live-region announcements concise and meaningful.
+* Do not use color as the only indicator of status.
+* Test keyboard navigation and reduced-motion behavior.
+* Avoid duplicating shared focus rules in unrelated modules.
+    */

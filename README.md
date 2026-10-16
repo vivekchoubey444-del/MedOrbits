@@ -2,71 +2,135 @@ MedOrbits
 
 Education · Admissions · Careers · Recruitment
 
-MedOrbits is a web platform structure for organizing education discovery, admissions guidance, study-abroad information, career resources, recruitment services, user accounts, and administrative workflows. This repository combines a public-facing HTML/CSS/JavaScript frontend with a Node.js/Express backend, data files, database resources, tests, deployment documentation, and operational tooling.
+Study · Work · Grow
 
-> **Implementation note:** A directory or filename in this repository describes intended organization; it does not by itself mean that the feature, endpoint, integration, or workflow is implemented. Confirm actual behavior in the source code and configuration before relying on it.
+MedOrbits is a web platform designed to bring education discovery, admissions guidance, study-abroad resources, career development, and recruitment services together in one organized digital experience.
+
+The repository combines a public-facing HTML, CSS, and JavaScript frontend with a Node.js and Express backend, data resources, database components, automated tests, deployment configuration, and operational documentation.
+
+Implementation status: This README describes the intended platform architecture and repository organization. A directory, filename, configuration variable, test, or documentation page does not independently prove that a feature or integration is implemented or operational. Verify behavior against the current source code, package scripts, environment configuration, and deployment before relying on it.
+
+⸻
 
 Contents
 
-• Project goals
-• Technology and architecture
-• Repository structure
-• Getting started
-• Environment configuration
-• Running and testing
-• Frontend conventions
-• Backend conventions
-• Data and database
-• Security and privacy
-• Deployment and operations
-• Contribution workflow
-• Troubleshooting
-• Documentation map
+* Project Overview
+* Platform Capabilities
+* Technology and Architecture
+* Repository Structure
+* Getting Started
+* Environment Configuration
+* Development and Testing
+* Frontend Standards
+* Backend Architecture
+* Data and Database Management
+* Security and Privacy
+* Deployment and Operations
+* Contribution Guidelines
+* Troubleshooting
+* Documentation Directory
+* License and Third-Party Notices
 
-Project goals
+⸻
 
-The planned platform brings together:
+Project Overview
 
-• Education discovery: courses, colleges, universities, education pathways, and study destinations.
-• Admissions support: eligibility information, entrance examinations, counselling resources, document checklists, and admission-process guidance.
-• Education planning: fee information, scholarships, hostels, student loans, guides, and FAQs.
-• Career services: job listings, internships, resume support, interview preparation, sector pages, and location-based discovery.
-• Recruitment: employer services, job posting, applicant management, candidate sourcing, and recruitment coordination.
-• User accounts: registration, authentication, verification, profile management, applications, documents, notifications, payments, subscriptions, and support.
-• Administration: management interfaces for users, roles, applications, education records, jobs, documents, payments, subscriptions, support, and audit logs.
-• Platform operations: API services, database migrations, data validation, tests, security checks, monitoring, backups, and deployment guidance.
+MedOrbits aims to connect students, education seekers, job candidates, employers, recruiters, and administrators through a unified platform.
 
-The availability of each capability depends on its implementation, configuration, external providers, and deployment environment.
+The platform’s intended goals are to:
 
-Technology and architecture
+* Make education and career information easier to discover.
+* Organize admissions guidance and educational resources.
+* Provide information about studying in India and abroad.
+* Connect career development resources with employment opportunities.
+* Support recruitment-related workflows for employers and candidates.
+* Provide structured account, application, document, and administrative workflows.
+* Maintain a modular, maintainable, secure, and responsive web architecture.
 
-The repository is organized around these components:
+The availability of individual features depends on their implementation, configuration, external service dependencies, and deployment environment.
 
-|Component                 |Location                                                      |Responsibility                                                                 |
-|—————————|—————————————————————|-——————————————————————————|
-|Public website            |Root `index.html`, `pages/`, `education/`, `career/`, `legal/`|Public pages and information architecture                                      |
-|Account interfaces        |`account/`                                                    |User-facing account and dashboard pages                                        |
-|Administration UI         |`admin/`                                                      |Administrative interfaces                                                      |
-|Static assets             |`assets/`                                                     |CSS, JavaScript, images, icons, fonts, and public JSON data                    |
-|HTTP server               |`server.js` and `src/`                                        |Node.js/Express application and API organization                               |
-|Data model and persistence|`database/`, `src/models/`, `src/repositories/`               |Database schema, migrations, models, and data access                           |
-|Tests                     |`tests/`                                                      |Unit, integration, API, database, security, end-to-end, and accessibility tests|
-|Operations                |`infrastructure/`, `scripts/`                                 |Deployment, monitoring, backups, validation, and maintenance                   |
-|Project documentation     |`docs/` and directory-level `README.md` files                 |Architecture, API, security, deployment, and operations guides                 |
+Platform Capabilities
 
-The project includes a package.json and package-lock.json. Use the package scripts actually defined in package.json; do not assume a script exists merely because it is mentioned in this README.
+Education and Admissions
 
-Repository structure
+* Courses, colleges, universities, and education pathways.
+* Undergraduate and postgraduate education information.
+* Medical, dental, AYUSH, nursing, pharmacy, paramedical, engineering, management, law, and other course categories.
+* Admission procedures, eligibility information, entrance examinations, and counselling resources.
+* Study-abroad destinations and international education guidance.
+* Fee information, scholarships, accommodation resources, and education-planning guides.
+* Document checklists, frequently asked questions, and admission-related support.
+
+Careers and Employment
+
+* Job listings, job categories, and job-detail pages.
+* Internship opportunities and career resources.
+* Resume preparation and interview guidance.
+* Career exploration and sector-specific information.
+* Employer services and recruitment resources.
+* Candidate discovery and applicant-management workflows.
+
+Accounts and Applications
+
+* Registration, authentication, and profile management.
+* Account verification and application tracking.
+* Document submission and access-controlled document management.
+* Notifications, support requests, and account dashboards.
+* Payment and subscription workflows where implemented.
+
+Administration and Operations
+
+* User and role management.
+* Education catalogue and content management.
+* Application, document, job, payment, and subscription administration.
+* Support workflows and administrative audit trails.
+* Database migrations, validation, automated tests, deployment tooling, and operational runbooks.
+
+These are platform objectives, not a guarantee that every listed capability is available in the current deployment.
+
+⸻
+
+Technology and Architecture
+
+MedOrbits uses a modular web application structure.
+
+Component	Location	Responsibility
+Public website	index.html, pages/, education/, career/, legal/	Public-facing pages and navigation
+Account interfaces	account/	User account and dashboard interfaces
+Administration	admin/	Administrative interfaces
+Static assets	assets/	CSS, JavaScript, images, icons, fonts, and public data
+Application server	server.js, src/	Node.js and Express application
+Configuration	src/config/	Environment and integration configuration
+Persistence	database/, src/models/, src/repositories/	Database schemas, migrations, models, and data access
+Automated tests	tests/	Application, integration, API, security, and browser tests
+Infrastructure	infrastructure/, scripts/	Deployment, validation, backups, and operational tooling
+Documentation	docs/ and directory-level README.md files	Technical and operational guidance
+
+Architecture principles
+
+* Separation of concerns: Keep presentation, HTTP handling, business logic, and persistence responsibilities distinct.
+* Modularity: Prefer focused modules with clear interfaces.
+* Server-side enforcement: Enforce authorization, validation, and business rules on the server.
+* Configuration-driven operation: Keep environment-specific settings outside application source code.
+* Data integrity: Validate inputs and maintain consistent identifiers across related data sources.
+* Accessibility: Build interfaces that support keyboard navigation, semantic structure, and readable contrast.
+* Operational reliability: Document deployment prerequisites, migrations, backups, health checks, and recovery procedures.
+
+⸻
+
+Repository Structure
+
+The following tree is an architectural reference. Confirm that each path exists in the current checkout before treating it as implemented.
 
 medorbits/
-├── index.html                  # Public homepage
-├── README.md                   # This guide
-├── README-PRODUCTION.md        # Production-specific guidance
-├── package.json                # Node.js package metadata and scripts
-├── package-lock.json           # Locked npm dependency tree
-├── server.js                   # Server entry point, if configured as such
-├── .nvmrc                      # Preferred Node.js version
-├── .env.example                # Environment-variable template; no real secrets
+├── index.html
+├── README.md
+├── README-PRODUCTION.md
+├── package.json
+├── package-lock.json
+├── server.js
+├── .nvmrc
+├── .env.example
 ├── .gitignore
 ├── .dockerignore
 ├── Dockerfile
@@ -74,329 +138,579 @@ medorbits/
 ├── LICENSE
 ├── NOTICE
 ├── SECURITY.md
+├── SUPPORT.md
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
 ├── CHANGELOG.md
-├── SUPPORT.md
 ├── .editorconfig
 ├── .prettierrc.json
 ├── .eslintrc.json
-├── .github/                    # CI, security, dependency and deployment workflows
-├── .husky/                     # Optional Git hooks
-├── pages/                      # About, services, contact, forms and system pages
-├── account/                    # Login, registration, profile and account workflows
-├── education/                  # Courses, institutions, admissions and study destinations
-├── career/                     # Jobs, internships, employer tools and career resources
-├── admin/                      # Administrative interfaces
-├── legal/                      # Privacy, terms, refunds and other legal pages
+├── .github/
+├── .husky/
+├── pages/
+├── account/
+├── education/
+├── career/
+├── admin/
+├── legal/
 ├── assets/
-│   ├── css/                    # Design system and page/component styles
-│   ├── js/                     # Frontend modules and utilities
-│   ├── data/                   # Public JSON catalogues and content
-│   ├── images/                 # Logos, hero images, course and destination imagery
-│   ├── icons/                  # Education, career and social icons
-│   ├── fonts/                  # Local font assets and usage notes
-│   └── documents/              # Public document assets and documentation
-├── public/                     # Public metadata, manifest and crawler files
+│   ├── css/
+│   ├── js/
+│   ├── data/
+│   ├── images/
+│   ├── icons/
+│   ├── fonts/
+│   └── documents/
+├── public/
 ├── database/
 │   ├── schema.sql
 │   ├── migrations/
 │   ├── seeds/
 │   └── fixtures/
-├── storage/                    # Runtime storage; keep private files out of public web roots
+├── storage/
 ├── src/
 │   ├── app.js
-│   ├── config/                 # Environment, database, CORS, security and integrations
-│   ├── routes/                 # HTTP route definitions
-│   ├── controllers/             # Request handling
-│   ├── middleware/              # Authentication, authorization, validation and security
-│   ├── services/                # Business logic and external-service orchestration
-│   ├── models/                  # Domain models
-│   ├── repositories/             # Data access
-│   ├── validators/               # Input validation
-│   ├── policies/                 # Resource-level authorization policies
-│   ├── utils/                    # Shared server utilities
-│   ├── integrations/             # Email, payment, storage and AI provider adapters
-│   ├── templates/                # Email and document templates
-│   ├── workers/                  # Background workers
-│   └── jobs/                     # Scheduled or queued job definitions
-├── infrastructure/              # Backup, database, monitoring, deployment and queue runbooks
-├── scripts/                     # Environment checks, migration, seed and validation scripts
-├── tests/                       # Automated test suites
-└── docs/                        # Architecture, API, database, security, deployment and operations
+│   ├── config/
+│   ├── routes/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── services/
+│   ├── models/
+│   ├── repositories/
+│   ├── validators/
+│   ├── policies/
+│   ├── utils/
+│   ├── integrations/
+│   ├── templates/
+│   ├── workers/
+│   └── jobs/
+├── infrastructure/
+├── scripts/
+├── tests/
+└── docs/
 
-For the complete file-by-file inventory, use the repository tree and the README files inside each directory. Keep this overview synchronized with the actual repository.
+Important directory conventions
 
-Getting started
+* assets/data/ contains public-facing catalogue or reference data. Anything served to the browser must be treated as public.
+* storage/ is intended for runtime files. Private uploads must not be exposed through public static-file serving.
+* database/migrations/ contains versioned schema changes where the migration system is implemented.
+* src/repositories/ isolates persistence logic where that architecture is used.
+* src/policies/ is intended for resource-level authorization rules.
+* tests/ contains automated test suites and their supporting fixtures.
+* infrastructure/ and docs/ contain operational guidance and deployment resources.
+
+For a complete file-level inventory, inspect the actual repository tree and the README files within individual directories.
+
+⸻
+
+Getting Started
 
 Prerequisites
 
-• Git.
-• A Node.js version compatible with package.json and .nvmrc.
-• npm.
-• Any database, email, payment, storage, queue, or other provider required by the features you intend to run.
-• Environment values for enabled integrations.
+Install the tools required by the current application configuration:
 
-Check the required Node.js version:
+* Git.
+* A Node.js version compatible with package.json and .nvmrc.
+* npm.
+* Any required database service.
+* Additional providers required by enabled features, such as email, payments, object storage, or background queues.
 
-cat .nvmrc
+Check the installed versions:
+
 node —version
 npm —version
+git —version
 
-If you use nvm, switch to the version specified by the project:
+Inspect the project’s preferred Node.js version:
+
+cat .nvmrc
+
+If the project uses nvm, install and select the configured version:
 
 nvm install
 nvm use
 
-Install dependencies
+If .nvmrc is missing or unsupported, select a Node.js version compatible with the project’s declared engine and deployment environment.
+
+1. Obtain the repository
+
+If you have not already cloned the project:
+
+git clone <YOUR_REPOSITORY_URL>
+cd medorbits
+
+Replace the placeholder with the actual repository URL.
+
+2. Install dependencies
 
 From the repository root:
 
 npm ci
 
-Use npm install only when intentionally updating the dependency lockfile or when no compatible lockfile is available.
+npm ci installs dependencies from the lockfile and is preferred for reproducible installations when a compatible package-lock.json is present.
 
-Configure environment variables
+Use npm install when intentionally changing dependencies or regenerating the lockfile.
 
-Create a local environment file from the template:
+3. Configure local environment variables
+
+Create a local environment file from the template.
+
+macOS or Linux:
 
 cp .env.example .env
 
-On Windows PowerShell:
+Windows PowerShell:
 
 Copy-Item .env.example .env
 
-Edit .env with values appropriate for your local environment. Never commit .env, production credentials, API keys, payment secrets, private keys, or real user data.
+Update .env with values suitable for your local environment. Do not commit this file or place production credentials in it.
 
-Inspect available commands
-
-Before starting the application, inspect the scripts and server entry points:
+4. Inspect available npm scripts
 
 npm run
 
-Then use the appropriate command defined by the repository. Common script names in Node projects include dev, start, test, lint, and build, but their presence is not guaranteed. Do not run a command that is not listed in package.json.
+Review the scripts in package.json before starting the application. Use the documented command for the actual entry point and runtime configuration.
 
-If a database is required, configure it and apply the project’s documented migrations before testing database-backed features.
+Common names include dev, start, test, lint, and build, but these scripts must not be assumed to exist.
 
-Environment configuration
+5. Start required services
 
-.env.example should document the variable names required by the application without containing real credentials. Keep configuration centralized and validate required variables at startup.
+If the application requires a database, cache, queue, or external provider, configure that dependency before running the related feature.
 
-Depending on enabled functionality, configuration may include:
+Apply the project’s documented database migrations and use only synthetic development seed data.
 
-• Application environment and listening port.
-• Database connection settings.
-• Session and authentication secrets.
-• CORS allowed origins.
-• Email provider configuration.
-• File/object storage settings.
-• Payment provider keys and webhook secrets.
-• Queue or worker configuration.
-• AI provider endpoint and key, if an AI integration is implemented.
-• Logging and monitoring settings.
+6. Start the application
 
-Use the names and formats actually expected by src/config/ and server.js. Do not invent production values. A missing required variable should be reported clearly without exposing secret values in logs.
+Run the start or development command defined in package.json and confirm that the application starts without configuration, module-loading, or database errors.
 
-Running and testing
+Verify the configured local URL and health endpoint against the actual server implementation.
 
-Use only commands defined by the repository’s package.json and CI configuration. A typical workflow is:
+⸻
+
+Environment Configuration
+
+.env.example should document configuration names and safe example formats without containing actual credentials.
+
+Configuration may include the following categories, depending on implemented features:
+
+Category	Typical purpose
+Application	Runtime environment, port, public URL
+Database	Connection URL or host, database, user, and password
+Authentication	Session secrets, token configuration, cookie settings
+Browser security	CORS origins and trusted proxy configuration
+Email	SMTP or email-provider credentials
+File storage	Local storage or object-storage configuration
+Payments	Provider keys, webhook secrets, and supported currencies
+Background processing	Queue connections and worker settings
+AI services	Provider endpoint, model, and API key
+Monitoring	Log levels, error reporting, and health checks
+
+Use the exact names and formats expected by server.js, src/config/, and the relevant integration modules.
+
+Configuration requirements
+
+* Validate required environment variables during startup.
+* Fail clearly when essential configuration is missing or invalid.
+* Never print secret values in startup errors or diagnostic logs.
+* Keep development, testing, staging, and production configuration separate.
+* Use the hosting platform’s secret-management facility for production credentials.
+* Ensure that every documented variable is actually consumed by the code before relying on it.
+
+⸻
+
+Development and Testing
+
+Use the scripts and test configuration present in the repository.
+
+A recommended workflow is:
 
 1. Install dependencies.
 2. Configure environment variables.
-3. Start required local services.
-4. Apply database migrations and seed only non-sensitive development data.
-5. Start the application using the documented development command.
-6. Run relevant tests and quality checks.
-7. Verify the health endpoint and key user flows.
+3. Start the required local services.
+4. Apply the appropriate database migrations.
+5. Run the application.
+6. Execute relevant automated tests.
+7. Check formatting, linting, and configuration validation.
+8. Verify important user flows manually or through end-to-end tests.
 
-Test coverage is organized under tests/:
+Test organization
 
-• unit/ — isolated functions and business logic.
-• integration/ — interactions between application components.
-• api/ — HTTP endpoints and response behavior.
-• database/ — schema, queries, migrations and persistence.
-• security/ — authentication, authorization, validation and abuse controls.
-• e2e/ — complete browser or application workflows.
-• accessibility/ — keyboard, semantic and accessibility checks.
-• fixtures/ — controlled test data.
+The repository may organize tests using directories such as:
 
-Do not use production credentials or real personal documents in automated tests.
+Directory	Intended coverage
+tests/unit/	Isolated functions and business rules
+tests/integration/	Interactions between application components
+tests/api/	HTTP routes, validation, and response contracts
+tests/database/	Queries, schema, migrations, and persistence
+tests/security/	Authentication, authorization, and abuse controls
+tests/e2e/	End-to-end user workflows
+tests/accessibility/	Accessibility and keyboard interaction
+tests/fixtures/	Controlled test data
 
-Frontend conventions
+Use the directories and test runner that actually exist in the checkout.
 
-Shared structure
+Test safety
 
-• Keep shared styling in assets/css/ and reusable browser logic in assets/js/.
-• Use the shared navigation, footer, opening animation, typography, and design tokens consistently across pages.
-• Keep page-specific changes isolated when possible; do not unintentionally alter the established homepage or shared layout when adding a new page.
-• Use root-relative asset URLs only when the site is deployed at the domain root. If deployed under a subpath, review path handling.
-• Ensure navigation targets correspond to files or routes that actually exist.
+* Never use production credentials in automated tests.
+* Do not upload real identity documents or sensitive personal data as fixtures.
+* Use an isolated test database.
+* Confirm the target database before running reset, truncation, or destructive migration commands.
+* Ensure tests do not send real emails, charge payment methods, or trigger production webhooks.
+* Treat passing tests as evidence for the behavior covered, not proof that the entire application is production-ready.
 
-Visual design
+⸻
 
-The existing MedOrbits design direction uses premium dark surfaces, carefully controlled accent colours, readable contrast, responsive layouts, and a polished opening animation. Follow the relevant page’s established theme when extending the site. Do not replace shared header/footer/animation behavior without an explicit design decision.
+Frontend Standards
 
-Accessibility and performance
+Shared interface conventions
 
-• Use semantic landmarks and a logical heading hierarchy.
-• Provide meaningful alternative text for informative images.
-• Ensure interactive controls work with a keyboard and expose visible focus states.
-• Label form fields and associate validation messages with their controls.
-• Respect prefers-reduced-motion.
-• Lazy-load below-the-fold images where appropriate.
-• Avoid loading large media or scripts unnecessarily.
-• Test at mobile, tablet and desktop widths.
+* Keep reusable styles in assets/css/.
+* Keep reusable browser-side functionality in assets/js/.
+* Reuse established navigation, footer, typography, design tokens, and animation behavior.
+* Keep page-specific styling isolated when practical.
+* Confirm that links, forms, buttons, and navigation targets correspond to real files or server routes.
+* Avoid unrelated redesigns when adding a page or fixing a functional issue.
 
-Public JSON data
+MedOrbits visual direction
 
-Files under assets/data/ are delivered to the browser and must be treated as public. Do not place secrets, private user records, payment data, access-controlled records, or uploaded identity documents there. Validate JSON and preserve consistent IDs between related catalogues.
+Follow the design system established by the relevant page. The platform’s design direction includes premium dark surfaces, carefully controlled accent colours, readable contrast, responsive layouts, and polished opening animations.
 
-Backend conventions
+When extending the interface:
 
-The src/ tree separates application responsibilities. Preserve the separation where it exists:
+* Preserve the established brand identity.
+* Maintain consistent spacing, typography, buttons, cards, and navigation.
+* Use colour combinations with sufficient contrast.
+* Keep shared header and footer changes deliberate and consistent.
+* Avoid introducing conflicting page-level design systems.
 
-1. Routes define HTTP paths and middleware composition.
-2. Controllers translate HTTP requests into service calls and responses.
-3. Services implement business rules and coordinate integrations.
-4. Repositories isolate persistence and data-access logic.
-5. Models represent domain entities or database records.
-6. Validators check untrusted input.
-7. Policies enforce resource-specific access rules.
-8. Middleware provides cross-cutting concerns such as authentication, rate limiting, request IDs and error handling.
+Accessibility
 
-Use consistent error responses, validate inputs on the server, authorize every protected operation, and avoid returning internal errors or sensitive fields to clients. Route definitions should reference real exported controller functions; check imports and exports when a route fails to mount.
+* Use semantic HTML landmarks and a logical heading hierarchy.
+* Provide meaningful alternative text for informative images.
+* Associate form labels, hints, and validation errors with their controls.
+* Ensure keyboard access and visible focus indicators.
+* Use appropriate accessible names for icon-only controls.
+* Respect the prefers-reduced-motion media preference.
+* Do not communicate important information through colour alone.
 
-Data and database
+Performance and responsive behaviour
 
-The repository includes database/schema.sql, migrations, seeds, fixtures, and server-side model/repository folders.
+* Test mobile, tablet, and desktop layouts.
+* Avoid horizontal overflow and clipped interactive controls.
+* Lazy-load appropriate below-the-fold images.
+* Optimize image dimensions and media formats.
+* Avoid loading unused JavaScript and large resources unnecessarily.
+* Use caching and compression where supported by the deployment architecture.
+* Check network requests and browser-console errors before release.
 
-• Treat migrations as versioned changes to the database schema.
-• Review migration effects before running them against a shared or production database.
-• Back up important data before destructive changes.
-• Keep seed data synthetic and non-sensitive.
-• Use parameterized queries or a safe data-access library.
-• Apply least-privilege database credentials.
-• Document rollback and recovery steps.
-• Do not assume a database engine or schema is active until verified from configuration and code.
+Public assets and URLs
 
-Public catalogue data in assets/data/ is separate from private application data. Account records, identity documents, payment events and audit records should use appropriate backend storage and access controls.
+Root-relative paths such as /assets/css/main.css assume deployment at the domain root. Review asset paths if the application is hosted under a subpath or behind a reverse proxy.
 
-Security and privacy
+Anything delivered through public static-file serving must be considered accessible to visitors unless a separate access-control mechanism prevents access.
 
-Read SECURITY.md and docs/security/ before changing authentication, authorization, file handling, payments, or administrative features.
+⸻
 
-Minimum expectations:
+Backend Architecture
 
-• Keep secrets outside source control and rotate any credential that may have been exposed.
-• Enforce server-side authentication and authorization; hiding a frontend link is not access control.
-• Use secure session and cookie settings appropriate to the deployment.
-• Validate and sanitize all untrusted input.
-• Apply rate limits to authentication, verification, password reset, upload and other abuse-prone endpoints.
-• Protect state-changing requests against CSRF where applicable.
-• Check file type, size and content; store private uploads outside public web roots.
-• Verify payment webhooks cryptographically and make payment processing idempotent.
-• Avoid logging passwords, tokens, payment credentials, or document contents.
-• Maintain audit trails for sensitive administrative actions.
-• Keep dependencies updated and review security alerts.
-• Provide clear retention and deletion behavior for personal data.
+Preserve the separation of responsibilities established in the source code.
 
-Never claim a control is implemented solely because a related file exists. Verify the actual code and deployment configuration.
+Layer	Responsibility
+Routes	Define HTTP paths and compose middleware
+Controllers	Translate HTTP requests into application calls and responses
+Services	Implement business rules and coordinate workflows
+Repositories	Encapsulate database access
+Models	Represent domain entities or database records
+Validators	Validate untrusted input and request schemas
+Policies	Enforce resource-specific authorization
+Middleware	Handle cross-cutting concerns such as authentication and error handling
+Integrations	Encapsulate external services such as email, payments, and storage
+Workers and jobs	Process background or scheduled work where implemented
 
-Deployment and operations
+Backend development rules
 
-Deployment-related files include Dockerfile, docker-compose.yml, .dockerignore, infrastructure/deployment/, monitoring runbooks, backup scripts, and GitHub Actions workflows.
+* Validate all untrusted input on the server.
+* Enforce authorization for every protected operation.
+* Check ownership and resource-level permissions on individual records.
+* Use parameterized SQL queries or a safe data-access library.
+* Return consistent, appropriately sanitized error responses.
+* Avoid exposing stack traces, secrets, internal paths, or sensitive database details.
+* Keep external-service calls isolated behind suitable integration modules.
+* Confirm that route imports reference real exported functions.
+* Avoid duplicating business rules across controllers and routes.
+* Make retries and background processing safe for operations that may run more than once.
 
-Before deploying:
+Frontend visibility is not an authorization mechanism. A hidden navigation link does not prevent direct access to an API endpoint.
 
-1. Confirm the Node.js version and dependency lockfile.
-2. Set production environment variables in the hosting platform’s secret manager.
-3. Confirm database connectivity, migrations and backups.
-4. Configure HTTPS, allowed origins, session cookies and security headers.
-5. Confirm private storage is not publicly served.
-6. Verify health checks and logs.
-7. Run tests and security checks.
-8. Deploy to staging and smoke-test critical flows.
-9. Document the release and rollback plan.
-10. Monitor errors and service health after release.
+⸻
 
-Use infrastructure/deployment/rollback.md or the relevant runbook if a release needs to be reverted. Do not run destructive database commands as a routine deployment step.
+Data and Database Management
 
-Contribution workflow
+The repository may contain SQL schema files, migration scripts, seed data, fixtures, and server-side models or repositories.
 
-1. Read CONTRIBUTING.md and CODE_OF_CONDUCT.md.
-2. Create a focused branch for the change.
-3. Keep changes small and avoid unrelated formatting or design modifications.
+Database practices
+
+* Treat migrations as versioned, reviewable changes.
+* Review schema changes before applying them to shared environments.
+* Back up important data before potentially destructive changes.
+* Use least-privilege database accounts.
+* Keep test and production databases isolated.
+* Use synthetic, non-sensitive development fixtures.
+* Document recovery and rollback procedures.
+* Validate migration results before releasing dependent application code.
+
+Do not assume a database engine is active merely because a schema file or database directory exists. Confirm the configured driver, connection settings, schema, and migration mechanism.
+
+Public and private data
+
+Keep public education catalogues separate from private user and operational records.
+
+Public data may include:
+
+* Course and institution catalogues.
+* Public education reference material.
+* Published career categories.
+* Public FAQs and destination information.
+
+Private or restricted data may include:
+
+* Account and contact details.
+* Applications and application status.
+* Identity documents and uploaded files.
+* Payment events and transaction references.
+* Internal support messages.
+* Administrative audit records.
+
+Do not place private data in assets/data/ or another publicly served directory.
+
+⸻
+
+Security and Privacy
+
+Read SECURITY.md and the relevant security documentation before changing authentication, authorization, file handling, payments, or administration.
+
+Minimum security expectations
+
+* Keep credentials and secrets outside version control.
+* Rotate any credential that may have been exposed.
+* Enforce server-side authentication and resource-level authorization.
+* Configure secure cookies, HTTPS, and trusted proxies appropriately.
+* Validate inputs and use context-appropriate output encoding.
+* Apply suitable rate limits to login, verification, password-reset, upload, and other abuse-prone endpoints.
+* Protect state-changing requests against CSRF where applicable.
+* Store private uploads outside public web roots.
+* Restrict document access by user, role, purpose, and resource ownership.
+* Validate uploaded file size, type, and content; consider malware scanning.
+* Verify payment webhooks using the provider’s required signature-verification method.
+* Make payment-event processing idempotent and reconcile transactions with the payment provider.
+* Avoid logging passwords, authentication tokens, payment secrets, and document contents.
+* Audit sensitive administrative operations.
+* Define personal-data retention, access, and deletion procedures.
+* Review dependency vulnerabilities and security updates regularly.
+
+Security verification
+
+A configuration file, middleware filename, or security-related dependency does not prove that the associated control is correctly enforced. Review the implementation and test both allowed and denied access paths.
+
+Never expose private files or unrestricted administrative functionality merely to simplify frontend development.
+
+⸻
+
+Deployment and Operations
+
+Deployment resources may include Dockerfile, docker-compose.yml, .dockerignore, CI workflows, scripts, and operational runbooks.
+
+Pre-deployment checklist
+
+* [ ]	Confirm the supported Node.js version and dependency lockfile.
+* [ ]	Review production dependencies and security alerts.
+* [ ]	Configure production secrets through the hosting platform.
+* [ ]	Verify database connectivity and migration status.
+* [ ]	Confirm that backups exist and recovery procedures are documented.
+* [ ]	Configure HTTPS, CORS, cookies, and security headers.
+* [ ]	Verify private storage and document access controls.
+* [ ]	Confirm health checks, structured logs, and error reporting.
+* [ ]	Run relevant tests and validation checks.
+* [ ]	Deploy to staging and test critical user journeys.
+* [ ]	Document the release version and rollback plan.
+* [ ]	Monitor application health after deployment.
+
+Docker and container operation
+
+Before using the supplied Docker configuration, verify:
+
+* The Dockerfile uses the correct application entry point.
+* Required runtime files are included in the build context.
+* Secrets are not copied into the image.
+* Storage directories have suitable ownership and permissions.
+* Health-check paths match actual server endpoints.
+* Persistent data uses appropriate volumes or managed services.
+* Network exposure is limited to the services that require it.
+* Resource limits and read-only filesystem settings are compatible with the application.
+
+Do not assume that a Compose service, health check, or environment variable works simply because it appears in the configuration.
+
+Database releases
+
+1. Review the migration.
+2. Back up affected data when appropriate.
+3. Confirm the target environment.
+4. Apply the approved migration using the project’s documented process.
+5. Verify schema and application compatibility.
+6. Monitor errors and data integrity.
+
+Avoid routine production resets or destructive schema operations.
+
+Incident response
+
+If a release causes failures:
+
+1. Identify the affected service and user workflows.
+2. Preserve relevant logs without exposing personal data or secrets.
+3. Follow the documented incident and rollback procedures.
+4. Determine whether the issue affects application code, configuration, dependencies, or data.
+5. Validate the recovery before declaring the incident resolved.
+6. Document the cause, remediation, and preventive action.
+
+See README-PRODUCTION.md and the relevant operational runbooks for environment-specific procedures.
+
+⸻
+
+Contribution Guidelines
+
+Before contributing, read:
+
+* CONTRIBUTING.md
+* CODE_OF_CONDUCT.md
+* SECURITY.md, when the change affects security-sensitive behavior
+
+Recommended workflow
+
+1. Create a focused branch.
+2. Make the smallest coherent change.
+3. Follow existing architecture and design conventions.
 4. Add or update tests for behavior changes.
-5. Update the relevant README or technical documentation.
-6. Run available lint, test, validation and security checks.
-7. Open a pull request using .github/PULL_REQUEST_TEMPLATE.md.
-8. Never include secrets, production exports, or private user documents in a commit.
+5. Update relevant documentation.
+6. Run the available quality checks.
+7. Review the diff for accidental changes and sensitive information.
+8. Submit a pull request using the repository’s actual template, if configured.
 
-Git hooks under .husky/ may run local checks. CI workflows under .github/workflows/ define automated checks; confirm their actual configuration before relying on them.
+Pull request expectations
+
+A pull request should explain:
+
+* The problem being addressed.
+* The approach and important implementation decisions.
+* Any configuration or database changes.
+* Tests performed and their results.
+* Security, privacy, accessibility, and compatibility implications.
+* Any required deployment or migration steps.
+
+Do not include credentials, production exports, private documents, or unrelated generated files in commits.
+
+Git hooks and CI workflows may provide additional checks. Confirm their actual configuration before relying on them.
+
+⸻
 
 Troubleshooting
 
 The server does not start
 
-• Confirm the Node.js version.
-• Run npm ci.
-• Inspect the startup command in package.json.
-• Check required environment variables.
-• Review the server log for the first actionable error.
-• Confirm all imported route/controller modules exist and export the expected functions.
+* Check the Node.js version.
+* Run npm ci.
+* Inspect available npm scripts.
+* Validate required environment variables.
+* Review the first actionable startup error.
+* Confirm imports and exports for routes, controllers, and configuration modules.
+* Check connectivity to required services.
 
 A page or asset returns 404
 
-• Verify the file exists at the referenced path.
-• Check capitalization and file extensions.
-• Confirm static-file middleware and deployment root configuration.
-• Review whether root-relative URLs match the deployment path.
+* Verify the target file and exact filename capitalization.
+* Check the requested URL in the browser’s network panel.
+* Confirm static-file middleware and the deployment root.
+* Review root-relative URLs and any subpath configuration.
 
-API requests fail
+An API request fails
 
-• Confirm the server is running and the API route is mounted.
-• Check CORS configuration, request method, URL, payload and authentication state.
-• Inspect server logs without exposing secrets.
-• Confirm the database and required integrations are available.
+* Confirm the server is running.
+* Verify the endpoint, method, request payload, and content type.
+* Check authentication and resource permissions.
+* Review CORS and CSRF configuration as applicable.
+* Inspect server logs without exposing secrets.
+* Confirm the database and required integrations are available.
 
-JSON data does not load
+Public JSON data fails to load
 
-• Validate the file with a JSON parser.
-• Check the URL in the browser network panel.
-• Confirm the expected top-level key matches the frontend code.
-• Ensure the file is in a publicly served location and contains no private data.
+* Validate the JSON syntax.
+* Check the requested URL and HTTP response.
+* Confirm the frontend expects the actual top-level data structure.
+* Verify that the asset is publicly served.
+* Ensure no private data has been placed in the file.
 
-Deployment fails
+A route fails to mount
 
-• Review the hosting build and runtime logs.
-• Confirm the configured start command and Node.js version.
-• Verify environment variables and service connectivity.
-• Check health-check paths and the deployment runbook.
+* Confirm the route module exists.
+* Check its exported handlers.
+* Verify that every registered route receives a valid callback.
+* Inspect middleware ordering and error output.
 
-Documentation map
+A deployment fails
 
-|Topic                   |Documentation                                   |
-|————————|————————————————|
-|Security reporting      |`SECURITY.md`, `docs/security/`                 |
-|Contribution standards  |`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`         |
-|Release history         |`CHANGELOG.md`                                  |
-|Support                 |`SUPPORT.md`                                    |
-|Architecture            |`docs/architecture/`                            |
-|API                     |`docs/api/`                                     |
-|Database                |`docs/database/`, `database/`                   |
-|Deployment              |`docs/deployment/`, `infrastructure/deployment/`|
-|Operations and incidents|`docs/operations/`, `infrastructure/monitoring/`|
-|Tests                   |`tests/`                                        |
-|Public data             |`assets/data/README.md`                         |
+* Review build and runtime logs.
+* Verify the start command and Node.js version.
+* Check environment configuration and service connectivity.
+* Confirm health-check paths and container permissions.
+* Follow the relevant deployment runbook.
 
-License and notices
+⸻
 
-Review LICENSE and NOTICE for the terms that apply to this repository and its included materials. Third-party assets and dependencies may have separate license requirements.
+Documentation Directory
 
-────────
+Topic	Reference
+Production operations	README-PRODUCTION.md
+Security reporting	SECURITY.md, docs/security/
+Contribution standards	CONTRIBUTING.md
+Community standards	CODE_OF_CONDUCT.md
+Release history	CHANGELOG.md
+Support	SUPPORT.md
+Architecture	docs/architecture/
+API	docs/api/
+Database	docs/database/, database/
+Deployment	docs/deployment/, infrastructure/deployment/
+Operations and incidents	docs/operations/, infrastructure/monitoring/
+Automated tests	tests/
+Public data	assets/data/README.md
+
+This table is a navigation guide. Confirm each referenced file or directory exists before treating it as the authoritative documentation source.
+
+⸻
+
+License and Third-Party Notices
+
+Review LICENSE and NOTICE for the repository’s licensing terms and supplementary notices.
+
+Third-party libraries, fonts, images, datasets, and other included materials may have separate licensing, attribution, or usage requirements. Verify those requirements before redistribution or commercial use.
+
+⸻
+
+Keeping This README Accurate
+
+Update this document when significant changes affect:
+
+* Repository organization.
+* Supported runtime versions.
+* Installation or startup procedures.
+* Environment configuration.
+* Database setup and migrations.
+* Security requirements.
+* Testing and release workflows.
+* Deployment and operational procedures.
+
+Prefer instructions verified against the current codebase over assumptions based on filenames or planned features.
+
+⸻
 
 MedOrbits — Study · Work · Grow
 
-Keep this README accurate as the repository evolves. Document implemented behavior, required configuration, and operational procedures based on the current source code rather than assumed functionality.
-# MedOrbits
-# MedOrbits
+Education discovery. Admissions guidance. Career opportunities. Recruitment services.

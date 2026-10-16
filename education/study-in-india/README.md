@@ -1,16 +1,21 @@
 MedOrbits — Study in India
 
-Directory
+Directory: education/study-in-india/
+Section: Education → Study in India
+Brand: MedOrbits
+Design system: Royal Burgundy & Champagne Gold
 
-/education/study-india/
+1. Purpose
 
-This directory contains the MedOrbits destination hub and
-course-specific pages for students exploring education opportunities in
-India.
+The Study in India module serves as a destination hub for students exploring education opportunities in India. It organizes course-specific information, admission guidance, eligibility considerations, entrance examinations, and academic pathways across medical, healthcare, engineering, management, law, and other disciplines.
 
-File Structure
+This directory provides a consistent structure for discovering courses and navigating relevant MedOrbits education resources.
 
-study-india/
+Implementation note: This README documents the intended structure and maintenance requirements. Verify actual files, functionality, shared assets, and integrations against the current repository before treating them as implemented.
+
+2. Directory Structure
+
+study-in-india/
 ├── README.md
 ├── index.html
 ├── mbbs.html
@@ -26,164 +31,168 @@ study-india/
 ├── pg-others.html
 └── more-courses.html
 
-Page Responsibilities
+3. Page Responsibilities
 
-────────
+File	Purpose
+index.html	Main Study in India landing page introducing study pathways and linking to course pages.
+mbbs.html	MBBS education, admission pathways, eligibility, counselling, and medical-college research.
+bds.html	Dental education and BDS admission information.
+ayush.html	AYUSH pathways, including relevant traditional and complementary healthcare programmes.
+nursing.html	Nursing courses, study routes, eligibility, and career pathways.
+pharmacy.html	Pharmacy programmes, admission planning, and related career options.
+paramedical.html	Paramedical and allied-health programmes and application guidance.
+engineering.html	Engineering disciplines, course selection, entrance examinations, and institution research.
+management.html	Management and business programmes, including undergraduate and postgraduate pathways.
+law.html	Legal education pathways, entrance examinations, and law-school research.
+pg-medical.html	Postgraduate medical education and related admission planning.
+pg-others.html	Other postgraduate programmes outside the dedicated medical postgraduate page.
+more-courses.html	Additional courses and pathways not covered by the primary pages.
 
-File                                Purpose
+4. Design System
 
-────────
+All pages should follow the MedOrbits Royal Burgundy & Champagne Gold visual direction.
 
-index.html                        Main Study in India landing page;
-introduces study pathways and links
-to course pages.
+Colour and surfaces
 
-mbbs.html                         MBBS education, admission pathway,
-eligibility, counselling, and
-medical-college research.
+* Primary surfaces: Deep royal burgundy and dark aubergine.
+* Accents: Champagne gold for highlights, borders, icons, and primary actions.
+* Supporting colours: Coordinated dark, muted, and tinted surfaces that preserve readability.
+* Background policy: Avoid pure-white section backgrounds. Maintain strong contrast between text, surfaces, and gold accents.
 
-bds.html                          Dental education and BDS admission
-information.
+Typography and layout
 
-ayush.html                        AYUSH pathways, including relevant
-traditional and complementary
-healthcare programmes.
+* Pair elegant display headings with a legible sans-serif body font.
+* Use responsive sections, compact cards, clear visual hierarchy, and consistent spacing.
+* Keep content readable across mobile, tablet, and desktop layouts.
+* Avoid horizontal overflow and unintended text wrapping or clipping.
 
-nursing.html                      Nursing courses, study routes,
-eligibility, and career pathways.
+Interaction
 
-pharmacy.html                     Pharmacy programmes, admission
-planning, and related career
-options.
+* Use the established sticky header, dropdown navigation, and mobile menu where supported by the reference implementation.
+* Reuse existing navigation and animation components.
+* Apply subtle transitions and the animated MedOrbits introduction where appropriate.
+* Respect reduced-motion preferences.
 
-paramedical.html                  Paramedical and allied-health
-programmes and application
-guidance.
+Accessibility
 
-engineering.html                  Engineering disciplines, course
-selection, entrance exams, and
-institution research.
+* Use semantic HTML and a logical heading hierarchy.
+* Provide visible keyboard focus states.
+* Use descriptive image alternative text.
+* Ensure controls work with keyboard and touch input.
+* Associate form labels with their inputs.
+* Maintain sufficient text and interactive-element contrast.
 
-management.html                   Management and business programmes,
-including undergraduate and
-postgraduate pathways.
+5. Shared Project Dependencies
 
-law.html                          Legal education pathways, entrance
-examinations, and law-school
-research.
+Reuse existing site-wide assets rather than creating duplicate files.
 
-pg-medical.html                   Postgraduate medical education and
-related admission planning.
+Stylesheet
 
-pg-others.html                    Other postgraduate programmes
-outside the dedicated medical
-postgraduate page.
+/assets/css/style.css
 
-more-courses.html                 Additional courses and pathways not covered by the primary pages.
+JavaScript modules
 
-Design System
+Use the following modules when they exist in the deployed project:
 
-Use the Royal Burgundy & Champagne Gold visual direction
-consistently across this directory.
+/assets/js/constants.js
+/assets/js/config.js
+/assets/js/utils.js
+/assets/js/navigation.js
+/assets/js/search.js
+/assets/js/animations.js
+/assets/js/app.js
 
-• Primary surfaces: deep royal burgundy and dark aubergine.
-• Accents: champagne gold for highlights, borders, icons, and
-primary actions.
-• Typography: elegant display headings paired with a legible
-sans-serif body font.
-• Layout: responsive sections, compact cards, clear hierarchy, and
-readable spacing.
-• Interaction: sticky header, dropdown navigation, mobile menu,
-subtle transitions, and an animated MedOrbits intro where used by
-the reference page.
-• Accessibility: semantic HTML, visible focus states, descriptive
-image alt text, keyboard-operable controls, and reduced-motion
-support.
+Brand and image assets
 
-Avoid pure-white section backgrounds. Maintain strong contrast between
-text, surfaces, and gold accents.
-
-Shared Project Dependencies
-
-Use the existing site-wide assets rather than creating duplicate files:
-
-• Shared stylesheet: /assets/css/style.css
-• JavaScript modules: /assets/js/constants.js,
-/assets/js/config.js, /assets/js/utils.js,
-/assets/js/navigation.js, /assets/js/search.js,
-/assets/js/animations.js, and /assets/js/app.js
-• Brand logo: /assets/images/logo/medorbits-logo.png
-• Images: existing paths under /assets/images/
-• Image fallback, where available:
+/assets/images/logo/medorbits-logo.png
+/assets/images/
 /assets/images/placeholders/image-placeholder.svg
 
-Only include script files that exist in the deployed project. Keep
-shared navigation, footer, logo, and asset paths consistent with the
-rest of MedOrbits.
+The placeholder path is optional and should be used only if that file exists.
 
-Navigation and Linking
+Dependency rule: Verify each stylesheet, script, logo, and image path before referencing it. Include only existing modules, and follow the loading order and initialization conventions used by the current application.
 
-• Link the Study in India hub from the main Education navigation and
-relevant Study Abroad or Education Hub pages.
-• Link each course card to its matching page in this directory.
-• Provide a clear route back to /education/study-india/index.html.
-• Link general course discovery to /education/courses.html.
-• Use the existing admission, fee, scholarship, document, college, and
-university resource pages where relevant.
-• Keep contact and guidance calls to action aligned with the current
-site routes, such as /pages/contact.html and /pages/apply.html,
-when those pages are available.
+6. Navigation and Internal Linking
 
-SEO and Page Metadata
+* Link the Study in India hub from the main Education navigation and relevant Education Hub or Study Abroad pages.
+* Link each course card to its corresponding page in this directory.
+* Provide a clear route back to /education/study-in-india/index.html.
+* Link general course discovery to /education/courses.html.
+* Reuse relevant admission, fee, scholarship, document, college, and university resources where those pages exist.
+* Align contact and guidance calls to action with the actual site routes, such as /pages/contact.html and /pages/apply.html, when available.
+* Verify every destination before publishing a link.
+* Use consistent navigation labels and avoid links to placeholder or nonexistent pages.
 
-Every HTML page should have:
+7. SEO and Page Metadata
 
-• A unique, descriptive <title>.
-• A concise, page-specific meta description.
-• A canonical URL matching the deployed page path.
-• A viewport declaration and appropriate theme color.
-• Meaningful heading hierarchy and descriptive link text.
-• Relevant image alt text and loading=“lazy” for non-critical
-images.
-• index, follow only when the page is intended to be publicly
-indexed.
+Every HTML page should include:
 
-Do not copy the MBBS page title, description, or canonical URL unchanged
-to other pages.
+* A unique, descriptive <title>.
+* A concise, page-specific meta description.
+* A canonical URL matching the actual deployed page.
+* A viewport declaration.
+* An appropriate theme colour.
+* A meaningful heading hierarchy and descriptive link text.
+* Relevant image alternative text.
+* loading=“lazy” for non-critical images where appropriate.
+* An appropriate indexing directive based on the page’s intended visibility.
 
-Content and Accuracy
+Do not reuse the MBBS page title, description, or canonical URL unchanged on other course pages. Canonical URLs must reflect the actual deployment domain and URL structure rather than an assumed domain.
 
-• Treat course eligibility, entrance exams, recognition, fees, seat
-availability, counselling rules, and deadlines as cycle-specific.
-• Prefer official regulator, examination, institution, and
-counselling-authority information.
-• Clearly distinguish general guidance from official requirements.
-• Do not promise admission, scholarships, employment, or specific
-outcomes.
-• Direct students to verify current requirements with the appropriate
-official authority before applying.
+8. Content Accuracy and Admissions Guidance
 
-Quality Checklist
+Course and admission information may change by academic year, institution, examination cycle, applicant category, and applicable regulations.
 
-Before publishing a page:
+* Treat eligibility, entrance examinations, recognition, fees, seat availability, counselling rules, and deadlines as cycle-specific.
+* Prefer official regulator, examination, institution, and counselling-authority information.
+* Clearly distinguish general educational guidance from official requirements.
+* Link to authoritative sources where appropriate.
+* Identify the applicable academic year or review date for time-sensitive information.
+* Do not promise admission, scholarships, employment, or specific outcomes.
+* Direct students to verify current requirements with the relevant official authority before applying.
 
-☐ Confirm the file name and internal links.
-☐ Check desktop, tablet, and mobile layouts.
-☐ Test the sticky header, dropdowns, mobile menu, search, and
-calls to action.
-☐ Verify that all image and script paths resolve.
-☐ Check browser console errors and missing assets.
-☐ Validate metadata, canonical URL, headings, and image alt text.
-☐ Confirm keyboard navigation, focus visibility, and
-reduced-motion behavior.
-☐ Verify factual admission details against current official
-sources.
-☐ Confirm the page uses the Royal Burgundy & Champagne Gold design
-system.
+For regulated professional programmes, ensure that claims about recognition, eligibility, registration, and professional practice are supported by the relevant authoritative sources.
 
-Maintenance
+9. Functional Requirements
 
-When adding a new course page, add it to this README, the Study in India
-landing page, and the relevant site navigation or course directory.
-Reuse established MedOrbits components and paths so that pages remain
-visually and technically consistent.
+Before considering a page production-ready, verify the following:
+
+* [ ]	The HTML file exists at the documented path.
+* [ ]	Course cards and internal links resolve correctly.
+* [ ]	The shared header, footer, and navigation behave as expected.
+* [ ]	The sticky header, dropdowns, and mobile menu work where implemented.
+* [ ]	Search and calls to action work where implemented.
+* [ ]	All image, stylesheet, and script paths resolve.
+* [ ]	No relevant browser-console errors or missing assets remain.
+* [ ]	Metadata, canonical URLs, headings, and image alternative text are correct.
+* [ ]	Keyboard navigation, focus visibility, and reduced-motion behaviour are tested.
+* [ ]	Desktop, tablet, and mobile layouts are checked.
+* [ ]	Admission details are verified against current official sources.
+* [ ]	Forms and backend integrations enforce server-side validation and appropriate authorization where applicable.
+
+10. Maintenance Checklist
+
+When adding or updating a course page:
+
+* [ ]	Add or update the HTML page.
+* [ ]	Update this README.
+* [ ]	Add the course to index.html and more-courses.html where appropriate.
+* [ ]	Update relevant site navigation or course-directory data.
+* [ ]	Confirm image, stylesheet, and script paths.
+* [ ]	Verify current official admission, eligibility, and recognition information.
+* [ ]	Test desktop and mobile layouts.
+* [ ]	Check internal links and browser-console errors.
+* [ ]	Update page-specific SEO metadata and review dates.
+* [ ]	Confirm that any new forms or integrations follow the applicable security requirements.
+
+11. Maintenance Policy
+
+Keep this documentation aligned with the actual repository. Update it whenever the directory structure, course pages, shared dependencies, navigation, or admission requirements change.
+
+Document planned enhancements separately from implemented functionality. Do not describe a feature, integration, or asset as operational until it has been verified.
+
+⸻
+
+MedOrbits — Study · Work · Grow
+
+Explore education pathways in India, compare course options, and prepare for your next academic step.

@@ -1,78 +1,243 @@
+
 'use strict';
 
 const {
-  isAdmin, hasRole, hasPermission, isOwner, sameId,
+  isAdmin,
+  hasRole,
+  hasPermission,
+  isOwner,
+  sameId,
   resourceOwnerId,
 } = require('./policy-utils');
 
+const OWNER_FIELDS = [
+  'userId',
+  'ownerId',
+  'candidateId',
+  'applicantId',
+  'uploadedBy',
+];
+
+const PROTECTED_DOCUMENT_FIELDS = new Set([
+  'id',
+  '_id',
+  'userId',
+  'ownerId',
+  'candidateId',
+  'applicantId',
+  'uploadedBy',
+  'status',
+  'verificationStatus',
+  'reviewStatus',
+  'reviewerId',
+  'assignedTo',
+  'storageKey',
+  'bucket',
+  'url',
+  'downloadUrl',
+  'checksum',
+  'malwareScanStatus',
+  'isDeleted',
+  'deletedAt',
+  'createdAt',
+  'updatedAt',
+]);
+
+function actorId(actor) {
+  return actor?.id ?? actor?.userId ?? actor?.sub ?? null;
+}
+
 function documentOwnerId(document) {
-  return resourceOwnerId(document, ['userId', 'ownerId', 'candidateId', 'applicantId', 'uploadedBy']);
+  return resourceOwnerId(document, OWNER_FIELDS);
 }
 
 function canUploadDocument(actor, metadata = {}) {
   if (!actor) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'documents:upload:any')) return true;
-  const targetOwner = metadata.userId ?? metadata.ownerId ?? metadata.candidateId;
-  if (!targetOwner) return hasRole(actor, 'user', 'student', 'candidate', 'employer');
-  return isOwner(actor, targetOwner) &&
-    hasRole(actor, 'user', 'student', 'candidate', 'employer');
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'documents:upload:any')
+  ) {
+    return true;
+  }
+
+  if (!hasRole(actor, 'user', 'student', 'candidate', 'employer')) {
+    return false;
+  }
+
+  const targetOwner =
+    metadata.userId ??
+    metadata.ownerId ??
+    metadata.candidateId;
+
+  // The controller/service must bind ownership to the authenticated
+  // identity when no explicit owner is provided.
+  if (targetOwner == null || targetOwner === '') {
+    return true;
+  }
+
+  return isOwner(actor, targetOwner);
 }
 
 function canViewDocument(actor, document) {
   if (!actor || !document) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'documents:read:any')) return true;
-  if (isOwner(actor, documentOwnerId(document))) return true;
 
-  const relatedApplication = document.applicationId &&
-    (sameId(document.applicationApplicantId, actor.id ?? actor.userId ?? actor.sub) ||
-     sameId(document.applicantId, actor.id ?? actor.userId ?? actor.sub));
-  if (relatedApplication && hasPermission(actor, 'applications:read:assigned')) return true;
+  if (
+    document.isDeleted === true ||
+    document.deletedAt != null
+  ) {
+    return false;
+  }
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'documents:read:any')
+  ) {
+    return true;
+  }
+
+  if (isOwner(actor, documentOwnerId(document))) {
+    return true;
+  }
+
+  const id = actorId(actor);
+
+  if (id == null) return false;
+
+  const relatedApplication =
+    document.applicationId != null &&
+    (
+      sameId(document.applicationApplicantId, id) ||
+      sameId(document.applicantId, id)
+    );
+
+  if (
+    relatedApplication &&
+    hasPermission(actor, 'applications:read:assigned')
+  ) {
+    return true;
+  }
 
   const isAssignedReviewer =
-    sameId(document.assignedTo, actor.id ?? actor.userId ?? actor.sub) ||
-    sameId(document.reviewerId, actor.id ?? actor.userId ?? actor.sub);
+    sameId(document.assignedTo, id) ||
+    sameId(document.reviewerId, id);
 
-  return isAssignedReviewer &&
+  return (
+    isAssignedReviewer &&
     hasRole(actor, 'counsellor', 'support') &&
-    hasPermission(actor, 'documents:review:assigned');
+    hasPermission(actor, 'documents:review:assigned')
+  );
 }
 
 function canUpdateDocument(actor, document, changes = {}) {
   if (!actor || !document) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'documents:update:any')) return true;
-  if (!isOwner(actor, documentOwnerId(document))) return false;
 
-  // Owners may update limited metadata, never review/security/storage fields.
-  const forbidden = new Set([
-    'userId', 'ownerId', 'candidateId', 'applicantId', 'uploadedBy',
-    'status', 'verificationStatus', 'reviewStatus', 'reviewerId',
-    'storageKey', 'bucket', 'url', 'downloadUrl', 'checksum',
-    'malwareScanStatus', 'deletedAt',
-  ]);
-  return !Object.keys(changes || {}).some((key) => forbidden.has(key));
+  if (
+    document.isDeleted === true ||
+    document.deletedAt != null
+  ) {
+    return false;
+  }
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'documents:update:any')
+  ) {
+    return true;
+  }
+
+  if (!isOwner(actor, documentOwnerId(document))) {
+    return false;
+  }
+
+  if (
+    !changes ||
+    typeof changes !== 'object' ||
+    Array.isArray(changes)
+  ) {
+    return false;
+  }
+
+  return !Object.keys(changes).some((key) =>
+    PROTECTED_DOCUMENT_FIELDS.has(key)
+  );
 }
 
 function canReviewDocument(actor, document) {
   if (!actor || !document) return false;
-  return isAdmin(actor) ||
-    hasPermission(actor, 'documents:review:any') ||
-    (sameId(document.reviewerId ?? document.assignedTo, actor.id ?? actor.userId ?? actor.sub) &&
-     hasRole(actor, 'counsellor', 'support') &&
-     hasPermission(actor, 'documents:review:assigned'));
+
+  if (
+    document.isDeleted === true ||
+    document.deletedAt != null
+  ) {
+    return false;
+  }
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'documents:review:any')
+  ) {
+    return true;
+  }
+
+  const id = actorId(actor);
+
+  if (id == null) return false;
+
+  const assigned =
+    sameId(document.reviewerId, id) ||
+    sameId(document.assignedTo, id);
+
+  return (
+    assigned &&
+    hasRole(actor, 'counsellor', 'support') &&
+    hasPermission(actor, 'documents:review:assigned')
+  );
 }
 
 function canDeleteDocument(actor, document) {
   if (!actor || !document) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'documents:delete:any')) return true;
-  return isOwner(actor, documentOwnerId(document)) &&
-    !document.requiredForActiveApplication &&
-    !['verified', 'locked', 'submitted'].includes(String(document.status || '').toLowerCase());
+
+  if (
+    document.isDeleted === true ||
+    document.deletedAt != null
+  ) {
+    return false;
+  }
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'documents:delete:any')
+  ) {
+    return true;
+  }
+
+  const status = String(document.status || '').toLowerCase();
+
+  return (
+    isOwner(actor, documentOwnerId(document)) &&
+    document.requiredForActiveApplication !== true &&
+    !['verified', 'locked', 'submitted'].includes(status)
+  );
 }
 
 function canGenerateDocumentDownload(actor, document) {
-  return canViewDocument(actor, document) &&
-    document.isDeleted !== true &&
-    document.deletedAt == null;
+  if (!actor || !document) return false;
+
+  if (
+    document.isDeleted === true ||
+    document.deletedAt != null
+  ) {
+    return false;
+  }
+
+  if (!canViewDocument(actor, document)) {
+    return false;
+  }
+
+  // The download service must additionally enforce storage-key
+  // ownership, document review status, and signed-URL expiry.
+  return true;
 }
 
 module.exports = {

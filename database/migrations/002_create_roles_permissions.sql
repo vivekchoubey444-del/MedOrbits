@@ -1,210 +1,199 @@
-
 -- =============================================================================
 -- Migration: 002_create_roles_permissions.sql
--- Purpose: Create normalized roles, permissions and role assignments.
+-- Project: MedOrbits
+-- Purpose: Create normalized roles, permissions, and role assignments.
 -- Database: MySQL 8.0.16+
+-- Engine: InnoDB
+-- Character set: utf8mb4
+-- Collation: utf8mb4_0900_ai_ci
 --
--- Depends on:
+-- DEPENDENCIES:
 --   001_create_users.sql
 --
--- Security:
--- - Authorization must be enforced by backend middleware and services.
+-- SECURITY:
+-- - Enforce authorization in backend middleware and services.
 -- - Never rely on frontend role checks alone.
--- - Do not allow public registration to assign privileged roles.
--- - Protect role and permission changes with audit logging.
+-- - Never allow public registration to assign privileged roles.
+-- - Audit role assignments and permission changes.
+-- - Grant only explicitly approved permissions to each role.
+-- - Protect administrative role assignment through trusted backend logic.
 --
--- This migration is designed for a fresh installation.
--- MySQL DDL can implicitly commit; do not depend on transaction rollback
--- to undo CREATE TABLE operations.
+-- MIGRATION SAFETY:
+-- - Intended for a fresh installation.
+-- - CREATE TABLE IF NOT EXISTS does not alter existing table definitions.
+-- - MySQL DDL can implicitly commit.
+-- - Seed operations are repeatable when the required unique constraints exist.
+-- - Existing role and permission definitions are not silently overwritten.
+--
+-- IMPORTANT:
+-- This file creates RBAC tables and seeds baseline authorization records.
+-- Do not rerun an already-applied migration as a substitute for a migration
+-- runner. Use a new migration for subsequent schema changes.
 -- =============================================================================
-
-
 -- =============================================================================
 -- 1. ROLES
 -- =============================================================================
-
 CREATE TABLE IF NOT EXISTS roles (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-
     name VARCHAR(50) NOT NULL,
     display_name VARCHAR(100) NOT NULL,
     description TEXT NULL,
-
     is_system BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3),
-
     PRIMARY KEY (id),
-
     UNIQUE KEY uq_roles_name (name),
-
+    KEY idx_roles_active (is_active),
+    KEY idx_roles_system (is_system),
     CONSTRAINT chk_roles_name_format
-        CHECK (REGEXP_LIKE(name, '^[a-z][a-z0-9_]*$', 'c')),
-
+        CHECK (
+            REGEXP_LIKE(name, '^[a-z][a-z0-9_]*$', 'c')
+        ),
     CONSTRAINT chk_roles_display_name
-        CHECK (CHAR_LENGTH(TRIM(display_name)) > 0)
-
+        CHECK (
+            CHAR_LENGTH(TRIM(display_name)) > 0
+        )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- =============================================================================
 -- 2. PERMISSIONS
 -- =============================================================================
-
 CREATE TABLE IF NOT EXISTS permissions (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-
     name VARCHAR(100) NOT NULL,
     resource VARCHAR(60) NOT NULL,
     action VARCHAR(60) NOT NULL,
     description TEXT NULL,
-
     is_system BOOLEAN NOT NULL DEFAULT FALSE,
-
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
     PRIMARY KEY (id),
-
     UNIQUE KEY uq_permissions_name (name),
     KEY idx_permissions_resource_action (resource, action),
-
+    KEY idx_permissions_system (is_system),
     CONSTRAINT chk_permissions_name_format
-        CHECK (REGEXP_LIKE(name, '^[a-z][a-z0-9_.:-]*$', 'c')),
-
+        CHECK (
+            REGEXP_LIKE(name, '^[a-z][a-z0-9_.:-]*$', 'c')
+        ),
     CONSTRAINT chk_permissions_resource
-        CHECK (CHAR_LENGTH(TRIM(resource)) > 0),
-
+        CHECK (
+            CHAR_LENGTH(TRIM(resource)) > 0
+        ),
     CONSTRAINT chk_permissions_action
-        CHECK (CHAR_LENGTH(TRIM(action)) > 0)
-
+        CHECK (
+            CHAR_LENGTH(TRIM(action)) > 0
+        )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- =============================================================================
 -- 3. ROLE-PERMISSION MAPPING
 -- =============================================================================
-
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id BIGINT UNSIGNED NOT NULL,
     permission_id BIGINT UNSIGNED NOT NULL,
-
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
     PRIMARY KEY (role_id, permission_id),
-
     KEY idx_role_permissions_permission_id (permission_id),
-
     CONSTRAINT fk_role_permissions_role
         FOREIGN KEY (role_id)
         REFERENCES roles (id)
         ON DELETE CASCADE,
-
     CONSTRAINT fk_role_permissions_permission
         FOREIGN KEY (permission_id)
         REFERENCES permissions (id)
         ON DELETE CASCADE
-
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- =============================================================================
 -- 4. USER-ROLE MAPPING
 -- =============================================================================
 -- A user can have multiple roles.
 --
--- users.role is retained for compatibility with the existing user schema.
--- If user_roles becomes the authoritative authorization source, migrate
--- existing assignments through a separate reviewed migration.
+-- users.role from migration 001 is a legacy compatibility field.
+-- The normalized user_roles relationship should be the authoritative source
+-- for backend authorization after the application's role migration is complete.
 --
--- assigned_by is nullable to support system-created assignments.
-
+-- assigned_by is nullable for trusted system-created assignments.
+-- A NULL value must not be interpreted as authorization to grant privileges.
 CREATE TABLE IF NOT EXISTS user_roles (
     user_id BIGINT UNSIGNED NOT NULL,
     role_id BIGINT UNSIGNED NOT NULL,
-
     assigned_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     assigned_by BIGINT UNSIGNED NULL,
-
     PRIMARY KEY (user_id, role_id),
-
     KEY idx_user_roles_role_id (role_id),
     KEY idx_user_roles_assigned_by (assigned_by),
-
     CONSTRAINT fk_user_roles_user
         FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE,
-
     CONSTRAINT fk_user_roles_role
         FOREIGN KEY (role_id)
         REFERENCES roles (id)
-        ON DELETE CASCADE,
-
+        ON DELETE RESTRICT,
     CONSTRAINT fk_user_roles_assigned_by
         FOREIGN KEY (assigned_by)
         REFERENCES users (id)
         ON DELETE SET NULL
-
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- =============================================================================
--- 5. SEED SYSTEM ROLES
+-- 5. SEED BASELINE SYSTEM ROLES
 -- =============================================================================
--- Re-running this seed does not reset existing descriptions or active states.
-
+-- Duplicate role names are ignored without replacing existing definitions.
+-- Review changes to system roles through a separate controlled migration.
 INSERT INTO roles (
     name,
     display_name,
     description,
-    is_system
+    is_system,
+    is_active
 )
 VALUES
     (
         'user',
         'User',
         'Standard registered account.',
+        TRUE,
         TRUE
     ),
     (
         'admin',
         'Administrator',
         'Administrative access subject to explicit permissions.',
+        TRUE,
         TRUE
     ),
     (
         'counsellor',
         'Counsellor',
         'Education guidance and application support.',
+        TRUE,
         TRUE
     ),
     (
         'employer',
         'Employer',
         'Employer and recruitment-related access.',
+        TRUE,
         TRUE
     )
 ON DUPLICATE KEY UPDATE
     id = id;
-
-
 -- =============================================================================
--- 6. SEED BASE PERMISSIONS
+-- 6. SEED BASELINE SYSTEM PERMISSIONS
 -- =============================================================================
--- These records define capabilities; they do not independently grant access.
--- The role_permissions table determines which roles receive each permission.
-
+-- These definitions describe capabilities.
+-- They do not independently grant access.
+-- Access is determined by role_permissions and backend authorization.
+--
+-- Duplicate permission names are ignored without overwriting existing
+-- descriptions or resource/action definitions.
 INSERT INTO permissions (
     name,
     resource,
@@ -227,7 +216,6 @@ VALUES
         'Update own profile.',
         TRUE
     ),
-
     (
         'applications.create',
         'applications',
@@ -270,7 +258,6 @@ VALUES
         'Manage application workflows.',
         TRUE
     ),
-
     (
         'colleges.read',
         'colleges',
@@ -285,7 +272,6 @@ VALUES
         'Create and manage college records.',
         TRUE
     ),
-
     (
         'courses.read',
         'courses',
@@ -300,7 +286,6 @@ VALUES
         'Create and manage course records.',
         TRUE
     ),
-
     (
         'jobs.read',
         'jobs',
@@ -315,7 +300,6 @@ VALUES
         'Manage job listings.',
         TRUE
     ),
-
     (
         'employers.manage_own',
         'employers',
@@ -323,7 +307,6 @@ VALUES
         'Manage own employer profile and listings.',
         TRUE
     ),
-
     (
         'users.read',
         'users',
@@ -338,7 +321,6 @@ VALUES
         'Manage user accounts.',
         TRUE
     ),
-
     (
         'roles.read',
         'roles',
@@ -353,7 +335,6 @@ VALUES
         'Manage roles and permission assignments.',
         TRUE
     ),
-
     (
         'payments.read_own',
         'payments',
@@ -375,7 +356,6 @@ VALUES
         'Initiate authorized refunds.',
         TRUE
     ),
-
     (
         'documents.read_own',
         'documents',
@@ -397,7 +377,6 @@ VALUES
         'Review submitted documents.',
         TRUE
     ),
-
     (
         'support.create',
         'support',
@@ -412,15 +391,11 @@ VALUES
         'Manage support requests.',
         TRUE
     )
-
 ON DUPLICATE KEY UPDATE
     id = id;
-
-
 -- =============================================================================
 -- 7. ASSIGN BASE PERMISSIONS TO THE USER ROLE
 -- =============================================================================
-
 INSERT INTO role_permissions (
     role_id,
     permission_id
@@ -445,14 +420,12 @@ INNER JOIN permissions AS p
         'support.create'
     )
 WHERE r.name = 'user'
+  AND r.is_active = TRUE
 ON DUPLICATE KEY UPDATE
-    role_id = role_permissions.role_id;
-
-
+    role_id = role_id;
 -- =============================================================================
 -- 8. ASSIGN COUNSELLOR PERMISSIONS
 -- =============================================================================
-
 INSERT INTO role_permissions (
     role_id,
     permission_id
@@ -473,14 +446,12 @@ INNER JOIN permissions AS p
         'support.manage'
     )
 WHERE r.name = 'counsellor'
+  AND r.is_active = TRUE
 ON DUPLICATE KEY UPDATE
-    role_id = role_permissions.role_id;
-
-
+    role_id = role_id;
 -- =============================================================================
 -- 9. ASSIGN EMPLOYER PERMISSIONS
 -- =============================================================================
-
 INSERT INTO role_permissions (
     role_id,
     permission_id
@@ -498,19 +469,17 @@ INNER JOIN permissions AS p
         'support.create'
     )
 WHERE r.name = 'employer'
+  AND r.is_active = TRUE
 ON DUPLICATE KEY UPDATE
-    role_id = role_permissions.role_id;
-
-
+    role_id = role_id;
 -- =============================================================================
--- 10. ASSIGN ADMIN PERMISSIONS
+-- 10. ASSIGN EXPLICIT ADMIN PERMISSIONS
 -- =============================================================================
--- This grants every currently system-marked permission to the admin role.
--- Review this policy before production use.
+-- Only the permissions listed below are assigned by this seed.
+-- Newly introduced permissions are not automatically granted to administrators.
 --
--- Only trusted administrators should be able to assign the admin role.
--- Protect privileged operations with backend authorization and audit logs.
-
+-- Keep this list synchronized with the reviewed administrative access policy.
+-- This section does not assign the admin role to any user.
 INSERT INTO role_permissions (
     role_id,
     permission_id
@@ -519,13 +488,70 @@ SELECT
     r.id,
     p.id
 FROM roles AS r
-CROSS JOIN permissions AS p
+INNER JOIN permissions AS p
+    ON p.name IN (
+        'profile.read_own',
+        'profile.update_own',
+        'applications.create',
+        'applications.read_own',
+        'applications.update_own',
+        'applications.read_all',
+        'applications.review',
+        'applications.manage',
+        'colleges.read',
+        'colleges.manage',
+        'courses.read',
+        'courses.manage',
+        'jobs.read',
+        'jobs.manage',
+        'employers.manage_own',
+        'users.read',
+        'users.manage',
+        'roles.read',
+        'roles.manage',
+        'payments.read_own',
+        'payments.read_all',
+        'payments.refund',
+        'documents.read_own',
+        'documents.manage_own',
+        'documents.review',
+        'support.create',
+        'support.manage'
+    )
 WHERE r.name = 'admin'
-  AND p.is_system = TRUE
+  AND r.is_active = TRUE
 ON DUPLICATE KEY UPDATE
-    role_id = role_permissions.role_id;
-
-
+    role_id = role_id;
+-- =============================================================================
+-- 11. VERIFICATION QUERIES
+-- =============================================================================
+-- These queries display current records; they do not automatically fail
+-- the migration if a required role or permission is missing.
+SELECT
+    id,
+    name,
+    display_name,
+    is_system,
+    is_active
+FROM roles
+ORDER BY name;
+SELECT
+    id,
+    name,
+    resource,
+    action,
+    is_system
+FROM permissions
+ORDER BY resource, action;
+SELECT
+    r.name AS role_name,
+    p.name AS permission_name
+FROM role_permissions AS rp
+INNER JOIN roles AS r
+    ON r.id = rp.role_id
+INNER JOIN permissions AS p
+    ON p.id = rp.permission_id
+ORDER BY r.name, p.name;
 -- =============================================================================
 -- END OF MIGRATION
 -- =============================================================================

@@ -1,276 +1,322 @@
 /* =========================================================
-MedOrbits -- Responsive Styles
-Extracted from the original homepage
-========================================================= */
-
-/* --------------------------------------
-Tablet and compact desktop: 1100px and below
--------------------------------------- */
+   MedOrbits -- Responsive Styles
+   File: assets/css/responsive.css
+   Design System: Luxury Aubergine & Champagne Gold
+   Purpose:
+   - Tablet and mobile layouts
+   - Responsive navigation
+   - Responsive grids and cards
+   - Readable typography
+   - Reduced-motion accessibility
+   Preserve existing homepage selectors and animations.
+   ========================================================= */
+/* =========================================================
+   1. Tablet and compact desktop: 1100px and below
+   ========================================================= */
 @media (max-width: 1100px) {
-.menu-toggle {
-display: inline-flex;
+  /* Navigation */
+  .nav-wrap {
+    position: relative;
+  }
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 15px 22px 20px;
+    background: #160d20;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav.open {
+    display: flex;
+  }
+  .nav > a,
+  .nav-trigger {
+    width: 100%;
+    padding: 11px 8px;
+    text-align: left;
+  }
+  .nav-group {
+    width: 100%;
+  }
+  .dropdown {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 5px;
+    box-shadow: none;
+  }
+  .nav-cta {
+    width: 100%;
+  }
+  /* Hero and primary layouts */
+  .hero-grid {
+    gap: 28px;
+  }
+  /* Cards */
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
 }
-
-.nav {
-display: none;
-position: absolute;
-top: 100%;
-left: 0;
-right: 0;
-align-items: stretch;
-flex-direction: column;
-gap: 4px;
-padding: 15px 22px 20px;
-background: #160d20;
-border-bottom: 1px solid var(–line);
-}
-
-.nav.open {
-display: flex;
-}
-
-.nav > a,
-.nav-trigger {
-padding: 11px 8px;
-text-align: left;
-}
-
-.nav-group {
-width: 100%;
-}
-
-.dropdown {
-position: static;
-width: 100%;
-margin-bottom: 5px;
-box-shadow: none;
-}
-
-.nav-cta {
-width: 100%;
-}
-
-.hero-grid {
-gap: 28px;
-}
-
-.cards {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.footer-grid {
-grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.footer-brand {
-grid-column: 1 / -1;
-}
-}
-
-/* --------------------------------------
-Mobile and tablet: 760px and below
--------------------------------------- */
+/* =========================================================
+   2. Mobile and tablet: 760px and below
+   ========================================================= */
 @media (max-width: 760px) {
-.container {
-width: calc(100% - 28px);
+  /* Containers */
+  .container {
+    width: calc(100% - 28px);
+    max-width: 100%;
+  }
+  /* Announcement bar */
+  .announcement {
+    gap: 7px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  /* Header */
+  .nav-wrap {
+    min-height: 70px;
+  }
+  .brand {
+    min-width: 0;
+  }
+  .brand img {
+    width: 41px;
+    height: 41px;
+    flex-shrink: 0;
+  }
+  .brand strong {
+    font-size: 14px;
+  }
+  .brand small {
+    font-size: 9px;
+  }
+  /* Hero */
+  .hero {
+    padding: 48px 0;
+  }
+  .hero-grid,
+  .about-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero h1 {
+    font-size: clamp(2.25rem, 8vw, 3.375rem);
+    line-height: 1.1;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+  .hero-visual {
+    min-width: 0;
+    min-height: 270px;
+  }
+  .hero-visual img {
+    width: 100%;
+    height: 270px;
+    object-fit: cover;
+  }
+  /* Pillars */
+  .pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pillar {
+    min-width: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .pillar:nth-child(2) {
+    border-right: 0;
+  }
+  .pillar:nth-child(n + 3) {
+    border-bottom: 0;
+  }
+  /* Search */
+  .search-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .search-form > * {
+    min-width: 0;
+    width: 100%;
+  }
+  /* Sections */
+  .section {
+    padding: 52px 0;
+  }
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  /* Cards */
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .card {
+    min-width: 0;
+  }
+  .card-media img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  .card-body {
+    padding: 14px;
+  }
+  .card h3 {
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+  }
+  .card p {
+    min-height: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  /* About section */
+  .about-visual img {
+    width: 100%;
+    height: 270px;
+    object-fit: cover;
+  }
+  /* Lists and video grids */
+  .check-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .video-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Call to action */
+  .cta-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .cta-inner > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+  .footer-grid > * {
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .footer-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
 }
-
-.announcement {
-gap: 7px;
-font-size: 8px;
-letter-spacing: 0.06em;
-}
-
-.nav-wrap {
-min-height: 70px;
-}
-
-.brand img {
-width: 41px;
-height: 41px;
-}
-
-.brand strong {
-font-size: 14px;
-}
-
-.brand small {
-font-size: 7px;
-}
-
-.hero {
-padding: 48px 0;
-}
-
-.hero-grid,
-.about-grid {
-grid-template-columns: 1fr;
-}
-
-.hero h1 {
-font-size: clamp(38px, 10vw, 54px);
-}
-
-.hero-visual,
-.hero-visual img {
-height: 270px;
-min-height: 270px;
-}
-
-.pillars {
-grid-template-columns: repeat(2, 1fr);
-}
-
-.pillar {
-border-bottom: 1px solid var(–line);
-}
-
-.pillar:nth-child(2) {
-border-right: 0;
-}
-
-.pillar:nth-child(n + 3) {
-border-bottom: 0;
-}
-
-.search-form {
-grid-template-columns: 1fr;
-}
-
-.section {
-padding: 52px 0;
-}
-
-.section-head {
-align-items: flex-start;
-flex-direction: column;
-gap: 10px;
-}
-
-.cards {
-gap: 12px;
-}
-
-.card-media img {
-height: 135px;
-}
-
-.card-body {
-padding: 12px;
-}
-
-.card h3 {
-font-size: 15px;
-}
-
-.card p {
-min-height: 66px;
-font-size: 10px;
-}
-
-.about-visual img {
-height: 270px;
-}
-
-.check-list {
-grid-template-columns: 1fr;
-}
-
-.video-grid {
-grid-template-columns: 1fr;
-}
-
-.cta-inner {
-align-items: flex-start;
-flex-direction: column;
-}
-
-.footer-grid {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-gap: 22px 16px;
-}
-
-.footer-brand {
-grid-column: 1 / -1;
-}
-
-.footer-bottom {
-flex-direction: column;
-}
-}
-
-/* --------------------------------------
-Narrow mobile: 390px and below
--------------------------------------- */
+/* =========================================================
+   3. Narrow mobile: 390px and below
+   ========================================================= */
 @media (max-width: 390px) {
-.cards,
-.footer-grid {
-grid-template-columns: 1fr;
+  .container {
+    width: calc(100% - 24px);
+  }
+  /* Compact layouts */
+  .cards,
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card-media img {
+    height: 190px;
+  }
+  .card p {
+    min-height: 0;
+  }
+  /* Full-width primary actions */
+  .hero-actions {
+    width: 100%;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  /* Brand */
+  .brand small {
+    letter-spacing: 0.05em;
+  }
+  /* Prevent horizontal overflow */
+  .hero-grid,
+  .about-grid,
+  .section-head,
+  .footer-grid {
+    min-width: 0;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 9vw, 2.625rem);
+  }
 }
-
-.card-media img {
-height: 190px;
-}
-
-.card p {
-min-height: 0;
-}
-
-.hero-actions .btn {
-width: 100%;
-}
-
-.brand small {
-letter-spacing: 0.07em;
-}
-}
-
-/* --------------------------------------
-Reduced-motion preferences
--------------------------------------- */
+/* =========================================================
+   4. Reduced-motion accessibility
+   ========================================================= */
 @media (prefers-reduced-motion: reduce) {
-html {
-scroll-behavior: auto;
-}
-
-*,
-*::before,
-*::after {
-animation-duration: 0.01ms !important;
-animation-iteration-count: 1 !important;
-transition-duration: 0.01ms !important;
-scroll-behavior: auto !important;
-}
-
-.intro-screen,
-.intro-screen::before,
-.intro-screen::after,
-.intro-content,
-.intro-logo,
-.intro-tagline,
-.intro-rule {
-animation: none !important;
-transition: none !important;
-}
-
-.intro-screen::before,
-.intro-screen::after {
-opacity: 1;
-transform: none;
-}
-
-.intro-content,
-.intro-logo,
-.intro-tagline {
-opacity: 1;
-transform: none;
-}
-
-.intro-tagline {
-letter-spacing: 0.24em;
-}
-
-.intro-rule {
-width: 150px;
-}
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Preserve the existing opening-screen layout while
+     preventing its animations from running. */
+  .intro-screen,
+  .intro-screen::before,
+  .intro-screen::after,
+  .intro-content,
+  .intro-logo,
+  .intro-tagline,
+  .intro-rule {
+    animation: none !important;
+    transition: none !important;
+  }
+  .intro-screen::before,
+  .intro-screen::after {
+    opacity: 1;
+    transform: none;
+  }
+  .intro-content,
+  .intro-logo,
+  .intro-tagline {
+    opacity: 1;
+    transform: none;
+  }
+  .intro-tagline {
+    letter-spacing: 0.24em;
+  }
+  .intro-rule {
+    width: 150px;
+  }
 }

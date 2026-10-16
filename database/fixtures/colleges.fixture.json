@@ -1,7 +1,5 @@
-
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Synthetic MedOrbits college fixtures for development and automated tests. These are not real institution listings.",
+  "description": "Synthetic MedOrbits college fixtures for development and automated tests only. These are not real institution listings and must never be presented as verified colleges.",
   "colleges": [
     {
       "id": "COLLEGE-TEST-0001",

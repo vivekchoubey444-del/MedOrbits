@@ -2,54 +2,73 @@ name: MedOrbits Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag (for example, v1.0.0)"
+        description: 'Existing version tag (for example, v1.0.0)'
         required: true
         type: string
 permissions:
   contents: read
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref }}
+  group: release-${{ inputs.tag || github.ref }}
   cancel-in-progress: false
 jobs:
   validate:
     name: Validate release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
+      # --------------------------------------------------
+      # 1. RESOLVE AND VALIDATE TAG
+      # --------------------------------------------------
       - name: Resolve release tag
         id: release
+        shell: bash
         env:
           INPUT_TAG: ${{ inputs.tag }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             tag="$INPUT_TAG"
           else
             tag="$REF_NAME"
           fi
-          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ! "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "::error::Invalid release tag: $tag"
+            echo "Expected semantic version format: vMAJOR.MINOR.PATCH"
             exit 1
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Release tag: $tag"
+      # --------------------------------------------------
+      # 2. CHECKOUT RELEASE SOURCE
+      # --------------------------------------------------
       - name: Checkout release source
         uses: actions/checkout@v7
         with:
           ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
           persist-credentials: false
+      # --------------------------------------------------
+      # 3. SET UP NODE.JS
+      # --------------------------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: package-lock.json
+      # --------------------------------------------------
+      # 4. VERIFY TAG AND PACKAGE VERSION
+      # --------------------------------------------------
       - name: Verify release tag and package version
+        shell: bash
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
@@ -57,15 +76,44 @@ jobs:
           git rev-parse --verify "refs/tags/$RELEASE_TAG"
           package_version="$(node -p "require('./package.json').version")"
           expected_version="${RELEASE_TAG#v}"
-          if [ "$package_version" != "$expected_version" ]; then
+          if [[ "$package_version" != "$expected_version" ]]; then
             echo "::error::Tag version $expected_version does not match package.json version $package_version."
             exit 1
           fi
-          echo "Validated release: $RELEASE_TAG"
-      - name: Install locked dependencies
-        run: npm ci
-      - name: Run tests
+          echo "Release version validated: $RELEASE_TAG"
+      # --------------------------------------------------
+      # 5. VERIFY PACKAGE FILES
+      # --------------------------------------------------
+      - name: Verify required files
+        shell: bash
         run: |
+          set -euo pipefail
+          for file in package.json package-lock.json server.js; do
+            if [[ ! -f "$file" ]]; then
+              echo "::error::Required file is missing: $file"
+              exit 1
+            fi
+          done
+      # --------------------------------------------------
+      # 6. INSTALL LOCKED DEPENDENCIES
+      # --------------------------------------------------
+      - name: Install dependencies
+        run: npm ci
+      # --------------------------------------------------
+      # 7. CHECK SERVER SYNTAX
+      # --------------------------------------------------
+      - name: Check JavaScript syntax
+        run: node --check server.js
+      # --------------------------------------------------
+      # 8. RUN RELEASE TESTS
+      # --------------------------------------------------
+      - name: Run tests
+        shell: bash
+        env:
+          CI: true
+          NODE_ENV: test
+        run: |
+          set -euo pipefail
           node -e "
             const p = require('./package.json');
             if (!p.scripts || !p.scripts.test) {
@@ -73,7 +121,7 @@ jobs:
               process.exit(1);
             }
           "
-          npm test
+          npm test -- --runInBand
   publish:
     name: Publish GitHub Release
     needs: validate
@@ -82,37 +130,54 @@ jobs:
     permissions:
       contents: write
     steps:
+      # --------------------------------------------------
+      # 1. RESOLVE RELEASE TAG
+      # --------------------------------------------------
       - name: Resolve release tag
         id: release
+        shell: bash
         env:
           INPUT_TAG: ${{ inputs.tag }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             tag="$INPUT_TAG"
           else
             tag="$REF_NAME"
           fi
-          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ! "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "::error::Invalid release tag: $tag"
             exit 1
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      # --------------------------------------------------
+      # 2. CHECKOUT RELEASE SOURCE
+      # --------------------------------------------------
       - name: Checkout release source
         uses: actions/checkout@v7
         with:
           ref: ${{ steps.release.outputs.tag }}
           fetch-depth: 0
           persist-credentials: false
+      # --------------------------------------------------
+      # 3. VERIFY TAG EXISTS
+      # --------------------------------------------------
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: git rev-parse --verify "refs/tags/$RELEASE_TAG"
+      # --------------------------------------------------
+      # 4. CREATE GITHUB RELEASE
+      # --------------------------------------------------
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
         run: |
           set -euo pipefail
-          git rev-parse --verify "refs/tags/$RELEASE_TAG"
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "::error::A GitHub Release already exists for $RELEASE_TAG."
             exit 1
@@ -121,3 +186,4 @@ jobs:
             --generate-notes \
             --verify-tag \
             --title "MedOrbits $RELEASE_TAG"
+          echo "GitHub Release created: $RELEASE_TAG"

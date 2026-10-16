@@ -1,10 +1,18 @@
-MedOrbits — Education Resources
+MedOrbits Education Resources
 
-This directory contains the education resource pages for the MedOrbits website. It brings together information and guidance on education costs, scholarships, accommodation, study planning, brochures, student loans and common questions.
+Directory: education/resources/
 
-Directory Structure
+1. Overview
 
-resources/
+The Education Resources module brings together information and guidance on education costs, scholarships, accommodation, study planning, brochures, student loans, and frequently asked questions.
+
+It serves as a supporting resource library within the MedOrbits Education module, helping students research educational opportunities, plan expenses, understand funding options, and access relevant guidance.
+
+Implementation note: The presence of a page does not guarantee that its content, search functionality, downloadable files, external links, or data integrations are operational. Verify the current HTML, JavaScript, data files, and backend integrations before documenting a feature as implemented.
+
+2. Directory Structure
+
+education/resources/
 ├── README.md
 ├── index.html
 ├── fees.html
@@ -15,116 +23,157 @@ resources/
 ├── student-loans.html
 └── faqs.html
 
-Page Guide
+3. Page Guide
 
-|File                |Purpose                                                                                                                                               |
-|———————|——————————————————————————————————————————————————|
-|`index.html`        |Main resources landing page. Introduces the resource library and links to the pages in this directory.                                                |
-|`fees.html`         |Education fee information and cost-planning guidance. Where applicable, help visitors identify tuition and other expenses to verify with institutions.|
-|`scholarships.html` |Scholarship and financial-aid information, including eligibility, application requirements and deadlines to check with providers.                     |
-|`hostels.html`      |Student accommodation and hostel information, including facilities, location, costs and rules to confirm before booking.                              |
-|`guides.html`       |Study-planning and education guidance articles, checklists and practical reference material.                                                          |
-|`brochures.html`    |Brochure and downloadable-resource library. Link only to files that have actually been added to the project.                                          |
-|`student-loans.html`|Student-loan and education-financing information, including lender requirements, interest, repayment and eligibility considerations.                  |
-|`faqs.html`         |Frequently asked questions about education resources, fees, funding, accommodation and study planning.                                                |
+File	Responsibility
+index.html	Main resource-library landing page with summaries and links to available resources.
+fees.html	Education fee information and cost-planning guidance.
+scholarships.html	Scholarship and financial-aid information, eligibility, application requirements, and deadlines.
+hostels.html	Student accommodation information, facilities, costs, location, and relevant conditions.
+guides.html	Study-planning articles, educational guides, checklists, and reference material.
+brochures.html	Directory of available brochures and downloadable educational resources.
+student-loans.html	Student-loan and education-financing guidance, including eligibility and repayment considerations.
+faqs.html	Frequently asked questions about education costs, funding, accommodation, and study planning.
 
-Recommended Page Responsibilities
+4. Page Responsibilities
 
-index.html
+4.1 index.html — Resource Library
 
-• Serve as the entry point for the resource library.
-• Provide concise summaries and clear links to each resource page.
-• Include a resource search or category navigation if supported by the site’s shared components.
+* Introduce the education resource library.
+* Provide concise summaries of the available resource categories.
+* Link to each resource page.
+* Include search or category navigation where supported by the implementation.
 
-fees.html
+4.2 fees.html — Education Fees
 
-• Organize fee information by course, institution, location or cost type where relevant.
-• Distinguish tuition from additional expenses such as accommodation, travel, deposits and examination charges.
-• Display the source and review date for figures when available.
+* Organize fee information by course, institution, location, or cost type where relevant.
+* Distinguish tuition fees from accommodation, travel, deposits, examination charges, and other expenses.
+* Identify the source and review date for published figures when available.
+* Clearly distinguish estimated costs from official fee schedules.
 
-scholarships.html
+4.3 scholarships.html — Scholarships and Financial Aid
 
-• Explain scholarship categories and common application steps.
-• Present eligibility, coverage, required documents and deadlines only when verified.
-• Link applicants to the official scholarship provider for current terms.
+* Explain relevant scholarship categories and application procedures.
+* Present eligibility, award coverage, required documents, and deadlines only when verified.
+* Link to official scholarship providers for current conditions.
+* Avoid guaranteeing scholarship eligibility or award approval.
 
-hostels.html
+4.4 hostels.html — Student Accommodation
 
-• Help students compare accommodation options and practical facilities.
-• Include rent, deposits, utilities, location, safety information and cancellation terms only when verified.
-• Make clear whether a listing is informational or an actual available booking.
+* Help students understand accommodation options and relevant facilities.
+* Present rent, deposits, utilities, location, safety information, and cancellation conditions only when verified.
+* Identify the source and date of accommodation information where practical.
+* Clearly distinguish informational listings from confirmed availability or actual booking services.
 
-guides.html
+4.5 guides.html — Education Guides
 
-• Organize guides by topic, course, study level or destination.
-• Include publication or review dates for time-sensitive guidance.
-• Link to official institutions or authorities for rules and requirements.
+* Organize guides by topic, course, study level, or destination.
+* Provide practical educational guidance and supporting checklists.
+* Include publication or review dates for time-sensitive information.
+* Reference official institutions and authorities for formal requirements.
 
-brochures.html
+4.6 brochures.html — Brochures and Downloads
 
-• List brochures with a title, short description, category, format and file link.
-• Store project-owned brochure PDFs in a consistent directory, for example /assets/documents/brochures/.
-• Do not show a download action for a file that does not exist.
+* Display available brochures with a title, description, category, format, and working file link.
+* Link only to files that actually exist in the project or an approved document-storage service.
+* Store public, approved brochure PDFs in a consistent directory, such as assets/documents/brochures/, if that matches the existing project architecture.
+* Ensure downloadable files are accessible and have descriptive filenames.
+* Do not expose private student documents through the public brochure library.
 
-student-loans.html
+Example brochure filenames, if those resources are created and approved:
 
-• Explain financing concepts in plain language.
-• Identify key items to compare, including interest rates, fees, collateral or co-applicant requirements, moratorium terms and repayment conditions.
-• Direct users to official lenders for current eligibility and product terms. Avoid promising loan approval.
+* medical-courses-guide.pdf
+* admission-checklist.pdf
+* study-abroad-guide.pdf
+* career-planning-checklist.pdf
 
-faqs.html
+These filenames are examples, not confirmation that the files currently exist.
 
-• Group questions by topic and provide concise answers.
-• Keep answers consistent with the related resource pages.
-• Direct users to official sources for current fees, scholarship rules, lending terms and accommodation availability.
+4.7 student-loans.html — Student Loans
 
-Shared Design and Integration
+* Explain education-financing concepts in clear language.
+* Identify important comparison factors, including interest rates, processing fees, collateral, co-applicant requirements, moratorium terms, and repayment conditions.
+* Link to official lenders for current eligibility criteria and product terms.
+* Distinguish general financial information from personalized financial advice.
+* Never guarantee loan approval or financing availability.
 
-Follow the existing MedOrbits website design system when implementing these pages:
+4.8 faqs.html — Frequently Asked Questions
 
-• Use the site’s established premium dark colour themes, typography, spacing, cards, buttons and responsive breakpoints.
-• Keep navigation, logo, footer and common UI elements consistent with the pages that already exist.
-• Reuse shared CSS and JavaScript where available instead of duplicating site-wide functionality.
-• Use absolute site-root paths for shared assets and internal links where that matches the existing project, such as /assets/css/style.css and /assets/images/....
-• Ensure every page has a descriptive <title>, meta description, a single clear <h1>, accessible labels and meaningful image alt text.
-• Preserve mobile usability, keyboard navigation, visible focus states and reduced-motion preferences.
+* Group questions by relevant topic.
+* Provide concise answers consistent with the related resource pages.
+* Direct visitors to official sources for current fees, scholarship rules, loan terms, and accommodation information.
+* Keep answers updated when relevant policies or requirements change.
 
-Suggested Shared Assets
+5. Shared Design and Frontend Standards
 
-assets/
-├── css/
-│   └── style.css
-├── js/
-│   ├── app.js
-│   ├── navigation.js
-│   └── search.js
-├── images/
-│   └── ...
-└── documents/
-    └── brochures/
-        ├── medical-courses-guide.pdf
-        ├── admission-checklist.pdf
-        ├── study-abroad-guide.pdf
-        └── career-planning-checklist.pdf
+* Follow the established MedOrbits design system and existing page themes.
+* Reuse shared navigation, footer, typography, spacing, cards, buttons, and design tokens.
+* Maintain responsive layouts across mobile, tablet, and desktop.
+* Reuse shared CSS and JavaScript where available rather than duplicating site-wide functionality.
+* Use semantic HTML, accessible labels, meaningful image alternative text, and visible keyboard focus states.
+* Respect reduced-motion preferences.
+* Provide appropriate loading, empty, validation, and error states wherever dynamic functionality is implemented.
+* Ensure internal links resolve to valid pages or routes.
 
-The asset names above are examples. Create only the files that are actually used by the pages.
+Use the project’s existing asset paths and conventions. Example paths such as /assets/css/style.css or /assets/js/app.js must be verified before use.
 
-Content Accuracy and Maintenance
+6. Data and External Integrations
 
-• Treat fees, scholarships, hostel availability, loan terms, eligibility and deadlines as changeable information.
-• Verify such details with the relevant institution, official authority, accommodation provider or lender before publishing.
-• Record a source and last-reviewed date for time-sensitive information.
-• Do not guarantee admission, scholarships, accommodation, loan approval or employment outcomes.
-• Check internal links, downloadable files and mobile layouts before deployment.
+The resource pages may use public educational catalogues, approved downloadable files, or external information sources.
 
-Implementation Checklist
+Potential data categories include:
 
-☐ All eight HTML pages exist and use the shared MedOrbits structure.
-☐ The resource landing page links to every resource page.
-☐ All internal links resolve to the intended pages.
-☐ Every brochure download points to a real file.
-☐ Fees, scholarships, accommodation and loan details are verified and dated.
-☐ Search and filters, if present, work with keyboard and touch input.
-☐ Pages are responsive and accessible.
-☐ Page titles, descriptions and canonical URLs are correct.
-☐ Shared navigation and footer links are tested.
+* Tuition and additional education costs.
+* Scholarship opportunities.
+* Accommodation information.
+* Study guides and educational checklists.
+* Student-loan and financing information.
+* Frequently asked questions.
+
+Before implementing an integration, verify:
+
+1. The actual data source and filename.
+2. The data schema and required fields.
+3. The endpoint, if an API is used.
+4. The response format and error-handling behavior.
+5. Whether the information is public or requires authorization.
+6. The source and review date for information that can change.
+
+Public catalogues and brochures must not contain private application records, identity documents, authentication tokens, or confidential student information.
+
+7. Content Accuracy and Maintenance
+
+* Treat fees, scholarships, accommodation availability, loan terms, eligibility criteria, and deadlines as changeable information.
+* Verify details with the relevant institution, official authority, accommodation provider, or lender before publication.
+* Record a source and last-reviewed date for time-sensitive information.
+* Clearly distinguish estimates, general guidance, and official requirements.
+* Avoid guarantees concerning admission, scholarships, accommodation, loan approval, or employment.
+* Review external links and downloadable files periodically.
+
+8. Testing and Quality Assurance
+
+Before releasing changes to the Education Resources module, verify the following:
+
+* [ ]	All eight HTML pages exist.
+* [ ]	The landing page links to the relevant resource pages.
+* [ ]	Internal navigation and shared assets load correctly.
+* [ ]	Every brochure download points to an existing, approved file.
+* [ ]	Fees, scholarships, accommodation, and loan details are verified and dated where appropriate.
+* [ ]	Search and filters work where implemented.
+* [ ]	Dynamic content handles empty results and errors.
+* [ ]	Pages are responsive and accessible.
+* [ ]	Page titles and meta descriptions are accurate.
+* [ ]	Shared navigation and footer links are tested.
+* [ ]	No credentials or private student information are exposed.
+
+9. Maintenance
+
+Update this document whenever the resource pages, downloadable materials, data sources, integrations, or directory structure change.
+
+Verify filenames, internal links, and referenced assets against the current repository. Clearly distinguish implemented functionality from proposed enhancements.
+
+⸻
+
+MedOrbits — Study · Work · Grow
+
+Reliable educational resources to help students research costs, explore funding options, plan accommodation, and make informed academic decisions.

@@ -1,63 +1,9 @@
-
-# ============================================================
-# MEDORBITS SOURCE FILES -- KEEP TRACKED
-# ============================================================
-
-# Ensure source directories are not ignored
-!/account/
-!/admin/
-!/assets/
-!/career/
-!/education/
-!/legal/
-!/pages/
-!/public/
-!/src/
-!/database/
-!/docs/
-!/scripts/
-!/tests/
-!/.github/
-!/.husky/
-
-# Keep root project configuration and documentation
-!/.env.example
-!/.gitignore
-!/.nvmrc
-!/.dockerignore
-!/.editorconfig
-!/.prettierrc.json
-!/.eslintrc.json
-!/Dockerfile
-!/docker-compose.yml
-!/package.json
-!/package-lock.json
-!/README.md
-!/README-PRODUCTION.md
-!/LICENSE
-!/NOTICE
-!/SECURITY.md
-!/CONTRIBUTING.md
-!/CODE_OF_CONDUCT.md
-!/CHANGELOG.md
-!/SUPPORT.md
-!/server.js
-
-# Keep database schema, migrations, seeds, and documentation
-!/database/*.sql
-!/database/**/*.sql
-!/database/*.md
-!/database/**/*.md
-
-# Keep GitHub configuration and documentation
-!/.github/*.md
-!/.github/*.yml
-!/.github/*.yaml
-!/.github/ISSUE_TEMPLATE/
-!/.github/workflows/
-
-# Keep Husky hooks and documentation
-!/.husky/README.md
-!/.husky/commit-msg
-!/.husky/pre-commit
-!/.husky/pre-push
+node_modules/
+coverage/
+dist/
+logs/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store

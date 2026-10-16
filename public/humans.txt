@@ -1,18 +1,28 @@
-/* TEAM */
+/* TEAM
 
 Brand: MedOrbits
 Website: https://medorbits.in/
 Organization: MedOrbits
 Industry: Education Consultancy, Career Guidance and Recruitment
-Focus: Education, Admissions, Study Abroad, Jobs, Internships and Career Development
 
-/* ABOUT */
+Mission:
+Make education and career opportunities easier to discover,
+understand and access.
+*/
 
-MedOrbits connects students, educational institutions, job seekers and employers through education guidance, admission assistance, career support and recruitment services.
+/* ABOUT
 
-Our mission is to make education and career opportunities easier to discover, understand and access.
+MedOrbits connects students, educational institutions,
+job seekers and employers through education guidance,
+admission assistance, career development and recruitment
+services.
 
-/* SERVICES */
+Our focus is on helping people explore educational pathways,
+understand admission requirements, discover career options
+and access relevant opportunities.
+*/
+
+/* SERVICES
 
 Education Consultancy
 Medical Admissions Guidance
@@ -25,45 +35,85 @@ Career Counselling
 Job Opportunities
 Internship Opportunities
 Employer and Recruitment Services
+*/
 
-/* DESIGN */
+/* DESIGN
 
 Design Philosophy: Premium, accessible and user-friendly
-Visual Identity: Royal Burgundy, Champagne Gold and complementary luxury palettes
+Visual Identity: Royal Burgundy and Champagne Gold
 Typography: DM Sans and Playfair Display
-Design Priorities: Responsive layouts, readable content, accessible navigation and consistent branding
 
-/* TECHNOLOGY */
+Priorities:
+
+* Responsive layouts
+* Readable typography
+* Accessible navigation
+* Consistent visual identity
+* Clear information hierarchy
+    */
+
+/* TECHNOLOGY
 
 Frontend: HTML5, CSS3 and JavaScript
 Data: Structured JSON resources where applicable
 Architecture: Modular website structure
-Compatibility: Responsive design for desktop, tablet and mobile devices
+Compatibility: Desktop, tablet and mobile devices
 Security: HTTPS and appropriate server-side access controls
+*/
 
-/* ACCESSIBILITY */
+/* ACCESSIBILITY
 
-We aim to provide clear navigation, readable typography, meaningful page titles, descriptive image text and keyboard-friendly interactions.
+We aim to provide:
 
-/* CONTENT AND DATA */
+* Semantic HTML and meaningful page titles
+* Descriptive alternative text for informative images
+* Readable typography and sufficient contrast
+* Keyboard-friendly navigation and interactions
+* Responsive layouts across supported devices
+    */
 
-Public information should be reviewed for accuracy before publication.
-Admission requirements, fees, scholarships, employment details and deadlines may change.
-Users should verify official eligibility criteria and requirements with the relevant institution, employer or authority.
+/* CONTENT AND DATA
 
-/* CONTACT */
+Public information should be reviewed for accuracy before
+publication.
+
+Admission requirements, tuition fees, scholarships,
+employment details and application deadlines may change.
+
+Users should verify official eligibility criteria,
+requirements and deadlines with the relevant institution,
+employer or authority.
+*/
+
+/* PRIVACY AND SECURITY
+
+Respect user privacy and protect confidential information.
+
+Use appropriate server-side authentication and authorization
+for restricted resources.
+
+Never publish credentials, access tokens, private documents
+or confidential user information in public assets.
+*/
+
+/* CONTACT
 
 Website: https://medorbits.in/
-Contact: Please use the contact information published on our official website.
+Contact: Use the contact information published on the
+official MedOrbits website.
+*/
 
-/* STANDARDS */
+/* STANDARDS
 
 Semantic HTML
 Responsive Web Design
 Search Engine Optimization
+Accessible User Experiences
 Privacy-Conscious Data Handling
 Secure Development Practices
+*/
 
-/* LAST UPDATED */
+/* LAST UPDATED
 
 2026-10-15
+*/

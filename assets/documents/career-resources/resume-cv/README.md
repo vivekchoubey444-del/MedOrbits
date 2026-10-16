@@ -1,15 +1,31 @@
-Resume & CV Resources — Documentation
+MedOrbits Resume & CV Resources
 
 Project: MedOrbits
 Directory: assets/documents/career-resources/resume-cv/
-Purpose: Resume writing, CV preparation, application readiness, and professional presentation.
-Access Level: Public resources only
+Document: README.md
+Purpose: Resume writing, CV preparation, application readiness, and professional presentation
+Access Level: Public educational resources only
+Status: Resource documentation baseline
+Maintained by: MedOrbits Project Team
+
+⸻
 
 1. Overview
 
-The resume-cv/ directory contains educational guides, editable templates, and checklists that help students, fresh graduates, and experienced professionals create clear, accurate, and role-specific resumes and curricula vitae (CVs).
+The resume-cv/ directory contains educational guides, editable templates, and review checklists designed to help students, fresh graduates, and experienced professionals create clear, accurate, accessible, and role-specific resumes and curricula vitae (CVs).
 
-These resources support MedOrbits’ career guidance, job assistance, internship support, and recruitment services.
+These resources support MedOrbits’ career guidance, job assistance, internship support, professional development, and recruitment services.
+
+The directory is intended for public educational materials and reusable templates. Completed resumes, private candidate records, and confidential employment information must not be stored or published in this directory.
+
+Objectives
+
+* Help candidates prepare professional application documents.
+* Explain resume and CV structure and formatting conventions.
+* Support candidates with limited professional experience.
+* Encourage accurate representation of qualifications, skills, and achievements.
+* Improve document readability and compatibility with common recruitment systems.
+* Promote responsible handling of personal and employment-related information.
 
 2. Directory Structure
 
@@ -20,151 +36,261 @@ resume-cv/
 ├── resume-template-editable.docx
 └── resume-writing-guide.pdf
 
+This represents the intended directory structure. Keep the documentation synchronized with the actual files present in the repository.
+
 3. Resource Inventory
 
-File	Purpose
-freshers-resume-guide.pdf	Guidance for students and recent graduates with limited professional experience
-resume-checklist.pdf	Final review checklist for content, formatting, accuracy, and completeness
-resume-template-editable.docx	Editable resume template for individual customization
-resume-writing-guide.pdf	General guidance on resume structure, writing, formatting, and tailoring applications
+File	Format	Purpose
+freshers-resume-guide.pdf	PDF	Guidance for students and recent graduates with limited professional experience
+resume-checklist.pdf	PDF	Final review checklist covering content, formatting, accuracy, and completeness
+resume-template-editable.docx	DOCX	Editable resume template for individual customization
+resume-writing-guide.pdf	PDF	General guidance on resume structure, writing, formatting, and application tailoring
 
-Keep this inventory synchronized with the actual directory contents.
+Inventory requirements
+
+* Confirm that each listed resource exists before publishing its download link.
+* Update the inventory whenever a resource is added, removed, or renamed.
+* Ensure file descriptions accurately reflect their contents.
+* Update the parent MANIFEST.json when the resource inventory or its metadata changes.
+* Do not list private candidate documents as public resources.
 
 4. Intended Audience
 
+These resources are intended for:
+
 * Students preparing their first resume.
 * Fresh graduates seeking entry-level employment.
-* Internship and trainee applicants.
-* Experienced professionals changing roles or industries.
-* Candidates applying for healthcare, education, IT, engineering, management, and other professional opportunities.
+* Internship, apprenticeship, and trainee applicants.
+* Experienced professionals changing roles, employers, or industries.
+* Candidates applying for healthcare, education, information technology, engineering, management, and other professional opportunities.
+* Job seekers returning to employment after a career break.
 
-5. Resume and CV Guidance
+The guidance should be adaptable to different experience levels, industries, application requirements, and geographic conventions.
 
-Resources should explain how to:
+5. Resume and CV Preparation Standards
 
-1. Select an appropriate resume or CV format for the role and country.
+Resources should explain how to create application documents that are relevant, accurate, and easy to review.
+
+Candidates should be guided to:
+
+1. Select a suitable resume or CV format based on the role, country, industry, and application instructions.
 2. Organize contact details, education, experience, projects, skills, and certifications.
-3. Prioritize relevant qualifications and achievements.
+3. Prioritize qualifications and achievements relevant to the target opportunity.
 4. Use clear, concise, professional language.
-5. Tailor content to the actual job description.
-6. Describe projects and responsibilities accurately.
-7. Review spelling, grammar, formatting, and consistency.
-8. Export the final document in the employer’s requested format.
+5. Tailor the document to the actual job description without copying unsupported claims.
+6. Describe projects, responsibilities, and accomplishments accurately.
+7. Maintain consistent spelling, grammar, formatting, dates, and terminology.
+8. Review the final document before submission.
+9. Export or save the document in the format requested by the employer.
+10. Keep a private master copy and create role-specific versions where useful.
 
-Explain the distinction between a resume and a CV where relevant, since conventions vary by country, industry, and application type.
+Resume versus CV
+
+A resume is generally a concise, targeted summary of relevant qualifications and experience. A CV may provide a more detailed record of academic, professional, research, or other relevant achievements.
+
+However, these terms and their expected formats vary by country, industry, institution, and application type. Resources must not present one format as universally correct. Candidates should follow the specific instructions of the employer, institution, or recruiting organization.
 
 6. Freshers’ Resume Standards
 
-Freshers’ resources should help candidates demonstrate relevant strengths without inventing employment experience.
+The freshers-resume-guide.pdf should help candidates demonstrate relevant strengths without inventing employment history or exaggerating experience.
 
-Suitable content may include:
+Suitable content
+
+Depending on the candidate’s background and the target role, a fresher’s resume may include:
 
 * Educational qualifications.
-* Academic projects and coursework.
+* Academic projects and relevant coursework.
 * Internships and practical training.
-* Relevant technical and transferable skills.
+* Technical and transferable skills.
 * Certifications and workshops.
 * Volunteering and extracurricular activities.
+* Competitions, presentations, or publications where relevant.
 * Verifiable achievements and responsibilities.
 
-Candidates should include only information that is accurate, relevant, and appropriate for the position.
+Content requirements
 
-7. Editable Template Standards
+* Prioritize evidence of relevant skills and learning.
+* Explain project contributions clearly and accurately.
+* Distinguish academic projects from professional employment.
+* Include dates and qualification details consistently.
+* Avoid unsupported claims of expertise or proficiency.
+* Do not invent internships, certifications, awards, employers, or achievements.
+* Omit irrelevant personal information unless it is specifically required and appropriate for the application.
 
-The editable DOCX template should:
+Candidates should focus on demonstrating suitability through evidence rather than trying to fill the document with unnecessary content.
+
+7. Editable Resume Template Standards
+
+The resume-template-editable.docx file should provide a reusable starting point that candidates can customize independently.
+
+Template requirements
+
+The template should:
 
 * Use clear section headings and consistent typography.
-* Provide clearly marked placeholders.
-* Allow users to add or remove sections easily.
+* Include visibly marked placeholders and brief editing instructions.
+* Allow users to add, remove, and reorder sections.
+* Support different roles and experience levels.
 * Avoid unnecessary graphics, complex tables, and restrictive layouts.
 * Remain readable when exported to PDF.
-* Support customization for different roles and experience levels.
+* Use standard section labels where practical.
 * Avoid collecting unnecessary personal or sensitive information.
+* Open and remain editable in commonly used word-processing applications.
 
-Users must replace all placeholders and verify the document before submitting it.
+Placeholder requirements
 
-8. ATS Compatibility
+Use clearly identifiable placeholders such as:
 
-Where resources discuss applicant tracking systems (ATS), they should recommend practical formatting practices:
+* [Full Name]
+* [Professional Email]
+* [Phone Number — Optional Where Appropriate]
+* [Relevant Qualification]
+* [Project or Experience]
+* [Relevant Skills]
 
-* Use standard headings such as Education, Experience, Skills, and Projects.
-* Include relevant keywords naturally when supported by actual qualifications.
+Placeholders must be replaced before the document is submitted. Users should verify all contact details, dates, qualifications, links, and claims.
+
+The published template must not contain real applicants’ personal information.
+
+8. Applicant Tracking System (ATS) Compatibility
+
+Where resources discuss applicant tracking systems (ATS), they should provide practical, appropriately qualified recommendations.
+
+Recommended practices
+
+* Use conventional headings such as Education, Experience, Skills, and Projects.
+* Include relevant keywords naturally when supported by actual qualifications and experience.
 * Follow the employer’s requested file format.
-* Avoid placing essential information exclusively in images, headers, or footers.
-* Use a readable layout and consistent date formatting.
-* Check the exported document for missing text or formatting errors.
+* Keep essential information in the main document body rather than placing it exclusively in images, headers, or footers.
+* Use readable fonts, straightforward layouts, and consistent date formatting.
+* Avoid unnecessary decorative elements that may interfere with text extraction.
+* Check that the exported file preserves the intended text and structure.
+* Follow application instructions for file naming, document type, and submission method.
 
-Do not guarantee that a resume will pass every ATS or result in an interview.
+Accuracy requirements
+
+ATS systems differ in their parsing methods, configurations, and evaluation processes. No resume format or keyword strategy can guarantee that a document will pass every ATS, receive a particular ranking, or result in an interview.
+
+Resources must not promise guaranteed ATS selection or employment outcomes.
 
 9. File Naming and Version Control
 
 Use lowercase, descriptive, hyphen-separated filenames.
 
-Examples:
+Approved naming examples:
 
-* resume-writing-guide.pdf
-* freshers-resume-guide.pdf
-* resume-checklist.pdf
-* resume-template-editable.docx
+freshers-resume-guide.pdf
+resume-checklist.pdf
+resume-template-editable.docx
+resume-writing-guide.pdf
 
-Review resources before replacing approved versions. Record version and review information where appropriate.
+Version-control requirements
+
+* Preserve established filenames unless a change is necessary.
+* Review updated documents before replacing approved versions.
+* Record version and review information where appropriate.
+* Keep this README and the parent manifest synchronized with the published inventory.
+* Avoid ambiguous duplicate filenames such as final, final-new, or latest.
+* Follow the repository’s approved review process before publication.
+
+Candidates should maintain their own application versions in private storage, using filenames that help distinguish roles or submission dates without exposing unnecessary personal information.
 
 10. Accessibility and Compatibility
 
-* Use readable fonts and clear headings.
-* Maintain sufficient color contrast.
+All published resources should be usable across common devices and assistive technologies.
+
+* Use readable fonts and clear, logically ordered headings.
+* Maintain sufficient text and background contrast.
 * Provide selectable text in PDFs wherever possible.
-* Ensure documents work on mobile devices and common word processors.
-* Verify that DOCX templates remain editable.
-* Check exported PDFs for clipped text, broken links, and layout issues.
-* Use descriptive links and accessible document structures.
+* Use meaningful document structure and descriptive links.
+* Ensure DOCX templates remain editable.
+* Check exported PDFs for clipped text, broken links, and formatting errors.
+* Avoid layouts that depend entirely on color to communicate meaning.
+* Verify compatibility with commonly used word processors and PDF viewers.
+* Test mobile and desktop readability where practical.
+* Ensure printed versions remain legible and that important content is not cut off.
 
 11. Privacy and Security
 
 This directory is intended for public educational materials.
 
+Publication safeguards
+
 * Do not publish completed resumes containing real applicants’ personal information.
-* Do not include real phone numbers, home addresses, identity numbers, signatures, or confidential employment details in sample templates.
+* Do not include real phone numbers, private email addresses, home addresses, identity numbers, signatures, or confidential employment details in sample templates.
 * Use fictional examples or clearly marked placeholders.
 * Remove unnecessary personal metadata before publication.
 * Never include passwords, API keys, access tokens, or other secrets.
-* Store private resumes and candidate records in an appropriate access-controlled system.
+* Keep private resumes and candidate records in appropriately access-controlled storage.
+* Review embedded links, document properties, comments, tracked changes, and hidden content before publishing DOCX files.
+* Review PDFs for unintended personal information and embedded attachments.
+
+Personal resumes submitted through a separate MedOrbits service must be handled according to that service’s documented privacy, access-control, retention, and consent requirements. Public documentation must not imply that personal data is collected unless the relevant service actually does so.
 
 12. Website Integration
 
-Resources may be linked from MedOrbits career guidance, job assistance, internship, and professional development pages.
+These resources may be linked from MedOrbits career guidance, job assistance, internship support, resume assistance, and professional development pages.
 
-Integration requirements:
+Integration requirements
 
-* Provide descriptive resource titles and summaries.
+* Provide descriptive resource titles and concise summaries.
 * Display file formats and file sizes where practical.
 * Verify download paths before publication.
 * Ensure mobile and desktop compatibility.
 * Apply access controls to non-public materials.
-* Update links whenever documents are moved or renamed.
+* Update website links whenever files are moved or renamed.
+* Make it clear whether a resource is a guide, checklist, or editable template.
+* Avoid claims that downloading a resource guarantees recruitment success.
 
-13. Maintenance Checklist
+Example public asset paths
+
+/assets/documents/career-resources/resume-cv/resume-writing-guide.pdf
+/assets/documents/career-resources/resume-cv/freshers-resume-guide.pdf
+/assets/documents/career-resources/resume-cv/resume-checklist.pdf
+/assets/documents/career-resources/resume-cv/resume-template-editable.docx
+
+These paths should be published only after confirming that the files exist and are served from the expected location.
+
+13. Maintenance and Publishing Checklist
 
 Before publishing or updating a resource:
 
 * [ ]	Verify spelling, grammar, accuracy, and clarity.
-* [ ]	Check resume examples for fabricated or misleading claims.
-* [ ]	Test the editable DOCX template.
-* [ ]	Check PDF readability and mobile compatibility.
-* [ ]	Verify ATS-related guidance is appropriately qualified.
+* [ ]	Check examples for fabricated or misleading claims.
+* [ ]	Confirm that resume and CV guidance accounts for differing conventions.
+* [ ]	Test the editable DOCX template in a compatible word processor.
+* [ ]	Check PDF readability, links, and mobile compatibility.
+* [ ]	Review ATS-related guidance to ensure it is appropriately qualified.
 * [ ]	Remove personal and confidential information.
-* [ ]	Verify the website download path.
+* [ ]	Inspect document metadata, comments, and tracked changes.
+* [ ]	Verify filenames and the website download paths.
 * [ ]	Update the parent MANIFEST.json when required.
-* [ ]	Record the review date where appropriate.
+* [ ]	Record the review date and version where appropriate.
+* [ ]	Obtain the required approval before publication.
 
-14. Scope and Disclaimer
+14. Maintenance Workflow
 
-These resources provide general resume-writing and career guidance. They do not guarantee ATS selection, interview invitations, employment, or recruitment outcomes.
+Use the following workflow for routine resource updates:
 
-Candidates are responsible for ensuring that their application documents are accurate and comply with the requirements of the employer or recruiting organization.
+1. Review: Identify outdated guidance, formatting issues, accessibility problems, or missing resources.
+2. Revise: Update the relevant document or template without unnecessarily changing unrelated files.
+3. Validate: Check accuracy, file integrity, accessibility, privacy, and compatibility.
+4. Synchronize: Update this README and the parent manifest if the inventory or metadata changes.
+5. Approve: Complete the applicable project review process.
+6. Publish: Place approved files in the correct directory and verify their public download paths.
+7. Record: Document the revision and review date according to project conventions.
+
+15. Scope and Disclaimer
+
+These resources provide general resume-writing, CV-preparation, and career guidance. They do not guarantee ATS selection, interview invitations, employment, or recruitment outcomes.
+
+Candidates are responsible for ensuring that their application documents are accurate, truthful, relevant to the position, and compliant with the requirements of the employer or recruiting organization.
+
+Resume and CV conventions vary by country, industry, and application type. Candidates should follow the specific instructions associated with each opportunity.
 
 ⸻
 
 Maintained by: MedOrbits Project Team
 Document: README.md
+Directory: assets/documents/career-resources/resume-cv/
 Status: Resource documentation baseline

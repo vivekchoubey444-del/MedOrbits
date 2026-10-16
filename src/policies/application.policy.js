@@ -1,78 +1,213 @@
+
 'use strict';
 
 const {
-  isAdmin, hasRole, hasPermission, isOwner, sameId,
-  resourceOwnerId, safeStatus,
+  isAdmin,
+  hasRole,
+  hasPermission,
+  isOwner,
+  sameId,
+  resourceOwnerId,
+  safeStatus,
 } = require('./policy-utils');
 
+const APPLICANT_ROLES = ['user', 'student', 'candidate'];
+const EDITABLE_STATUSES = new Set([
+  'draft',
+  'incomplete',
+  'submitted',
+]);
+
+const PROTECTED_APPLICATION_FIELDS = new Set([
+  'id',
+  '_id',
+  'status',
+  'reviewStatus',
+  'decision',
+  'approvedBy',
+  'rejectedBy',
+  'reviewedBy',
+  'reviewedAt',
+  'applicantId',
+  'candidateId',
+  'userId',
+  'ownerId',
+  'createdBy',
+  'counsellorId',
+  'assignedCounsellorId',
+  'createdAt',
+  'updatedAt',
+]);
+
+function actorId(actor) {
+  return actor?.id ?? actor?.userId ?? actor?.sub ?? null;
+}
+
 function applicantId(application) {
-  return resourceOwnerId(application, ['applicantId', 'candidateId', 'userId', 'ownerId', 'createdBy']);
+  return resourceOwnerId(application, [
+    'applicantId',
+    'candidateId',
+    'userId',
+    'ownerId',
+    'createdBy',
+  ]);
 }
 
 function counsellorAssigned(actor, application) {
-  return Boolean(actor && application &&
-    (sameId(application.counsellorId, actor.id ?? actor.userId ?? actor.sub) ||
-     sameId(application.assignedCounsellorId, actor.id ?? actor.userId ?? actor.sub)));
+  const id = actorId(actor);
+
+  if (id == null || !application) {
+    return false;
+  }
+
+  return (
+    sameId(application.counsellorId, id) ||
+    sameId(application.assignedCounsellorId, id)
+  );
+}
+
+function hasApplicantRole(actor) {
+  return hasRole(actor, ...APPLICANT_ROLES);
+}
+
+function hasProtectedChanges(changes) {
+  if (
+    !changes ||
+    typeof changes !== 'object' ||
+    Array.isArray(changes)
+  ) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) =>
+    PROTECTED_APPLICATION_FIELDS.has(key)
+  );
 }
 
 function canCreateApplication(actor, input = {}) {
   if (!actor) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'applications:create:any')) return true;
-  const targetApplicant = input.applicantId ?? input.candidateId ?? input.userId;
-  // A normal applicant can create only for themselves. The server should set this field from actor identity.
-  if (!targetApplicant) return hasRole(actor, 'user', 'student', 'candidate');
-  return isOwner(actor, targetApplicant) && hasRole(actor, 'user', 'student', 'candidate');
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'applications:create:any')
+  ) {
+    return true;
+  }
+
+  if (!hasApplicantRole(actor)) {
+    return false;
+  }
+
+  const targetApplicant =
+    input.applicantId ??
+    input.candidateId ??
+    input.userId;
+
+  // Controllers should set applicant identity from the
+  // authenticated actor, not trust client-supplied identity.
+  if (targetApplicant == null || targetApplicant === '') {
+    return true;
+  }
+
+  return isOwner(actor, targetApplicant);
 }
 
 function canViewApplication(actor, application) {
   if (!actor || !application) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'applications:read:any')) return true;
-  if (isOwner(actor, applicantId(application))) return true;
-  if (counsellorAssigned(actor, application) &&
-      hasRole(actor, 'counsellor', 'support')) return true;
-  return hasPermission(actor, 'applications:read:assigned') &&
-    counsellorAssigned(actor, application);
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'applications:read:any')
+  ) {
+    return true;
+  }
+
+  if (isOwner(actor, applicantId(application))) {
+    return true;
+  }
+
+  if (!counsellorAssigned(actor, application)) {
+    return false;
+  }
+
+  return (
+    (
+      hasRole(actor, 'counsellor', 'support') &&
+      hasPermission(actor, 'applications:read:assigned')
+    ) ||
+    hasPermission(actor, 'applications:read:assigned')
+  );
 }
 
 function canUpdateApplication(actor, application, changes = {}) {
   if (!actor || !application) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'applications:update:any')) return true;
 
-  // Applicants may update their own application only before it enters review.
-  if (isOwner(actor, applicantId(application))) {
-    const status = safeStatus(application.status);
-    const editableStatuses = new Set(['draft', 'incomplete', 'submitted']);
-    const protectedFields = [
-      'status', 'reviewStatus', 'decision', 'approvedBy', 'rejectedBy',
-      'applicantId', 'candidateId', 'userId', 'ownerId', 'createdBy',
-    ];
-    if (!editableStatuses.has(status)) return false;
-    return !Object.keys(changes || {}).some((key) => protectedFields.includes(key));
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'applications:update:any')
+  ) {
+    return true;
   }
 
-  return counsellorAssigned(actor, application) &&
+  if (isOwner(actor, applicantId(application))) {
+    if (!EDITABLE_STATUSES.has(safeStatus(application.status))) {
+      return false;
+    }
+
+    return !hasProtectedChanges(changes);
+  }
+
+  return (
+    counsellorAssigned(actor, application) &&
     hasRole(actor, 'counsellor') &&
-    hasPermission(actor, 'applications:update:assigned');
+    hasPermission(actor, 'applications:update:assigned') &&
+    !hasProtectedChanges(changes)
+  );
 }
 
 function canReviewApplication(actor, application) {
   if (!actor || !application) return false;
-  return isAdmin(actor) ||
-    hasPermission(actor, 'applications:review:any') ||
-    (counsellorAssigned(actor, application) &&
-     hasRole(actor, 'counsellor') &&
-     hasPermission(actor, 'applications:review:assigned'));
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'applications:review:any')
+  ) {
+    return true;
+  }
+
+  return (
+    counsellorAssigned(actor, application) &&
+    hasRole(actor, 'counsellor') &&
+    hasPermission(actor, 'applications:review:assigned')
+  );
 }
 
 function canDeleteApplication(actor, application) {
   if (!actor || !application) return false;
-  if (isAdmin(actor) || hasPermission(actor, 'applications:delete:any')) return true;
-  return isOwner(actor, applicantId(application)) &&
-    ['draft', 'incomplete'].includes(safeStatus(application.status));
+
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'applications:delete:any')
+  ) {
+    return true;
+  }
+
+  return (
+    isOwner(actor, applicantId(application)) &&
+    ['draft', 'incomplete'].includes(
+      safeStatus(application.status)
+    )
+  );
 }
 
 function canAssignCounsellor(actor) {
-  return Boolean(actor && (isAdmin(actor) || hasPermission(actor, 'applications:assign')));
+  return Boolean(
+    actor &&
+    (
+      isAdmin(actor) ||
+      hasPermission(actor, 'applications:assign')
+    )
+  );
 }
 
 module.exports = {

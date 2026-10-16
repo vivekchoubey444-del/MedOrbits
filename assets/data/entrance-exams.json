@@ -1,31 +1,464 @@
 {
   "schemaVersion": "1.0.0",
   "updatedAt": null,
+  "metadata": {
+    "title": "MedOrbits Entrance Examinations Catalogue",
+    "description": "Catalogue of entrance and related examinations for health courses. IDs match exams.json and courses.json.",
+    "defaultCountryCode": "IN",
+    "dateFormat": "YYYY-MM-DD",
+    "verificationPolicy": "Verify authority, eligibility, dates and links against the official examination authority before publication. Never invent them."
+  },
+  "fields": [
+    "id",
+    "name",
+    "shortName",
+    "slug",
+    "aliases",
+    "countryCode",
+    "examPurpose",
+    "examLevel",
+    "conductingAuthority",
+    "courseIds",
+    "officialUrl",
+    "sourceUrl",
+    "description",
+    "frequency",
+    "examMode",
+    "currentCycle",
+    "verificationStatus",
+    "verifiedAt",
+    "verifiedBy",
+    "reviewDueAt",
+    "sortOrder",
+    "active",
+    "createdAt",
+    "updatedAt"
+  ],
+  "allowedValues": {
+    "examPurpose": [
+      "admission",
+      "licensing",
+      "scholarship",
+      "other"
+    ],
+    "examLevel": [
+      "national",
+      "state",
+      "institutional",
+      "international",
+      "other"
+    ],
+    "frequency": [
+      "annual",
+      "biannual",
+      "multiple_per_year",
+      "irregular",
+      "unknown"
+    ],
+    "examMode": [
+      "computer_based",
+      "pen_and_paper",
+      "hybrid",
+      "unknown"
+    ],
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ]
+  },
+  "dataRules": [
+    "id and slug must be unique; ids must match exams.json where the same exam appears.",
+    "Every value in courseIds must reference an existing course in courses.json.",
+    "countryCode must be an ISO 3166-1 alpha-2 code.",
+    "examPurpose 'licensing' means the test is not an admission test and must not be presented as one.",
+    "officialUrl, frequency, examMode and all currentCycle values must stay null until taken from an official source.",
+    "conductingAuthority is informational and must be re-verified each cycle because it can change.",
+    "currentCycle dates use YYYY-MM-DD; examDate must not precede registrationStart when both are set.",
+    "Placeholder entries (state, institution, other) must stay unverified and must not be shown as official.",
+    "verifiedAt and verifiedBy must be null until verified, and set together; 'verified' also requires sourceUrl.",
+    "The active field controls display only; it does not mean registration is open.",
+    "Never invent dates, eligibility, links or authority details."
+  ],
   "exams": [
     {
       "id": "exam-neet-ug",
-      "name": "NEET UG",
+      "name": "National Eligibility cum Entrance Test (Undergraduate)",
+      "shortName": "NEET UG",
       "slug": "neet-ug",
+      "aliases": [
+        "NEET",
+        "NEET-UG"
+      ],
       "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "National Testing Agency (NTA)",
       "courseIds": [
         "course-mbbs",
-        "course-bds"
+        "course-bds",
+        "course-bams",
+        "course-bhms",
+        "course-bums",
+        "course-bsms",
+        "course-bnys",
+        "course-bvsc-ah"
       ],
       "officialUrl": "https://exams.nta.ac.in/NEET/",
-      "description": "Check the current official examination information, eligibility, dates and notices.",
+      "sourceUrl": null,
+      "description": "Check the current official examination information, eligibility, dates and notices on the NTA website.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
       "verifiedAt": null,
-      "active": true
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 1,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-neet-pg",
+      "name": "National Eligibility cum Entrance Test (Postgraduate)",
+      "shortName": "NEET PG",
+      "slug": "neet-pg",
+      "aliases": [
+        "NEET-PG"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "National Board of Examinations in Medical Sciences (NBEMS)",
+      "courseIds": [
+        "course-md",
+        "course-ms-surgery",
+        "course-dnb",
+        "course-pg-diploma-medical"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Postgraduate medical entrance. Verify the current notice with the official authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 2,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-neet-mds",
+      "name": "National Eligibility cum Entrance Test (Master of Dental Surgery)",
+      "shortName": "NEET MDS",
+      "slug": "neet-mds",
+      "aliases": [
+        "NEET-MDS"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "National Board of Examinations in Medical Sciences (NBEMS)",
+      "courseIds": [
+        "course-mds"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Postgraduate dental entrance. Verify the current notice with the official authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 3,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-neet-ss",
+      "name": "National Eligibility cum Entrance Test (Super Speciality)",
+      "shortName": "NEET SS",
+      "slug": "neet-ss",
+      "aliases": [
+        "NEET-SS"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "National Board of Examinations in Medical Sciences (NBEMS)",
+      "courseIds": [
+        "course-dm",
+        "course-mch"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Super-speciality medical entrance. Verify the current notice with the official authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 4,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-ini-cet",
+      "name": "Institute of National Importance Combined Entrance Test",
+      "shortName": "INI-CET",
+      "slug": "ini-cet",
+      "aliases": [
+        "INI CET",
+        "AIIMS PG"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "All India Institute of Medical Sciences (AIIMS)",
+      "courseIds": [
+        "course-md",
+        "course-ms-surgery",
+        "course-mds"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Postgraduate entrance for institutes of national importance. Verify the current notice and the courses it covers.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 5,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-aiapget",
+      "name": "All India AYUSH Post Graduate Entrance Test",
+      "shortName": "AIAPGET",
+      "slug": "aiapget",
+      "aliases": [
+        "AIAPGET",
+        "AYUSH PG"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "national",
+      "conductingAuthority": "National Testing Agency (NTA)",
+      "courseIds": [
+        "course-md-ayurveda"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "AYUSH postgraduate entrance. Verify the current notice and covered disciplines.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 6,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-fmge",
+      "name": "Foreign Medical Graduate Examination",
+      "shortName": "FMGE",
+      "slug": "fmge",
+      "aliases": [
+        "FMGE",
+        "MCI Screening Test"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "licensing",
+      "examLevel": "national",
+      "conductingAuthority": "National Board of Examinations in Medical Sciences (NBEMS)",
+      "courseIds": [
+        "course-mbbs-abroad"
+      ],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Licensing screening for foreign medical graduates, not an admission test. Verify current rules with the official authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 7,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-state-medical-cet",
+      "name": "State-level entrance examinations for health courses",
+      "shortName": "State-level entrance tests",
+      "slug": "state-medical-cet",
+      "aliases": [
+        "State CET"
+      ],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "state",
+      "conductingAuthority": null,
+      "courseIds": [],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Placeholder for state-level tests (nursing, pharmacy, allied health and others). Add individual exams only after verifying the state authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 8,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
+    },
+    {
+      "id": "exam-institution-entrance",
+      "name": "Institution or university-specific entrance examinations",
+      "shortName": "Institution-specific entrance tests",
+      "slug": "institution-entrance",
+      "aliases": [],
+      "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "institutional",
+      "conductingAuthority": null,
+      "courseIds": [],
+      "officialUrl": null,
+      "sourceUrl": null,
+      "description": "Placeholder for institution-level tests. Add individual exams only after verifying the institution.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 9,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     },
     {
       "id": "exam-other",
       "name": "Other entrance examinations",
+      "shortName": "Other entrance examinations",
       "slug": "other-entrance-exams",
+      "aliases": [],
       "countryCode": "IN",
+      "examPurpose": "admission",
+      "examLevel": "other",
+      "conductingAuthority": null,
       "courseIds": [],
       "officialUrl": null,
+      "sourceUrl": null,
       "description": "Add examination details only after verifying the relevant official examination authority.",
+      "frequency": null,
+      "examMode": null,
+      "currentCycle": {
+        "academicYear": null,
+        "registrationStart": null,
+        "registrationEnd": null,
+        "examDate": null,
+        "resultDate": null,
+        "noticeUrl": null
+      },
+      "verificationStatus": "unverified",
       "verifiedAt": null,
-      "active": true
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "sortOrder": 10,
+      "active": true,
+      "createdAt": null,
+      "updatedAt": null
     }
   ]
 }

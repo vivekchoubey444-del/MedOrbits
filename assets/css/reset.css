@@ -1,50 +1,243 @@
 /* =========================================================
-MedOrbits -- Base Reset
-Browser normalization and foundational layout rules
-Original homepage rules preserved
-========================================================= */
-
-/* Consistent box sizing */
+   MedOrbits -- Base Reset
+   Theme: Luxury Aubergine & Champagne Gold
+   Purpose: Browser normalization and foundational layout
+   Original homepage behavior preserved
+   ========================================================= */
+/* =========================================================
+   1. Consistent Box Sizing
+   ========================================================= */
 *,
 *::before,
 *::after {
-box-sizing: border-box;
+  box-sizing: border-box;
 }
-
-/* Document scrolling and anchor positioning */
+/* =========================================================
+   2. Document Scrolling and Anchor Positioning
+   ========================================================= */
 html {
-scroll-behavior: smooth;
-scroll-padding-top: 100px;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height, 82px) + 18px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
-
-/* Responsive images */
-img {
-display: block;
-max-width: 100%;
+body {
+  min-width: 0;
+  margin: 0;
 }
-
-/* Remove the default mobile tap highlight */
+/* =========================================================
+   3. Media Defaults
+   ========================================================= */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+img,
+video {
+  height: auto;
+}
+iframe {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+/* Preserve useful intrinsic proportions for embedded media */
+video,
+iframe {
+  border: 0;
+}
+/* =========================================================
+   4. Typography Defaults
+   ========================================================= */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-top: 0;
+}
+address {
+  font-style: normal;
+}
+small {
+  font-size: 0.875em;
+}
+sub,
+sup {
+  position: relative;
+  font-size: 0.75em;
+  line-height: 0;
+  vertical-align: baseline;
+}
+sup {
+  top: -0.5em;
+}
+sub {
+  bottom: -0.25em;
+}
+/* =========================================================
+   5. Links and Interactive Elements
+   ========================================================= */
+a {
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
 button,
 a {
--webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent;
 }
-
-/* Inherit the site’s typography in form controls */
+button {
+  color: inherit;
+}
 button,
 input,
 select,
 textarea {
-font: inherit;
+  max-width: 100%;
+  font: inherit;
 }
-
-/* Prevent long content from forcing grid or flex overflow */
-body {
-min-width: 0;
-}
-
 button,
 input,
 select,
 textarea {
-max-width: 100%;
+  margin: 0;
+}
+button,
+select {
+  text-transform: none;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+button,
+input {
+  overflow: visible;
+}
+textarea {
+  overflow: auto;
+  resize: vertical;
+}
+/* =========================================================
+   6. Form Control Normalization
+   ========================================================= */
+input,
+select,
+textarea {
+  min-width: 0;
+}
+input[type="search"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  max-width: none;
+}
+input[type="file"] {
+  max-width: 100%;
+}
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+legend {
+  padding: 0;
+}
+/* =========================================================
+   7. Lists and Tables
+   ========================================================= */
+ul,
+ol {
+  padding-left: 1.5em;
+}
+table {
+  max-width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+th {
+  text-align: left;
+}
+/* =========================================================
+   8. Prevent Layout Overflow
+   ========================================================= */
+main,
+section,
+article,
+aside,
+header,
+footer,
+nav,
+figure {
+  min-width: 0;
+}
+pre,
+code,
+kbd,
+samp {
+  font-family: monospace;
+}
+pre {
+  max-width: 100%;
+  overflow: auto;
+}
+p,
+li,
+td,
+th {
+  overflow-wrap: break-word;
+}
+/* =========================================================
+   9. Accessible Focus Defaults
+   ========================================================= */
+:focus {
+  outline-color: var(--gold, #c9a96e);
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--gold-light, #e4d0a1);
+  outline-offset: 3px;
+}
+/* =========================================================
+   10. Hidden Elements
+   ========================================================= */
+[hidden] {
+  display: none !important;
+}
+/* =========================================================
+   11. Reduced Motion
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
