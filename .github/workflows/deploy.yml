@@ -70,9 +70,12 @@ jobs:
     permissions:
       contents: read
     steps:
+ dependabot/github_actions/actions/checkout-7
+      - name: Checkout main branch
+        uses: actions/checkout@v7
+=======
       - name: Checkout verified commit
-        uses: actions/checkout@v4
-        with:
+    with:
           ref: ${{ needs.verify.outputs.deployment_sha }}
           persist-credentials: false
       - name: Set up Node.js

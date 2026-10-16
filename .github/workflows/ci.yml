@@ -13,9 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
-    steps:
+    steps:<<<<<<< dependabot/github_actions/actions/checkout-7
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4=======
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4>>>>>> main
         with:
           node-version: 20
           cache: npm
