@@ -17,27 +17,27 @@
 * Never execute these tests against production payments.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before, after } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before, after } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const REFUND_PATH =
-process.env.REFUND_TEST_PATH || ‘/api/payments/:paymentId/refunds’;
+process.env.REFUND_TEST_PATH || '/api/payments/:paymentId/refunds';
 
 const PAYMENT_PATH =
-process.env.PAYMENT_TEST_PATH || ‘/api/payments/:paymentId’;
+process.env.PAYMENT_TEST_PATH || '/api/payments/:paymentId';
 
-const TEST_TOKEN = process.env.PAYMENT_TEST_TOKEN || ‘’;
+const TEST_TOKEN = process.env.PAYMENT_TEST_TOKEN || '';
 
-const PAYMENT_ID = process.env.TEST_PAYMENT_ID || ‘’;
+const PAYMENT_ID = process.env.TEST_PAYMENT_ID || '';
 const ORIGINAL_AMOUNT_MINOR = Number(
 process.env.TEST_PAYMENT_AMOUNT_MINOR || 10000
 );
@@ -47,48 +47,48 @@ process.env.TEST_REFUNDABLE_AMOUNT_MINOR ||
 ORIGINAL_AMOUNT_MINOR
 );
 
-const CURRENCY = process.env.TEST_PAYMENT_CURRENCY || ‘INR’;
+const CURRENCY = process.env.TEST_PAYMENT_CURRENCY || 'INR';
 
 const REQUEST_TIMEOUT_MS = Number(
 process.env.PAYMENT_TEST_TIMEOUT_MS || 15000
 );
 
 const ENABLE_MUTATING_TESTS =
-process.env.RUN_MUTATING_PAYMENT_TESTS === ‘true’;
+process.env.RUN_MUTATING_PAYMENT_TESTS === 'true';
 
 const IDEMPOTENCY_HEADER =
-process.env.REFUND_IDEMPOTENCY_HEADER || ‘Idempotency-Key’;
+process.env.REFUND_IDEMPOTENCY_HEADER || 'Idempotency-Key';
 
 const MUTATING_TESTS_REQUIRE_EXPLICIT_ENABLE =
-‘Set RUN_MUTATING_PAYMENT_TESTS=true only for an isolated payment test environment.’;
+'Set RUN_MUTATING_PAYMENT_TESTS=true only for an isolated payment test environment.';
 
 function assertConfiguration() {
 assert.ok(
 PAYMENT_ID,
-‘TEST_PAYMENT_ID must identify a dedicated test payment.’
+'TEST_PAYMENT_ID must identify a dedicated test payment.'
 );
 
 assert.ok(
 TEST_TOKEN,
-‘PAYMENT_TEST_TOKEN must contain a valid test-environment credential.’
+'PAYMENT_TEST_TOKEN must contain a valid test-environment credential.'
 );
 
 assert.ok(
 Number.isSafeInteger(ORIGINAL_AMOUNT_MINOR) &&
 ORIGINAL_AMOUNT_MINOR > 0,
-‘TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.’
+'TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.'
 );
 
 assert.ok(
 Number.isSafeInteger(REFUNDABLE_AMOUNT_MINOR) &&
 REFUNDABLE_AMOUNT_MINOR >= 0 &&
 REFUNDABLE_AMOUNT_MINOR <= ORIGINAL_AMOUNT_MINOR,
-‘TEST_REFUNDABLE_AMOUNT_MINOR must be between zero and the original payment amount.’
+'TEST_REFUNDABLE_AMOUNT_MINOR must be between zero and the original payment amount.'
 );
 
 assert.ok(
 Number.isFinite(REQUEST_TIMEOUT_MS) && REQUEST_TIMEOUT_MS > 0,
-‘PAYMENT_TEST_TIMEOUT_MS must be a positive number.’
+'PAYMENT_TEST_TIMEOUT_MS must be a positive number.'
 );
 }
 
@@ -99,8 +99,8 @@ return ${BASE_URL}${pathTemplate.replace( ':paymentId', encodeURIComponent(payme
 function authHeaders(extra = {}) {
 return {
 Authorization: Bearer ${TEST_TOKEN},
-Accept: ‘application/json’,
-…extra,
+Accept: 'application/json',
+...extra,
 };
 }
 
@@ -113,10 +113,10 @@ REQUEST_TIMEOUT_MS
 
 try {
 const response = await fetch(${BASE_URL}${path}, {
-…options,
+...options,
 headers: authHeaders(options.headers || {}),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -143,10 +143,10 @@ clearTimeout(timeout);
 async function getPayment() {
 return request(
 PAYMENT_PATH.replace(
-‘:paymentId’,
+':paymentId',
 encodeURIComponent(PAYMENT_ID)
 ),
-{ method: ‘GET’ }
+{ method: 'GET' }
 );
 }
 
@@ -156,12 +156,12 @@ idempotencyKey,
 paymentId = PAYMENT_ID,
 }) {
 const path = REFUND_PATH.replace(
-‘:paymentId’,
+':paymentId',
 encodeURIComponent(paymentId)
 );
 
 const headers = {
-‘Content-Type’: ‘application/json’,
+'Content-Type': 'application/json',
 };
 
 if (idempotencyKey) {
@@ -169,12 +169,12 @@ headers[IDEMPOTENCY_HEADER] = idempotencyKey;
 }
 
 return request(path, {
-method: ‘POST’,
+method: 'POST',
 headers,
 body: JSON.stringify({
 amount: amountMinor,
 currency: CURRENCY,
-reason: ‘Integration test refund’,
+reason: 'Integration test refund',
 }),
 });
 }
@@ -185,7 +185,7 @@ return [200, 201, 202].includes(status);
 
 function refundId(response) {
 const body = response.body;
-if (!body || typeof body !== ‘object’) return null;
+if (!body || typeof body !== 'object') return null;
 
 return (
 body.refundId ||
@@ -198,7 +198,7 @@ null
 
 function refundAmountMinor(response) {
 const body = response.body;
-if (!body || typeof body !== ‘object’) return null;
+if (!body || typeof body !== 'object') return null;
 
 const amount =
 body.amount ??
@@ -227,13 +227,13 @@ function newIdempotencyKey(prefix) {
 return ${prefix}-${crypto.randomUUID()};
 }
 
-describe(‘Concurrent refund integration tests’, () => {
+describe('Concurrent refund integration tests', () => {
 before(() => {
 assertConfiguration();
 });
 
-describe(‘test environment safety’, () => {
-it(‘requires explicit opt-in before sending mutating refund requests’, () => {
+describe('test environment safety', () => {
+it('requires explicit opt-in before sending mutating refund requests', () => {
 assert.equal(
 ENABLE_MUTATING_TESTS,
 true,
@@ -261,12 +261,12 @@ it('can retrieve the payment used by the test fixture', async () => {
 
 });
 
-describe(‘concurrent refund requests’, () => {
+describe('concurrent refund requests', () => {
 it(
-‘does not process duplicate refunds when identical requests arrive concurrently’,
+'does not process duplicate refunds when identical requests arrive concurrently',
 { skip: !ENABLE_MUTATING_TESTS },
 async () => {
-const key = newIdempotencyKey(‘concurrent-refund’);
+const key = newIdempotencyKey('concurrent-refund');
 const amount = Math.min(100, REFUNDABLE_AMOUNT_MINOR);
 
     assert.ok(amount > 0, 'The test payment must have a refundable balance.');
@@ -363,14 +363,14 @@ it(
 
 });
 
-describe(‘refund validation’, () => {
+describe('refund validation', () => {
 it(
-‘rejects zero-value refunds’,
+'rejects zero-value refunds',
 { skip: !ENABLE_MUTATING_TESTS },
 async () => {
 const response = await createRefund({
 amountMinor: 0,
-idempotencyKey: newIdempotencyKey(‘zero-refund’),
+idempotencyKey: newIdempotencyKey('zero-refund'),
 });
 
     assertRefundRejected(response, 'Zero-value refund');
@@ -424,13 +424,13 @@ it(
 
 });
 
-describe(‘idempotency’, () => {
+describe('idempotency', () => {
 it(
-‘returns a consistent result when the same refund is retried’,
+'returns a consistent result when the same refund is retried',
 { skip: !ENABLE_MUTATING_TESTS },
 async () => {
 const amount = Math.min(100, REFUNDABLE_AMOUNT_MINOR);
-assert.ok(amount > 0, ‘The test payment must have a refundable balance.’);
+assert.ok(amount > 0, 'The test payment must have a refundable balance.');
 
     const key = newIdempotencyKey('refund-retry');
     const [first, second] = await Promise.all([
@@ -472,9 +472,9 @@ assert.ok(amount > 0, ‘The test payment must have a refundable balance.’);
 
 });
 
-describe(‘payment-state consistency’, () => {
+describe('payment-state consistency', () => {
 it(
-‘does not expose an impossible payment amount or negative refundable balance after refunds’,
+'does not expose an impossible payment amount or negative refundable balance after refunds',
 { skip: !ENABLE_MUTATING_TESTS },
 async () => {
 const response = await getPayment();

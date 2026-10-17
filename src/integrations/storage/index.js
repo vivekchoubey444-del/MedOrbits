@@ -1,32 +1,32 @@
-‘use strict’;
+'use strict';
 
 const {
 StorageClient,
-} = require(’./storage.client’);
+} = require('./storage.client');
 
 const {
 LocalStorageProvider,
-} = require(’./local.provider’);
+} = require('./local.provider');
 
 const {
 S3StorageProvider,
-} = require(’./s3.provider’);
+} = require('./s3.provider');
 
 const {
 loadStorageConfig,
-} = require(’./storage.config’);
+} = require('./storage.config');
 
-const SUPPORTED_DRIVERS = new Set([‘local’, ‘s3’]);
+const SUPPORTED_DRIVERS = new Set(['local', 's3']);
 
 function assertStorageProvider(provider) {
-if (!provider || typeof provider !== ‘object’) {
-throw new TypeError(‘A valid storage provider is required.’);
+if (!provider || typeof provider !== 'object') {
+throw new TypeError('A valid storage provider is required.');
 }
 
-for (const method of [‘put’, ‘get’, ‘delete’]) {
-if (typeof provider[method] !== ‘function’) {
+for (const method of ['put', 'get', 'delete']) {
+if (typeof provider[method] !== 'function') {
 throw new TypeError(
-Storage provider must implement ${method}().
+`Storage provider must implement ${method}().`
 );
 }
 }
@@ -37,10 +37,10 @@ return provider;
 function createStorageClient(options = {}) {
 if (
 !options ||
-typeof options !== ‘object’ ||
+typeof options !== 'object' ||
 Array.isArray(options)
 ) {
-throw new TypeError(‘Storage options must be an object.’);
+throw new TypeError('Storage options must be an object.');
 }
 
 // Dependency injection supports unit tests and custom providers.
@@ -53,20 +53,20 @@ assertStorageProvider(options.provider)
 const environment = options.env || process.env;
 const config = options.config || loadStorageConfig(environment);
 
-if (!config || typeof config !== ‘object’) {
-throw new TypeError(‘Storage configuration is invalid.’);
+if (!config || typeof config !== 'object') {
+throw new TypeError('Storage configuration is invalid.');
 }
 
 if (!SUPPORTED_DRIVERS.has(config.driver)) {
 throw new Error(
-Unsupported storage driver: ${String(config.driver)}
+`Unsupported storage driver: ${String(config.driver)}`
 );
 }
 
 let provider;
 
 switch (config.driver) {
-case ‘local’:
+case 'local':
 provider = new LocalStorageProvider(config);
 break;
 

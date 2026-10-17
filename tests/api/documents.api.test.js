@@ -173,7 +173,7 @@ describe('Documents API', () => {
         expect(response.body.data).toEqual(expect.any(Array));
       }
     });
-    test('does not disclose another user’s document through an arbitrary ID', async () => {
+    test('does not disclose another user's document through an arbitrary ID', async () => {
       const response = await request(app)
         .get(`${baseUrl}/DOCUMENT-OWNED-BY-ANOTHER-USER`)
         .set('Accept', 'application/json');

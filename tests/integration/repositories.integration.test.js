@@ -360,7 +360,7 @@ test('repository-backed item responses do not expose credential fields', async (
     assertSafeErrorResponse(response);
   }
 });
-test('repository does not allow one user to read another user’s record', async (t) => {
+test('repository does not allow one user to read another user's record', async (t) => {
   if (!canRunOwnershipTests()) {
     t.skip(
       'Set REPOSITORY_TEST_USER_A_TOKEN, REPOSITORY_TEST_USER_B_TOKEN, and REPOSITORY_TEST_ITEM_ID.'
@@ -507,7 +507,7 @@ test('repository-backed updates cannot modify protected ownership fields', async
     assertSafeErrorResponse(response);
   }
 });
-test('repository-backed delete does not disclose another user’s record', async (t) => {
+test('repository-backed delete does not disclose another user's record', async (t) => {
   if (!canRunMutationTests() || !canRunOwnershipTests()) {
     t.skip(
       'Requires RUN_MUTATING_REPOSITORY_TESTS=true, both user tokens, and REPOSITORY_TEST_ITEM_ID.'

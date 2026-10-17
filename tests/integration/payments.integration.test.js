@@ -20,68 +20,68 @@
 * Never run mutating payment tests against production.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const PAYMENTS_PATH =
-process.env.PAYMENTS_TEST_PATH || ‘/api/payments’;
+process.env.PAYMENTS_TEST_PATH || '/api/payments';
 
 const PAYMENT_PATH =
-process.env.PAYMENT_TEST_PATH || ‘/api/payments/:id’;
+process.env.PAYMENT_TEST_PATH || '/api/payments/:id';
 
 const REFUNDS_PATH =
 process.env.PAYMENT_REFUNDS_TEST_PATH ||
-‘/api/payments/:id/refunds’;
+'/api/payments/:id/refunds';
 
 const USER_A_TOKEN =
 process.env.PAYMENT_TEST_USER_A_TOKEN ||
 process.env.PAYMENT_TEST_TOKEN ||
-‘’;
+'';
 
 const USER_B_TOKEN =
-process.env.PAYMENT_TEST_USER_B_TOKEN || ‘’;
+process.env.PAYMENT_TEST_USER_B_TOKEN || '';
 
 const PAYMENT_ID =
-process.env.TEST_PAYMENT_ID || ‘’;
+process.env.TEST_PAYMENT_ID || '';
 
 const AMOUNT_MINOR = Number(
 process.env.TEST_PAYMENT_AMOUNT_MINOR || 10000
 );
 
 const CURRENCY =
-process.env.TEST_PAYMENT_CURRENCY || ‘INR’;
+process.env.TEST_PAYMENT_CURRENCY || 'INR';
 
 const TIMEOUT_MS = Number(
 process.env.PAYMENT_TEST_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_MUTATING_PAYMENT_TESTS === ‘true’;
+process.env.RUN_MUTATING_PAYMENT_TESTS === 'true';
 
 function validateConfiguration() {
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘PAYMENT_TEST_TIMEOUT_MS must be positive.’
+'PAYMENT_TEST_TIMEOUT_MS must be positive.'
 );
 
 assert.ok(
 Number.isSafeInteger(AMOUNT_MINOR) && AMOUNT_MINOR > 0,
-‘TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.’
+'TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.'
 );
 
 assert.match(
 CURRENCY,
 /^[A-Z]{3}$/,
-‘TEST_PAYMENT_CURRENCY must be a three-letter uppercase currency code.’
+'TEST_PAYMENT_CURRENCY must be a three-letter uppercase currency code.'
 );
 
 for (const [name, path] of Object.entries({
@@ -89,17 +89,17 @@ PAYMENTS_PATH,
 PAYMENT_PATH,
 REFUNDS_PATH,
 })) {
-assert.ok(path.startsWith(’/’), ${name} must start with /.);
+assert.ok(path.startsWith('/'), ${name} must start with /.);
 }
 
 assert.ok(
-PAYMENT_PATH.includes(’:id’),
-‘PAYMENT_TEST_PATH must contain the :id placeholder.’
+PAYMENT_PATH.includes(':id'),
+'PAYMENT_TEST_PATH must contain the :id placeholder.'
 );
 
 assert.ok(
-REFUNDS_PATH.includes(’:id’),
-‘PAYMENT_REFUNDS_TEST_PATH must contain the :id placeholder.’
+REFUNDS_PATH.includes(':id'),
+'PAYMENT_REFUNDS_TEST_PATH must contain the :id placeholder.'
 );
 }
 
@@ -108,15 +108,15 @@ return ${BASE_URL}${path};
 }
 
 function paymentUrl(id) {
-return PAYMENT_PATH.replace(’:id’, encodeURIComponent(String(id)));
+return PAYMENT_PATH.replace(':id', encodeURIComponent(String(id)));
 }
 
 function refundsUrl(id) {
-return REFUNDS_PATH.replace(’:id’, encodeURIComponent(String(id)));
+return REFUNDS_PATH.replace(':id', encodeURIComponent(String(id)));
 }
 
 async function request(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -129,8 +129,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -138,7 +138,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -147,7 +147,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -201,7 +201,7 @@ return [200, 201, 202].includes(response.status);
 function extractPayment(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -211,7 +211,7 @@ return body.payment || body.data?.payment || body.data || body;
 function extractPaymentId(response) {
 const payment = extractPayment(response);
 
-if (!payment || typeof payment !== ‘object’) {
+if (!payment || typeof payment !== 'object') {
 return null;
 }
 
@@ -222,7 +222,7 @@ function requireMutationOptIn() {
 assert.equal(
 RUN_MUTATING_TESTS,
 true,
-‘Set RUN_MUTATING_PAYMENT_TESTS=true only in an isolated payment sandbox.’
+'Set RUN_MUTATING_PAYMENT_TESTS=true only in an isolated payment sandbox.'
 );
 }
 
@@ -234,18 +234,18 @@ function paymentCreationPayload(overrides = {}) {
 return {
 amount: AMOUNT_MINOR,
 currency: CURRENCY,
-description: ‘MedOrbits payment integration test’,
-…overrides,
+description: 'MedOrbits payment integration test',
+...overrides,
 };
 }
 
-describe(‘MedOrbits payment integration tests’, () => {
+describe('MedOrbits payment integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘payment endpoint availability’, () => {
-it(‘handles a payment collection request without an internal server error’, async () => {
+describe('payment endpoint availability', () => {
+it('handles a payment collection request without an internal server error', async () => {
 const response = await request(PAYMENTS_PATH, {
 token: USER_A_TOKEN || undefined,
 });
@@ -259,10 +259,10 @@ token: USER_A_TOKEN || undefined,
 
 });
 
-describe(‘authentication and authorization’, () => {
-it(‘rejects payment creation without authentication’, async () => {
+describe('authentication and authorization', () => {
+it('rejects payment creation without authentication', async () => {
 const response = await request(PAYMENTS_PATH, {
-method: ‘POST’,
+method: 'POST',
 body: paymentCreationPayload(),
 });
 
@@ -300,9 +300,9 @@ it(
 
 });
 
-describe(‘payment creation and validation’, () => {
+describe('payment creation and validation', () => {
 it(
-‘creates a payment with a valid amount and currency’,
+'creates a payment with a valid amount and currency',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutationOptIn();
@@ -451,9 +451,9 @@ it(
 
 });
 
-describe(‘payment retrieval and integrity’, () => {
+describe('payment retrieval and integrity', () => {
 it(
-‘retrieves the configured sandbox payment’,
+'retrieves the configured sandbox payment',
 { skip: !PAYMENT_ID || !USER_A_TOKEN },
 async () => {
 const response = await request(paymentUrl(PAYMENT_ID), {
@@ -525,9 +525,9 @@ it(
 
 });
 
-describe(‘refund validation’, () => {
+describe('refund validation', () => {
 it(
-‘rejects a zero-value refund’,
+'rejects a zero-value refund',
 { skip: !RUN_MUTATING_TESTS || !PAYMENT_ID },
 async () => {
 requireMutationOptIn();

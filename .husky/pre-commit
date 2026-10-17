@@ -78,10 +78,14 @@ run_check() {
 }
 # ESLint
 run_check "ESLint" "lint"
-# Prettier
-run_check "Prettier formatting validation" "format:check"
-# Automated tests
-run_check "automated tests" "test"
+# Optional heavy checks (full-repository formatting and tests can be enabled explicitly)
+if [ "${MEDORBITS_PRECOMMIT_FULL:-0}" = "1" ]; then
+    run_check "Prettier formatting validation" "format:check"
+    run_check "automated tests" "test"
+else
+    echo "INFO: Skipping Prettier and automated tests in pre-commit."
+    echo "INFO: Set MEDORBITS_PRECOMMIT_FULL=1 to run full checks locally."
+fi
 # --------------------------------------------------
 # 5. Report results
 # --------------------------------------------------

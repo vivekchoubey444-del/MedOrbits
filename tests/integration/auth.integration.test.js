@@ -12,42 +12,42 @@
 * integration-test environment.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.AUTH_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const REGISTER_PATH =
-process.env.AUTH_REGISTER_PATH || ‘/api/auth/register’;
+process.env.AUTH_REGISTER_PATH || '/api/auth/register';
 
 const LOGIN_PATH =
-process.env.AUTH_LOGIN_PATH || ‘/api/auth/login’;
+process.env.AUTH_LOGIN_PATH || '/api/auth/login';
 
 const ME_PATH =
-process.env.AUTH_ME_PATH || ‘/api/auth/me’;
+process.env.AUTH_ME_PATH || '/api/auth/me';
 
 const LOGOUT_PATH =
-process.env.AUTH_LOGOUT_PATH || ‘/api/auth/logout’;
+process.env.AUTH_LOGOUT_PATH || '/api/auth/logout';
 
 const PROTECTED_PATH =
-process.env.AUTH_PROTECTED_TEST_PATH || ‘/api/users/me’;
+process.env.AUTH_PROTECTED_TEST_PATH || '/api/users/me';
 
 const TEST_PASSWORD =
-process.env.AUTH_TEST_PASSWORD || ‘Integration-Test-Password-92!’;
+process.env.AUTH_TEST_PASSWORD || 'Integration-Test-Password-92!';
 
 const TIMEOUT_MS = Number(
 process.env.AUTH_TEST_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_AUTH_MUTATING_TESTS === ‘true’;
+process.env.RUN_AUTH_MUTATING_TESTS === 'true';
 
 function validateConfiguration() {
 for (const [name, path] of Object.entries({
@@ -58,20 +58,20 @@ AUTH_LOGOUT_PATH: LOGOUT_PATH,
 AUTH_PROTECTED_TEST_PATH: PROTECTED_PATH,
 })) {
 assert.ok(
-path.startsWith(’/’),
+path.startsWith('/'),
 ${name} must start with /.
 );
 }
 
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘AUTH_TEST_TIMEOUT_MS must be positive.’
+'AUTH_TEST_TIMEOUT_MS must be positive.'
 );
 
 assert.ok(
-typeof TEST_PASSWORD === ‘string’ &&
+typeof TEST_PASSWORD === 'string' &&
 TEST_PASSWORD.length >= 12,
-‘AUTH_TEST_PASSWORD must be at least 12 characters.’
+'AUTH_TEST_PASSWORD must be at least 12 characters.'
 );
 }
 
@@ -80,7 +80,7 @@ return ${BASE_URL}${path};
 }
 
 async function apiRequest(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -92,8 +92,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -101,7 +101,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -110,7 +110,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -140,17 +140,17 @@ return auth-test-${crypto.randomUUID()}@example.com;
 
 function registrationPayload(overrides = {}) {
 return {
-name: ‘MedOrbits Integration Test’,
+name: 'MedOrbits Integration Test',
 email: uniqueEmail(),
 password: TEST_PASSWORD,
-…overrides,
+...overrides,
 };
 }
 
 function extractUser(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -160,7 +160,7 @@ return body.user || body.data?.user || body.data || body;
 function extractToken(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -193,22 +193,22 @@ function requireMutatingTests() {
 assert.equal(
 RUN_MUTATING_TESTS,
 true,
-‘Set RUN_AUTH_MUTATING_TESTS=true only in an isolated integration-test environment.’
+'Set RUN_AUTH_MUTATING_TESTS=true only in an isolated integration-test environment.'
 );
 }
 
-describe(‘MedOrbits authentication integration tests’, () => {
+describe('MedOrbits authentication integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘endpoint availability’, () => {
-it(‘responds to an authentication request without an internal server error’, async () => {
+describe('endpoint availability', () => {
+it('responds to an authentication request without an internal server error', async () => {
 const response = await apiRequest(LOGIN_PATH, {
-method: ‘POST’,
+method: 'POST',
 body: {
-email: ‘nonexistent-auth-test@example.com’,
-password: ‘Invalid-Test-Password-92!’,
+email: 'nonexistent-auth-test@example.com',
+password: 'Invalid-Test-Password-92!',
 },
 });
 
@@ -221,9 +221,9 @@ password: ‘Invalid-Test-Password-92!’,
 
 });
 
-describe(‘registration’, () => {
+describe('registration', () => {
 it(
-‘registers a new user with valid input’,
+'registers a new user with valid input',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutatingTests();
@@ -321,13 +321,13 @@ it(
 
 });
 
-describe(‘login’, () => {
-it(‘rejects invalid credentials’, async () => {
+describe('login', () => {
+it('rejects invalid credentials', async () => {
 const response = await apiRequest(LOGIN_PATH, {
-method: ‘POST’,
+method: 'POST',
 body: {
 email: unknown-${crypto.randomUUID()}@example.com,
-password: ‘Invalid-Password-92!’,
+password: 'Invalid-Password-92!',
 },
 });
 
@@ -400,10 +400,10 @@ it('does not return a password in the login response', async () => {
 
 });
 
-describe(‘token and protected-route behaviour’, () => {
-it(‘rejects an invalid bearer token on a protected endpoint’, async () => {
+describe('token and protected-route behaviour', () => {
+it('rejects an invalid bearer token on a protected endpoint', async () => {
 const response = await apiRequest(PROTECTED_PATH, {
-token: ‘invalid.token.value’,
+token: 'invalid.token.value',
 });
 
   assertNoServerError(response, 'Invalid bearer token');
@@ -468,9 +468,9 @@ it(
 
 });
 
-describe(‘logout’, () => {
+describe('logout', () => {
 it(
-‘accepts logout for an authenticated session’,
+'accepts logout for an authenticated session',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutatingTests();

@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -13,15 +13,15 @@
     */
 
 const REQUIRED_METHODS = Object.freeze([
-‘put’,
-‘get’,
-‘delete’,
+'put',
+'get',
+'delete',
 ]);
 
 class StorageClient {
 constructor(provider) {
-if (!provider || typeof provider !== ‘object’) {
-throw new TypeError(‘A storage provider is required.’);
+if (!provider || typeof provider !== 'object') {
+throw new TypeError('A storage provider is required.');
 }
 
 for (const method of REQUIRED_METHODS) {
@@ -43,10 +43,10 @@ Object.defineProperty(this, 'provider', {
 async put(input) {
 if (
 !input ||
-typeof input !== ‘object’ ||
+typeof input !== 'object' ||
 Array.isArray(input)
 ) {
-throw new TypeError(‘Storage put() requires an options object.’);
+throw new TypeError('Storage put() requires an options object.');
 }
 
 if (typeof input.key !== 'string' || !input.key.trim()) {
@@ -75,14 +75,14 @@ return this.provider.delete(key);
 }
 
 async close() {
-if (typeof this.provider.close === ‘function’) {
+if (typeof this.provider.close === 'function') {
 await this.provider.close();
 }
 }
 
 validateKey(key) {
-if (typeof key !== ‘string’ || !key.trim()) {
-throw new TypeError(‘A non-empty storage key is required.’);
+if (typeof key !== 'string' || !key.trim()) {
+throw new TypeError('A non-empty storage key is required.');
 }
 }
 }

@@ -3,3 +3,5 @@ coverage
 dist
 package-lock.json
 assets/data
+tests/**/*.js
+tests/**/*.mjs

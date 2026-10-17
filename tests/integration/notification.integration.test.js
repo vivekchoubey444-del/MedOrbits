@@ -18,48 +18,48 @@
 * the actual MedOrbits notification routes and controllers.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
 
 const BASE_URL = (
 process.env.NOTIFICATION_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const NOTIFICATIONS_PATH =
-process.env.NOTIFICATIONS_TEST_PATH || ‘/api/notifications’;
+process.env.NOTIFICATIONS_TEST_PATH || '/api/notifications';
 
 const NOTIFICATION_PATH =
-process.env.NOTIFICATION_TEST_PATH || ‘/api/notifications/:id’;
+process.env.NOTIFICATION_TEST_PATH || '/api/notifications/:id';
 
 const READ_PATH =
 process.env.NOTIFICATION_READ_TEST_PATH ||
-‘/api/notifications/:id/read’;
+'/api/notifications/:id/read';
 
 const READ_ALL_PATH =
 process.env.NOTIFICATION_READ_ALL_TEST_PATH ||
-‘/api/notifications/read-all’;
+'/api/notifications/read-all';
 
 const USER_A_TOKEN =
-process.env.NOTIFICATION_TEST_USER_A_TOKEN || ‘’;
+process.env.NOTIFICATION_TEST_USER_A_TOKEN || '';
 
 const USER_B_TOKEN =
-process.env.NOTIFICATION_TEST_USER_B_TOKEN || ‘’;
+process.env.NOTIFICATION_TEST_USER_B_TOKEN || '';
 
 const TIMEOUT_MS = Number(
 process.env.NOTIFICATION_TEST_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_NOTIFICATION_MUTATING_TESTS === ‘true’;
+process.env.RUN_NOTIFICATION_MUTATING_TESTS === 'true';
 
 function validateConfiguration() {
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘NOTIFICATION_TEST_TIMEOUT_MS must be positive.’
+'NOTIFICATION_TEST_TIMEOUT_MS must be positive.'
 );
 
 for (const [name, path] of Object.entries({
@@ -69,19 +69,19 @@ READ_PATH,
 READ_ALL_PATH,
 })) {
 assert.ok(
-path.startsWith(’/’),
+path.startsWith('/'),
 ${name} must start with /.
 );
 }
 
 assert.ok(
-NOTIFICATION_PATH.includes(’:id’),
-‘NOTIFICATION_TEST_PATH must contain the :id placeholder.’
+NOTIFICATION_PATH.includes(':id'),
+'NOTIFICATION_TEST_PATH must contain the :id placeholder.'
 );
 
 assert.ok(
-READ_PATH.includes(’:id’),
-‘NOTIFICATION_READ_TEST_PATH must contain the :id placeholder.’
+READ_PATH.includes(':id'),
+'NOTIFICATION_READ_TEST_PATH must contain the :id placeholder.'
 );
 }
 
@@ -91,20 +91,20 @@ return ${BASE_URL}${path};
 
 function notificationUrl(id) {
 return NOTIFICATION_PATH.replace(
-‘:id’,
+':id',
 encodeURIComponent(String(id))
 );
 }
 
 function readUrl(id) {
 return READ_PATH.replace(
-‘:id’,
+':id',
 encodeURIComponent(String(id))
 );
 }
 
 async function request(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -117,8 +117,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -126,7 +126,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -135,7 +135,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -189,7 +189,7 @@ if (Array.isArray(body)) {
 return body;
 }
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -215,7 +215,7 @@ return null;
 function extractNotification(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -228,7 +228,7 @@ body
 }
 
 function extractNotificationId(notification) {
-if (!notification || typeof notification !== ‘object’) {
+if (!notification || typeof notification !== 'object') {
 return null;
 }
 
@@ -246,17 +246,17 @@ function requireMutationOptIn() {
 assert.equal(
 RUN_MUTATING_TESTS,
 true,
-‘Set RUN_NOTIFICATION_MUTATING_TESTS=true only in an isolated test environment.’
+'Set RUN_NOTIFICATION_MUTATING_TESTS=true only in an isolated test environment.'
 );
 }
 
-describe(‘MedOrbits notification integration tests’, () => {
+describe('MedOrbits notification integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘endpoint availability’, () => {
-it(‘handles a notification listing request without an internal server error’, async () => {
+describe('endpoint availability', () => {
+it('handles a notification listing request without an internal server error', async () => {
 const response = await request(NOTIFICATIONS_PATH, {
 token: USER_A_TOKEN || undefined,
 });
@@ -270,8 +270,8 @@ token: USER_A_TOKEN || undefined,
 
 });
 
-describe(‘authentication’, () => {
-it(‘rejects unauthenticated notification listing when the endpoint is private’, async () => {
+describe('authentication', () => {
+it('rejects unauthenticated notification listing when the endpoint is private', async () => {
 const response = await request(NOTIFICATIONS_PATH);
 
   assertNoServerError(response, 'Unauthenticated notification listing');
@@ -300,10 +300,10 @@ it('rejects an invalid token when retrieving a notification', async () => {
 
 });
 
-describe(‘notification listing’, () => {
-it(‘returns a documented notification collection for an authenticated user’, async (t) => {
+describe('notification listing', () => {
+it('returns a documented notification collection for an authenticated user', async (t) => {
 if (!USER_A_TOKEN) {
-t.skip(‘Set NOTIFICATION_TEST_USER_A_TOKEN.’);
+t.skip('Set NOTIFICATION_TEST_USER_A_TOKEN.');
 return;
 }
 
@@ -394,9 +394,9 @@ it('rejects invalid pagination values or handles them safely', async (t) => {
 
 });
 
-describe(‘notification retrieval and ownership’, () => {
+describe('notification retrieval and ownership', () => {
 it(
-‘prevents one user from reading another user’s private notification’,
+'prevents one user from reading another user's private notification',
 { skip: !RUN_MUTATING_TESTS },
 async (t) => {
 requireMutationOptIn();
@@ -441,9 +441,9 @@ it('does not resolve a malformed notification identifier to an unrelated record'
 
 });
 
-describe(‘read-state updates’, () => {
+describe('read-state updates', () => {
 it(
-‘marks an owned notification as read’,
+'marks an owned notification as read',
 { skip: !RUN_MUTATING_TESTS },
 async (t) => {
 requireMutationOptIn();
@@ -495,7 +495,7 @@ requireMutationOptIn();
   }
 );
 it(
-  'does not allow one user to mark another user’s notification as read',
+  'does not allow one user to mark another user's notification as read',
   { skip: !RUN_MUTATING_TESTS },
   async (t) => {
     requireMutationOptIn();
@@ -546,10 +546,10 @@ it(
 
 });
 
-describe(‘input validation and method handling’, () => {
-it(‘does not accept unsupported HTTP methods for notification listing’, async () => {
+describe('input validation and method handling', () => {
+it('does not accept unsupported HTTP methods for notification listing', async () => {
 const response = await request(NOTIFICATIONS_PATH, {
-method: ‘TRACE’,
+method: 'TRACE',
 });
 
   assert.ok(

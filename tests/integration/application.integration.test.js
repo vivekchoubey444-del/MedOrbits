@@ -12,57 +12,57 @@
 * Mutating tests require an isolated test environment.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.APPLICATION_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const APPLICATIONS_PATH =
-process.env.APPLICATIONS_TEST_PATH || ‘/api/applications’;
+process.env.APPLICATIONS_TEST_PATH || '/api/applications';
 
 const APPLICATION_PATH =
-process.env.APPLICATION_TEST_PATH || ‘/api/applications/:id’;
+process.env.APPLICATION_TEST_PATH || '/api/applications/:id';
 
-const USER_A_TOKEN = process.env.APPLICATION_TEST_USER_A_TOKEN || ‘’;
-const USER_B_TOKEN = process.env.APPLICATION_TEST_USER_B_TOKEN || ‘’;
+const USER_A_TOKEN = process.env.APPLICATION_TEST_USER_A_TOKEN || '';
+const USER_B_TOKEN = process.env.APPLICATION_TEST_USER_B_TOKEN || '';
 
 const TIMEOUT_MS = Number(
 process.env.APPLICATION_TEST_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_APPLICATION_MUTATING_TESTS === ‘true’;
+process.env.RUN_APPLICATION_MUTATING_TESTS === 'true';
 
 const VALID_APPLICATION = {
-course: process.env.TEST_APPLICATION_COURSE || ‘MBBS’,
-applicantName: ‘Integration Test Applicant’,
+course: process.env.TEST_APPLICATION_COURSE || 'MBBS',
+applicantName: 'Integration Test Applicant',
 email: application-test-${crypto.randomUUID()}@example.com,
-phone: ‘9000000000’,
-country: ‘IN’,
-message: ‘Automated integration test application.’,
+phone: '9000000000',
+country: 'IN',
+message: 'Automated integration test application.',
 };
 
 function validateConfiguration() {
 assert.ok(
-APPLICATIONS_PATH.startsWith(’/’),
-‘APPLICATIONS_TEST_PATH must start with /.’
+APPLICATIONS_PATH.startsWith('/'),
+'APPLICATIONS_TEST_PATH must start with /.'
 );
 
 assert.ok(
-APPLICATION_PATH.includes(’:id’),
-‘APPLICATION_TEST_PATH must include the :id placeholder.’
+APPLICATION_PATH.includes(':id'),
+'APPLICATION_TEST_PATH must include the :id placeholder.'
 );
 
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘APPLICATION_TEST_TIMEOUT_MS must be positive.’
+'APPLICATION_TEST_TIMEOUT_MS must be positive.'
 );
 }
 
@@ -72,12 +72,12 @@ return ${BASE_URL}${path};
 
 function applicationUrl(id) {
 return buildUrl(
-APPLICATION_PATH.replace(’:id’, encodeURIComponent(id))
+APPLICATION_PATH.replace(':id', encodeURIComponent(id))
 );
 }
 
 async function apiRequest(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -89,8 +89,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -98,7 +98,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -107,7 +107,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const text = await response.text();
@@ -148,7 +148,7 @@ ${label}: expected a client error, received HTTP ${response.status}.
 function extractApplication(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -163,7 +163,7 @@ body
 function extractApplicationId(response) {
 const application = extractApplication(response);
 
-if (!application || typeof application !== ‘object’) {
+if (!application || typeof application !== 'object') {
 return null;
 }
 
@@ -183,20 +183,20 @@ function requireMutatingTests() {
 assert.equal(
 RUN_MUTATING_TESTS,
 true,
-‘Set RUN_APPLICATION_MUTATING_TESTS=true only for an isolated integration-test environment.’
+'Set RUN_APPLICATION_MUTATING_TESTS=true only for an isolated integration-test environment.'
 );
 }
 
-describe(‘MedOrbits application integration tests’, () => {
+describe('MedOrbits application integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘configuration and connectivity’, () => {
-it(‘requires test credentials for both test users’, () => {
+describe('configuration and connectivity', () => {
+it('requires test credentials for both test users', () => {
 assert.ok(
 USER_A_TOKEN,
-‘APPLICATION_TEST_USER_A_TOKEN is required.’
+'APPLICATION_TEST_USER_A_TOKEN is required.'
 );
 
   assert.ok(
@@ -222,10 +222,10 @@ it('responds without an internal server error to an application collection reque
 
 });
 
-describe(‘authentication and authorization’, () => {
-it(‘rejects application creation without authentication’, async () => {
+describe('authentication and authorization', () => {
+it('rejects application creation without authentication', async () => {
 const response = await apiRequest(APPLICATIONS_PATH, {
-method: ‘POST’,
+method: 'POST',
 body: VALID_APPLICATION,
 });
 
@@ -251,9 +251,9 @@ it('rejects unauthenticated application collection access when the endpoint is p
 
 });
 
-describe(‘application validation’, () => {
+describe('application validation', () => {
 it(
-‘rejects an application with missing required fields’,
+'rejects an application with missing required fields',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutatingTests();
@@ -330,9 +330,9 @@ it(
 
 });
 
-describe(‘application creation and retrieval’, () => {
+describe('application creation and retrieval', () => {
 it(
-‘creates an application with a valid payload’,
+'creates an application with a valid payload',
 { skip: !RUN_MUTATING_TESTS },
 async (t) => {
 requireMutatingTests();
@@ -407,9 +407,9 @@ it(
 
 });
 
-describe(‘cross-user access control’, () => {
+describe('cross-user access control', () => {
 it(
-‘prevents another user from reading a private application’,
+'prevents another user from reading a private application',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutatingTests();
@@ -479,9 +479,9 @@ it(
 
 });
 
-describe(‘status transition protection’, () => {
+describe('status transition protection', () => {
 it(
-‘does not allow an ordinary applicant to approve an application’,
+'does not allow an ordinary applicant to approve an application',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutatingTests();
