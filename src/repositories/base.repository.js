@@ -36,6 +36,11 @@ function createRepository({ table, columns, searchable = [], defaultOrder = 'id'
       values.push(String(params.status).slice(0, 50));
     }
 
+    if (params.user_id && allowed.has('user_id')) {
+      where.push('`user_id` = ?');
+      values.push(params.user_id);
+    }
+
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const countRows = await query(`SELECT COUNT(*) AS total FROM \`${table}\` ${whereSql}`, values);
     const order = allowed.has(params.sort) ? params.sort : defaultOrder;

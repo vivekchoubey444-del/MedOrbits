@@ -1,7 +1,7 @@
 'use strict';
 const request = require('supertest');
 const app = require('../../src/app');
-const baseUrl = '/api/applications';
+const baseUrl = `${app.locals.apiPrefix}/applications`;
 const validApplication = {
   courseId: 'COURSE-001',
   collegeId: 'COLLEGE-001',
