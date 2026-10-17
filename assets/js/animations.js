@@ -25,6 +25,7 @@
     stagger: "[data-animate-stagger]",
     parallax: "[data-parallax]"
   };
+  const AUTO_REVEAL = ".hero-grid > div, .section-head, .cta-inner, .pillar, .faq, .footer-grid > div:not(.footer-brand)";
   function prefersReducedMotion() {
     return Boolean(
       window.matchMedia &&
@@ -160,6 +161,12 @@
   }
   function initRevealAnimations(root = document) {
     if (!root?.querySelectorAll) return;
+    root.querySelectorAll(AUTO_REVEAL).forEach((element) => {
+      if (!element.hasAttribute("data-animate")) element.setAttribute("data-animate", "fade-up");
+    });
+    root.querySelectorAll(".cards:not([data-no-catalog-slider])").forEach((element) => {
+      if (!element.hasAttribute("data-animate-stagger")) element.setAttribute("data-animate-stagger", "");
+    });
     root.querySelectorAll(SELECTORS.reveal).forEach(observeElement);
     root.querySelectorAll(SELECTORS.stagger).forEach(observeElement);
   }

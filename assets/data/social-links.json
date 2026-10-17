@@ -7,6 +7,7 @@
   },
   "links": [
     { "id": "google", "label": "Google", "url": "" },
+    { "id": "website", "label": "MedOrbits website", "url": "https://medorbits.in" },
     { "id": "whatsapp-primary", "label": "WhatsApp +91 62058 89064", "url": "https://wa.me/916205889064" },
     { "id": "whatsapp-secondary", "label": "WhatsApp +91 76449 87052", "url": "https://wa.me/917644987052" },
     { "id": "facebook", "label": "Facebook", "url": "" },

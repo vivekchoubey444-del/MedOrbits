@@ -573,11 +573,15 @@
           "telegram",
           "whatsapp",
           "x",
-          "youtube"
+          "youtube",
+          "website"
         ]);
+        const unconfiguredProfiles = ["instagram", "facebook", "x"];
         helpers.queryAll("[data-social-links]").forEach((container) => {
           container.replaceChildren();
-          (Array.isArray(data.links) ? data.links : []).forEach((item) => {
+          const configured = Array.isArray(data.links) ? data.links : [];
+          const configuredIds = new Set(configured.map((item) => String(item?.id || "").toLowerCase()));
+          configured.forEach((item) => {
             if (typeof item?.url !== "string" || !item.url.trim()) return;
             let url;
             try {
@@ -592,7 +596,9 @@
             const link = document.createElement("a");
             const icon = document.createElement("img");
             const label = document.createElement("span");
-            const iconName = iconIds.has(iconId) ? iconId : "social";
+            const iconName = iconId === "website"
+              ? "link"
+              : iconIds.has(iconId) ? iconId : "social";
 
             link.className = "footer-social-button";
             link.href = url.href;
@@ -607,6 +613,27 @@
             link.append(icon, label);
             container.appendChild(link);
           });
+
+          unconfiguredProfiles.forEach((id) => {
+            const item = configured.find((candidate) => String(candidate?.id || "").toLowerCase() === id);
+            if (configuredIds.has(id) && item?.url?.trim()) return;
+
+            const placeholder = document.createElement("span");
+            const icon = document.createElement("img");
+            const label = document.createElement("span");
+            placeholder.className = "footer-social-placeholder";
+            placeholder.setAttribute("role", "img");
+            placeholder.setAttribute("aria-label", `${id} profile link not configured`);
+            icon.src = `/assets/icons/social/${id}.svg`;
+            icon.alt = "";
+            icon.width = 18;
+            icon.height = 18;
+            icon.setAttribute("aria-hidden", "true");
+            label.textContent = id === "x" ? "X" : id[0].toUpperCase() + id.slice(1);
+            placeholder.append(icon, label);
+            container.appendChild(placeholder);
+          });
+
           container.hidden = container.childElementCount === 0;
         });
       }).catch((error) => {
@@ -623,11 +650,66 @@
   // --------------------------------------------------
 
   const catalogSliders = {
+    observer: null,
     init() {
-      helpers.queryAll("[data-catalog-slider]").forEach((track, index) => {
+      if (!document.getElementById("medorbits-grid-layout")) {
+        const style = document.createElement("style");
+        style.id = "medorbits-grid-layout";
+        style.textContent = `
+          .cards.is-catalog-slider {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 16px !important;
+            overflow: visible !important;
+            padding: 2px 0 !important;
+            scroll-snap-type: none !important;
+          }
+          .cards.is-catalog-slider > * {
+            min-width: 0 !important;
+            flex: initial !important;
+            scroll-snap-align: none !important;
+          }
+          .footer-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 20px 16px !important;
+          }
+          .footer-grid > .footer-brand {
+            grid-column: 1 / -1 !important;
+          }
+          .footer-social-placeholder {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border: 1px solid rgba(201, 169, 110, 0.18);
+            border-radius: 8px;
+            color: var(--muted, #a79caf);
+            font-size: 11px;
+            opacity: 0.6;
+          }
+          .footer-social-placeholder img {
+            width: 18px;
+            height: 18px;
+          }
+          .catalog-slider-controls {
+            justify-content: flex-end;
+          }
+          @media (max-width: 390px) {
+            .cards.is-catalog-slider,
+            .footer-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      helpers.queryAll("[data-catalog-slider], .cards:not([data-no-catalog-slider])").forEach((track, index) => {
         if (track.dataset.sliderInitialized === "true") return;
 
         track.dataset.sliderInitialized = "true";
+        track.dataset.sliderPageSize ||= "4";
         track.classList.add("is-catalog-slider");
         track.setAttribute(
           "aria-label",
@@ -717,6 +799,17 @@
         if (paginated) showPage(0);
         else updateControls();
       });
+
+      if (!this.observer && "MutationObserver" in window && document.body) {
+        this.observer = new MutationObserver((records) => {
+          const addedCatalog = records.some((record) => [...record.addedNodes].some((node) =>
+            node.nodeType === Node.ELEMENT_NODE &&
+            (node.matches(".cards") || node.querySelector(".cards"))
+          ));
+          if (addedCatalog) this.init();
+        });
+        this.observer.observe(document.body, { childList: true, subtree: true });
+      }
     }
   };
 
