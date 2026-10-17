@@ -36,6 +36,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --runInBand --passWithNoTests",
     "test:unit": "jest --runInBand --passWithNoTests tests/unit",
+    "test:university-directory": "node --test tests/unit/public-university-directory.test.mjs",
     "test:integration": "jest --runInBand --passWithNoTests tests/integration",
     "test:api": "jest --runInBand --passWithNoTests tests/api",
     "test:database": "jest --runInBand --passWithNoTests tests/database",

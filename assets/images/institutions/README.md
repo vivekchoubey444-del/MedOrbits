@@ -108,7 +108,7 @@ Use consistent and descriptive filenames.
 * Use lowercase filenames.
 * Separate words with hyphens.
 * Prefer .svg for simple scalable placeholders and vector illustrations.
-* Prefer WebP for optimized raster photographs and illustrations.
+* Prefer JPG for optimized raster photographs and illustrations.
 * Use JPG when appropriate for existing content or compatibility.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -129,7 +129,7 @@ assets/images/institutions/
 ├── university-campus-placeholder.svg
 ├── medical-college-placeholder.svg
 ├── hospital-placeholder.svg
-└── institution-default.webp
+└── institution-default.jpg
 
 Create additional assets only when they support an actual application requirement. Check the existing directory for equivalent files before adding new ones.
 
@@ -208,7 +208,7 @@ Recommended practices:
 
 * Compress raster photographs before publishing.
 * Resize images to appropriate display dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Keep SVG placeholders lightweight.
 * Remove unnecessary SVG metadata.
 * Avoid unnecessary external SVG references.
@@ -286,7 +286,7 @@ This directory is designed to support additional institution placeholders and ve
 
 1. Save the new image in assets/images/institutions/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Use SVG for simple scalable placeholders or WebP for optimized raster imagery.
+3. Use SVG for simple scalable placeholders or JPG for optimized raster imagery.
 4. Verify the image’s content, dimensions, and licensing.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant HTML, CSS, JavaScript, JSON, or API references.
@@ -299,7 +299,7 @@ This directory is designed to support additional institution placeholders and ve
 Use this table to record new assets as they are created.
 
 Filename	Intended use	Format	Status
-example-institution-image.webp	Describe the institution or campus use	WebP	Proposed
+example-institution-image.jpg	Describe the institution or campus use	JPG	Proposed
 
 Replace the example row with actual filenames when the files are created. Proposed entries are not confirmation that the files exist.
 
@@ -312,7 +312,7 @@ Possible additions include:
 * engineering-college-placeholder.svg — Engineering college listings
 * nursing-college-placeholder.svg — Nursing institution listings
 * research-institution-placeholder.svg — Research institution listings
-* institution-default.webp — General raster fallback where required
+* institution-default.jpg — General raster fallback where required
 
 These are suggestions only. Create them when supported by actual application requirements, and check for duplicates before adding files.
 

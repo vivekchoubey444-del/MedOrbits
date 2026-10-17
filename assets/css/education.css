@@ -399,7 +399,7 @@
       rgba(43, 29, 54, 0.91) 62%,
       rgba(84, 30, 50, 0.6)
     ),
-    url("/assets/images/education/education-global.webp") center / cover no-repeat,
+    url("/assets/images/education/education-global.jpg") center / cover no-repeat,
     var(--bg, #100a17);
 }
 .cta-inner {

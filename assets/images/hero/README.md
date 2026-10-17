@@ -32,36 +32,36 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/hero/
 ├── README.md
-├── admissions-hero.webp
-├── career-hero.webp
-├── contact-hero.webp
-├── education-hero.webp
+├── admissions-hero.jpg
+├── career-hero.jpg
+├── contact-hero.jpg
+├── education-hero.jpg
 ├── hero-home.png
-├── home-hero.webp
-└── study-abroad-hero.webp
+├── home-hero.jpg
+└── study-abroad-hero.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-admissions-hero.webp	18.3 KB	Admissions and counselling
-career-hero.webp	20.7 KB	Career guidance and professional development
-contact-hero.webp	18.5 KB	Contact and enquiry pages
-education-hero.webp	18.4 KB	Education and course discovery
+admissions-hero.jpg	18.3 KB	Admissions and counselling
+career-hero.jpg	20.7 KB	Career guidance and professional development
+contact-hero.jpg	18.5 KB	Contact and enquiry pages
+education-hero.jpg	18.4 KB	Education and course discovery
 hero-home.png	2.0 MB	Existing homepage image; verify current references
-home-hero.webp	18.3 KB	Homepage hero image
-study-abroad-hero.webp	18.3 KB	International education
+home-hero.jpg	18.3 KB	Homepage hero image
+study-abroad-hero.jpg	18.3 KB	International education
 
 File sizes are approximate and may change after optimization or replacement.
 
 The screenshot confirms the filenames and approximate sizes, but does not establish the images’ dimensions, visual content, licensing, or production usage.
 
-Important: Both hero-home.png and home-hero.webp are present. Compare their content and check application references before replacing, renaming, or deleting either file.
+Important: Both hero-home.png and home-hero.jpg are present. Compare their content and check application references before replacing, renaming, or deleting either file.
 
 3. Naming Conventions
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized photographic or raster hero imagery.
+* Prefer JPG for optimized photographic or raster hero imagery.
 * Use SVG only for suitable scalable vector artwork.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -73,13 +73,13 @@ Before renaming or removing files, inspect references in HTML, CSS, JavaScript, 
 4. Hero Asset Catalogue
 
 Filename	Intended page	Visual direction
-home-hero.webp	Homepage	Welcoming education and career guidance
+home-hero.jpg	Homepage	Welcoming education and career guidance
 hero-home.png	Existing homepage asset	Preserve until its current role is verified
-education-hero.webp	Education	Academic learning and course discovery
-admissions-hero.webp	Admissions	Application guidance and counselling
-study-abroad-hero.webp	Study abroad	International education and global learning
-career-hero.webp	Career	Professional development and career planning
-contact-hero.webp	Contact	Consultation and student support
+education-hero.jpg	Education	Academic learning and course discovery
+admissions-hero.jpg	Admissions	Application guidance and counselling
+study-abroad-hero.jpg	Study abroad	International education and global learning
+career-hero.jpg	Career	Professional development and career planning
+contact-hero.jpg	Contact	Consultation and student support
 
 Choose imagery that matches the actual content of each page. Do not imply institutional partnerships, campus facilities, admission guarantees, or employment outcomes through the images.
 
@@ -152,7 +152,7 @@ Recommended practices:
 
 * Compress images before publishing.
 * Resize images to appropriate source dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Remove unnecessary metadata.
 * Use responsive image sources where beneficial.
 * Avoid serving oversized originals when smaller files provide sufficient quality.
@@ -167,7 +167,7 @@ Large photographic hero	Approximately 300–500 KB where practical
 
 These are guidelines rather than strict limits.
 
-The observed WebP files are approximately 18–21 KB, while hero-home.png is approximately 2 MB. These sizes alone do not prove that the files are visually equivalent or that either is suitable for every use. Compare their quality, dimensions, composition, and production references before deciding whether to replace the PNG.
+The observed JPG files are approximately 18–21 KB, while hero-home.png is approximately 2 MB. These sizes alone do not prove that the files are visually equivalent or that either is suitable for every use. Compare their quality, dimensions, composition, and production references before deciding whether to replace the PNG.
 
 9. Recommended HTML Integration
 
@@ -175,7 +175,7 @@ The following example illustrates how a hero image can be referenced. Adapt it t
 
 <img
   class=“hero__image”
-  src=“/assets/images/hero/home-hero.webp”
+  src=“/assets/images/hero/home-hero.jpg”
   alt=“”
   width=“1920”
   height=“1080”
@@ -259,7 +259,7 @@ File integrity
 * [ ]	The extension matches its actual format.
 * [ ]	Dimensions and compression are appropriate.
 * [ ]	All production references are correct.
-* [ ]	Homepage PNG and WebP references have been checked.
+* [ ]	Homepage PNG and JPG references have been checked.
 
 Visual quality
 
@@ -294,7 +294,7 @@ This directory is designed to accommodate additional hero images as MedOrbits ex
 
 1. Save the image in assets/images/hero/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Prefer WebP for optimized raster imagery.
+3. Prefer JPG for optimized raster imagery.
 4. Optimize the image for its intended dimensions.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant HTML, CSS, JavaScript, or JSON references.
@@ -307,7 +307,7 @@ This directory is designed to accommodate additional hero images as MedOrbits ex
 Use this table to document new assets.
 
 Filename	Intended page	Format	Status
-example-hero.webp	Describe the destination page	WebP	Proposed
+example-hero.jpg	Describe the destination page	JPG	Proposed
 
 Replace the example row with actual files when they are created. Proposed entries do not confirm that files exist.
 
@@ -315,12 +315,12 @@ Replace the example row with actual files when they are created. Proposed entrie
 
 Possible additions include:
 
-* online-learning-hero.webp — Online education and learning resources
-* student-support-hero.webp — Student guidance and support
-* scholarship-hero.webp — Scholarship information
-* medical-education-hero.webp — Medical education guidance
-* career-planning-hero.webp — Career planning services
-* exam-preparation-hero.webp — Examination preparation resources
+* online-learning-hero.jpg — Online education and learning resources
+* student-support-hero.jpg — Student guidance and support
+* scholarship-hero.jpg — Scholarship information
+* medical-education-hero.jpg — Medical education guidance
+* career-planning-hero.jpg — Career planning services
+* exam-preparation-hero.jpg — Examination preparation resources
 
 These are suggestions only. Add them when supported by actual page requirements, and check for duplicates before creating files.
 
@@ -343,7 +343,7 @@ When adding, replacing, or removing hero images:
 1. Inspect the current directory and image references.
 2. Check the affected page before modifying an asset.
 3. Preserve established filenames unless a migration is required.
-4. Compare the homepage PNG and WebP before choosing a canonical asset.
+4. Compare the homepage PNG and JPG before choosing a canonical asset.
 5. Update this README when the approved inventory changes.
 6. Test responsive rendering and accessibility.
 7. Check loading performance and text contrast.
@@ -373,7 +373,7 @@ Verify each path before referencing it. These directory names describe potential
 
 The assets/images/hero/ directory should contain optimized, accessible, responsive, appropriately licensed, and visually consistent hero images for MedOrbits.
 
-The documented inventory includes six WebP assets and one PNG asset. Both homepage filename variants must be checked against the actual code before either is replaced or removed.
+The documented inventory includes six JPG assets and one PNG asset. Both homepage filename variants must be checked against the actual code before either is replaced or removed.
 
 All new hero images must support their page’s purpose, preserve content readability, and integrate with the existing website without disrupting its layout, opening animation, header, footer, responsive behaviour, or Royal Burgundy and Champagne Gold design system.
 

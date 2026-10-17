@@ -33,36 +33,36 @@ The following is a proposed inventory. Check the existing repository before crea
 
 assets/images/education/
 ├── README.md
-├── education-global.webp
-├── medical-education.webp
-├── mbbs-education.webp
-├── postgraduate-medical-education.webp
-├── dental-education.webp
-├── nursing-education.webp
-├── pharmacy-education.webp
-├── paramedical-education.webp
-├── allied-health-education.webp
-├── physiotherapy-education.webp
-├── engineering-education.webp
-├── computer-science-education.webp
-├── management-education.webp
-├── business-education.webp
-├── law-education.webp
-├── science-education.webp
-├── arts-humanities-education.webp
-├── commerce-education.webp
-├── agriculture-education.webp
-├── online-learning.webp
-├── distance-learning.webp
-├── classroom-learning.webp
-├── laboratory-learning.webp
-├── university-campus.webp
-├── academic-counselling.webp
-├── college-selection.webp
-├── scholarship-guidance.webp
-├── student-support.webp
-├── international-education.webp
-├── academic-success.webp
+├── education-global.jpg
+├── medical-education.jpg
+├── mbbs-education.jpg
+├── postgraduate-medical-education.jpg
+├── dental-education.jpg
+├── nursing-education.jpg
+├── pharmacy-education.jpg
+├── paramedical-education.jpg
+├── allied-health-education.jpg
+├── physiotherapy-education.jpg
+├── engineering-education.jpg
+├── computer-science-education.jpg
+├── management-education.jpg
+├── business-education.jpg
+├── law-education.jpg
+├── science-education.jpg
+├── arts-humanities-education.jpg
+├── commerce-education.jpg
+├── agriculture-education.jpg
+├── online-learning.jpg
+├── distance-learning.jpg
+├── classroom-learning.jpg
+├── laboratory-learning.jpg
+├── university-campus.jpg
+├── academic-counselling.jpg
+├── college-selection.jpg
+├── scholarship-guidance.jpg
+├── student-support.jpg
+├── international-education.jpg
+├── academic-success.jpg
 └── education-placeholder.svg
 
 Naming conventions
@@ -70,7 +70,7 @@ Naming conventions
 * Use lowercase filenames.
 * Separate words with hyphens.
 * Use descriptive names based on the image’s subject or purpose.
-* Prefer .webp for optimized photographs and raster imagery.
+* Prefer .jpg for optimized photographs and raster imagery.
 * Use .svg for suitable vector illustrations and placeholders.
 * Avoid spaces, ambiguous abbreviations, and unnecessary version suffixes.
 * Keep existing filenames and referenced paths stable unless a deliberate migration is required.
@@ -80,36 +80,36 @@ Important: The filenames above are recommendations, not confirmation that these 
 3. Asset Catalogue
 
 Filename	Intended purpose
-education-global.webp	General education landing pages and educational discovery
-medical-education.webp	Medical education overview and healthcare study pathways
-mbbs-education.webp	MBBS programme information and medical admission guidance
-postgraduate-medical-education.webp	MD, MS, and other postgraduate medical education content
-dental-education.webp	Dental education and BDS-related information
-nursing-education.webp	Nursing programmes and healthcare learning
-pharmacy-education.webp	Pharmacy courses and pharmaceutical education
-paramedical-education.webp	Paramedical and allied healthcare programmes
-allied-health-education.webp	Allied health education and professional training
-physiotherapy-education.webp	Physiotherapy and rehabilitation education
-engineering-education.webp	Engineering programmes and technical education
-computer-science-education.webp	Computer science, computing, and technology courses
-management-education.webp	Management programmes and leadership education
-business-education.webp	Business, commerce, and entrepreneurship learning
-law-education.webp	Legal studies and law programmes
-science-education.webp	Science courses and laboratory-based learning
-arts-humanities-education.webp	Arts, humanities, and social science education
-commerce-education.webp	Commerce, accounting, and finance education
-agriculture-education.webp	Agricultural sciences and related programmes
-online-learning.webp	Digital learning and online study environments
-distance-learning.webp	Distance education and flexible learning
-classroom-learning.webp	Classroom-based teaching and collaborative study
-laboratory-learning.webp	Practical learning and laboratory environments
-university-campus.webp	Campus life and institutional education
-academic-counselling.webp	Academic counselling and programme selection
-college-selection.webp	College comparison and institution discovery
-scholarship-guidance.webp	Scholarship information and financial assistance
-student-support.webp	Student services and academic support
-international-education.webp	International study and global education opportunities
-academic-success.webp	Study skills, educational development, and academic goals
+education-global.jpg	General education landing pages and educational discovery
+medical-education.jpg	Medical education overview and healthcare study pathways
+mbbs-education.jpg	MBBS programme information and medical admission guidance
+postgraduate-medical-education.jpg	MD, MS, and other postgraduate medical education content
+dental-education.jpg	Dental education and BDS-related information
+nursing-education.jpg	Nursing programmes and healthcare learning
+pharmacy-education.jpg	Pharmacy courses and pharmaceutical education
+paramedical-education.jpg	Paramedical and allied healthcare programmes
+allied-health-education.jpg	Allied health education and professional training
+physiotherapy-education.jpg	Physiotherapy and rehabilitation education
+engineering-education.jpg	Engineering programmes and technical education
+computer-science-education.jpg	Computer science, computing, and technology courses
+management-education.jpg	Management programmes and leadership education
+business-education.jpg	Business, commerce, and entrepreneurship learning
+law-education.jpg	Legal studies and law programmes
+science-education.jpg	Science courses and laboratory-based learning
+arts-humanities-education.jpg	Arts, humanities, and social science education
+commerce-education.jpg	Commerce, accounting, and finance education
+agriculture-education.jpg	Agricultural sciences and related programmes
+online-learning.jpg	Digital learning and online study environments
+distance-learning.jpg	Distance education and flexible learning
+classroom-learning.jpg	Classroom-based teaching and collaborative study
+laboratory-learning.jpg	Practical learning and laboratory environments
+university-campus.jpg	Campus life and institutional education
+academic-counselling.jpg	Academic counselling and programme selection
+college-selection.jpg	College comparison and institution discovery
+scholarship-guidance.jpg	Scholarship information and financial assistance
+student-support.jpg	Student services and academic support
+international-education.jpg	International study and global education opportunities
+academic-success.jpg	Study skills, educational development, and academic goals
 education-placeholder.svg	Fallback for missing or unavailable educational imagery
 
 Choose images that accurately represent the course or educational setting described by the page. Avoid using an image of one discipline to represent a different discipline simply because the visual style matches.
@@ -158,7 +158,7 @@ Use the current components and styles wherever possible. Image integration shoul
 5. Image Formats and Optimization
 
 Format	Recommended use
-WebP	General educational photographs, banners, and card images
+JPG	General educational photographs, banners, and card images
 AVIF	Optional high-efficiency imagery when supported by the existing delivery pipeline
 SVG	Simple vector illustrations and placeholders
 JPEG	Existing photographic assets that remain in use
@@ -208,7 +208,7 @@ Informative images
 Use alternative text that describes the meaningful content of the actual image.
 
 <img
-  src=“/assets/images/education/medical-education.webp”
+  src=“/assets/images/education/medical-education.jpg”
   alt=“Students participating in a supervised medical education session”
   width=“1200”
   height=“800”
@@ -223,7 +223,7 @@ Decorative images
 When an image adds no information beyond the adjacent text, use an empty alternative text value.
 
 <img
-  src=“/assets/images/education/classroom-learning.webp”
+  src=“/assets/images/education/classroom-learning.jpg”
   alt=“”
   width=“1200”
   height=“800”
@@ -247,7 +247,7 @@ Educational content image
 
 <figure class=“education-image”>
   <img
-    src=“/assets/images/education/medical-education.webp”
+    src=“/assets/images/education/medical-education.jpg”
     alt=“Medical students learning in an educational setting”
     width=“1200”
     height=“800”
@@ -261,7 +261,7 @@ Course card
 <article class=“course-card”>
   <img
     class=“course-card__image”
-    src=“/assets/images/education/nursing-education.webp”
+    src=“/assets/images/education/nursing-education.jpg”
     alt=“”
     width=“800”
     height=“600”
@@ -288,11 +288,11 @@ Responsive image example
     type=“image/avif”
   >
   <source
-    srcset=“/assets/images/education/medical-education.webp”
-    type=“image/webp”
+    srcset=“/assets/images/education/medical-education.jpg”
+    type="image/jpeg"
   >
   <img
-    src=“/assets/images/education/medical-education.webp”
+    src=“/assets/images/education/medical-education.jpg”
     alt=“Students learning in a medical education environment”
     width=“1200”
     height=“800”
@@ -301,7 +301,7 @@ Responsive image example
   >
 </picture>
 
-Only use the AVIF source if that file actually exists. The browser can then fall back to WebP and the final image source as supported.
+Only use the AVIF source if that file actually exists. The browser can then fall back to JPG and the final image source as supported.
 
 9. Responsive Behaviour
 

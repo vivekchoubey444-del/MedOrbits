@@ -27,7 +27,6 @@ const DEFAULT_MIME_TYPES = [
 ‘application/pdf’,
 ‘image/jpeg’,
 ‘image/png’,
-‘image/webp’,
 ];
 
 function resolveStoragePath(configuredPath, variableName) {

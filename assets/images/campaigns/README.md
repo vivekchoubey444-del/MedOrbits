@@ -31,16 +31,16 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/campaigns/
 ├── README.md
-├── admissions-campaign.webp
-├── career-campaign.webp
-└── scholarship-campaign.webp
+├── admissions-campaign.jpg
+├── career-campaign.jpg
+└── scholarship-campaign.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-admissions-campaign.webp	18.3 KB	Admissions and counselling promotions
-career-campaign.webp	20.9 KB	Career guidance and professional development campaigns
-scholarship-campaign.webp	18.2 KB	Scholarship awareness and financial-aid guidance
+admissions-campaign.jpg	18.3 KB	Admissions and counselling promotions
+career-campaign.jpg	20.9 KB	Career guidance and professional development campaigns
+scholarship-campaign.jpg	18.2 KB	Scholarship awareness and financial-aid guidance
 
 File sizes are approximate and may change after optimization or replacement.
 
@@ -71,19 +71,19 @@ Do not introduce an unrelated colour system or alter existing website layouts, o
 
 4. Asset Usage Guidelines
 
-admissions-campaign.webp
+admissions-campaign.jpg
 
 Use for admissions guidance, counselling services, application assistance, and educational pathway promotions.
 
 Do not imply guaranteed admission, official institutional endorsement, or confirmed seat availability unless the relevant claim is independently verified and appropriately authorized.
 
-career-campaign.webp
+career-campaign.jpg
 
 Use for career planning, professional development, employment support, and career guidance campaigns.
 
 Avoid promising guaranteed employment, salaries, placements, or professional outcomes.
 
-scholarship-campaign.webp
+scholarship-campaign.jpg
 
 Use for scholarship awareness, eligibility guidance, financial-aid information, and scholarship application support.
 
@@ -95,7 +95,7 @@ Use descriptive and consistent filenames.
 
 * Use lowercase characters.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster campaign imagery.
+* Prefer JPG for optimized raster campaign imagery.
 * Use SVG for suitable scalable vector graphics.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -133,7 +133,7 @@ Create dedicated mobile variants only when responsive cropping cannot preserve t
 The following example illustrates how a campaign image can be referenced.
 
 <img
-  src=“/assets/images/campaigns/admissions-campaign.webp”
+  src=“/assets/images/campaigns/admissions-campaign.jpg”
   alt=“”
   width=“800”
   height=“600”
@@ -155,7 +155,7 @@ Recommended practices:
 
 * Compress images before publishing.
 * Resize assets to suitable display dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Remove unnecessary metadata.
 * Avoid oversized originals when smaller files provide sufficient quality.
 * Specify image dimensions or reserve layout space.
@@ -249,7 +249,7 @@ When adding a new image:
 
 1. Save the file in assets/images/campaigns/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Prefer WebP for optimized raster imagery.
+3. Prefer JPG for optimized raster imagery.
 4. Optimize the image for its intended display dimensions.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant HTML, CSS, JavaScript, or JSON references.
@@ -262,7 +262,7 @@ When adding a new image:
 Use this table to document new campaign assets.
 
 Filename	Campaign purpose	Format	Status
-example-campaign.webp	Describe the campaign	WebP	Proposed
+example-campaign.jpg	Describe the campaign	JPG	Proposed
 
 Replace the example entry with actual filenames when assets are created. Proposed filenames do not confirm that files exist.
 
@@ -270,13 +270,13 @@ Replace the example entry with actual filenames when assets are created. Propose
 
 Possible additions include:
 
-* study-abroad-campaign.webp — International education promotions
-* medical-education-campaign.webp — Medical education guidance
-* course-discovery-campaign.webp — Course exploration and selection
-* application-support-campaign.webp — Application assistance services
-* education-loan-campaign.webp — Education financing guidance
-* exam-preparation-campaign.webp — Entrance examination resources
-* student-guidance-campaign.webp — Student counselling and planning
+* study-abroad-campaign.jpg — International education promotions
+* medical-education-campaign.jpg — Medical education guidance
+* course-discovery-campaign.jpg — Course exploration and selection
+* application-support-campaign.jpg — Application assistance services
+* education-loan-campaign.jpg — Education financing guidance
+* exam-preparation-campaign.jpg — Entrance examination resources
+* student-guidance-campaign.jpg — Student counselling and planning
 
 These are suggestions only. Add assets when the relevant campaign or content requirement exists, and check for duplicates before creating files.
 

@@ -34,18 +34,18 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/study-abroad/
 ├── README.md
-├── international-education.webp
-├── pre-departure-guidance.webp
-├── student-visa-guidance.webp
-└── university-abroad.webp
+├── international-education.jpg
+├── pre-departure-guidance.jpg
+├── student-visa-guidance.jpg
+└── university-abroad.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-international-education.webp	14.6 KB	International education overview
-pre-departure-guidance.webp	14.6 KB	Pre-departure preparation and student guidance
-student-visa-guidance.webp	14.6 KB	Student visa information and guidance
-university-abroad.webp	14.7 KB	Overseas university discovery and education
+international-education.jpg	14.6 KB	International education overview
+pre-departure-guidance.jpg	14.6 KB	Pre-departure preparation and student guidance
+student-visa-guidance.jpg	14.6 KB	Student visa information and guidance
+university-abroad.jpg	14.7 KB	Overseas university discovery and education
 
 File sizes are approximate and may change after optimization or replacement.
 
@@ -78,21 +78,21 @@ Avoid unauthorized university logos, misleading campus imagery, false partnershi
 
 4. Existing Asset Guidelines
 
-international-education.webp
+international-education.jpg
 
 Use for general international education content, overseas study information, and introductions to global learning opportunities.
 
-pre-departure-guidance.webp
+pre-departure-guidance.jpg
 
 Use for information about preparation before travelling for education, including relevant checklists, orientation, and practical student guidance.
 
-student-visa-guidance.webp
+student-visa-guidance.jpg
 
 Use for student visa information and related guidance. Keep accompanying content accurate and jurisdiction-specific where necessary.
 
 Do not imply guaranteed visa approval or present general guidance as an official immigration decision.
 
-university-abroad.webp
+university-abroad.jpg
 
 Use for overseas university discovery, international course exploration, and related educational content.
 
@@ -102,7 +102,7 @@ Do not imply an institutional partnership, accreditation, or verified campus rep
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster imagery.
+* Prefer JPG for optimized raster imagery.
 * Use SVG for suitable scalable vector illustrations.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -132,7 +132,7 @@ Preserve the existing website layout and responsive breakpoints.
 The following example illustrates how to reference a study abroad image.
 
 <img
-  src=“/assets/images/study-abroad/international-education.webp”
+  src=“/assets/images/study-abroad/international-education.jpg”
   alt=“”
   width=“800”
   height=“600”
@@ -154,7 +154,7 @@ Recommended practices:
 
 * Compress images before publishing.
 * Resize images to appropriate display dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Remove unnecessary metadata.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
@@ -248,7 +248,7 @@ This directory is designed to accommodate additional imagery as MedOrbits expand
 
 1. Save the new image in assets/images/study-abroad/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Prefer WebP for optimized raster imagery.
+3. Prefer JPG for optimized raster imagery.
 4. Optimize the image for its intended display dimensions.
 5. Verify the image’s relevance, quality, and usage rights.
 6. Add the filename and intended use to the asset catalogue.
@@ -261,7 +261,7 @@ This directory is designed to accommodate additional imagery as MedOrbits expand
 Use this table to record additional approved images.
 
 Filename	Intended use	Format	Status
-example-study-abroad.webp	Describe the image and its page	WebP	Proposed
+example-study-abroad.jpg	Describe the image and its page	JPG	Proposed
 
 Replace the example row with actual filenames when the files are created. Proposed entries do not confirm that files exist.
 
@@ -269,14 +269,14 @@ Replace the example row with actual filenames when the files are created. Propos
 
 Potential additions include:
 
-* international-admissions.webp — International application guidance
-* overseas-scholarships.webp — Scholarship information
-* international-student-life.webp — Student life and adaptation
-* global-career-opportunities.webp — International career pathways
-* study-abroad-counselling.webp — Overseas education counselling
-* international-documentation.webp — Application document guidance
-* student-accommodation-abroad.webp — Accommodation guidance
-* international-course-selection.webp — Course discovery and planning
+* international-admissions.jpg — International application guidance
+* overseas-scholarships.jpg — Scholarship information
+* international-student-life.jpg — Student life and adaptation
+* global-career-opportunities.jpg — International career pathways
+* study-abroad-counselling.jpg — Overseas education counselling
+* international-documentation.jpg — Application document guidance
+* student-accommodation-abroad.jpg — Accommodation guidance
+* international-course-selection.jpg — Course discovery and planning
 
 These are suggestions only. Add images when supported by actual page content or service requirements, and check for duplicates before creating new files.
 

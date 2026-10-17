@@ -50,7 +50,6 @@ const ALLOWED_MIME_TYPES = Object.freeze([
   'application/pdf',
   'image/jpeg',
   'image/png',
-  'image/webp',
 ]);
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;

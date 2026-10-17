@@ -601,7 +601,7 @@ function mountStatic(prefix, folder) {
           res.setHeader('Cache-Control', 'no-cache');
         }
 
-        if (/\.(?:js|css|svg|png|jpe?g|webp|woff2?)$/i.test(file)) {
+        if (/\.(?:js|css|svg|png|jpe?g|JPG|woff2?)$/i.test(file)) {
           res.setHeader('X-Content-Type-Options', 'nosniff');
         }
       },

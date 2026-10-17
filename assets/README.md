@@ -183,7 +183,7 @@ Implement filesystem, cross-reference, verification, and publication checks in r
 
 Images
 
-* Prefer optimized WebP or AVIF images when supported by the delivery pipeline.
+* Prefer optimized JPG or AVIF images when supported by the delivery pipeline.
 * Provide appropriate dimensions and responsive variants where beneficial.
 * Use meaningful alternative text for informative images.
 * Use empty alternative text for purely decorative images.

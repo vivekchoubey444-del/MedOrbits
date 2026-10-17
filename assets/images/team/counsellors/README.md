@@ -33,7 +33,7 @@ Verify the current repository before creating, renaming, or replacing files. The
 assets/images/team/counsellors/
 ├── README.md
 ├── counsellor-placeholder.svg
-└── example-counsellor.webp
+└── example-counsellor.jpg
 
 The example image filenames are proposed only. Create them when the corresponding assets are needed and approved.
 
@@ -45,7 +45,7 @@ Maintain an inventory of approved counsellor images as they are added.
 
 Filename	Intended use	Status
 counsellor-placeholder.svg	Generic fallback for an unavailable counsellor portrait	Proposed
-example-counsellor.webp	Example counsellor portrait	Proposed
+example-counsellor.jpg	Example counsellor portrait	Proposed
 
 These entries are examples, not confirmation that the files currently exist. Replace them with actual filenames after the assets have been created and verified.
 
@@ -81,7 +81,7 @@ Do not change the global website theme to accommodate individual portraits.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized photographic portraits.
+* Prefer JPG for optimized photographic portraits.
 * Use SVG for simple placeholder illustrations.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -118,7 +118,7 @@ Requirements:
 The following example illustrates how an approved counsellor portrait may be referenced.
 
 <img
-  src=“/assets/images/team/counsellors/example-counsellor.webp”
+  src=“/assets/images/team/counsellors/example-counsellor.jpg”
   alt=“Name of the counsellor”
   width=“800”
   height=“800”
@@ -169,7 +169,7 @@ Recommended practices:
 
 * Resize images to appropriate display dimensions.
 * Compress photographic assets before publishing.
-* Prefer WebP where supported.
+* Prefer JPG where supported.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
 * Lazy-load below-the-fold portraits where appropriate.
@@ -263,7 +263,7 @@ This directory is designed to accommodate additional approved counsellor portrai
 Use this table to document additional approved images.
 
 Filename	Intended use	Format	Status
-example-counsellor-portrait.webp	Approved counsellor profile	WebP	Proposed
+example-counsellor-portrait.jpg	Approved counsellor profile	JPG	Proposed
 
 Replace the example row with actual filenames after the files have been created. Proposed entries do not confirm that files exist.
 
@@ -271,13 +271,13 @@ Replace the example row with actual filenames after the files have been created.
 
 Potential additions include:
 
-* education-counsellor.webp — Approved education counsellor portrait
-* admissions-counsellor.webp — Approved admissions counsellor portrait
-* career-counsellor.webp — Approved career counsellor portrait
-* study-abroad-counsellor.webp — Approved international education counsellor portrait
-* student-support-counsellor.webp — Approved student support counsellor portrait
+* education-counsellor.jpg — Approved education counsellor portrait
+* admissions-counsellor.jpg — Approved admissions counsellor portrait
+* career-counsellor.jpg — Approved career counsellor portrait
+* study-abroad-counsellor.jpg — Approved international education counsellor portrait
+* student-support-counsellor.jpg — Approved student support counsellor portrait
 * counsellor-placeholder.svg — Generic portrait fallback
-* counselling-team.webp — Approved group photograph of counsellors
+* counselling-team.jpg — Approved group photograph of counsellors
 
 These are suggestions only. Create them only when the corresponding people, roles, content, and publication permissions have been verified.
 

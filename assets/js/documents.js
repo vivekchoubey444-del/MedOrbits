@@ -19,15 +19,13 @@
   const ALLOWED_TYPES = [
     "application/pdf",
     "image/jpeg",
-    "image/png",
-    "image/webp"
+    "image/png"
   ];
   const ALLOWED_EXTENSIONS = [
     ".pdf",
     ".jpg",
     ".jpeg",
-    ".png",
-    ".webp"
+    ".png"
   ];
   const state = {
     documents: [],
@@ -101,7 +99,7 @@
     if (!validExtension || !validMime) {
       return {
         valid: false,
-        error: "Only PDF, JPG, PNG, and WEBP files are allowed."
+        error: "Only PDF, JPG, PNG, and JPEG files are allowed."
       };
     }
     return { valid: true, error: null };

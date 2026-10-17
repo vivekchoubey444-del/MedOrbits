@@ -32,7 +32,7 @@ Verify the current repository before creating, renaming, or replacing files. The
 assets/images/team/leadership/
 ├── README.md
 ├── leadership-placeholder.svg
-└── example-leader.webp
+└── example-leader.jpg
 
 The example image filenames are proposed only. Create them when the corresponding assets are required and approved.
 
@@ -44,7 +44,7 @@ Maintain an inventory of approved leadership images as they are added.
 
 Filename	Intended use	Status
 leadership-placeholder.svg	Generic fallback for an unavailable leadership portrait	Proposed
-example-leader.webp	Example leadership portrait	Proposed
+example-leader.jpg	Example leadership portrait	Proposed
 
 These entries do not confirm that the files currently exist. Replace the examples with actual filenames after the assets have been created and verified.
 
@@ -80,7 +80,7 @@ Do not introduce a separate visual theme for leadership pages.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized photographic portraits.
+* Prefer JPG for optimized photographic portraits.
 * Use SVG for simple placeholder illustrations.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -117,7 +117,7 @@ Requirements:
 The following example illustrates how an approved leadership portrait may be referenced.
 
 <img
-  src=“/assets/images/team/leadership/example-leader.webp”
+  src=“/assets/images/team/leadership/example-leader.jpg”
   alt=“Name of the leadership team member”
   width=“800”
   height=“800”
@@ -168,7 +168,7 @@ Recommended practices:
 
 * Resize images to appropriate display dimensions.
 * Compress photographic assets before publishing.
-* Prefer WebP where supported.
+* Prefer JPG where supported.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
 * Lazy-load below-the-fold portraits where appropriate.
@@ -262,7 +262,7 @@ This directory is designed to accommodate additional approved leadership portrai
 Use this table to document additional approved images.
 
 Filename	Intended use	Format	Status
-example-leader-portrait.webp	Approved leadership profile	WebP	Proposed
+example-leader-portrait.jpg	Approved leadership profile	JPG	Proposed
 
 Replace the example row with actual filenames after the files have been created. Proposed entries do not confirm that files exist.
 
@@ -270,9 +270,9 @@ Replace the example row with actual filenames after the files have been created.
 
 Potential additions include:
 
-* founder-portrait.webp — Approved founder portrait
-* director-portrait.webp — Approved director portrait
-* executive-team.webp — Approved leadership group photograph
+* founder-portrait.jpg — Approved founder portrait
+* director-portrait.jpg — Approved director portrait
+* executive-team.jpg — Approved leadership group photograph
 * leadership-placeholder.svg — Generic portrait fallback
 
 These are suggestions only. Create them when the corresponding people, roles, content, and publication permissions have been verified.

@@ -22,7 +22,6 @@
     "application/pdf",
     "image/jpeg",
     "image/png",
-    "image/webp",
     "text/plain",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

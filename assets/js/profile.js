@@ -181,11 +181,11 @@
       throw new TypeError("Select a valid image file.");
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/png"];
     const maxSize = 5 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error("Upload a JPG, PNG, or WebP image.");
+      throw new Error("Upload a JPG or PNG image.");
     }
 
     if (file.size > maxSize) {

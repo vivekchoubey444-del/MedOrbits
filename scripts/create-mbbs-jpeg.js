@@ -4,7 +4,7 @@ const path = require('node:path');
 const sharp = require('sharp');
 
 const root = path.resolve(__dirname, '..');
-const source = path.join(root, 'assets/images/education/medical-education.webp');
+const source = path.join(root, 'assets/images/education/medical-education.jpg');
 const output = path.join(root, 'assets/images/education/mbbs.jpg');
 
 sharp(source)

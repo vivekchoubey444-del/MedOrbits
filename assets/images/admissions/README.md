@@ -22,20 +22,20 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/admissions/
 ├── README.md
-├── admission-guidance.webp
-├── application-support.webp
-├── counselling.webp
-├── document-assistance.webp
-└── scholarship-guidance.webp
+├── admission-guidance.jpg
+├── application-support.jpg
+├── counselling.jpg
+├── document-assistance.jpg
+└── scholarship-guidance.jpg
 
 Asset catalogue
 
 Filename	Observed size	Intended use
-admission-guidance.webp	14.5 KB	General admission guidance and eligibility information
-application-support.webp	14.7 KB	Application preparation and submission assistance
-counselling.webp	14.6 KB	Educational counselling and pathway discussions
-document-assistance.webp	14.5 KB	Document preparation and checklist guidance
-scholarship-guidance.webp	14.6 KB	Scholarship information and application guidance
+admission-guidance.jpg	14.5 KB	General admission guidance and eligibility information
+application-support.jpg	14.7 KB	Application preparation and submission assistance
+counselling.jpg	14.6 KB	Educational counselling and pathway discussions
+document-assistance.jpg	14.5 KB	Document preparation and checklist guidance
+scholarship-guidance.jpg	14.6 KB	Scholarship information and application guidance
 
 File sizes are approximate and may change after optimization or replacement.
 
@@ -47,7 +47,7 @@ Use consistent, descriptive filenames.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster illustrations and content imagery.
+* Prefer JPG for optimized raster illustrations and content imagery.
 * Keep filenames stable after production references are established.
 * Avoid duplicate files with unclear suffixes such as final, new, or latest.
 * Verify existing assets before creating replacements.
@@ -78,37 +78,37 @@ Images should be:
 * Composed to support nearby headings and calls to action
 * Optimized for fast loading
 
-The WebP assets may be abstract branded illustrations intended for visual presentation and prototyping. Do not describe them as documentary photographs unless their actual content supports that description.
+The JPG assets may be abstract branded illustrations intended for visual presentation and prototyping. Do not describe them as documentary photographs unless their actual content supports that description.
 
 Avoid unauthorized institutional logos, misleading campus imagery, fabricated endorsements, and visuals that suggest guaranteed admissions or scholarships.
 
 5. Asset Usage Guidelines
 
-admission-guidance.webp
+admission-guidance.jpg
 
 Use for general admissions information, eligibility guidance, application timelines, and educational pathway content.
 
 Do not use the image alone to communicate official admission requirements or deadlines. Present those details as accurate, accessible text.
 
-application-support.webp
+application-support.jpg
 
 Use for application preparation, form completion guidance, application tracking information, and submission support.
 
 Do not imply that an application has been submitted or accepted merely because the image appears on a page.
 
-counselling.webp
+counselling.jpg
 
 Use for counselling services, academic planning, course selection, and student guidance.
 
 Ensure the surrounding content accurately describes the actual service offered by MedOrbits.
 
-document-assistance.webp
+document-assistance.jpg
 
 Use for document checklists, document preparation guidance, and application-related resources.
 
 Do not imply that displaying this image means a document has been verified, authenticated, or approved.
 
-scholarship-guidance.webp
+scholarship-guidance.jpg
 
 Use for scholarship discovery, eligibility information, financial-aid guidance, and scholarship application resources.
 
@@ -142,7 +142,7 @@ Do not change the existing page layout solely to accommodate an image.
 The following example illustrates how an admissions asset may be referenced:
 
 <img
-  src=“/assets/images/admissions/admission-guidance.webp”
+  src=“/assets/images/admissions/admission-guidance.jpg”
   alt=“”
   width=“800”
   height=“600”
@@ -162,7 +162,7 @@ Admissions images should be optimized for both visual quality and website perfor
 
 Recommended practices:
 
-* Compress WebP files before publishing.
+* Compress JPG files before publishing.
 * Use appropriate source dimensions.
 * Avoid oversized originals.
 * Remove unnecessary metadata.
@@ -290,7 +290,7 @@ When adding a new image:
 
 1. Save the image in assets/images/admissions/.
 2. Use a descriptive, lowercase, hyphen-separated filename.
-3. Prefer optimized WebP images for raster illustrations and content imagery.
+3. Prefer optimized JPG images for raster illustrations and content imagery.
 4. Add the new filename, intended use, and approximate file size to the asset catalogue.
 5. Update the relevant HTML, CSS, JavaScript, or JSON references if required.
 6. Verify that the image exists and renders correctly.
@@ -302,7 +302,7 @@ When adding a new image:
 Add new images to the following table as they are introduced.
 
 Filename	Intended use	Format	Status
-example-image.webp	Describe the image’s purpose	WebP	Proposed
+example-image.jpg	Describe the image’s purpose	JPG	Proposed
 
 Replace the example row with actual filenames when new assets are added. Do not treat proposed entries as existing files.
 
@@ -310,14 +310,14 @@ Replace the example row with actual filenames when new assets are added. Do not 
 
 Depending on future MedOrbits services, additional images may include:
 
-* eligibility-guidance.webp — Admission eligibility information
-* entrance-exam-guidance.webp — Entrance examination guidance
-* college-selection.webp — College selection and comparison
-* admission-process.webp — Admission process explanations
-* fee-guidance.webp — Tuition and fee information
-* education-loan-guidance.webp — Education financing guidance
-* application-tracking.webp — Application status guidance
-* admission-checklist.webp — Application readiness and document checklists
+* eligibility-guidance.jpg — Admission eligibility information
+* entrance-exam-guidance.jpg — Entrance examination guidance
+* college-selection.jpg — College selection and comparison
+* admission-process.jpg — Admission process explanations
+* fee-guidance.jpg — Tuition and fee information
+* education-loan-guidance.jpg — Education financing guidance
+* application-tracking.jpg — Application status guidance
+* admission-checklist.jpg — Application readiness and document checklists
 
 These are suggestions only. Create files when the corresponding content or page requires them.
 

@@ -50,7 +50,7 @@ Maintain an inventory of approved team images as they are added.
 
 Filename	Intended use	Status
 team-placeholder.svg	Generic fallback when a team image is unavailable	Proposed
-team-member-example.webp	Example team portrait	Proposed
+team-member-example.jpg	Example team portrait	Proposed
 
 The filenames above are examples only. They do not confirm that these assets currently exist.
 
@@ -87,7 +87,7 @@ Do not change the global colour theme to accommodate individual team portraits.
 * Use lowercase filenames.
 * Separate words with hyphens.
 * Prefer descriptive names.
-* Use WebP for optimized photographic portraits where appropriate.
+* Use JPG for optimized photographic portraits where appropriate.
 * Use SVG for simple placeholder illustrations.
 * Keep filenames stable once referenced by production pages.
 * Avoid names containing unnecessary personal information.
@@ -124,7 +124,7 @@ Requirements:
 The following example illustrates how an approved team portrait may be referenced.
 
 <img
-  src=“/assets/images/team/team-member-example.webp”
+  src=“/assets/images/team/team-member-example.jpg”
   alt=“Name of the team member”
   width=“800”
   height=“800”
@@ -174,7 +174,7 @@ Recommended practices:
 
 * Resize images to appropriate display dimensions.
 * Compress photographic assets before publishing.
-* Prefer WebP where supported.
+* Prefer JPG where supported.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
 * Lazy-load below-the-fold team portraits where appropriate.
@@ -267,7 +267,7 @@ This directory is designed to accommodate additional approved portraits and team
 Use this table to document additional assets.
 
 Filename	Intended use	Format	Status
-example-team-portrait.webp	Approved team member portrait	WebP	Proposed
+example-team-portrait.jpg	Approved team member portrait	JPG	Proposed
 
 Replace the example row with actual filenames when the files are created. Proposed entries do not confirm that files exist.
 
@@ -276,10 +276,10 @@ Replace the example row with actual filenames when the files are created. Propos
 Potential additions include:
 
 * team-placeholder.svg — Generic portrait fallback
-* leadership-team.webp — Approved leadership group photograph
-* counselling-team.webp — Approved counselling team photograph
-* student-support-team.webp — Approved student support team photograph
-* advisory-team.webp — Approved advisory group photograph
+* leadership-team.jpg — Approved leadership group photograph
+* counselling-team.jpg — Approved counselling team photograph
+* student-support-team.jpg — Approved student support team photograph
+* advisory-team.jpg — Approved advisory group photograph
 
 These are suggestions only. Create them only when the corresponding content exists and the necessary permissions have been obtained.
 

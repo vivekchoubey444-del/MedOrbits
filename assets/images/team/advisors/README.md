@@ -32,7 +32,7 @@ Verify the current repository before creating, renaming, or replacing files. The
 assets/images/team/advisors/
 ├── README.md
 ├── advisor-placeholder.svg
-└── example-advisor.webp
+└── example-advisor.jpg
 
 The example image filenames are proposed only. Create them only when needed and approved.
 
@@ -44,7 +44,7 @@ Record each approved advisor image as it is added.
 
 Filename	Intended use	Status
 advisor-placeholder.svg	Generic fallback for an unavailable advisor portrait	Proposed
-example-advisor.webp	Example advisor portrait	Proposed
+example-advisor.jpg	Example advisor portrait	Proposed
 
 The filenames above do not confirm that these files exist. Replace the examples with actual filenames after the corresponding assets have been created and verified.
 
@@ -80,7 +80,7 @@ Do not modify the global website theme to accommodate individual advisor portrai
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized photographic portraits.
+* Prefer JPG for optimized photographic portraits.
 * Use SVG for simple placeholder illustrations.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -117,7 +117,7 @@ Requirements:
 The following example illustrates how an approved advisor portrait may be referenced.
 
 <img
-  src=“/assets/images/team/advisors/example-advisor.webp”
+  src=“/assets/images/team/advisors/example-advisor.jpg”
   alt=“Name of the advisor”
   width=“800”
   height=“800”
@@ -168,7 +168,7 @@ Recommended practices:
 
 * Resize images to appropriate display dimensions.
 * Compress photographic assets before publishing.
-* Prefer WebP where supported.
+* Prefer JPG where supported.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
 * Lazy-load below-the-fold portraits where appropriate.
@@ -262,7 +262,7 @@ This directory is designed to accommodate additional approved advisor portraits 
 Use this table to document additional approved images.
 
 Filename	Intended use	Format	Status
-example-advisor-portrait.webp	Approved advisor profile	WebP	Proposed
+example-advisor-portrait.jpg	Approved advisor profile	JPG	Proposed
 
 Replace the example row with actual filenames after the files have been created. Proposed entries do not confirm that files exist.
 
@@ -270,12 +270,12 @@ Replace the example row with actual filenames after the files have been created.
 
 Potential additions include:
 
-* education-advisor.webp — Approved education advisor portrait
-* career-advisor.webp — Approved career advisor portrait
-* admissions-advisor.webp — Approved admissions advisor portrait
-* international-education-advisor.webp — Approved international education advisor portrait
+* education-advisor.jpg — Approved education advisor portrait
+* career-advisor.jpg — Approved career advisor portrait
+* admissions-advisor.jpg — Approved admissions advisor portrait
+* international-education-advisor.jpg — Approved international education advisor portrait
 * advisor-placeholder.svg — Generic fallback illustration
-* advisory-team.webp — Approved group photograph of advisors
+* advisory-team.jpg — Approved group photograph of advisors
 
 These are suggestions only. Create them only when the corresponding people, roles, content, and publication permissions have been verified.
 

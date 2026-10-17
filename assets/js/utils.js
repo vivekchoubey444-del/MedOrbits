@@ -20,10 +20,9 @@
     allowedTypes: [
       "application/pdf",
       "image/jpeg",
-      "image/png",
-      "image/webp"
+      "image/png"
     ],
-    allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png", ".webp"]
+    allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png"]
   });
 
   const EVENTS = Object.freeze({

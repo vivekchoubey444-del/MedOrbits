@@ -31,20 +31,20 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/career/
 ├── README.md
-├── career-guidance.webp
-├── internship-guidance.webp
-├── job-search.webp
-├── professional-development.webp
-└── recruitment-services.webp
+├── career-guidance.jpg
+├── internship-guidance.jpg
+├── job-search.jpg
+├── professional-development.jpg
+└── recruitment-services.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-career-guidance.webp	17.0 KB	Career planning and guidance
-internship-guidance.webp	17.2 KB	Internship discovery and preparation
-job-search.webp	16.9 KB	Job-search resources and application support
-professional-development.webp	17.1 KB	Professional skills and career growth
-recruitment-services.webp	17.0 KB	Recruitment and employment support
+career-guidance.jpg	17.0 KB	Career planning and guidance
+internship-guidance.jpg	17.2 KB	Internship discovery and preparation
+job-search.jpg	16.9 KB	Job-search resources and application support
+professional-development.jpg	17.1 KB	Professional skills and career growth
+recruitment-services.jpg	17.0 KB	Recruitment and employment support
 
 File sizes are approximate and may change after optimization or replacement.
 
@@ -75,23 +75,23 @@ If an asset is an abstract branded illustration, do not present it as a document
 
 4. Asset Usage Guidelines
 
-career-guidance.webp
+career-guidance.jpg
 
 Use for career planning, career counselling, education-to-employment pathways, and professional direction.
 
-internship-guidance.webp
+internship-guidance.jpg
 
 Use for internship discovery, internship preparation, and practical career-experience guidance.
 
-job-search.webp
+job-search.jpg
 
 Use for job-search resources, application preparation, vacancy discovery, and employment guidance.
 
-professional-development.webp
+professional-development.jpg
 
 Use for professional skills, career progression, lifelong learning, and workplace development.
 
-recruitment-services.webp
+recruitment-services.jpg
 
 Use for recruitment-related information, employer engagement, and employment support services where applicable.
 
@@ -101,7 +101,7 @@ Images must not imply guaranteed internships, job offers, salaries, or recruitme
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster illustrations and content imagery.
+* Prefer JPG for optimized raster illustrations and content imagery.
 * Use SVG for suitable scalable vector artwork.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -130,7 +130,7 @@ Do not change the existing page layout or responsive breakpoints simply to accom
 7. Recommended HTML Integration
 
 <img
-  src=“/assets/images/career/career-guidance.webp”
+  src=“/assets/images/career/career-guidance.jpg”
   alt=“”
   width=“800”
   height=“600”
@@ -150,7 +150,7 @@ Recommended practices:
 
 * Compress images before publishing.
 * Resize images to appropriate display dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Remove unnecessary metadata.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
@@ -241,7 +241,7 @@ This directory is designed to accommodate additional images as MedOrbits expands
 
 1. Save the new image in assets/images/career/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Prefer WebP for optimized raster illustrations.
+3. Prefer JPG for optimized raster illustrations.
 4. Optimize the image for its intended display dimensions.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant application references.
@@ -254,7 +254,7 @@ This directory is designed to accommodate additional images as MedOrbits expands
 Use this table to record additional images as they are created.
 
 Filename	Intended use	Format	Status
-example-career-image.webp	Describe the career-related content	WebP	Proposed
+example-career-image.jpg	Describe the career-related content	JPG	Proposed
 
 Replace the example row with actual assets when they are created. Proposed entries do not confirm that files exist.
 
@@ -262,15 +262,15 @@ Replace the example row with actual assets when they are created. Proposed entri
 
 Possible additions include:
 
-* career-planning.webp — Career planning and goal setting
-* career-assessment.webp — Career assessment resources
-* resume-writing.webp — Resume and CV preparation
-* interview-preparation.webp — Interview preparation
-* professional-skills.webp — Workplace and professional skills
-* technical-skills.webp — Technical learning and skill development
-* soft-skills.webp — Communication and interpersonal skills
-* career-transition.webp — Career change and transition guidance
-* job-application.webp — Job application preparation
+* career-planning.jpg — Career planning and goal setting
+* career-assessment.jpg — Career assessment resources
+* resume-writing.jpg — Resume and CV preparation
+* interview-preparation.jpg — Interview preparation
+* professional-skills.jpg — Workplace and professional skills
+* technical-skills.jpg — Technical learning and skill development
+* soft-skills.jpg — Communication and interpersonal skills
+* career-transition.jpg — Career change and transition guidance
+* job-application.jpg — Job application preparation
 
 These are suggestions only. Add files when supported by actual page content or service requirements, and check for duplicates before creating them.
 

@@ -49,7 +49,7 @@ Do not introduce an unrelated colour system or change the site’s existing typo
 
 3.1 Content illustrations
 
-WebP and JPG content images may include original abstract branded illustrations created for layout integration, visual prototyping, and website presentation.
+JPG and JPG content images may include original abstract branded illustrations created for layout integration, visual prototyping, and website presentation.
 
 Important: Abstract illustrations are not documentary photographs. Do not present them as authentic photographs of real students, institutions, campuses, hospitals, counsellors, or facilities.
 
@@ -109,12 +109,12 @@ assets/images/
 ├── education-global.jpg
 ├── hero/
 │   ├── README.md
-│   ├── home-hero.webp
-│   ├── education-hero.webp
-│   ├── admissions-hero.webp
-│   ├── study-abroad-hero.webp
-│   ├── career-hero.webp
-│   └── contact-hero.webp
+│   ├── home-hero.jpg
+│   ├── education-hero.jpg
+│   ├── admissions-hero.jpg
+│   ├── study-abroad-hero.jpg
+│   ├── career-hero.jpg
+│   └── contact-hero.jpg
 ├── logo/
 ├── backgrounds/
 ├── education/
@@ -139,7 +139,7 @@ Use consistent, descriptive filenames.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster content imagery.
+* Prefer JPG for optimized raster content imagery.
 * Use JPG when appropriate for existing content or compatibility requirements.
 * Prefer SVG for scalable logos, simple illustrations, patterns, and placeholders.
 * Use PNG when transparency or a specific technical requirement justifies it.
@@ -164,13 +164,13 @@ Image assets covered by this documentation are intended to be stored locally in 
 Example local references:
 
 <img
-  src=“/assets/images/hero/home-hero.webp”
+  src=“/assets/images/hero/home-hero.jpg”
   alt=“Education guidance”
   width=“1600”
   height=“900”
 >
 <img
-  src=“/assets/images/education/medical-education.webp”
+  src=“/assets/images/education/medical-education.jpg”
   alt=“Medical education”
   width=“800”
   height=“600”
@@ -218,7 +218,7 @@ Recommended practices:
 
 * Resize images to appropriate display dimensions.
 * Compress raster images before publishing.
-* Prefer WebP for suitable content imagery.
+* Prefer JPG for suitable content imagery.
 * Use SVG for simple vector graphics where appropriate.
 * Remove unnecessary metadata.
 * Avoid oversized originals when smaller assets provide sufficient quality.
@@ -361,7 +361,7 @@ This directory is designed to accommodate additional image assets as MedOrbits e
 Use this table to document new assets as they are approved.
 
 Filename	Category	Intended use	Status
-example-image.webp	Relevant category	Describe the image’s purpose	Proposed
+example-image.jpg	Relevant category	Describe the image’s purpose	Proposed
 
 Replace the example row with actual filenames and details after the files have been created and verified. Proposed entries do not confirm that assets exist.
 

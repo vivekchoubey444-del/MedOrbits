@@ -156,6 +156,22 @@
   color: #b7acbf;
 }
 
+.directory-page .field {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(201, 169, 110, 0.35);
+  border-radius: 6px;
+  background: #10372b;
+  color: #f7f1fa;
+  font: inherit;
+}
+
+.directory-page .field:focus-visible {
+  outline: 2px solid #e4d0a1;
+  outline-offset: 2px;
+}
+
 .directory-footer {
   padding-block: 20px;
   border-top: 1px solid rgba(201, 169, 110, 0.24);

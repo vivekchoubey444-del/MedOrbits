@@ -410,15 +410,13 @@
       ".pdf",
       ".jpg",
       ".jpeg",
-      ".png",
-      ".webp"
+      ".png"
     ],
 
     allowedMimeTypes: [
       "application/pdf",
       "image/jpeg",
-      "image/png",
-      "image/webp"
+      "image/png"
     ],
 
     documentTypes: [

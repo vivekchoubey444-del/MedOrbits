@@ -475,7 +475,7 @@ test('canUpdateUser', async (t) => {
       canUpdateUser(
         makeActor(),
         makeUser(),
-        { bio: 'Updated biography', avatar: 'avatar.webp' }
+        { bio: 'Updated biography', avatar: 'avatar.jpg' }
       ),
       true
     );

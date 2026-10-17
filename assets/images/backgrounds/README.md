@@ -31,18 +31,18 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/backgrounds/
 ├── README.md
-├── burgundy-gradient.webp
-├── champagne-texture.webp
+├── burgundy-gradient.jpg
+├── champagne-texture.jpg
 ├── education-pattern.svg
-└── premium-dark-texture.webp
+└── premium-dark-texture.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-burgundy-gradient.webp	10.9 KB	Burgundy-themed backgrounds and gradient surfaces
-champagne-texture.webp	8.6 KB	Champagne gold accents and subtle textures
+burgundy-gradient.jpg	10.9 KB	Burgundy-themed backgrounds and gradient surfaces
+champagne-texture.jpg	8.6 KB	Champagne gold accents and subtle textures
 education-pattern.svg	736 bytes	Scalable decorative pattern for education-related sections
-premium-dark-texture.webp	11.0 KB	Premium dark backgrounds and supporting surfaces
+premium-dark-texture.jpg	11.0 KB	Premium dark backgrounds and supporting surfaces
 
 File sizes are approximate and may change when assets are optimized or replaced.
 
@@ -65,13 +65,13 @@ Design preservation rule: Background assets must not be used as a reason to rebu
 
 4. Asset Usage Guidelines
 
-burgundy-gradient.webp
+burgundy-gradient.jpg
 
 Use for approved burgundy background surfaces, decorative section treatments, and brand-aligned visual transitions.
 
 Ensure that text and controls remain readable against the gradient.
 
-champagne-texture.webp
+champagne-texture.jpg
 
 Use for restrained gold-toned accents, decorative backgrounds, and premium visual details.
 
@@ -83,7 +83,7 @@ Use as a scalable decorative pattern for suitable education-related sections.
 
 Verify that the SVG renders correctly at different sizes and does not introduce unnecessary external dependencies.
 
-premium-dark-texture.webp
+premium-dark-texture.jpg
 
 Use for premium dark-themed sections and supporting visual surfaces where the existing design calls for them.
 
@@ -95,7 +95,7 @@ Use consistent, descriptive filenames.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for raster textures and decorative images.
+* Prefer JPG for raster textures and decorative images.
 * Prefer SVG for scalable patterns and simple vector graphics.
 * Keep filenames stable after they are referenced by production code.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -112,7 +112,7 @@ The following example illustrates how a background image can be referenced.
 
 .premium-section {
   background-image:
-    url(“/assets/images/backgrounds/burgundy-gradient.webp”);
+    url(“/assets/images/backgrounds/burgundy-gradient.jpg”);
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
@@ -165,7 +165,7 @@ Recommended practices:
 
 * Compress raster images before publishing.
 * Use appropriately sized source files.
-* Prefer WebP for supported raster textures.
+* Prefer JPG for supported raster textures.
 * Use SVG for suitable vector patterns.
 * Remove unnecessary metadata.
 * Avoid unnecessarily large repeating textures.
@@ -263,7 +263,7 @@ When adding an image:
 
 1. Save it in assets/images/backgrounds/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Select WebP for suitable raster textures or SVG for scalable vector patterns.
+3. Select JPG for suitable raster textures or SVG for scalable vector patterns.
 4. Optimize the file for its intended display size.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant CSS or application references.
@@ -276,7 +276,7 @@ When adding an image:
 Use this table to record additional assets as they are created.
 
 Filename	Intended use	Format	Status
-example-background.webp	Describe the intended background	WebP	Proposed
+example-background.jpg	Describe the intended background	JPG	Proposed
 
 Replace the example row with actual assets when they are added. Proposed filenames are not confirmation that files exist.
 
@@ -284,12 +284,12 @@ Replace the example row with actual assets when they are added. Proposed filenam
 
 Depending on future design requirements, possible additions include:
 
-* burgundy-noise-texture.webp — Subtle burgundy surface texture
+* burgundy-noise-texture.jpg — Subtle burgundy surface texture
 * champagne-gold-pattern.svg — Reusable gold decorative pattern
 * education-grid-pattern.svg — Geometric pattern for educational content
-* soft-cream-texture.webp — Warm cream background texture
+* soft-cream-texture.jpg — Warm cream background texture
 * abstract-orbit-pattern.svg — Abstract orbital motif aligned with the brand
-* dark-burgundy-gradient.webp — Deeper burgundy gradient for premium sections
+* dark-burgundy-gradient.jpg — Deeper burgundy gradient for premium sections
 * subtle-line-pattern.svg — Lightweight decorative line pattern
 
 These are suggestions only. Create them when a real design requirement exists, and check the current directory for duplicates before adding them.

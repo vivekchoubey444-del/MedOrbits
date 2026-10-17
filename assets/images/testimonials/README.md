@@ -59,12 +59,12 @@ assets/
 └── images/
     └── testimonials/
         ├── README.md
-        ├── student-testimonial.webp
-        ├── graduate-testimonial.webp
-        ├── parent-testimonial.webp
-        ├── career-testimonial.webp
-        ├── study-abroad-testimonial.webp
-        └── placeholder-testimonial.webp
+        ├── student-testimonial.jpg
+        ├── graduate-testimonial.jpg
+        ├── parent-testimonial.jpg
+        ├── career-testimonial.jpg
+        ├── study-abroad-testimonial.jpg
+        └── placeholder-testimonial.jpg
 
 The filenames above are examples of possible assets, not confirmation that these files already exist.
 
@@ -89,22 +89,22 @@ Use lowercase, descriptive, hyphen-separated filenames.
 
 Recommended pattern:
 
-audience-or-service-testimonial.webp
+audience-or-service-testimonial.jpg
 
 Examples:
 
-* student-testimonial.webp
-* graduate-testimonial.webp
-* parent-testimonial.webp
-* career-testimonial.webp
-* study-abroad-testimonial.webp
-* admissions-testimonial.webp
-* placeholder-testimonial.webp
+* student-testimonial.jpg
+* graduate-testimonial.jpg
+* parent-testimonial.jpg
+* career-testimonial.jpg
+* study-abroad-testimonial.jpg
+* admissions-testimonial.jpg
+* placeholder-testimonial.jpg
 
 Naming rules
 
 1. Use lowercase letters and hyphens.
-2. Prefer meaningful names over generic names such as image1.webp.
+2. Prefer meaningful names over generic names such as image1.jpg.
 3. Use the appropriate file extension.
 4. Avoid spaces, special characters, and unnecessary version suffixes.
 5. Do not include personal information in filenames.
@@ -114,13 +114,13 @@ Naming rules
 5. Supported image formats
 
 Format	Recommended use
-WebP	Preferred format for optimised photographic assets
+JPG	Preferred format for optimised photographic assets
 AVIF	Optional modern format when supported by the existing image pipeline
 JPEG/JPG	Compatible photographic fallback where needed
 PNG	Images requiring transparency or lossless raster detail
 SVG	Simple vector illustrations or placeholder graphics, not photographs
 
-Prefer WebP for ordinary photographic testimonials when browser support and the project’s image pipeline permit it.
+Prefer JPG for ordinary photographic testimonials when browser support and the project’s image pipeline permit it.
 
 Use responsive image variants where needed instead of serving unnecessarily large files to small screens.
 
@@ -177,7 +177,7 @@ Use concise, context-appropriate alternative text when the photograph communicat
 Example:
 
 <img
-  src=“/assets/images/testimonials/student-testimonial.webp”
+  src=“/assets/images/testimonials/student-testimonial.jpg”
   alt=“Student sharing their experience of admissions guidance”
   loading=“lazy”
   decoding=“async”
@@ -190,7 +190,7 @@ Decorative image
 If an image is purely decorative and adds no information beyond the surrounding content, use an empty alternative text value:
 
 <img
-  src=“/assets/images/testimonials/decorative-detail.webp”
+  src=“/assets/images/testimonials/decorative-detail.jpg”
   alt=“”
   loading=“lazy”
   decoding=“async”
@@ -225,7 +225,7 @@ Recommended practices
 Example responsive image:
 
 <img
-  src=“/assets/images/testimonials/student-testimonial.webp”
+  src=“/assets/images/testimonials/student-testimonial.jpg”
   alt=“Approved student testimonial portrait”
   width=“600”
   height=“600”
@@ -242,7 +242,7 @@ Reference images using the project’s established asset URL conventions.
 For a root-relative public asset path:
 
 <img
-  src=“/assets/images/testimonials/student-testimonial.webp”
+  src=“/assets/images/testimonials/student-testimonial.jpg”
   alt=“Appropriate alternative text”
   width=“600”
   height=“600”
@@ -270,7 +270,7 @@ Use a neutral placeholder when a testimonial has no approved image or when an im
 
 Recommended example filename:
 
-placeholder-testimonial.webp
+placeholder-testimonial.jpg
 
 A placeholder should:
 
@@ -308,7 +308,7 @@ Maintain an internal inventory for the images used by testimonial components.
 Field	Purpose
 Filename	Exact asset filename
 Intended use	Component or page using the image
-Asset format	WebP, AVIF, JPEG, PNG, or SVG
+Asset format	JPG, AVIF, JPEG, PNG, or SVG
 Dimensions	Actual pixel dimensions
 Source	Original, commissioned, stock, or client-supplied
 Permission status	Approved, pending, or not permitted

@@ -80,13 +80,13 @@ The following structure is proposed for future expansion. It does not indicate t
 assets/images/blog/
 ├── README.md
 ├── blog-placeholder.svg
-├── education-guidance.webp
-├── admissions-guidance.webp
-├── study-abroad-guidance.webp
-├── career-guidance.webp
-├── scholarship-guidance.webp
-├── medical-education.webp
-└── exam-preparation.webp
+├── education-guidance.jpg
+├── admissions-guidance.jpg
+├── study-abroad-guidance.jpg
+├── career-guidance.jpg
+├── scholarship-guidance.jpg
+├── medical-education.jpg
+└── exam-preparation.jpg
 
 Create additional assets only when required by actual article content or website components. Check the directory for existing equivalents before adding files.
 
@@ -94,7 +94,7 @@ Create additional assets only when required by actual article content or website
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster illustrations and thumbnails.
+* Prefer JPG for optimized raster illustrations and thumbnails.
 * Use SVG for scalable patterns, icons, and simple vector illustrations.
 * Keep filenames descriptive and relevant to article content.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -138,7 +138,7 @@ The example dimensions are illustrative. Verify the SVG’s intended display dim
 Informative article image
 
 <img
-  src=“/assets/images/blog/education-guidance.webp”
+  src=“/assets/images/blog/education-guidance.jpg”
   alt=“Illustration representing educational guidance”
   width=“1200”
   height=“675”
@@ -158,7 +158,7 @@ Recommended practices:
 
 * Compress raster images before publishing.
 * Use appropriately sized source images.
-* Prefer WebP for supported raster content.
+* Prefer JPG for supported raster content.
 * Use SVG for suitable vector illustrations.
 * Remove unnecessary metadata.
 * Specify image dimensions or reserve layout space.
@@ -217,7 +217,7 @@ When adding an image:
 
 1. Save the asset in assets/images/blog/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Select an appropriate format, preferably WebP for raster imagery or SVG for scalable vector artwork.
+3. Select an appropriate format, preferably JPG for raster imagery or SVG for scalable vector artwork.
 4. Optimize the image for its intended dimensions.
 5. Add the filename and intended use to the asset catalogue.
 6. Update relevant application references.
@@ -229,7 +229,7 @@ When adding an image:
 Use this table to record additional assets as they are created.
 
 Filename	Intended use	Format	Status
-example-article-image.webp	Describe the article or content category	WebP	Proposed
+example-article-image.jpg	Describe the article or content category	JPG	Proposed
 
 Replace the example entry with actual filenames when new assets are added. Proposed entries are not confirmation that the files exist.
 
@@ -237,13 +237,13 @@ Replace the example entry with actual filenames when new assets are added. Propo
 
 Potential additions include:
 
-* education-guidance.webp — Educational planning articles
-* admissions-guidance.webp — Admissions information
-* study-abroad-guidance.webp — International education articles
-* career-guidance.webp — Career planning and employment content
-* scholarship-guidance.webp — Scholarship information
-* medical-education.webp — Medical education resources
-* exam-preparation.webp — Entrance examination preparation
+* education-guidance.jpg — Educational planning articles
+* admissions-guidance.jpg — Admissions information
+* study-abroad-guidance.jpg — International education articles
+* career-guidance.jpg — Career planning and employment content
+* scholarship-guidance.jpg — Scholarship information
+* medical-education.jpg — Medical education resources
+* exam-preparation.jpg — Entrance examination preparation
 
 These are suggestions only. Add them when supported by actual content requirements and after checking for duplicates.
 

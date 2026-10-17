@@ -34,16 +34,16 @@ The following inventory reflects the supplied directory screenshot.
 
 assets/images/services/
 ├── README.md
-├── career-support.webp
-├── education-consultation.webp
-└── student-support.webp
+├── career-support.jpg
+├── education-consultation.jpg
+└── student-support.jpg
 
 Current asset catalogue
 
 Filename	Observed size	Intended use
-career-support.webp	17.0 KB	Career guidance and professional support
-education-consultation.webp	17.1 KB	Education planning and consultancy
-student-support.webp	17.1 KB	Student guidance and support services
+career-support.jpg	17.0 KB	Career guidance and professional support
+education-consultation.jpg	17.1 KB	Education planning and consultancy
+student-support.jpg	17.1 KB	Student guidance and support services
 
 File sizes are approximate and may change after optimization or replacement.
 
@@ -74,19 +74,19 @@ If an asset is an abstract branded illustration, do not present it as a document
 
 4. Existing Asset Guidelines
 
-career-support.webp
+career-support.jpg
 
 Use for career guidance, career planning, professional development, and related employment-support information.
 
 Do not imply guaranteed employment, placement, salary, or career outcomes.
 
-education-consultation.webp
+education-consultation.jpg
 
 Use for education consultancy, course discovery, academic planning, and guidance about educational pathways.
 
 Do not imply guaranteed admissions, official institutional endorsement, or confirmed seat availability unless the relevant claims are verified and authorized.
 
-student-support.webp
+student-support.jpg
 
 Use for student assistance, educational guidance, application support, and related student-facing services.
 
@@ -96,7 +96,7 @@ Keep the image consistent with the actual service content presented on the page.
 
 * Use lowercase filenames.
 * Separate words with hyphens.
-* Prefer WebP for optimized raster illustrations and content imagery.
+* Prefer JPG for optimized raster illustrations and content imagery.
 * Use SVG for suitable scalable vector artwork.
 * Keep filenames stable after production references are established.
 * Avoid unclear suffixes such as final, new, latest, or final-2.
@@ -126,7 +126,7 @@ Preserve the existing layout, responsive breakpoints, spacing, and component dim
 The following example illustrates how to reference a service image.
 
 <img
-  src=“/assets/images/services/education-consultation.webp”
+  src=“/assets/images/services/education-consultation.jpg”
   alt=“”
   width=“800”
   height=“600”
@@ -148,7 +148,7 @@ Recommended practices:
 
 * Compress images before publishing.
 * Resize images to appropriate display dimensions.
-* Prefer WebP for supported raster imagery.
+* Prefer JPG for supported raster imagery.
 * Remove unnecessary metadata.
 * Use responsive image sources where beneficial.
 * Specify image dimensions or reserve layout space.
@@ -240,7 +240,7 @@ This directory is designed to accommodate additional service images as MedOrbits
 
 1. Save the new image in assets/images/services/.
 2. Choose a descriptive lowercase filename using hyphens.
-3. Prefer WebP for optimized raster imagery.
+3. Prefer JPG for optimized raster imagery.
 4. Optimize the image for its intended display dimensions.
 5. Add the filename and intended use to the asset catalogue.
 6. Update the relevant HTML, CSS, JavaScript, or JSON references.
@@ -253,7 +253,7 @@ This directory is designed to accommodate additional service images as MedOrbits
 Use this table to record additional service images.
 
 Filename	Intended use	Format	Status
-example-service.webp	Describe the service	WebP	Proposed
+example-service.jpg	Describe the service	JPG	Proposed
 
 Replace the example row with actual filenames when assets are created. Proposed entries do not confirm that files exist.
 
@@ -261,13 +261,13 @@ Replace the example row with actual filenames when assets are created. Proposed 
 
 Potential additions include:
 
-* admission-assistance.webp — Admissions and application support
-* course-selection.webp — Course discovery and academic planning
-* scholarship-guidance.webp — Scholarship information and guidance
-* study-abroad-support.webp — International education assistance
-* document-assistance.webp — Document preparation guidance
-* career-counselling.webp — Career counselling services
-* application-support.webp — Application assistance
+* admission-assistance.jpg — Admissions and application support
+* course-selection.jpg — Course discovery and academic planning
+* scholarship-guidance.jpg — Scholarship information and guidance
+* study-abroad-support.jpg — International education assistance
+* document-assistance.jpg — Document preparation guidance
+* career-counselling.jpg — Career counselling services
+* application-support.jpg — Application assistance
 
 These are suggestions only. Add assets when supported by actual page content or service requirements, and check for duplicates before creating files.
 

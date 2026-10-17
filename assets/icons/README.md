@@ -163,7 +163,7 @@ Naming rules
 
 * Prefer names that communicate the icon’s purpose.
 * Use .svg for vector icons.
-* Use .png or .webp only when raster artwork is necessary.
+* Use .png or .jpg only when raster artwork is necessary.
 * Avoid spaces, unclear labels, and names such as icon1.svg.
 * Avoid duplicate files that represent the same concept.
 * Keep filenames stable to prevent broken references.
