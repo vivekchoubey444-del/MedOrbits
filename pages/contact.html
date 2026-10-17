@@ -181,10 +181,11 @@
             <span class="kicker">Enquiry form</span>
             <h2 id="form-heading">Tell us a little about your needs.</h2>
             <p>Fields marked with * are required.</p>
-            <form class="contact-form" id="contactForm" action="/api/v1/contact" method="post" data-whatsapp="916205889064" data-email="support@medorbits.in">
+            <form class="contact-form" id="contactForm" action="/api/v1/contact" method="post" data-whatsapp="916205889064" data-email="support@medorbits.in" data-require-contact-method="true">
               <div class="form-field"><label for="contactName">Full name *</label><input id="contactName" name="name" type="text" autocomplete="name" required maxlength="100" placeholder="Enter your full name"></div>
-              <div class="form-field"><label for="contactEmail">Email address *</label><input id="contactEmail" name="email" type="email" autocomplete="email" required maxlength="160" placeholder="you@example.com"></div>
-              <div class="form-field"><label for="contactPhone">Phone number (optional)</label><input id="contactPhone" name="phone" type="tel" autocomplete="tel" maxlength="30" placeholder="Include country code if relevant"></div>
+              <div class="form-field"><label for="contactEmail">Email address</label><input id="contactEmail" name="email" type="email" autocomplete="email" maxlength="160" placeholder="you@example.com"></div>
+              <div class="form-field"><label for="contactPhone">Phone number</label><input id="contactPhone" name="phone" type="tel" autocomplete="tel" maxlength="30" placeholder="Include country code if relevant"></div>
+              <p class="form-note">Provide either an email address or a phone number so we can respond.</p>
               <div class="form-field"><label for="contactType">I’m enquiring about *</label><select id="contactType" name="enquiryType" required><option value="" selected disabled>Select a topic</option><option value="education">Courses and institutions</option><option value="admissions">Admissions and counselling</option><option value="study-abroad">Study abroad</option><option value="career">Jobs and career support</option><option value="internships">Internships</option><option value="recruitment">Recruitment and employer services</option><option value="other">Other enquiry</option></select></div>
               <div class="form-field full"><label for="contactSubject">Subject (optional)</label><input id="contactSubject" name="subject" type="text" maxlength="160" placeholder="Briefly describe your question"></div>
               <div class="form-field full"><label for="contactMessage">How can we help? *</label><textarea id="contactMessage" name="message" required minlength="10" maxlength="4000" placeholder="Share your question or the kind of guidance you are looking for..."></textarea></div>

@@ -34,6 +34,38 @@
     status.setAttribute("aria-live", isError ? "assertive" : "polite");
   }
 
+  function validateContactMethod() {
+    const emailField = form.elements.namedItem("email");
+    const phoneField = form.elements.namedItem("phone");
+    const emailValue = String(emailField?.value || "").trim();
+    const phoneValue = String(phoneField?.value || "").trim();
+    const validPhone = !phoneValue || (
+      /^[+()\d\s.-]+$/.test(phoneValue) &&
+      phoneValue.replace(/\D/g, "").length >= 7 &&
+      phoneValue.replace(/\D/g, "").length <= 15
+    );
+
+    emailField?.setCustomValidity("");
+    phoneField?.setCustomValidity("");
+
+    if (!emailValue && !phoneValue) {
+      emailField?.setCustomValidity("Enter an email address or a phone number.");
+      phoneField?.setCustomValidity("Enter an email address or a phone number.");
+      return false;
+    }
+
+    if (!validPhone) {
+      phoneField?.setCustomValidity("Enter a valid phone number.");
+      return false;
+    }
+
+    return true;
+  }
+
+  form.querySelectorAll('[name="email"], [name="phone"]').forEach((field) => {
+    field.addEventListener("input", () => field.setCustomValidity(""));
+  });
+
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, (character) => ({
       "&": "&amp;",
@@ -92,7 +124,7 @@ ${rows}<footer class="contact">support@medorbits.in<br>+91 62058 89064 · +91 76
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!form.reportValidity()) return;
+    if (!validateContactMethod() || !form.reportValidity()) return;
 
     const submitButton = form.querySelector('button[type="submit"]');
     const originalText = submitButton?.textContent || "Submit Enquiry Online";
@@ -131,7 +163,7 @@ ${rows}<footer class="contact">support@medorbits.in<br>+91 62058 89064 · +91 76
 
   form.querySelectorAll("[data-contact-action]").forEach((button) => {
     button.addEventListener("click", () => {
-      if (!form.reportValidity()) return;
+      if (!validateContactMethod() || !form.reportValidity()) return;
       const details = getDetails();
       const message = getMessage(details);
       const action = button.dataset.contactAction;

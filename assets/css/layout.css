@@ -354,6 +354,26 @@
   min-width: 0;
   overflow-wrap: break-word;
 }
+.footer-social-links {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(201, 169, 110, 0.12);
+}
+.footer-social-links[hidden] {
+  display: none;
+}
+.footer-social-links a {
+  color: var(--muted, #a79caf);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.footer-social-links a:hover {
+  color: var(--gold-light, #e8d7ad);
+}
 /* =========================================================
    12. Reduced-motion compatibility
    ========================================================= */

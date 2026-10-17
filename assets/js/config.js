@@ -302,12 +302,14 @@
         refresh: "/auth/refresh",
         me: "/auth/me",
         sessions: "/sessions",
-        verifyEmail: "/verification/email",
-        resendVerification: "/verification/resend",
+        sendEmailVerification: "/verification/email/send",
+        verifyEmail: "/verification/email/confirm",
+        resendVerification: "/verification/email/send",
+        sendPhoneVerification: "/verification/phone/send",
+        verifyPhone: "/verification/phone/confirm",
         forgotPassword: "/password/forgot",
         resetPassword: "/password/reset",
-        changePassword: "/password/change",
-        twoFactor: "/auth/two-factor"
+        changePassword: "/password/change"
       },
 
       users: {
@@ -341,15 +343,15 @@
 
       documents: {
         list: "/documents",
+        mine: "/documents/mine",
         upload: "/uploads",
-        download: "/documents/download",
-        delete: "/documents"
+        verify: "/documents/:id/verify",
+        delete: "/documents/:id"
       },
 
       payments: {
-        createOrder: "/payments/orders",
-        verify: "/payments/verify",
-        history: "/payments",
+        createCheckout: "/payments/checkout",
+        history: "/payments/mine",
         subscriptions: "/subscriptions"
       },
 
@@ -357,7 +359,10 @@
       search: "/search",
       contact: "/contact",
       support: "/support",
-      faqs: "/faqs",
+      faqs: {
+        list: "/faqs",
+        answer: "/faqs/answer"
+      },
 
       admin: {
         dashboard: "/admin/dashboard",
@@ -569,6 +574,8 @@
     urls,
     routes,
     api,
+    API_BASE_URL: api.baseURL,
+    apiBaseUrl: api.baseURL,
     request,
     uploads,
     data,

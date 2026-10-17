@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "MedOrbits Public Social Links",
+    "description": "Public profile URLs rendered only when configured.",
+    "updatedAt": "2026-10-17"
+  },
+  "links": [
+    { "id": "google", "label": "Google", "url": "" },
+    { "id": "whatsapp-primary", "label": "WhatsApp +91 62058 89064", "url": "https://wa.me/916205889064" },
+    { "id": "whatsapp-secondary", "label": "WhatsApp +91 76449 87052", "url": "https://wa.me/917644987052" },
+    { "id": "facebook", "label": "Facebook", "url": "" },
+    { "id": "instagram", "label": "Instagram", "url": "" },
+    { "id": "linkedin", "label": "LinkedIn", "url": "" },
+    { "id": "youtube", "label": "YouTube", "url": "" },
+    { "id": "x", "label": "X", "url": "" },
+    { "id": "telegram", "label": "Telegram", "url": "" }
+  ]
+}

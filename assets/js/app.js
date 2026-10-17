@@ -548,6 +548,50 @@
       helpers.queryAll(APP.selectors.year).forEach((element) => {
         element.textContent = year;
       });
+
+      helpers.queryAll(".footer-bottom").forEach((element) => {
+        if (element.querySelector("[data-social-links]")) return;
+
+        const links = document.createElement("nav");
+        links.className = "footer-social-links";
+        links.dataset.socialLinks = "";
+        links.setAttribute("aria-label", "MedOrbits social links");
+        element.appendChild(links);
+      });
+
+      fetch("/assets/data/social-links.json", {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin"
+      }).then((response) => {
+        if (!response.ok) throw new Error("Social links are unavailable.");
+        return response.json();
+      }).then((data) => {
+        helpers.queryAll("[data-social-links]").forEach((container) => {
+          container.replaceChildren();
+          (Array.isArray(data.links) ? data.links : []).forEach((item) => {
+            if (typeof item?.url !== "string" || !item.url.trim()) return;
+            let url;
+            try {
+              url = new URL(item.url);
+            } catch {
+              return;
+            }
+            if (url.protocol !== "https:") return;
+
+            const link = document.createElement("a");
+            link.href = url.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = String(item.label || item.id || "Social link");
+            container.appendChild(link);
+          });
+          container.hidden = container.childElementCount === 0;
+        });
+      }).catch(() => {
+        helpers.queryAll("[data-social-links]").forEach((container) => {
+          container.hidden = true;
+        });
+      });
     }
   };
 

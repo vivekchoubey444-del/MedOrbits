@@ -254,7 +254,7 @@
   // --------------------------------------------------
 
   const API = Object.freeze({
-    PREFIX: "/api",
+    PREFIX: "/api/v1",
     DEFAULT_TIMEOUT_MS: 15000,
     UPLOAD_TIMEOUT_MS: 60000,
     MAX_RETRIES: 2,
@@ -262,7 +262,7 @@
     ENDPOINTS: Object.freeze({
       HEALTH: "/health",
       AUTH: "/auth",
-      SESSION: "/session",
+      SESSION: "/sessions",
       VERIFICATION: "/verification",
       PASSWORD: "/password",
       USERS: "/users",
@@ -285,6 +285,7 @@
       UPLOADS: "/uploads",
       CONTACT: "/contact",
       FAQS: "/faqs",
+      FAQ_ANSWER: "/faqs/answer",
       SUBSCRIPTIONS: "/subscriptions",
       ADMIN: "/admin"
     }),

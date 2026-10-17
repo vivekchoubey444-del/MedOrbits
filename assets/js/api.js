@@ -30,7 +30,10 @@
   // --------------------------------------------------
 
   const DEFAULTS = Object.freeze({
-    baseURL: "/api",
+    baseURL:
+      window.MedOrbitsConfig?.api?.baseURL ||
+      window.MedOrbitsConstants?.API?.PREFIX ||
+      "/api/v1",
     timeout: 20000,
     credentials: "same-origin",
     headers: Object.freeze({
@@ -104,7 +107,7 @@
     },
 
     normalizeBaseURL(value) {
-      const base = String(value || "/api").trim();
+      const base = String(value || "/api/v1").trim();
 
       if (!base) {
         throw new TypeError("API base URL cannot be empty.");
@@ -833,7 +836,7 @@
   const endpoints = Object.freeze({
     health: "/health",
     auth: "/auth",
-    sessions: "/session",
+    sessions: "/sessions",
     verification: "/verification",
     password: "/password",
     users: "/users",
@@ -856,6 +859,7 @@
     uploads: "/uploads",
     contact: "/contact",
     faqs: "/faqs",
+    faqAnswer: "/faqs/answer",
     subscriptions: "/subscriptions",
     admin: "/admin"
   });

@@ -113,6 +113,9 @@ function validate(input = {}, options = {}) {
     data[field] = data[field].trim();
   }
 
+  if (data.email === '') delete data.email;
+  if (data.phone === '') delete data.phone;
+
   if (data.name !== undefined) {
     if (data.name.length < 2 || data.name.length > LIMITS.name) {
       throw validationError(
@@ -185,10 +188,14 @@ function validate(input = {}, options = {}) {
   }
 
   if (!partial) {
-    for (const field of ['name', 'email', 'subject', 'message']) {
+    for (const field of ['name', 'message']) {
       if (!data[field]) {
         throw validationError(`${field} is required.`);
       }
+    }
+
+    if (!data.email && !data.phone) {
+      throw validationError('Either email or phone is required.');
     }
   }
 

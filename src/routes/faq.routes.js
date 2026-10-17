@@ -7,6 +7,7 @@ const controller = loadController('faq.controller.js');
 
 // Mounted at /api/v1/faqs
 
+router.post('/answer', asyncHandler(handler(controller, 'answer', 'Answer FAQ question')));
 router.get('/', asyncHandler(handler(controller, 'list', 'List FAQs')));
 router.get('/:id', asyncHandler(handler(controller, 'getById', 'Get FAQ')));
 router.post('/', asyncHandler(handler(controller, 'create', 'Create FAQ')));
