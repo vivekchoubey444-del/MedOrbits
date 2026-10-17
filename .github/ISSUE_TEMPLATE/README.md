@@ -8,7 +8,7 @@ Available Templates
 
 1. Bug Report
 
-File: bug_report.yml or bug-report.md
+File: bug_report.yml
 
 Use this template to report reproducible problems affecting MedOrbits, including:
 

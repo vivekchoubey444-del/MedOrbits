@@ -23,7 +23,7 @@ Configuration files define intended behavior; enforcement depends on their imple
 ├── PULL_REQUEST_TEMPLATE.md
 ├── ISSUE_TEMPLATE/
 │   ├── README.md
-│   ├── bug-report.md
+│   ├── bug_report.yml
 │   ├── feature-request.md
 │   └── security-report.yml
 └── workflows/
@@ -106,7 +106,7 @@ Directory: ISSUE_TEMPLATE/
 
 File	Responsibility
 README.md	Documents available issue templates.
-bug-report.md	Collects reproducible defects and relevant diagnostic details.
+bug_report.yml	Collects reproducible defects and relevant diagnostic details.
 feature-request.md	Collects feature proposals and expected outcomes.
 security-report.yml	Provides structured security-report intake, subject to its actual form configuration.
 
