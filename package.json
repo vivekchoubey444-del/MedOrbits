@@ -20,6 +20,7 @@
     "check:security": "node scripts/security-check.js",
     "check:json": "node scripts/validate-json.js --strict",
     "check:data": "node scripts/validate-data.js assets/data",
+    "data:import:universities": "node scripts/import-ugc-universities.js",
     "brand:pdfs": "node scripts/brand-pdfs.js",
     "site:autobot": "node scripts/site-autobot.js",
     "site:autobot:watch": "node scripts/site-autobot.js --watch",

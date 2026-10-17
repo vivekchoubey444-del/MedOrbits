@@ -58,7 +58,7 @@ faqs.json	faqs	Seeded — 5 records	Public informational questions and answers.
 scholarships.json	scholarships	4 current-cycle records	NSP lists these 2026-27 schemes with application windows ending 31 October 2026; verify current details on the official portal.
 recruitment.json	To be confirmed	Schema-only	Includes recruitment-body and stage catalogues.
 admissions.json	admissions	Schema-only	Documented schema version 1.2.0.
-universities.json	universities	Schema-only	Canonical source for institution records; no institutions are currently listed.
+universities.json	universities	UGC-sourced — 1,301 records	Canonical institution source. Imported records remain pending MedOrbits review.
 colleges.json	colleges	Empty	No college records are currently listed; use universities.json as the canonical institution source unless a verified college record is available.
 fees.json	fees	Schema-only	Fee record structure.
 hostels.json	hostels	Schema-only	Accommodation record structure.
@@ -69,6 +69,8 @@ notifications.json	notifications	Schema-only	Includes public message templates.
 testimonials.json	testimonials	Schema-only	Never populate with fabricated reviews or placeholder endorsements.
 
 The counts, collection keys, and statuses above are documented reference values. They are not a guarantee that the files currently contain those records or structures. Confirm them against the actual repository before release.
+
+Refresh the university snapshot with `npm run data:import:universities`. The importer accepts only public directory fields, stores the UGC listing as a source, and excludes contact, account, and credential fields. Public university pages may show UGC-sourced pending-review entries only with a visible status label and source link; they must not imply that recognition, programmes, admissions, or fees have been independently verified.
 
 2.2 Status definitions
 
@@ -352,6 +354,8 @@ A record should be displayed according to the applicable combination of:
 * Dataset-specific displayRules.
 
 Unverified records must be clearly labeled where they are intentionally shown for informational purposes. They must not be represented as officially confirmed.
+
+The university directory may show UGC-sourced records while MedOrbits review is pending, provided the interface labels them as UGC-listed and not independently verified. This exception does not authorize unverified recognition, course, fee, admission, vacancy, or outcome claims.
 
 Records that fail the publication policy must be withheld from public listings.
 

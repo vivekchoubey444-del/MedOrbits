@@ -1,0 +1,228 @@
+.university-category-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 24px;
+}
+
+.university-category-links a,
+.directory-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid rgba(201, 169, 110, 0.4);
+  border-radius: 6px;
+  color: #e4d0a1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.university-category-links a:hover,
+.directory-nav a:hover {
+  background: rgba(201, 169, 110, 0.12);
+}
+
+.university-directory-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(2, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 20px 0 12px;
+}
+
+.university-result-count,
+.university-meta {
+  color: #b7acbf;
+  font-size: 12px;
+}
+
+.university-status {
+  width: fit-content;
+  margin: 0 0 9px;
+  padding: 4px 8px;
+  border: 1px solid rgba(201, 169, 110, 0.5);
+  border-radius: 4px;
+  color: #e4d0a1;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.university-meta {
+  min-height: 0 !important;
+  margin-bottom: 10px !important;
+}
+
+.university-record-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.university-record-links a {
+  color: #e4d0a1;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.university-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.university-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.university-empty-state {
+  padding: 20px 0;
+  color: #b7acbf;
+}
+
+.directory-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(27, 105, 76, 0.22), transparent 35%),
+    linear-gradient(135deg, #071d17, #0a281f 55%, #10372b);
+  color: #f7f1fa;
+  font: 400 15px/1.7 "DM Sans", sans-serif;
+}
+
+.directory-header {
+  border-bottom: 1px solid rgba(201, 169, 110, 0.24);
+  background: rgba(4, 20, 15, 0.82);
+}
+
+.directory-header-inner,
+.directory-main,
+.directory-footer {
+  width: min(1180px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.directory-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 76px;
+}
+
+.directory-brand {
+  color: #e4d0a1;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.directory-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.directory-nav a {
+  min-height: 36px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.directory-main {
+  padding-block: 48px 64px;
+}
+
+.directory-eyebrow {
+  color: #e4d0a1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.directory-main h1 {
+  margin: 8px 0 10px;
+  color: #f7f1fa;
+  font: 600 clamp(32px, 5vw, 48px)/1.15 "Playfair Display", Georgia, serif;
+}
+
+.directory-main > p {
+  max-width: 760px;
+  color: #b7acbf;
+}
+
+.directory-footer {
+  padding-block: 20px;
+  border-top: 1px solid rgba(201, 169, 110, 0.24);
+  color: #b7acbf;
+  font-size: 11px;
+}
+
+.public-json-data .university-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.directory-page .public-json-data .university-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.directory-page .public-json-data .card {
+  border-color: rgba(201, 169, 110, 0.3);
+  border-radius: 8px;
+  background: linear-gradient(145deg, #174638, #0b2921);
+}
+
+.directory-page .public-json-data .card h3 {
+  color: #eee2f3;
+  font: 600 18px/1.35 "Playfair Display", Georgia, serif;
+}
+
+.directory-page .public-json-data .card p {
+  min-height: 0;
+  color: #b7acbf;
+  font-size: 12px;
+}
+
+.directory-page .university-data-disclaimer {
+  margin-top: 24px;
+}
+
+@media (max-width: 760px) {
+  .university-directory-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .public-json-data .university-cards,
+  .directory-page .public-json-data .university-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .directory-header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-block: 16px;
+  }
+
+  .directory-main {
+    padding-block: 34px 48px;
+  }
+}
+
+@media (max-width: 460px) {
+  .directory-header-inner,
+  .directory-main,
+  .directory-footer {
+    width: calc(100% - 28px);
+  }
+
+  .public-json-data .university-cards,
+  .directory-page .public-json-data .university-cards {
+    grid-template-columns: 1fr;
+  }
+}
