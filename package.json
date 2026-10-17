@@ -20,6 +20,9 @@
     "check:security": "node scripts/security-check.js",
     "check:json": "node scripts/validate-json.js --strict",
     "check:data": "node scripts/validate-data.js assets/data",
+    "brand:pdfs": "node scripts/brand-pdfs.js",
+    "site:autobot": "node scripts/site-autobot.js",
+    "site:autobot:watch": "node scripts/site-autobot.js --watch",
     "check:db": "node scripts/check-db.js",
     "check:health": "node scripts/health-check.js",
     "lint": "eslint .",
@@ -61,6 +64,7 @@
     "morgan": "^1.10.1",
     "mysql2": "^3.14.4",
     "nodemailer": "^7.0.5",
+    "pdf-lib": "^1.17.1",
     "pino": "^9.9.0",
     "pino-http": "^10.5.0",
     "pino-pretty": "^13.1.1",
@@ -109,4 +113,3 @@
     "endOfLine": "lf"
   }
 }
-

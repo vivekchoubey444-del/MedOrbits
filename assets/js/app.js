@@ -621,6 +621,19 @@
     }
   };
 
+  const siteTools = {
+    init() {
+      if (!/^\/(education|career)(\/|$)/.test(window.location.pathname)) return;
+      if (helpers.query('script[data-site-tools-script]')) return;
+
+      const script = document.createElement('script');
+      script.src = '/assets/js/site-tools.js';
+      script.dataset.siteToolsScript = '';
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  };
+
   // --------------------------------------------------
   // Cookie consent helpers
   // --------------------------------------------------
@@ -704,6 +717,7 @@
       backToTop.init();
       footer.init();
       catalogSliders.init();
+      siteTools.init();
       errorHandling.init();
 
       logger.info("Application initialized", {

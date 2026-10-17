@@ -5,6 +5,8 @@ Brand Identity: Royal Burgundy and Champagne Gold
 Classification: Public-facing document resources
 Maintained by: MedOrbits
 
+PDF cover generation: Run `npm run brand:pdfs` to preflight the library without changing files. Run `npm run brand:pdfs -- --write` to add a branded cover page with the MedOrbits logo, support contacts, and category-specific colors. Original PDFs are backed up under `storage/temporary/pdf-brand-backups/`, which is excluded from version control. The branding pass does not change publication or verification status.
+
 ⸻
 
 1. Overview

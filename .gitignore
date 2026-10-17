@@ -3,6 +3,7 @@ coverage/
 dist/
 logs/
 *.log
+storage/temporary/
 .env
 .env.*
 !.env.example
