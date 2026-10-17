@@ -634,14 +634,44 @@
         controls.append(previous, next);
         track.insertAdjacentElement("afterend", controls);
 
+        const pageSize = Number.parseInt(track.dataset.sliderPageSize || "", 10);
+        const paginated = Number.isInteger(pageSize) && pageSize > 0;
+        const items = [...track.children];
+        let currentPage = 0;
+
         const updateControls = () => {
+          if (paginated) {
+            previous.disabled = currentPage === 0;
+            next.disabled = (currentPage + 1) * pageSize >= items.length;
+            controls.hidden = items.length <= pageSize;
+            return;
+          }
+
           const maxScroll = track.scrollWidth - track.clientWidth;
           previous.disabled = track.scrollLeft <= 1;
           next.disabled = track.scrollLeft >= maxScroll - 1;
           controls.hidden = maxScroll <= 1;
         };
 
+        const showPage = (page) => {
+          currentPage = Math.max(
+            0,
+            Math.min(page, Math.ceil(items.length / pageSize) - 1)
+          );
+          items.forEach((item, index) => {
+            item.hidden =
+              index < currentPage * pageSize ||
+              index >= (currentPage + 1) * pageSize;
+          });
+          updateControls();
+        };
+
         const scrollByPage = (direction) => {
+          if (paginated) {
+            showPage(currentPage + direction);
+            return;
+          }
+
           const firstItem = track.firstElementChild;
           const itemWidth = firstItem?.getBoundingClientRect().width || track.clientWidth;
           const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
@@ -655,12 +685,14 @@
         next.addEventListener("click", () => scrollByPage(1));
         track.addEventListener("scroll", updateControls, { passive: true });
         track.addEventListener("keydown", (event) => {
+          if (paginated && event.target !== track) return;
           if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
           event.preventDefault();
           scrollByPage(event.key === "ArrowRight" ? 1 : -1);
         });
         window.addEventListener("resize", updateControls, { passive: true });
-        updateControls();
+        if (paginated) showPage(0);
+        else updateControls();
       });
     }
   };
