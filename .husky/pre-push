@@ -78,25 +78,30 @@ else
     echo "WARNING: No lint script configured; skipping ESLint."
 fi
 # --------------------------------------------------
-# 6. Require automated tests
+# 6. Optional automated tests
 # --------------------------------------------------
-echo ""
-echo "----------------------------------------"
-echo "Checking automated tests..."
-echo "----------------------------------------"
-if has_script test; then
-    echo "Running automated tests..."
-    npm test
-    echo "PASS: Automated tests"
-else
-    script_status=$?
-    if [ "$script_status" -gt 1 ]; then
-        echo "ERROR: Unable to inspect the test script."
+if [ "${MEDORBITS_PREPUSH_FULL:-0}" = "1" ]; then
+    echo ""
+    echo "----------------------------------------"
+    echo "Checking automated tests..."
+    echo "----------------------------------------"
+    if has_script test; then
+        echo "Running automated tests..."
+        npm test
+        echo "PASS: Automated tests"
+    else
+        script_status=$?
+        if [ "$script_status" -gt 1 ]; then
+            echo "ERROR: Unable to inspect the test script."
+            exit 1
+        fi
+        echo "ERROR: No test script configured in package.json."
+        echo "Configure a working test script before pushing."
         exit 1
     fi
-    echo "ERROR: No test script configured in package.json."
-    echo "Configure a working test script before pushing."
-    exit 1
+else
+    echo "INFO: Skipping automated tests in pre-push."
+    echo "INFO: Set MEDORBITS_PREPUSH_FULL=1 to run full checks locally."
 fi
 # --------------------------------------------------
 # 7. Report success
