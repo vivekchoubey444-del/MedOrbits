@@ -4,6 +4,7 @@
   const list = document.querySelector("[data-bulletin-list]");
   const status = document.querySelector("[data-bulletin-status]");
   const slots = [...document.querySelectorAll("[data-daily-banner-slot]")];
+  const grids = [...document.querySelectorAll("[data-daily-banner-grid]")];
   if (!list && !slots.length) return;
 
   function makeText(tag, className, value) {
@@ -17,6 +18,7 @@
     return item &&
       item.active === true &&
       item.publicationStatus === "published" &&
+      ["verified", "content_reviewed"].includes(item.verificationStatus) &&
       (!item.publishedAt || Date.parse(item.publishedAt) <= now) &&
       (!item.expiresAt || Date.parse(item.expiresAt) > now);
   }
@@ -155,12 +157,20 @@
         }).format(new Date()).replace(/-/g, "");
         renderSlot(slot, candidates[Number(date) % candidates.length], category);
       });
-      if (status) status.textContent = items.length
-        ? "Published information and official notices. Verify important details with the issuing authority."
-        : "No published bulletins are available right now.";
+      grids.forEach((grid) => {
+        grid.hidden = !slots.some((slot) => grid.contains(slot) && !slot.hidden);
+      });
+      if (status) {
+        status.textContent = items.length
+          ? "Published information and official notices. Verify important details with the issuing authority."
+          : "No published bulletins are available right now.";
+        status.hidden = !list && items.length > 0;
+      }
     } catch {
       if (status) status.textContent = "The bulletin could not be loaded. Use the resource links below and verify notices with the issuing authority.";
       slots.forEach((slot) => { slot.hidden = true; });
+      grids.forEach((grid) => { grid.hidden = true; });
+      if (status) status.hidden = false;
     }
   }
 

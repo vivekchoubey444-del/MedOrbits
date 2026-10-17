@@ -366,13 +366,38 @@
   display: none;
 }
 .footer-social-links a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid rgba(201, 169, 110, 0.3);
+  border-radius: 999px;
+  background: rgba(201, 169, 110, 0.06);
   color: var(--muted, #a79caf);
   font-size: 11px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
-.footer-social-links a:hover {
+.footer-social-links a img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  object-fit: contain;
+}
+.footer-social-links a:hover,
+.footer-social-links a:focus-visible {
+  border-color: var(--gold, #c9a96e);
+  background: rgba(201, 169, 110, 0.14);
   color: var(--gold-light, #e8d7ad);
+}
+.footer-social-links a:focus-visible {
+  outline: 2px solid var(--gold-light, #e8d7ad);
+  outline-offset: 3px;
 }
 /* =========================================================
    12. Reduced-motion compatibility
@@ -383,6 +408,7 @@
   .dropdown a,
   .btn,
   .nav-cta,
+  .footer-social-links a,
   .footer-grid > div:not(:first-child) a {
     transition: none;
   }

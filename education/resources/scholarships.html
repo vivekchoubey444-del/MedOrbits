@@ -203,7 +203,7 @@
           .then(data => {
             const now = Date.now();
             const offers = (data.scholarships || []).filter(offer => {
-              if (!offer.active || offer.publicationStatus !== "published" || offer.applicationStatus !== "open") return false;
+              if (!offer.active || offer.publicationStatus !== "published" || offer.verificationStatus !== "verified" || offer.applicationStatus !== "open") return false;
               if (offer.applicationEnd && new Date(`${offer.applicationEnd}T23:59:59Z`).getTime() < now) return false;
               if (topicMatches[topic] && !topicMatches[topic](offer)) return false;
               const searchable = `${offer.name} ${offer.providerName} ${offer.eligibilitySummary}`.toLowerCase();

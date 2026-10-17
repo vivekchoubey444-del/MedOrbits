@@ -566,6 +566,15 @@
         if (!response.ok) throw new Error("Social links are unavailable.");
         return response.json();
       }).then((data) => {
+        const iconIds = new Set([
+          "facebook",
+          "instagram",
+          "linkedin",
+          "telegram",
+          "whatsapp",
+          "x",
+          "youtube"
+        ]);
         helpers.queryAll("[data-social-links]").forEach((container) => {
           container.replaceChildren();
           (Array.isArray(data.links) ? data.links : []).forEach((item) => {
@@ -578,16 +587,30 @@
             }
             if (url.protocol !== "https:") return;
 
+            const id = String(item.id || "").toLowerCase();
+            const iconId = id.startsWith("whatsapp") ? "whatsapp" : id;
             const link = document.createElement("a");
+            const icon = document.createElement("img");
+            const label = document.createElement("span");
+            const iconName = iconIds.has(iconId) ? iconId : "social";
+
+            link.className = "footer-social-button";
             link.href = url.href;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
-            link.textContent = String(item.label || item.id || "Social link");
+            icon.src = `/assets/icons/social/${iconName}.svg`;
+            icon.alt = "";
+            icon.width = 18;
+            icon.height = 18;
+            icon.setAttribute("aria-hidden", "true");
+            label.textContent = String(item.label || item.id || "Social link");
+            link.append(icon, label);
             container.appendChild(link);
           });
           container.hidden = container.childElementCount === 0;
         });
-      }).catch(() => {
+      }).catch((error) => {
+        logger.error("Social links are unavailable.", error);
         helpers.queryAll("[data-social-links]").forEach((container) => {
           container.hidden = true;
         });
@@ -724,6 +747,325 @@
     }
   };
 
+  const publicData = {
+    init() {
+      const dataPages = new Set([
+        "/education/index.html",
+        "/education/courses.html",
+        "/education/colleges.html",
+        "/education/universities.html",
+        "/education/study-abroad/index.html",
+        "/education/admissions/index.html",
+        "/education/admissions/process.html",
+        "/education/admissions/documents.html",
+        "/education/admissions/exams.html",
+        "/education/resources/faqs.html",
+        "/education/resources/guides.html",
+        "/education/resources/fees.html",
+        "/education/resources/hostels.html",
+        "/career/index.html",
+        "/career/jobs.html",
+        "/career/internships.html",
+        "/career/guidance.html",
+        "/career/recruitment.html",
+        "/pages/careers.html",
+        "/pages/services.html",
+        "/pages/notifications.html",
+        "/pages/testimonials.html"
+      ]);
+      const pathname = window.location.pathname.endsWith("/")
+        ? `${window.location.pathname}index.html`
+        : window.location.pathname;
+      if (!dataPages.has(pathname)) return;
+      if (helpers.query("script[data-public-data]")) return;
+
+      const script = document.createElement("script");
+      script.src = "/assets/js/public-data.js";
+      script.dataset.publicData = "";
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  };
+
+  const publicBulletins = {
+    init() {
+      const pathname = window.location.pathname;
+      if (
+        pathname !== "/" &&
+        pathname !== "/index.html" &&
+        pathname !== "/pages/notifications.html"
+      ) return;
+      if (helpers.query("script[data-public-bulletins]")) return;
+
+      const script = document.createElement("script");
+      script.src = "/assets/js/bulletins.js";
+      script.dataset.publicBulletins = "";
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  };
+
+  const timedEnquiry = {
+    init() {
+      const pathname = window.location.pathname;
+      if (
+        /^\/(admin|account|legal)(\/|$)/.test(pathname) ||
+        pathname === "/pages/400.html" ||
+        pathname === "/pages/maintenance.html" ||
+        pathname === "/pages/contact.html" ||
+        helpers.query("#contactForm")
+      ) return;
+
+      const storageKeys = {
+        startedAt: "medorbits-enquiry-started-at",
+        shown: "medorbits-enquiry-shown"
+      };
+      const delay = 120000;
+      let storageUnavailable = false;
+      let storageWarningLogged = false;
+      let shownInThisDocument = false;
+
+      const warnStorageUnavailable = (error) => {
+        storageUnavailable = true;
+        if (storageWarningLogged) return;
+        storageWarningLogged = true;
+        logger.warn(
+          "Timed enquiry session tracking is unavailable.",
+          error
+        );
+      };
+
+      const readSessionValue = (key) => {
+        if (storageUnavailable) return null;
+        try {
+          return window.sessionStorage.getItem(key);
+        } catch (error) {
+          warnStorageUnavailable(error);
+          return null;
+        }
+      };
+
+      const writeSessionValue = (key, value) => {
+        if (storageUnavailable) return;
+        try {
+          window.sessionStorage.setItem(key, value);
+        } catch (error) {
+          warnStorageUnavailable(error);
+        }
+      };
+
+      if (readSessionValue(storageKeys.shown) === "true") return;
+
+      const storedStart = Number(readSessionValue(storageKeys.startedAt));
+      const startedAt = Number.isSafeInteger(storedStart) &&
+        storedStart > 0 &&
+        storedStart <= Date.now()
+        ? storedStart
+        : Date.now();
+      if (startedAt !== storedStart) {
+        writeSessionValue(storageKeys.startedAt, String(startedAt));
+      }
+
+      const closeButtonSelector = "[data-timed-enquiry-close]";
+
+      const show = () => {
+        if (shownInThisDocument) return;
+        if (readSessionValue(storageKeys.shown) === "true") return;
+
+        shownInThisDocument = true;
+        writeSessionValue(storageKeys.shown, "true");
+
+        const backdrop = document.createElement("div");
+        backdrop.className = "timed-enquiry-backdrop";
+        backdrop.setAttribute("data-timed-enquiry", "");
+        backdrop.innerHTML = `
+          <section
+            class="timed-enquiry-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="timed-enquiry-title"
+            aria-describedby="timed-enquiry-description"
+            tabindex="-1"
+          >
+            <button class="timed-enquiry-close" type="button" aria-label="Close enquiry form" data-timed-enquiry-close>×</button>
+            <p class="timed-enquiry-eyebrow">Here to help</p>
+            <h2 id="timed-enquiry-title">Have a question?</h2>
+            <p id="timed-enquiry-description">Share your details and our team will get back to you.</p>
+            <form class="timed-enquiry-form" novalidate>
+              <label>
+                Name
+                <input name="name" autocomplete="name" minlength="2" maxlength="100" required>
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" autocomplete="email" maxlength="254">
+              </label>
+              <label>
+                Phone
+                <input name="phone" type="tel" autocomplete="tel" maxlength="25">
+              </label>
+              <label>
+                What can we help with?
+                <select name="category">
+                  <option value="general">General enquiry</option>
+                  <option value="admissions">Admissions</option>
+                  <option value="study_abroad">Study abroad</option>
+                  <option value="career">Career</option>
+                  <option value="recruitment">Recruitment</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="technical_support">Technical support</option>
+                  <option value="feedback">Feedback</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label class="timed-enquiry-message">
+                Your question
+                <textarea name="message" rows="3" minlength="10" maxlength="10000" required></textarea>
+              </label>
+              <input name="source" type="hidden" value="website">
+              <p class="timed-enquiry-contact-hint">Please provide an email address or phone number.</p>
+              <p class="timed-enquiry-status" role="status" aria-live="polite" hidden></p>
+              <button class="timed-enquiry-submit" type="submit">Send enquiry</button>
+            </form>
+          </section>
+        `;
+
+        document.body.appendChild(backdrop);
+        const dialog = helpers.query(".timed-enquiry-dialog", backdrop);
+        const form = helpers.query(".timed-enquiry-form", backdrop);
+        const status = helpers.query(".timed-enquiry-status", backdrop);
+        const submit = helpers.query(".timed-enquiry-submit", backdrop);
+        const previousFocus = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+
+        const close = () => {
+          backdrop.remove();
+          document.body.style.overflow = previousOverflow;
+          if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+            previousFocus.focus({ preventScroll: true });
+          }
+        };
+
+        const focusableElements = () => helpers.queryAll(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]',
+          dialog
+        ).filter((element) => !element.hidden);
+
+        backdrop.addEventListener("click", (event) => {
+          if (
+            event.target === backdrop ||
+            (event.target instanceof Element &&
+              event.target.closest(closeButtonSelector))
+          ) {
+            close();
+          }
+        });
+
+        dialog.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            close();
+            return;
+          }
+          if (event.key !== "Tab") return;
+
+          const focusable = focusableElements();
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (!first || !last) {
+            event.preventDefault();
+            dialog.focus();
+          } else if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
+
+        document.body.style.overflow = "hidden";
+        form.elements.name.focus();
+
+        [form.elements.email, form.elements.phone].forEach((field) => {
+          field.addEventListener("input", () => field.setCustomValidity(""));
+        });
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const email = form.elements.email;
+          const phone = form.elements.phone;
+          const emailValue = email.value.trim();
+          const phoneValue = phone.value.trim();
+          const phoneDigits = phoneValue.replace(/\D/g, "").length;
+
+          email.setCustomValidity("");
+          phone.setCustomValidity("");
+          if (!emailValue && !phoneValue) {
+            email.setCustomValidity("Enter an email address or a phone number.");
+            phone.setCustomValidity("Enter an email address or a phone number.");
+            form.reportValidity();
+            return;
+          }
+          if (
+            phoneValue &&
+            (!/^[+()\d\s.-]+$/.test(phoneValue) ||
+              phoneDigits < 7 ||
+              phoneDigits > 15)
+          ) {
+            phone.setCustomValidity("Enter a valid phone number.");
+            form.reportValidity();
+            return;
+          }
+          if (!form.reportValidity()) return;
+
+          if (status) {
+            status.hidden = false;
+            status.textContent = "Sending your enquiry...";
+            status.dataset.state = "pending";
+          }
+          if (submit) submit.disabled = true;
+
+          try {
+            const response = await fetch("/api/v1/contact", {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              credentials: "same-origin",
+              body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(
+                payload.error?.message ||
+                  payload.message ||
+                  "Your enquiry could not be submitted. Please try again."
+              );
+            }
+            form.reset();
+            if (status) {
+              status.textContent = "Thank you. Your enquiry has been submitted.";
+              status.dataset.state = "success";
+            }
+          } catch (error) {
+            if (status) {
+              status.textContent = error.message ||
+                "Your enquiry could not be submitted. Please try again.";
+              status.dataset.state = "error";
+            }
+            logger.error("Timed enquiry submission failed.", error);
+          } finally {
+            if (submit) submit.disabled = false;
+          }
+        });
+      };
+
+      window.setTimeout(show, Math.max(0, delay - (Date.now() - startedAt)));
+    }
+  };
+
   // --------------------------------------------------
   // Cookie consent helpers
   // --------------------------------------------------
@@ -809,6 +1151,9 @@
       catalogSliders.init();
       siteTools.init();
       documentLibrary.init();
+      publicData.init();
+      publicBulletins.init();
+      timedEnquiry.init();
       errorHandling.init();
 
       logger.info("Application initialized", {
