@@ -34,13 +34,13 @@ if (
 typeof configuredPath !== 'string' ||
 configuredPath.trim() === ''
 ) {
-throw new Error(${variableName} must be a non-empty path.);
+throw new Error(`${variableName} must be a non-empty path.`);
 }
 
 const trimmedPath = configuredPath.trim();
 
 if (trimmedPath.includes('\0')) {
-throw new Error(${variableName} contains an invalid character.);
+throw new Error(`${variableName} contains an invalid character.`);
 }
 
 return path.resolve(projectRoot, trimmedPath);
@@ -66,7 +66,7 @@ return (
 relativePath === '' ||
 (
 relativePath !== '..' &&
-!relativePath.startsWith(..${path.sep}) &&
+!relativePath.startsWith(`..${path.sep}`) &&
 !path.isAbsolute(relativePath)
 )
 );
@@ -185,10 +185,10 @@ for (const type of types) {
 // Accept conventional MIME type/subtype values, not wildcards.
 if (
 type.includes('*') ||
-!/^[a-z0-9!#$&^.+-]+/[a-z0-9!#$&^.+-]+$/.test(type)
+!/^[a-z0-9!#$&^.+-]+\/[a-z0-9!#$&^.+-]+$/.test(type)
 ) {
 throw new Error(
-Invalid upload MIME type configured: ${type}
+`Invalid upload MIME type configured: ${type}`
 );
 }
 }
@@ -205,7 +205,7 @@ return uniqueTypes;
 function validatePositiveInteger(value, variableName) {
 if (!Number.isSafeInteger(value) || value <= 0) {
 throw new Error(
-${variableName} must be a positive safe integer.
+`${variableName} must be a positive safe integer.`
 );
 }
 

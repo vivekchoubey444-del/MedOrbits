@@ -16,7 +16,7 @@ resolved < 1 ||
 resolved > maximum
 ) {
 throw new RangeError(
-${name} must be an integer between 1 and ${maximum}.
+`${name} must be an integer between 1 and ${maximum}.`
 );
 }
 
@@ -42,7 +42,7 @@ throw new TypeError('reminderService.getDue is required.');
 
 function log(logger, level, fields) {
 if (logger && typeof logger[level] === 'function') {
-loggerlevel;
+logger[level](fields);
 }
 }
 

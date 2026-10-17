@@ -63,7 +63,7 @@ if (
 typeof value !== 'string' ||
 value.length > MAX_URL_LENGTH
 ) {
-throw new TypeError(${fieldName} must be a valid HTTPS URL.);
+throw new TypeError(`${fieldName} must be a valid HTTPS URL.`);
 }
 
 let parsed;
@@ -71,7 +71,7 @@ let parsed;
 try {
 parsed = new URL(value);
 } catch {
-throw new TypeError(${fieldName} must be a valid HTTPS URL.);
+throw new TypeError(`${fieldName} must be a valid HTTPS URL.`);
 }
 
 if (
@@ -81,7 +81,7 @@ parsed.username ||
 parsed.password
 ) {
 throw new TypeError(
-${fieldName} must use HTTPS and cannot contain URL credentials.
+`${fieldName} must use HTTPS and cannot contain URL credentials.`
 );
 }
 

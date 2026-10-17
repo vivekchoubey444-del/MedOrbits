@@ -34,7 +34,7 @@ validateImplementation() {
 for (const method of REQUIRED_METHODS) {
 if (this[method] === PaymentProvider.prototype[method]) {
 throw new TypeError(
-${this.constructor.name} must implement ${method}().
+`${this.constructor.name} must implement ${method}().`
 );
 }
 

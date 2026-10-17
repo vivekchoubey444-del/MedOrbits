@@ -27,7 +27,7 @@ const MAX_RECIPIENTS = 100;
 
 function requiredString(value, name) {
 if (typeof value !== 'string' || !value.trim()) {
-throw new Error(${name} is required.);
+throw new Error(`${name} is required.`);
 }
 
 return value.trim();
@@ -45,7 +45,7 @@ if (
 number < 1 ||
 number > max
 ) {
-throw new Error(${name} must be an integer between 1 and ${max}.);
+throw new Error(`${name} must be an integer between 1 and ${max}.`);
 }
 
 return number;
@@ -61,7 +61,7 @@ return value;
 }
 
 if (typeof value !== 'string') {
-throw new Error(${name} must be true or false.);
+throw new Error(`${name} must be true or false.`);
 }
 
 const normalized = value.trim().toLowerCase();
@@ -69,7 +69,7 @@ const normalized = value.trim().toLowerCase();
 if (normalized === 'true') return true;
 if (normalized === 'false') return false;
 
-throw new Error(${name} must be true or false.);
+throw new Error(`${name} must be true or false.`);
 }
 
 function validateEmailAddress(value, name) {
@@ -77,9 +77,9 @@ if (
 typeof value !== 'string' ||
 value.length > 254 ||
 /[\r\n\0]/.test(value) ||
-!/^[^\s@<>(),;:"\[]]+@[^\s@<>(),;:"\[]]+.[^\s@<>(),;:"\[]]+$/.test(value)
+!/^[^\s@<>(),;:"[\]]+@[^\s@<>(),;:"[\]]+\.[^\s@<>(),;:"[\]]+$/.test(value)
 ) {
-throw new TypeError(${name} must be a valid email address.);
+throw new TypeError(`${name} must be a valid email address.`);
 }
 
 return value;
@@ -93,7 +93,7 @@ addresses.length === 0 ||
 addresses.length > MAX_RECIPIENTS ||
 addresses.some(address => typeof address !== 'string' || !address.trim())
 ) {
-throw new TypeError(Invalid ${name} recipient list.);
+throw new TypeError(`Invalid ${name} recipient list.`);
 }
 
 return addresses;

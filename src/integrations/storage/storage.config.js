@@ -15,7 +15,7 @@ const parsed = typeof value === 'number' ? value : Number(value);
 
 if (!Number.isSafeInteger(parsed) || parsed <= 0) {
 throw new Error(
-${variableName} must be a positive safe integer.
+`${variableName} must be a positive safe integer.`
 );
 }
 
@@ -32,7 +32,7 @@ return value;
 }
 
 if (typeof value !== 'string') {
-throw new Error(${variableName} must be true or false.);
+throw new Error(`${variableName} must be true or false.`);
 }
 
 switch (value.trim().toLowerCase()) {
@@ -41,7 +41,7 @@ return true;
 case 'false':
 return false;
 default:
-throw new Error(${variableName} must be true or false.);
+throw new Error(`${variableName} must be true or false.`);
 }
 }
 
@@ -50,7 +50,7 @@ if (typeof value !== 'string') {
 throw new Error('S3_PREFIX must be a string.');
 }
 
-const prefix = value.trim().replace(/^/+|/+$/g, '');
+const prefix = value.trim().replace(/^\/+|\/+$/g, '');
 
 if (!prefix) {
 return '';
@@ -70,7 +70,7 @@ segment === '..' ||
 throw new Error('S3_PREFIX contains an invalid path segment.');
 }
 
-return ${prefix}/;
+return `${prefix}/`;
 }
 
 function validateEndpoint(value) {
@@ -102,8 +102,8 @@ if (parsed.protocol !== 'https:' && process.env.NODE_ENV === 'production') {
 throw new Error('S3_ENDPOINT must use HTTPS in production.');
 }
 
-return parsed.origin.replace(//+$/, '') +
-parsed.pathname.replace(//+$/, '');
+return parsed.origin.replace(/\/+$/, '') +
+parsed.pathname.replace(/\/+$/, '');
 }
 
 function loadStorageConfig(env = process.env) {

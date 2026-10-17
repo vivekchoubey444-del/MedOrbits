@@ -30,7 +30,7 @@ resolved < 1 ||
 resolved > maximum
 ) {
 throw new RangeError(
-${name} must be an integer between 1 and ${maximum}.
+`${name} must be an integer between 1 and ${maximum}.`
 );
 }
 
@@ -41,7 +41,7 @@ function normalizeDate(value, name, fallback = new Date()) {
 const date = value == null ? new Date(fallback) : new Date(value);
 
 if (Number.isNaN(date.getTime())) {
-throw new TypeError(${name} must be a valid date.);
+throw new TypeError(`${name} must be a valid date.`);
 }
 
 return date;
@@ -66,7 +66,7 @@ return value.trim();
 
 function log(logger, level, data) {
 if (logger && typeof logger[level] === 'function') {
-loggerlevel;
+logger[level](data);
 }
 }
 

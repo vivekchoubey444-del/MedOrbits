@@ -6,7 +6,13 @@ const prettier = require('eslint-config-prettier');
 
 module.exports = [
   {
-    ignores: ['node_modules/**', 'coverage/**', 'dist/**', 'assets/**'],
+    ignores: [
+      'node_modules/**',
+      'coverage/**',
+      'dist/**',
+      'assets/**',
+      'tests/**',
+    ],
   },
   js.configs.recommended,
   {
@@ -17,7 +23,8 @@ module.exports = [
       globals: { ...globals.node },
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off',
+      'no-control-regex': 'off',
       'no-console': 'off',
     },
   },

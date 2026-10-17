@@ -51,7 +51,7 @@ const requiredMethods = [
 for (const method of requiredMethods) {
 if (typeof provider[method] !== 'function') {
 throw new TypeError(
-Payment provider must implement ${method}().
+`Payment provider must implement ${method}().`
 );
 }
 }
@@ -82,7 +82,7 @@ throw new TypeError('Payment configuration is invalid.');
 
 if (!SUPPORTED_PROVIDERS.has(config.provider)) {
 throw new Error(
-Unsupported payment provider: ${String(config.provider)}
+`Unsupported payment provider: ${String(config.provider)}`
 );
 }
 

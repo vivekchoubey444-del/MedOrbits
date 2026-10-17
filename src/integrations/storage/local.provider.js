@@ -37,7 +37,7 @@ typeof key !== 'string' ||
 key.length === 0 ||
 key.length > 1024 ||
 key.includes('\0') ||
-key.includes('\') ||
+key.includes('\\') ||
 key.startsWith('/') ||
 path.posix.isAbsolute(key)
 ) {
@@ -88,7 +88,7 @@ typeof contentType !== 'string' ||
 contentType.length === 0 ||
 contentType.length > CONTENT_TYPE_MAX_LENGTH ||
 /[\r\n\0]/.test(contentType) ||
-!/^[a-zA-Z0-9!#$&^.+-]+/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
+!/^[a-zA-Z0-9!#$&^.+-]+\/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
 ) {
 throw new TypeError('Invalid content type.');
 }

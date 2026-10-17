@@ -95,7 +95,7 @@ return new S3StorageProvider({
 }
 
 normalizePrefix(prefix) {
-const trimmed = prefix.replace(/^/+|/+$/g, '');
+const trimmed = prefix.replace(/^\/+|\/+$/g, '');
 
 if (!trimmed) {
   return '';
@@ -111,7 +111,7 @@ typeof key !== 'string' ||
 key.length === 0 ||
 key.length > MAX_KEY_LENGTH ||
 key.startsWith('/') ||
-key.includes('\') ||
+key.includes('\\') ||
 key.includes('\0')
 ) {
 throw new TypeError('Invalid object key.');
@@ -134,7 +134,7 @@ return key;
 }
 
 key(key) {
-return ${this.prefix}${this.validateKey(key)};
+return `${this.prefix}${this.validateKey(key)}`;
 }
 
 normalizeBody(body) {
@@ -155,7 +155,7 @@ typeof contentType !== 'string' ||
 contentType.length === 0 ||
 contentType.length > 255 ||
 /[\r\n\0]/.test(contentType) ||
-!/^[a-zA-Z0-9!#$&^.+-]+/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
+!/^[a-zA-Z0-9!#$&^.+-]+\/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
 ) {
 throw new TypeError('Invalid content type.');
 }

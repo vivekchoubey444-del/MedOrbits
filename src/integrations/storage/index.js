@@ -26,7 +26,7 @@ throw new TypeError('A valid storage provider is required.');
 for (const method of ['put', 'get', 'delete']) {
 if (typeof provider[method] !== 'function') {
 throw new TypeError(
-Storage provider must implement ${method}().
+`Storage provider must implement ${method}().`
 );
 }
 }
@@ -59,7 +59,7 @@ throw new TypeError('Storage configuration is invalid.');
 
 if (!SUPPORTED_DRIVERS.has(config.driver)) {
 throw new Error(
-Unsupported storage driver: ${String(config.driver)}
+`Unsupported storage driver: ${String(config.driver)}`
 );
 }
 
