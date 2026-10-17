@@ -9,7 +9,37 @@
       { file: "courses.json", collection: "courses", title: "Course catalogue records" }
     ],
     "/education/colleges.html": [
-      { file: "colleges.json", collection: "colleges", title: "College directory records" }
+      {
+        file: "colleges.json",
+        collection: "colleges",
+        title: "College directory",
+        directory: true,
+        directoryKind: "college",
+        showTypeFilter: true,
+        mountSelector: "#college-results"
+      }
+    ],
+    "/education/government-colleges.html": [
+      {
+        file: "colleges.json",
+        collection: "colleges",
+        title: "Government colleges",
+        directory: true,
+        directoryKind: "college",
+        institutionTypes: ["government", "public", "government-aided"],
+        mountSelector: "#college-results"
+      }
+    ],
+    "/education/private-colleges.html": [
+      {
+        file: "colleges.json",
+        collection: "colleges",
+        title: "Private colleges",
+        directory: true,
+        directoryKind: "college",
+        institutionTypes: ["private"],
+        mountSelector: "#college-results"
+      }
     ],
     "/education/universities.html": [
       {
@@ -121,13 +151,18 @@
   const main = document.querySelector("main");
   if (!datasets || !main) return;
 
-  function isPublicRecord(record, config) {
-    if (!record || typeof record !== "object" || record.active === false) return false;
+  function isPublicRecord(record, config = {}) {
+    if (!record || typeof record !== "object") return false;
+    const recordStatus = record.status && typeof record.status === "object" ? record.status : {};
+    if (record.active === false || recordStatus.active === false) return false;
     if (record.publicationStatus && record.publicationStatus !== "published") return false;
-    if (record.status && ["draft", "planned", "inactive", "archived"].includes(record.status)) return false;
-    if (!record.verificationStatus || approvedVerification.has(record.verificationStatus)) return true;
+    if (typeof record.status === "string" && ["draft", "planned", "inactive", "archived"].includes(record.status)) return false;
+    const verificationStatus = record.verificationStatus || recordStatus.verificationStatus;
+    if (approvedVerification.has(verificationStatus)) return true;
+    if (config.directoryKind === "college") return false;
+    if (!verificationStatus) return true;
     return config.allowUgcPending === true
-      && record.verificationStatus === "pending-review"
+      && verificationStatus === "pending-review"
       && Array.isArray(record.sourceUrls)
       && record.sourceUrls.some((source) => source.sourceType === "government-directory" && source.url);
   }
@@ -151,12 +186,18 @@
     if (config.directory) {
       const status = document.createElement("p");
       status.className = "university-status";
-      status.textContent = "UGC-listed · MedOrbits review pending";
+      status.textContent = config.directoryKind === "college"
+        ? `College record · ${textValue(record.status || {}, ["verificationStatus"]) || "verification status unavailable"}`
+        : "UGC-listed - MedOrbits review pending";
       body.appendChild(status);
 
       const details = [
-        textValue(record, ["stateName"]),
-        textValue(record, ["ugcStatus"]) ? `UGC status: ${textValue(record, ["ugcStatus"])}` : "",
+        config.directoryKind === "college"
+          ? textValue(record.location || {}, ["city", "district", "state"])
+          : textValue(record, ["stateName"]),
+        config.directoryKind === "college"
+          ? textValue(record, ["institutionType"])
+          : textValue(record, ["ugcStatus"]) ? `UGC status: ${textValue(record, ["ugcStatus"])}` : "",
       ].filter(Boolean);
       if (details.length) {
         const meta = document.createElement("p");
@@ -176,13 +217,22 @@
     if (config.directory) {
       const links = document.createElement("div");
       links.className = "university-record-links";
-      const website = safeHttpUrl(record.website);
-      if (website) links.appendChild(createExternalLink(website, "Institution website (listed by UGC)"));
-      const directorySource = Array.isArray(record.sourceUrls)
-        ? record.sourceUrls.find((source) => source.sourceType === "government-directory")
+      const website = safeHttpUrl(config.directoryKind === "college"
+        ? record.contact?.officialWebsite
+        : record.website);
+      if (website) links.appendChild(createExternalLink(website, config.directoryKind === "college"
+        ? "Official college website"
+        : "Institution website (listed by UGC)"));
+      const sources = config.directoryKind === "college" ? record.officialSources : record.sourceUrls;
+      const directorySource = Array.isArray(sources)
+        ? sources.find((source) => config.directoryKind === "college"
+          ? source.url
+          : source.sourceType === "government-directory" && source.url)
         : null;
       const sourceUrl = safeHttpUrl(directorySource?.url);
-      if (sourceUrl) links.appendChild(createExternalLink(sourceUrl, "UGC source"));
+      if (sourceUrl) links.appendChild(createExternalLink(sourceUrl, config.directoryKind === "college"
+        ? "Source"
+        : "UGC source"));
       if (links.childElementCount) body.appendChild(links);
     }
 
@@ -250,10 +300,9 @@
       typeSelect.setAttribute("aria-label", "Filter by university type");
       const typeOptions = [
         ["", "All institution types"],
-        ["central-university", "Central government"],
-        ["state-university", "State government"],
-        ["private-university", "Private"],
-        ["deemed-university", "Deemed"],
+        ...(config.directoryKind === "college"
+          ? [["government", "Government"], ["public", "Public"], ["government-aided", "Government-aided"], ["private", "Private"]]
+          : [["central-university", "Central government"], ["state-university", "State government"], ["private-university", "Private"], ["deemed-university", "Deemed"]]),
       ];
       typeOptions.forEach(([value, label]) => {
         const option = document.createElement("option");
@@ -271,7 +320,21 @@
     allStates.value = "";
     allStates.textContent = "All states and union territories";
     stateSelect.appendChild(allStates);
-    [...new Set(records.map((record) => record.stateName).filter(Boolean))]
+    const stateName = (record) => config.directoryKind === "college"
+      ? textValue(record.location || {}, ["state"])
+      : textValue(record, ["stateName"]);
+    const recordName = (record) => textValue(record, ["name", "shortName", "title"]);
+    const recordSearchText = (record) => [
+      recordName(record),
+      record.summary,
+      stateName(record),
+      record.ugcStatus,
+      record.institutionType,
+      record.location?.city,
+      record.location?.district,
+    ].filter(Boolean);
+
+    [...new Set(records.map(stateName).filter(Boolean))]
       .sort((left, right) => left.localeCompare(right))
       .forEach((state) => {
         const option = document.createElement("option");
@@ -319,11 +382,10 @@
       const state = stateSelect.value;
       const institutionType = typeSelect?.value || "";
       const filtered = records.filter((record) => {
-        if (state && record.stateName !== state) return false;
+        if (state && stateName(record) !== state) return false;
         if (institutionType && record.institutionType !== institutionType) return false;
         if (!query) return true;
-        return [record.name, record.summary, record.stateName, record.ugcStatus, record.institutionType]
-          .filter(Boolean)
+        return recordSearchText(record)
           .some((value) => String(value).toLocaleLowerCase().includes(query));
       });
 
@@ -402,7 +464,7 @@
       }
       return data[collection];
     });
-    if (!records.length) return null;
+    if (!records.length && !datasetsByPage[currentPath]?.some((config) => config.directory)) return null;
 
     const scopedRecords = config.institutionTypes
       ? records.filter((record) => config.institutionTypes.includes(record.institutionType))
