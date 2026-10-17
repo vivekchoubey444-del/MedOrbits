@@ -1,7 +1,6 @@
 'use strict';
 
 const { crudController } = require('./controller.helpers');
-const { requireUser } = require('./controller.helpers');
 const repository = require('../repositories/session.repository');
 const validator = require('../validators/session.validator');
 

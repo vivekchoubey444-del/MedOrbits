@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -11,27 +11,27 @@
 * This module does not execute AI requests by itself.
     */
 
-const { AiClient } = require(’./ai.client’);
-const { AiProvider } = require(’./ai.provider’);
-const { OpenAiProvider } = require(’./openai.provider’);
-const { loadAiConfig } = require(’./ai.config’);
+const { AiClient } = require('./ai.client');
+const { AiProvider } = require('./ai.provider');
+const { OpenAiProvider } = require('./openai.provider');
+const { loadAiConfig } = require('./ai.config');
 
 function validateProvider(provider) {
 if (
 !provider ||
-typeof provider.generateText !== ‘function’
+typeof provider.generateText !== 'function'
 ) {
 throw new TypeError(
-‘AI provider must implement generateText(request).’
+'AI provider must implement generateText(request).'
 );
 }
 
 if (
 provider.close != null &&
-typeof provider.close !== ‘function’
+typeof provider.close !== 'function'
 ) {
 throw new TypeError(
-‘AI provider close must be a function when provided.’
+'AI provider close must be a function when provided.'
 );
 }
 
@@ -41,10 +41,10 @@ return provider;
 function createAiClient(options = {}) {
 if (
 !options ||
-typeof options !== ‘object’ ||
+typeof options !== 'object' ||
 Array.isArray(options)
 ) {
-throw new TypeError(‘AI client options must be an object.’);
+throw new TypeError('AI client options must be an object.');
 }
 
 const provider = options.provider

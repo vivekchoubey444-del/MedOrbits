@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -12,14 +12,14 @@
     */
 
 const REQUIRED_METHODS = Object.freeze([
-‘generateText’,
+'generateText',
 ]);
 
 class AiProvider {
 constructor() {
 if (new.target === AiProvider) {
 throw new TypeError(
-‘AiProvider is abstract and cannot be instantiated directly.’
+'AiProvider is abstract and cannot be instantiated directly.'
 );
 }
 
@@ -38,7 +38,7 @@ for (const method of REQUIRED_METHODS) {
 
 async generateText(_request) {
 throw new Error(
-‘AiProvider.generateText(request) must be implemented.’
+'AiProvider.generateText(request) must be implemented.'
 );
 }
 

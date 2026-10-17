@@ -91,7 +91,7 @@ controller.create = asyncHandler(async (req, res) => {
  * Payment status and amounts must be controlled by trusted services
  * and verified provider events, not arbitrary client updates.
  */
-controller.update = asyncHandler(async (req, res) => {
+controller.update = asyncHandler(async (req, _res) => {
   requireUser(req);
   unavailable('Direct payment updates');
 });
@@ -100,7 +100,7 @@ controller.update = asyncHandler(async (req, res) => {
  * DELETE /payments/:id
  * Financial records should not be deleted through a generic endpoint.
  */
-controller.remove = asyncHandler(async (req, res) => {
+controller.remove = asyncHandler(async (req, _res) => {
   requireUser(req);
   unavailable('Payment deletion');
 });

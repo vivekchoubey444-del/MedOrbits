@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -22,7 +22,7 @@ return fallback;
 }
 
 if (!Number.isSafeInteger(value) || value < 1) {
-throw new TypeError(${name} must be a positive safe integer.);
+throw new TypeError(`${name} must be a positive safe integer.`);
 }
 
 return value;
@@ -31,24 +31,24 @@ return value;
 function validateRequest(request, maxInputLength) {
 if (
 !request ||
-typeof request !== ‘object’ ||
+typeof request !== 'object' ||
 Array.isArray(request)
 ) {
-throw new TypeError(‘AI generation request must be an object.’);
+throw new TypeError('AI generation request must be an object.');
 }
 
 const { prompt } = request;
 
-if (typeof prompt !== ‘string’ || !prompt.trim()) {
-throw new TypeError(‘A non-empty prompt is required.’);
+if (typeof prompt !== 'string' || !prompt.trim()) {
+throw new TypeError('A non-empty prompt is required.');
 }
 
 if (prompt.length > maxInputLength) {
-throw new RangeError(‘AI prompt exceeds the configured input limit.’);
+throw new RangeError('AI prompt exceeds the configured input limit.');
 }
 
 return {
-…request,
+...request,
 prompt: prompt.trim(),
 };
 }
@@ -56,20 +56,20 @@ prompt: prompt.trim(),
 function validateResponse(response, maxOutputLength) {
 if (
 !response ||
-typeof response !== ‘object’ ||
+typeof response !== 'object' ||
 Array.isArray(response)
 ) {
-throw new TypeError(‘AI provider returned an invalid response.’);
+throw new TypeError('AI provider returned an invalid response.');
 }
 
-if (typeof response.text !== ‘string’) {
+if (typeof response.text !== 'string') {
 throw new TypeError(
-‘AI provider response must contain a text string.’
+'AI provider response must contain a text string.'
 );
 }
 
 if (response.text.length > maxOutputLength) {
-throw new RangeError(‘AI response exceeds the configured output limit.’);
+throw new RangeError('AI response exceeds the configured output limit.');
 }
 
 return response;
@@ -84,10 +84,10 @@ class AiClient {
 constructor(provider, options = {}) {
 if (
 !provider ||
-typeof provider.generateText !== ‘function’
+typeof provider.generateText !== 'function'
 ) {
 throw new TypeError(
-‘AI provider must implement generateText(request).’
+'AI provider must implement generateText(request).'
 );
 }
 
@@ -114,7 +114,7 @@ this.#maxOutputLength = positiveInteger(
 
 async generateText(request) {
 if (this.#closed) {
-throw new Error(‘AI client is closed.’);
+throw new Error('AI client is closed.');
 }
 
 const validatedRequest = validateRequest(

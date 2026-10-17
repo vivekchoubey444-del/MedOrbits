@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -13,8 +13,8 @@
 * { text: string, model: string, usage: object | null }
     */
 
-const { AiProvider } = require(’./ai.provider’);
-const { loadAiConfig } = require(’./ai.config’);
+const { AiProvider } = require('./ai.provider');
+const { loadAiConfig } = require('./ai.config');
 
 const MAX_SYSTEM_PROMPT_CHARS = 4_000;
 const MAX_MODEL_LENGTH = 128;
@@ -27,7 +27,7 @@ value < 1 ||
 value > maximum
 ) {
 throw new TypeError(
-${name} must be an integer between 1 and ${maximum}.
+`${name} must be an integer between 1 and ${maximum}.`
 );
 }
 
@@ -40,13 +40,13 @@ return 0.2;
 }
 
 if (
-typeof value !== ‘number’ ||
+typeof value !== 'number' ||
 !Number.isFinite(value) ||
 value < 0 ||
 value > 2
 ) {
 throw new TypeError(
-‘temperature must be a finite number between 0 and 2.’
+'temperature must be a finite number between 0 and 2.'
 );
 }
 
@@ -57,12 +57,15 @@ function validateModel(value, fallback) {
 const model = value == null ? fallback : value;
 
 if (
-typeof model !== ‘string’ ||
+typeof model !== 'string' ||
 !model.trim() ||
 model.length > MAX_MODEL_LENGTH ||
-/[\r\n\0]/.test(model)
+ Array.from(model).some((character) => {
+   const code = character.charCodeAt(0);
+   return code === 0 || code === 10 || code === 13;
+ })
 ) {
-throw new TypeError(‘Invalid AI model name.’);
+throw new TypeError('Invalid AI model name.');
 }
 
 return model.trim();
@@ -113,7 +116,7 @@ this.closed = false;
 
 async generateText(request) {
 if (this.closed) {
-throw new Error(‘AI provider is closed.’);
+throw new Error('AI provider is closed.');
 }
 
 if (

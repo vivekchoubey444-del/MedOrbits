@@ -1,4 +1,4 @@
-  ‘use strict’;
+  'use strict';
 
 /**
 
@@ -8,26 +8,26 @@
 * and a factory for creating configured email clients.
     */
 
-const { EmailClient } = require(’./email.client’);
-const { EmailProvider } = require(’./email.provider’);
-const { SmtpProvider } = require(’./smtp.provider’);
+const { EmailClient } = require('./email.client');
+const { EmailProvider } = require('./email.provider');
+const { SmtpProvider } = require('./smtp.provider');
 
 function validateProvider(provider) {
 if (
 !provider ||
-typeof provider.send !== ‘function’
+typeof provider.send !== 'function'
 ) {
 throw new TypeError(
-‘Email provider must implement send(message).’
+'Email provider must implement send(message).'
 );
 }
 
 if (
 provider.close != null &&
-typeof provider.close !== ‘function’
+typeof provider.close !== 'function'
 ) {
 throw new TypeError(
-‘Email provider close must be a function when provided.’
+'Email provider close must be a function when provided.'
 );
 }
 
@@ -37,11 +37,11 @@ return provider;
 function createEmailClient(options = {}) {
 if (
 !options ||
-typeof options !== ‘object’ ||
+typeof options !== 'object' ||
 Array.isArray(options)
 ) {
 throw new TypeError(
-‘Email client options must be an object.’
+'Email client options must be an object.'
 );
 }
 

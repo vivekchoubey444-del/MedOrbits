@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -10,13 +10,13 @@
 * Implementations may include SMTP or another approved email service.
     */
 
-const REQUIRED_METHODS = Object.freeze([‘send’]);
+const REQUIRED_METHODS = Object.freeze(['send']);
 
 class EmailProvider {
 constructor() {
 if (new.target === EmailProvider) {
 throw new TypeError(
-‘EmailProvider is abstract and cannot be instantiated directly.’
+'EmailProvider is abstract and cannot be instantiated directly.'
 );
 }
 
@@ -35,7 +35,7 @@ for (const method of REQUIRED_METHODS) {
 
 async send(_message) {
 throw new Error(
-‘EmailProvider.send(message) must be implemented.’
+'EmailProvider.send(message) must be implemented.'
 );
 }
 
