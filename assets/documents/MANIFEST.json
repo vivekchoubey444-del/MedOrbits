@@ -152,6 +152,23 @@
       "officialSources": [],
       "lastReviewedAt": null,
       "reviewDueAt": null
+    },
+    {
+      "id": "official-notice-verification-checklist",
+      "title": "Official Notice Verification Checklist",
+      "category": "checklists",
+      "path": "checklists/general/official-notice-verification-checklist.pdf",
+      "format": "application/pdf",
+      "description": "A general checklist for locating and checking notices on the issuing authority's own channels.",
+      "intendedUse": "Reviewing an education or career notice before acting on it.",
+      "status": "published",
+      "verificationStatus": "content_reviewed",
+      "version": "1.0.0",
+      "language": "en",
+      "keywords": ["notice", "verification", "official source", "checklist"],
+      "officialSources": [],
+      "lastReviewedAt": "2026-10-17",
+      "reviewDueAt": null
     }
   ]
 }
