@@ -552,6 +552,76 @@
   };
 
   // --------------------------------------------------
+  // Catalog sliders
+  // --------------------------------------------------
+
+  const catalogSliders = {
+    init() {
+      helpers.queryAll("[data-catalog-slider]").forEach((track, index) => {
+        if (track.dataset.sliderInitialized === "true") return;
+
+        track.dataset.sliderInitialized = "true";
+        track.classList.add("is-catalog-slider");
+        track.setAttribute(
+          "aria-label",
+          track.dataset.sliderLabel || `Catalog items ${index + 1}`
+        );
+        track.setAttribute("tabindex", "0");
+
+        const controls = document.createElement("div");
+        controls.className = "catalog-slider-controls";
+        controls.setAttribute("role", "group");
+        controls.setAttribute("aria-label", "Catalog navigation");
+
+        const previous = document.createElement("button");
+        previous.type = "button";
+        previous.className = "catalog-slider-button";
+        previous.setAttribute("aria-label", "Show previous catalog items");
+        previous.title = "Previous items";
+        previous.textContent = "‹";
+
+        const next = document.createElement("button");
+        next.type = "button";
+        next.className = "catalog-slider-button";
+        next.setAttribute("aria-label", "Show next catalog items");
+        next.title = "Next items";
+        next.textContent = "›";
+
+        controls.append(previous, next);
+        track.insertAdjacentElement("afterend", controls);
+
+        const updateControls = () => {
+          const maxScroll = track.scrollWidth - track.clientWidth;
+          previous.disabled = track.scrollLeft <= 1;
+          next.disabled = track.scrollLeft >= maxScroll - 1;
+          controls.hidden = maxScroll <= 1;
+        };
+
+        const scrollByPage = (direction) => {
+          const firstItem = track.firstElementChild;
+          const itemWidth = firstItem?.getBoundingClientRect().width || track.clientWidth;
+          const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
+          track.scrollBy({
+            left: direction * (itemWidth + gap),
+            behavior: helpers.prefersReducedMotion() ? "auto" : "smooth"
+          });
+        };
+
+        previous.addEventListener("click", () => scrollByPage(-1));
+        next.addEventListener("click", () => scrollByPage(1));
+        track.addEventListener("scroll", updateControls, { passive: true });
+        track.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          event.preventDefault();
+          scrollByPage(event.key === "ArrowRight" ? 1 : -1);
+        });
+        window.addEventListener("resize", updateControls, { passive: true });
+        updateControls();
+      });
+    }
+  };
+
+  // --------------------------------------------------
   // Cookie consent helpers
   // --------------------------------------------------
 
@@ -633,6 +703,7 @@
       links.init();
       backToTop.init();
       footer.init();
+      catalogSliders.init();
       errorHandling.init();
 
       logger.info("Application initialized", {

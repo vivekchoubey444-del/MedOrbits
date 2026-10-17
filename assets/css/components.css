@@ -209,9 +209,69 @@
   overflow-wrap: break-word;
 }
 /* =========================================================
-   10. Responsive component refinements
+   10. Catalog sliders
+   ========================================================= */
+.cards.is-catalog-slider,
+.career-grid.is-catalog-slider {
+  display: flex;
+  gap: 17px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 2px 16px;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: x mandatory;
+  scrollbar-color: var(--gold, #c9a96e) rgba(43, 29, 54, 0.65);
+  scrollbar-width: thin;
+}
+.cards.is-catalog-slider > * {
+  flex: 0 0 calc((100% - 51px) / 4);
+  scroll-snap-align: start;
+}
+.career-grid.is-catalog-slider > * {
+  flex: 0 0 calc((100% - 34px) / 3);
+  scroll-snap-align: start;
+}
+.catalog-slider-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.catalog-slider-controls[hidden] {
+  display: none;
+}
+.catalog-slider-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--gold, #c9a96e);
+  border-radius: 8px;
+  background: #6f1d31;
+  color: #fff8eb;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+.catalog-slider-button:hover:not(:disabled) {
+  background: #8a2438;
+}
+.catalog-slider-button:focus-visible {
+  outline: 2px solid var(--gold-light, #e8d7ad);
+  outline-offset: 3px;
+}
+.catalog-slider-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+/* =========================================================
+   11. Responsive component refinements
    ========================================================= */
 @media (max-width: 760px) {
+  .cards.is-catalog-slider > *,
+  .career-grid.is-catalog-slider > * {
+    flex-basis: min(82%, 340px);
+  }
   .container {
     width: calc(100% - 28px);
   }
