@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-‘use strict’;
+'use strict';
 
 /**
 
@@ -17,17 +17,17 @@
     */
 
 const ALLOWED_ENVIRONMENTS = new Set([
-‘development’,
-‘test’,
-‘staging’,
+  'development',
+  'test',
+  'staging',
 ]);
 
-const ENABLE_FLAG = ‘ALLOW_SEEDING’;
+const ENABLE_FLAG = 'ALLOW_SEEDING';
 
 class SeedRunnerError extends Error {
 constructor(message) {
 super(message);
-this.name = ‘SeedRunnerError’;
+this.name = 'SeedRunnerError';
 }
 }
 
@@ -36,19 +36,19 @@ const environment = process.env.NODE_ENV;
 
 if (!environment || !environment.trim()) {
 throw new SeedRunnerError(
-‘NODE_ENV is missing. Set it explicitly before running the seed command.’
+ 'NODE_ENV is missing. Set it explicitly before running the seed command.'
 );
 }
 
-if (environment === ‘production’) {
+if (environment === 'production') {
 throw new SeedRunnerError(
-‘Production seeding is blocked. Use an approved, separately reviewed production data procedure.’
+ 'Production seeding is blocked. Use an approved, separately reviewed production data procedure.'
 );
 }
 
 if (!ALLOWED_ENVIRONMENTS.has(environment)) {
 throw new SeedRunnerError(
-Unsupported NODE_ENV="${environment}". Allowed environments: ${[ ...ALLOWED_ENVIRONMENTS, ].join(', ')}.
+`Unsupported NODE_ENV="${environment}". Allowed environments: ${[...ALLOWED_ENVIRONMENTS].join(', ')}.`
 );
 }
 
@@ -56,9 +56,9 @@ return environment;
 }
 
 function validatePermission() {
-if (process.env[ENABLE_FLAG] !== ‘true’) {
+if (process.env[ENABLE_FLAG] !== 'true') {
 throw new SeedRunnerError(
-Seeding is disabled. Set ${ENABLE_FLAG}=true only when intentionally running approved seed data.
+`Seeding is disabled. Set ${ENABLE_FLAG}=true only when intentionally running approved seed data.`
 );
 }
 }
@@ -67,9 +67,10 @@ function validateDatabaseConfiguration() {
 const hasDatabaseUrl = Boolean(process.env.DATABASE_URL?.trim());
 
 const mysqlVariables = [
-‘MYSQL_HOST’,
-‘MYSQL_DATABASE’,
-‘MYSQL_USER’,
+'DB_HOST',
+'DB_NAME',
+'DB_USER',
+'DB_PASSWORD',
 ];
 
 const hasAnyMysqlVariable = mysqlVariables.some((name) =>
@@ -82,7 +83,7 @@ Boolean(process.env[name]?.trim())
 
 if (hasDatabaseUrl && hasAnyMysqlVariable) {
 throw new SeedRunnerError(
-‘Both DATABASE_URL and individual MySQL settings are configured. Resolve the database configuration conflict before seeding.’
+ 'Both DATABASE_URL and individual DB_* settings are configured. Resolve the database configuration conflict before seeding.'
 );
 }
 
@@ -99,7 +100,7 @@ throw new SeedRunnerError(
 
 if (!hasDatabaseUrl && !hasAllMysqlVariables) {
 throw new SeedRunnerError(
-‘Database configuration is missing. Configure DATABASE_URL or the complete MySQL settings required by the project adapter.’
+ 'Database configuration is missing. Configure DATABASE_URL or the complete DB_* settings required by the project adapter.'
 );
 }
 }
@@ -120,7 +121,7 @@ async function runApprovedSeeds() {
     */
 
 throw new SeedRunnerError(
-‘Seed runner is not configured. Connect the approved seed files and project database adapter before use.’
+ 'Seed runner is not configured. Connect the approved seed files and project database adapter before use.'
 );
 }
 
@@ -131,25 +132,25 @@ const environment = validateEnvironment();
 
 validateDatabaseConfiguration();
 
-console.log(’[MedOrbits Seed] Safety checks passed.’);
-console.log([MedOrbits Seed] Environment: ${environment});
+console.log('[MedOrbits Seed] Safety checks passed.');
+console.log(`[MedOrbits Seed] Environment: ${environment}`);
 
 await runApprovedSeeds();
 
-console.log(’[MedOrbits Seed] Operation completed.’);
+console.log('[MedOrbits Seed] Operation completed.');
 }
 
 main().catch((error) => {
 const message =
 error instanceof SeedRunnerError
 ? error.message
-: ‘An unexpected error stopped the seed operation.’;
+: 'An unexpected error stopped the seed operation.';
 
-console.error([MedOrbits Seed] STOPPED: ${message});
+console.error(`[MedOrbits Seed] STOPPED: ${message}`);
 
 if (!(error instanceof SeedRunnerError)) {
 console.error(
-‘[MedOrbits Seed] Review server-side logs securely for diagnostic details.’
+'[MedOrbits Seed] Review server-side logs securely for diagnostic details.'
 );
 }
 
