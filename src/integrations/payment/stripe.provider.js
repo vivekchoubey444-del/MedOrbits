@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -15,18 +15,18 @@
 * ●	Payment completion must be verified before fulfillment.
         */
 
-const { PaymentProvider } = require(’./payment.provider’);
-const { loadPaymentConfig } = require(’./payment.config’);
-const { verifyStripeWebhook } = require(’./webhook-verifier’);
+const { PaymentProvider } = require('./payment.provider');
+const { loadPaymentConfig } = require('./payment.config');
+const { verifyStripeWebhook } = require('./webhook-verifier');
 
 const SUPPORTED_CURRENCIES = new Set([
-‘inr’,
-‘usd’,
-‘eur’,
-‘gbp’,
-‘aud’,
-‘cad’,
-‘sgd’,
+'inr',
+'usd',
+'eur',
+'gbp',
+'aud',
+'cad',
+'sgd',
 ]);
 
 const MAX_METADATA_ENTRIES = 50;
@@ -35,14 +35,14 @@ const MAX_METADATA_VALUE_LENGTH = 500;
 const MAX_URL_LENGTH = 2048;
 
 function normalizeCurrency(currency) {
-if (typeof currency !== ‘string’) {
-throw new TypeError(‘Currency must be a string.’);
+if (typeof currency !== 'string') {
+throw new TypeError('Currency must be a string.');
 }
 
 const normalized = currency.trim().toLowerCase();
 
 if (!SUPPORTED_CURRENCIES.has(normalized)) {
-throw new TypeError(‘Unsupported Stripe currency.’);
+throw new TypeError('Unsupported Stripe currency.');
 }
 
 return normalized;
@@ -51,7 +51,7 @@ return normalized;
 function validateAmount(amount) {
 if (!Number.isSafeInteger(amount) || amount <= 0) {
 throw new TypeError(
-‘Amount must be a positive integer in the smallest currency unit.’
+'Amount must be a positive integer in the smallest currency unit.'
 );
 }
 
@@ -60,7 +60,7 @@ return amount;
 
 function validateHttpsUrl(value, fieldName) {
 if (
-typeof value !== ‘string’ ||
+typeof value !== 'string' ||
 value.length > MAX_URL_LENGTH
 ) {
 throw new TypeError(${fieldName} must be a valid HTTPS URL.);
@@ -75,7 +75,7 @@ throw new TypeError(${fieldName} must be a valid HTTPS URL.);
 }
 
 if (
-parsed.protocol !== ‘https:’ ||
+parsed.protocol !== 'https:' ||
 !parsed.hostname ||
 parsed.username ||
 parsed.password
@@ -91,16 +91,16 @@ return parsed.toString();
 function validateMetadata(metadata = {}) {
 if (
 !metadata ||
-typeof metadata !== ‘object’ ||
+typeof metadata !== 'object' ||
 Array.isArray(metadata)
 ) {
-throw new TypeError(‘Metadata must be an object.’);
+throw new TypeError('Metadata must be an object.');
 }
 
 const entries = Object.entries(metadata);
 
 if (entries.length > MAX_METADATA_ENTRIES) {
-throw new RangeError(‘Too many Stripe metadata fields.’);
+throw new RangeError('Too many Stripe metadata fields.');
 }
 
 const result = Object.create(null);
@@ -109,11 +109,11 @@ for (const [key, value] of entries) {
 if (
 !key ||
 key.length > MAX_METADATA_KEY_LENGTH ||
-typeof value !== ‘string’ ||
+typeof value !== 'string' ||
 value.length > MAX_METADATA_VALUE_LENGTH
 ) {
 throw new TypeError(
-‘Metadata keys and values must be valid strings within Stripe limits.’
+'Metadata keys and values must be valid strings within Stripe limits.'
 );
 }
 
@@ -126,10 +126,10 @@ return result;
 
 function validateSessionId(sessionId) {
 if (
-typeof sessionId !== ‘string’ ||
+typeof sessionId !== 'string' ||
 !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)
 ) {
-throw new TypeError(‘Invalid Stripe Checkout Session ID.’);
+throw new TypeError('Invalid Stripe Checkout Session ID.');
 }
 
 return sessionId;
@@ -139,7 +139,7 @@ class StripeProvider extends PaymentProvider {
 constructor({
 client,
 webhookSecret,
-currency = ‘inr’,
+currency = 'inr',
 } = {}) {
 super();
 
@@ -167,7 +167,7 @@ this.currency = normalizeCurrency(currency);
 static fromEnv(environment = process.env) {
 const config = loadPaymentConfig({
 …environment,
-PAYMENT_PROVIDER: ‘stripe’,
+PAYMENT_PROVIDER: 'stripe',
 });
 
 const credentials = config.stripe;
@@ -286,7 +286,7 @@ if (
 !(rawBody instanceof Uint8Array)
 ) {
 throw new TypeError(
-‘Stripe webhook verification requires the original raw request bytes.’
+'Stripe webhook verification requires the original raw request bytes.'
 );
 }
 

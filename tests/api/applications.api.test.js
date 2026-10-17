@@ -35,7 +35,7 @@ const authModulePath = process.env.MEDORBITS_TEST_AUTH_MODULE;
 let authenticationAdapter;
 if (authModulePath) {
   // This module must be trusted, test-only code.
-  // eslint-disable-next-line import/no-dynamic-require, global-require
+  // eslint-disable-next-line import/no-dynamic-require
   authenticationAdapter = require(require('node:path').resolve(authModulePath));
 }
 async function authenticateAsUser(userId, role = 'user') {

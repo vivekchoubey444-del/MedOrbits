@@ -1,6 +1,6 @@
-‘use strict’;
+'use strict';
 
-const crypto = require(‘node:crypto’);
+const crypto = require('node:crypto');
 
 const HEX_SIGNATURE_PATTERN = /^[a-f0-9]+$/i;
 
@@ -11,8 +11,8 @@ const HEX_SIGNATURE_PATTERN = /^[a-f0-9]+$/i;
     */
     function safeEqualHex(expected, received) {
     if (
-    typeof expected !== ‘string’ ||
-    typeof received !== ‘string’ ||
+    typeof expected !== 'string' ||
+    typeof received !== 'string' ||
     !HEX_SIGNATURE_PATTERN.test(expected) ||
     !HEX_SIGNATURE_PATTERN.test(received) ||
     expected.length % 2 !== 0 ||
@@ -21,8 +21,8 @@ const HEX_SIGNATURE_PATTERN = /^[a-f0-9]+$/i;
     return false;
     }
 
-const expectedBuffer = Buffer.from(expected, ‘hex’);
-const receivedBuffer = Buffer.from(received, ‘hex’);
+const expectedBuffer = Buffer.from(expected, 'hex');
+const receivedBuffer = Buffer.from(received, 'hex');
 
 if (
 expectedBuffer.length === 0 ||
@@ -46,19 +46,19 @@ receivedBuffer
     function verifyHmacSha256(rawBody, signature, secret) {
     if (!Buffer.isBuffer(rawBody)) {
     throw new TypeError(
-    ‘rawBody must be the exact raw request Buffer.’
+    'rawBody must be the exact raw request Buffer.'
     );
     }
 
 if (
-typeof secret !== ‘string’ ||
+typeof secret !== 'string' ||
 secret.length === 0
 ) {
-throw new Error(‘Webhook secret is required.’);
+throw new Error('Webhook secret is required.');
 }
 
 if (
-typeof signature !== ‘string’ ||
+typeof signature !== 'string' ||
 signature.length === 0 ||
 signature.length > 256 ||
 !HEX_SIGNATURE_PATTERN.test(signature) ||
@@ -68,16 +68,16 @@ return false;
 }
 
 const expected = crypto
-.createHmac(‘sha256’, secret)
+.createHmac('sha256', secret)
 .update(rawBody)
-.digest(‘hex’);
+.digest('hex');
 
 return safeEqualHex(expected, signature);
 }
 
 /**
 
-* Verify Razorpay’s HMAC-SHA256 webhook signature.
+* Verify Razorpay's HMAC-SHA256 webhook signature.
     */
     function verifyRazorpayWebhook(rawBody, signature, secret) {
     return verifyHmacSha256(rawBody, signature, secret);
@@ -86,7 +86,7 @@ return safeEqualHex(expected, signature);
 /**
 
 * Verify a Stripe webhook using the official Stripe SDK.
-* Stripe’s signature header contains a timestamp and signature
+* Stripe's signature header contains a timestamp and signature
 * components; it must not be treated as a plain hexadecimal HMAC.
     */
     function verifyStripeWebhook(
@@ -97,19 +97,19 @@ return safeEqualHex(expected, signature);
     ) {
     if (!Buffer.isBuffer(rawBody)) {
     throw new TypeError(
-    ‘rawBody must be the exact raw request Buffer.’
+    'rawBody must be the exact raw request Buffer.'
     );
     }
 
 if (
-typeof secret !== ‘string’ ||
+typeof secret !== 'string' ||
 secret.length === 0
 ) {
-throw new Error(‘Stripe webhook secret is required.’);
+throw new Error('Stripe webhook secret is required.');
 }
 
 if (
-typeof signature !== ‘string’ ||
+typeof signature !== 'string' ||
 signature.length === 0
 ) {
 return false;
@@ -118,10 +118,10 @@ return false;
 if (
 !stripe ||
 !stripe.webhooks ||
-typeof stripe.webhooks.constructEvent !== ‘function’
+typeof stripe.webhooks.constructEvent !== 'function'
 ) {
 throw new TypeError(
-‘A valid Stripe SDK instance is required.’
+'A valid Stripe SDK instance is required.'
 );
 }
 

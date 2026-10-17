@@ -809,7 +809,8 @@
     init() {
       const pathname = window.location.pathname;
       if (
-        /^\/(admin|account|legal)(\/|$)/.test(pathname) ||
+        (/^\/(admin|account|legal)(\/|$)/.test(pathname) &&
+          pathname !== "/legal/disclaimer.html") ||
         pathname === "/pages/400.html" ||
         pathname === "/pages/maintenance.html" ||
         pathname === "/pages/contact.html" ||

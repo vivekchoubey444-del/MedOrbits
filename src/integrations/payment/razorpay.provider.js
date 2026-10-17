@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -14,18 +14,18 @@
 * ●	Never treat checkout creation as proof of payment.
         */
 
-const { PaymentProvider } = require(’./payment.provider’);
-const { loadPaymentConfig } = require(’./payment.config’);
-const { verifyRazorpayWebhook } = require(’./webhook-verifier’);
+const { PaymentProvider } = require('./payment.provider');
+const { loadPaymentConfig } = require('./payment.config');
+const { verifyRazorpayWebhook } = require('./webhook-verifier');
 
 const SUPPORTED_CURRENCIES = new Set([
-‘INR’,
-‘USD’,
-‘EUR’,
-‘GBP’,
-‘AUD’,
-‘CAD’,
-‘SGD’,
+'INR',
+'USD',
+'EUR',
+'GBP',
+'AUD',
+'CAD',
+'SGD',
 ]);
 
 const MAX_RECEIPT_LENGTH = 40;
@@ -34,14 +34,14 @@ const MAX_NOTE_KEY_LENGTH = 256;
 const MAX_NOTE_VALUE_LENGTH = 256;
 
 function normalizeCurrency(currency) {
-if (typeof currency !== ‘string’) {
-throw new TypeError(‘Currency must be a string.’);
+if (typeof currency !== 'string') {
+throw new TypeError('Currency must be a string.');
 }
 
 const normalized = currency.trim().toUpperCase();
 
 if (!SUPPORTED_CURRENCIES.has(normalized)) {
-throw new TypeError(‘Unsupported payment currency.’);
+throw new TypeError('Unsupported payment currency.');
 }
 
 return normalized;
@@ -50,7 +50,7 @@ return normalized;
 function validateAmount(amount) {
 if (!Number.isSafeInteger(amount) || amount <= 0) {
 throw new TypeError(
-‘Amount must be a positive integer in the smallest currency unit.’
+'Amount must be a positive integer in the smallest currency unit.'
 );
 }
 
@@ -59,13 +59,13 @@ return amount;
 
 function validateReceipt(receipt) {
 if (
-typeof receipt !== ‘string’ ||
+typeof receipt !== 'string' ||
 !receipt.trim() ||
 receipt.length > MAX_RECEIPT_LENGTH ||
 !/^[a-zA-Z0-9_-]+$/.test(receipt)
 ) {
 throw new TypeError(
-‘Receipt must contain 1–40 alphanumeric characters, underscores, or hyphens.’
+'Receipt must contain 1–40 alphanumeric characters, underscores, or hyphens.'
 );
 }
 
@@ -75,16 +75,16 @@ return receipt;
 function validateNotes(notes = {}) {
 if (
 !notes ||
-typeof notes !== ‘object’ ||
+typeof notes !== 'object' ||
 Array.isArray(notes)
 ) {
-throw new TypeError(‘Notes must be an object.’);
+throw new TypeError('Notes must be an object.');
 }
 
 const entries = Object.entries(notes);
 
 if (entries.length > MAX_NOTES_COUNT) {
-throw new RangeError(‘Too many checkout note fields.’);
+throw new RangeError('Too many checkout note fields.');
 }
 
 const result = {};
@@ -93,10 +93,10 @@ for (const [key, value] of entries) {
 if (
 !key ||
 key.length > MAX_NOTE_KEY_LENGTH ||
-typeof value !== ‘string’ ||
+typeof value !== 'string' ||
 value.length > MAX_NOTE_VALUE_LENGTH
 ) {
-throw new TypeError(‘Invalid checkout note.’);
+throw new TypeError('Invalid checkout note.');
 }
 
 result[key] = value;
@@ -108,10 +108,10 @@ return result;
 
 function validatePaymentId(paymentId) {
 if (
-typeof paymentId !== ‘string’ ||
+typeof paymentId !== 'string' ||
 !/^pay_[a-zA-Z0-9]+$/.test(paymentId)
 ) {
-throw new TypeError(‘Invalid Razorpay payment ID.’);
+throw new TypeError('Invalid Razorpay payment ID.');
 }
 
 return paymentId;
@@ -122,7 +122,7 @@ constructor({
 client,
 keyId,
 webhookSecret,
-currency = ‘INR’,
+currency = 'INR',
 } = {}) {
 super();
 
@@ -154,7 +154,7 @@ this.currency = normalizeCurrency(currency);
 static fromEnv(environment = process.env) {
 const config = loadPaymentConfig({
 …environment,
-PAYMENT_PROVIDER: ‘razorpay’,
+PAYMENT_PROVIDER: 'razorpay',
 });
 
 const credentials = config.razorpay;
@@ -241,7 +241,7 @@ if (
 !(rawBody instanceof Uint8Array)
 ) {
 throw new TypeError(
-‘Webhook verification requires the original raw request bytes.’
+'Webhook verification requires the original raw request bytes.'
 );
 }
 

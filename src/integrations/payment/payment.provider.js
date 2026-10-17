@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -13,16 +13,16 @@
     */
 
 const REQUIRED_METHODS = Object.freeze([
-‘createCheckout’,
-‘fetchPayment’,
-‘verifyWebhook’,
+'createCheckout',
+'fetchPayment',
+'verifyWebhook',
 ]);
 
 class PaymentProvider {
 constructor() {
 if (new.target === PaymentProvider) {
 throw new TypeError(
-‘PaymentProvider is an abstract class and cannot be instantiated directly.’
+'PaymentProvider is an abstract class and cannot be instantiated directly.'
 );
 }
 
@@ -48,15 +48,15 @@ ${this.constructor.name} must implement ${method}().
 }
 
 async createCheckout(_request) {
-throw new Error(‘createCheckout() must be implemented by the provider.’);
+throw new Error('createCheckout() must be implemented by the provider.');
 }
 
 async fetchPayment(_paymentId) {
-throw new Error(‘fetchPayment() must be implemented by the provider.’);
+throw new Error('fetchPayment() must be implemented by the provider.');
 }
 
 async verifyWebhook(_rawBody, _headers) {
-throw new Error(‘verifyWebhook() must be implemented by the provider.’);
+throw new Error('verifyWebhook() must be implemented by the provider.');
 }
 }
 

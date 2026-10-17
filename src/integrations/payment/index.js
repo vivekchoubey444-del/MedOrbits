@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -14,42 +14,42 @@
 
 const {
 PaymentClient,
-} = require(’./payment.client’);
+} = require('./payment.client');
 
 const {
 PaymentProvider,
-} = require(’./payment.provider’);
+} = require('./payment.provider');
 
 const {
 RazorpayProvider,
-} = require(’./razorpay.provider’);
+} = require('./razorpay.provider');
 
 const {
 StripeProvider,
-} = require(’./stripe.provider’);
+} = require('./stripe.provider');
 
 const {
 loadPaymentConfig,
-} = require(’./payment.config’);
+} = require('./payment.config');
 
 const SUPPORTED_PROVIDERS = new Set([
-‘razorpay’,
-‘stripe’,
+'razorpay',
+'stripe',
 ]);
 
 function validateProvider(provider) {
-if (!provider || typeof provider !== ‘object’) {
-throw new TypeError(‘A valid payment provider is required.’);
+if (!provider || typeof provider !== 'object') {
+throw new TypeError('A valid payment provider is required.');
 }
 
 // Verify the minimum provider contract.
 // Keep this list aligned with PaymentClient and PaymentProvider.
 const requiredMethods = [
-‘createPayment’,
+'createPayment',
 ];
 
 for (const method of requiredMethods) {
-if (typeof provider[method] !== ‘function’) {
+if (typeof provider[method] !== 'function') {
 throw new TypeError(
 Payment provider must implement ${method}().
 );
@@ -62,10 +62,10 @@ return provider;
 function createPaymentClient(options = {}) {
 if (
 !options ||
-typeof options !== ‘object’ ||
+typeof options !== 'object' ||
 Array.isArray(options)
 ) {
-throw new TypeError(‘Payment options must be an object.’);
+throw new TypeError('Payment options must be an object.');
 }
 
 // Dependency injection supports tests and custom implementations.
@@ -76,8 +76,8 @@ return new PaymentClient(validateProvider(options.provider));
 const environment = options.env || process.env;
 const config = options.config || loadPaymentConfig(environment);
 
-if (!config || typeof config !== ‘object’) {
-throw new TypeError(‘Payment configuration is invalid.’);
+if (!config || typeof config !== 'object') {
+throw new TypeError('Payment configuration is invalid.');
 }
 
 if (!SUPPORTED_PROVIDERS.has(config.provider)) {
@@ -89,7 +89,7 @@ Unsupported payment provider: ${String(config.provider)}
 let provider;
 
 switch (config.provider) {
-case ‘razorpay’:
+case 'razorpay':
 provider = RazorpayProvider.fromEnv(environment);
 break;
 

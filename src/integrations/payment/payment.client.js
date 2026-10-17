@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -8,15 +8,15 @@
     */
 
 const REQUIRED_METHODS = Object.freeze([
-‘createCheckout’,
-‘fetchPayment’,
-‘verifyWebhook’,
+'createCheckout',
+'fetchPayment',
+'verifyWebhook',
 ]);
 
 class PaymentClient {
 constructor(provider) {
-if (!provider || typeof provider !== ‘object’) {
-throw new TypeError(‘A payment provider is required.’);
+if (!provider || typeof provider !== 'object') {
+throw new TypeError('A payment provider is required.');
 }
 
 for (const method of REQUIRED_METHODS) {
@@ -38,10 +38,10 @@ Object.defineProperty(this, 'provider', {
 async createCheckout(request) {
 if (
 !request ||
-typeof request !== ‘object’ ||
+typeof request !== 'object' ||
 Array.isArray(request)
 ) {
-throw new TypeError(‘Checkout request must be an object.’);
+throw new TypeError('Checkout request must be an object.');
 }
 
 return this.provider.createCheckout(request);
@@ -50,10 +50,10 @@ return this.provider.createCheckout(request);
 
 async fetchPayment(paymentId) {
 if (
-typeof paymentId !== ‘string’ ||
+typeof paymentId !== 'string' ||
 !paymentId.trim()
 ) {
-throw new TypeError(‘A valid payment ID is required.’);
+throw new TypeError('A valid payment ID is required.');
 }
 
 return this.provider.fetchPayment(paymentId);
@@ -63,7 +63,7 @@ return this.provider.fetchPayment(paymentId);
 async verifyWebhook(rawBody, headers) {
 if (!Buffer.isBuffer(rawBody) && !(rawBody instanceof Uint8Array)) {
 throw new TypeError(
-‘Webhook verification requires the original raw request bytes.’
+'Webhook verification requires the original raw request bytes.'
 );
 }
 
