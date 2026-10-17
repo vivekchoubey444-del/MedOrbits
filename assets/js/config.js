@@ -134,6 +134,7 @@
       services: "/pages/services.html",
       contact: "/pages/contact.html",
       apply: "/pages/apply.html",
+      subscriptions: "/pages/subscriptions.html",
       search: "/pages/search.html",
       testimonials: "/pages/testimonials.html",
       accessibility: "/pages/accessibility.html",

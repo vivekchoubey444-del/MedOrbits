@@ -66,6 +66,7 @@
       SERVICES: "/pages/services.html",
       CONTACT: "/pages/contact.html",
       APPLY: "/pages/apply.html",
+      SUBSCRIPTIONS: "/pages/subscriptions.html",
       SEARCH: "/pages/search.html",
       TESTIMONIALS: "/pages/testimonials.html",
       ACCESSIBILITY: "/pages/accessibility.html",
