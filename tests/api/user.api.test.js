@@ -121,7 +121,7 @@ describe('Users API', () => {
       expect([400, 403, 404, 422]).toContain(response.status);
       expectSafeResponse(response);
     });
-    test('prevents a user from accessing another user’s private profile', async () => {
+    test('prevents a user from accessing another user's private profile', async () => {
       const otherUser = await authenticateAs(
         'user',
         'test-profile-other'
@@ -176,7 +176,7 @@ describe('Users API', () => {
       expect([401, 403, 404, 405]).toContain(response.status);
       expectSafeResponse(response);
     });
-    test('prevents a user from updating another user’s profile', async () => {
+    test('prevents a user from updating another user's profile', async () => {
       const user = await authenticateAs(
         'user',
         'test-profile-other'

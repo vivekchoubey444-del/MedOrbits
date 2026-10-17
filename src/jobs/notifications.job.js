@@ -1,6 +1,6 @@
-‘use strict’;
+'use strict';
 
-const QUEUE_NAME = ‘notifications’;
+const QUEUE_NAME = 'notifications';
 
 const DEFAULT_BATCH_SIZE = 100;
 const MAX_BATCH_SIZE = 1000;
@@ -24,26 +24,26 @@ return resolved;
 }
 
 function validateDependencies(deps) {
-if (!deps || typeof deps !== ‘object’ || Array.isArray(deps)) {
-throw new TypeError(‘dependencies must be an object.’);
+if (!deps || typeof deps !== 'object' || Array.isArray(deps)) {
+throw new TypeError('dependencies must be an object.');
 }
 
-if (!deps.queue || typeof deps.queue.add !== ‘function’) {
-throw new TypeError(‘queue.add is required.’);
+if (!deps.queue || typeof deps.queue.add !== 'function') {
+throw new TypeError('queue.add is required.');
 }
 
 if (
 !deps.notificationService ||
-typeof deps.notificationService.getPending !== ‘function’
+typeof deps.notificationService.getPending !== 'function'
 ) {
 throw new TypeError(
-‘notificationService.getPending is required.’
+'notificationService.getPending is required.'
 );
 }
 }
 
 function log(logger, level, fields) {
-if (logger && typeof logger[level] === ‘function’) {
+if (logger && typeof logger[level] === 'function') {
 loggerlevel;
 }
 }
@@ -61,20 +61,20 @@ return id.length > 0 && id.length <= 200 ? id : null;
 async function runNotificationsJob(deps = {}, options = {}) {
 validateDependencies(deps);
 
-if (!options || typeof options !== ‘object’ || Array.isArray(options)) {
-throw new TypeError(‘options must be an object.’);
+if (!options || typeof options !== 'object' || Array.isArray(options)) {
+throw new TypeError('options must be an object.');
 }
 
 const batchSize = validatePositiveInteger(
 options.batchSize,
-‘batchSize’,
+'batchSize',
 DEFAULT_BATCH_SIZE,
 MAX_BATCH_SIZE
 );
 
 const attempts = validatePositiveInteger(
 options.attempts,
-‘attempts’,
+'attempts',
 DEFAULT_ATTEMPTS,
 MAX_ATTEMPTS
 );
@@ -84,13 +84,13 @@ const now = options.asOf === undefined
 : new Date(options.asOf);
 
 if (Number.isNaN(now.getTime())) {
-throw new TypeError(‘asOf must be a valid date.’);
+throw new TypeError('asOf must be a valid date.');
 }
 
 const scheduledAt = now.toISOString();
 
-log(deps.logger, ‘info’, {
-event: ‘notifications_job_started’,
+log(deps.logger, 'info', {
+event: 'notifications_job_started',
 queue: QUEUE_NAME,
 batchSize,
 scheduledAt
@@ -103,13 +103,13 @@ asOf: now
 
 if (!Array.isArray(items)) {
 throw new TypeError(
-‘notificationService.getPending must return an array.’
+'notificationService.getPending must return an array.'
 );
 }
 
 if (items.length > batchSize) {
 throw new Error(
-‘notificationService.getPending returned more items than requested.’
+'notificationService.getPending returned more items than requested.'
 );
 }
 
@@ -151,9 +151,9 @@ queue: QUEUE_NAME,
 scheduledAt
 };
 
-log(deps.logger, ‘info’, {
-event: ‘notifications_job_completed’,
-…result
+log(deps.logger, 'info', {
+event: 'notifications_job_completed',
+...result
 });
 
 return result;

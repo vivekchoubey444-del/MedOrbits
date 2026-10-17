@@ -153,7 +153,7 @@ this.currency = normalizeCurrency(currency);
 
 static fromEnv(environment = process.env) {
 const config = loadPaymentConfig({
-…environment,
+...environment,
 PAYMENT_PROVIDER: 'razorpay',
 });
 

@@ -78,7 +78,7 @@ describe('Payments API', () => {
         expectSafeResponse(response);
       }
     });
-    test('prevents users from accessing another user’s payment record', async () => {
+    test('prevents users from accessing another user's payment record', async () => {
       const otherUser = await authenticateAs(
         'user',
         'test-payment-other'
@@ -228,7 +228,7 @@ describe('Payments API', () => {
         expect([400, 403, 422]).toContain(response.status);
       }
     });
-    test('does not allow a user to initiate payment for another user’s application', async () => {
+    test('does not allow a user to initiate payment for another user's application', async () => {
       const user = await authenticateAs(
         'user',
         'test-payment-other'

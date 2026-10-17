@@ -13,57 +13,57 @@
 * directly and must not run against production data.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
 
 const BASE_URL = (
 process.env.CONTROLLER_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const TIMEOUT_MS = Number(
 process.env.CONTROLLER_TEST_TIMEOUT_MS || 15000
 );
 
-const USER_TOKEN = process.env.CONTROLLER_TEST_USER_TOKEN || ‘’;
-const ADMIN_TOKEN = process.env.CONTROLLER_TEST_ADMIN_TOKEN || ‘’;
+const USER_TOKEN = process.env.CONTROLLER_TEST_USER_TOKEN || '';
+const ADMIN_TOKEN = process.env.CONTROLLER_TEST_ADMIN_TOKEN || '';
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_CONTROLLER_MUTATING_TESTS === ‘true’;
+process.env.RUN_CONTROLLER_MUTATING_TESTS === 'true';
 
 /**
 
 * Override paths to match registered MedOrbits routes.
-* Set an endpoint variable to an empty string to skip that endpoint’s
+* Set an endpoint variable to an empty string to skip that endpoint's
 * applicable tests.
     */
     const ENDPOINTS = {
-    health: process.env.HEALTH_TEST_PATH || ‘/health’,
-    authLogin: process.env.CONTROLLER_AUTH_LOGIN_PATH || ‘/api/auth/login’,
-    authMe: process.env.CONTROLLER_AUTH_ME_PATH || ‘/api/auth/me’,
-    usersMe: process.env.CONTROLLER_USERS_ME_PATH || ‘/api/users/me’,
+    health: process.env.HEALTH_TEST_PATH || '/health',
+    authLogin: process.env.CONTROLLER_AUTH_LOGIN_PATH || '/api/auth/login',
+    authMe: process.env.CONTROLLER_AUTH_ME_PATH || '/api/auth/me',
+    usersMe: process.env.CONTROLLER_USERS_ME_PATH || '/api/users/me',
     applications:
-    process.env.CONTROLLER_APPLICATIONS_PATH || ‘/api/applications’,
-    courses: process.env.CONTROLLER_COURSES_PATH || ‘/api/courses’,
-    search: process.env.CONTROLLER_SEARCH_PATH || ‘/api/search’,
-    documents: process.env.CONTROLLER_DOCUMENTS_PATH || ‘/api/documents’,
+    process.env.CONTROLLER_APPLICATIONS_PATH || '/api/applications',
+    courses: process.env.CONTROLLER_COURSES_PATH || '/api/courses',
+    search: process.env.CONTROLLER_SEARCH_PATH || '/api/search',
+    documents: process.env.CONTROLLER_DOCUMENTS_PATH || '/api/documents',
     adminHealth:
-    process.env.CONTROLLER_ADMIN_HEALTH_PATH || ‘’,
+    process.env.CONTROLLER_ADMIN_HEALTH_PATH || '',
     };
 
 function validateConfiguration() {
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘CONTROLLER_TEST_TIMEOUT_MS must be positive.’
+'CONTROLLER_TEST_TIMEOUT_MS must be positive.'
 );
 
 for (const [name, path] of Object.entries(ENDPOINTS)) {
 if (path) {
 assert.ok(
-path.startsWith(’/’),
+path.startsWith('/'),
 ${name} endpoint path must start with /.
 );
 }
@@ -75,7 +75,7 @@ return ${BASE_URL}${path};
 }
 
 async function request(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -87,8 +87,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -96,7 +96,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -105,7 +105,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -139,32 +139,32 @@ ${label}: unexpected HTTP ${response.status}; response=${JSON.stringify(response
 function assertJsonWhenPresent(response, label) {
 if (!response.rawBody) return;
 
-const contentType = response.headers.get(‘content-type’) || ‘’;
+const contentType = response.headers.get('content-type') || '';
 
-if (contentType.includes(‘application/json’)) {
+if (contentType.includes('application/json')) {
 assert.ok(
 response.body !== null &&
-typeof response.body === ‘object’,
+typeof response.body === 'object',
 ${label}: declared JSON response could not be parsed as an object.
 );
 }
 }
 
 function assertNoSensitiveFields(value, label, seen = new Set()) {
-if (!value || typeof value !== ‘object’ || seen.has(value)) {
+if (!value || typeof value !== 'object' || seen.has(value)) {
 return;
 }
 
 seen.add(value);
 
 const sensitiveKeys = new Set([
-‘password’,
-‘passwordhash’,
-‘refreshtoken’,
-‘accesstoken’,
-‘clientsecret’,
-‘webhooksecret’,
-‘privatekey’,
+'password',
+'passwordhash',
+'refreshtoken',
+'accesstoken',
+'clientsecret',
+'webhooksecret',
+'privatekey',
 ]);
 
 for (const [key, child] of Object.entries(value)) {
@@ -195,18 +195,18 @@ ${label}: expected a client error, received HTTP ${response.status}.
 }
 
 function isConfigured(path) {
-return typeof path === ‘string’ && path.length > 0;
+return typeof path === 'string' && path.length > 0;
 }
 
-describe(‘MedOrbits controller integration tests’, () => {
+describe('MedOrbits controller integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘application availability and routing’, () => {
-it(‘responds to the configured health endpoint without an internal server error’, async (t) => {
+describe('application availability and routing', () => {
+it('responds to the configured health endpoint without an internal server error', async (t) => {
 if (!isConfigured(ENDPOINTS.health)) {
-t.skip(‘No health endpoint configured.’);
+t.skip('No health endpoint configured.');
 return;
 }
 
@@ -229,10 +229,10 @@ it('returns a client error for an unknown API route', async () => {
 
 });
 
-describe(‘authentication controller’, () => {
-it(‘rejects invalid login credentials without issuing a token’, async (t) => {
+describe('authentication controller', () => {
+it('rejects invalid login credentials without issuing a token', async (t) => {
 if (!isConfigured(ENDPOINTS.authLogin)) {
-t.skip(‘Authentication login endpoint is not configured.’);
+t.skip('Authentication login endpoint is not configured.');
 return;
 }
 
@@ -271,10 +271,10 @@ it('rejects an invalid token on the current-user endpoint', async (t) => {
 
 });
 
-describe(‘user controller’, () => {
-it(‘rejects invalid credentials for a protected user endpoint’, async (t) => {
+describe('user controller', () => {
+it('rejects invalid credentials for a protected user endpoint', async (t) => {
 if (!isConfigured(ENDPOINTS.usersMe)) {
-t.skip(‘User profile endpoint is not configured.’);
+t.skip('User profile endpoint is not configured.');
 return;
 }
 
@@ -310,10 +310,10 @@ it('does not expose sensitive fields in an authenticated user response', async (
 
 });
 
-describe(‘application controller’, () => {
-it(‘rejects application creation without authentication’, async (t) => {
+describe('application controller', () => {
+it('rejects application creation without authentication', async (t) => {
 if (!isConfigured(ENDPOINTS.applications)) {
-t.skip(‘Applications endpoint is not configured.’);
+t.skip('Applications endpoint is not configured.');
 return;
 }
 
@@ -348,10 +348,10 @@ it('rejects an invalid application payload when mutation tests are enabled', asy
 
 });
 
-describe(‘course controller’, () => {
-it(‘handles course listing requests without exposing server errors’, async (t) => {
+describe('course controller', () => {
+it('handles course listing requests without exposing server errors', async (t) => {
 if (!isConfigured(ENDPOINTS.courses)) {
-t.skip(‘Courses endpoint is not configured.’);
+t.skip('Courses endpoint is not configured.');
 return;
 }
 
@@ -371,10 +371,10 @@ return;
 
 });
 
-describe(‘search controller’, () => {
-it(‘handles a normal search query without an internal server error’, async (t) => {
+describe('search controller', () => {
+it('handles a normal search query without an internal server error', async (t) => {
 if (!isConfigured(ENDPOINTS.search)) {
-t.skip(‘Search endpoint is not configured.’);
+t.skip('Search endpoint is not configured.');
 return;
 }
 
@@ -410,10 +410,10 @@ it('handles an unusually long search query safely', async (t) => {
 
 });
 
-describe(‘document controller’, () => {
-it(‘does not return private document data to an unauthenticated client’, async (t) => {
+describe('document controller', () => {
+it('does not return private document data to an unauthenticated client', async (t) => {
 if (!isConfigured(ENDPOINTS.documents)) {
-t.skip(‘Documents endpoint is not configured.’);
+t.skip('Documents endpoint is not configured.');
 return;
 }
 
@@ -436,10 +436,10 @@ return;
 
 });
 
-describe(‘administrator controller’, () => {
-it(‘does not grant administrator access to an ordinary user token’, async (t) => {
+describe('administrator controller', () => {
+it('does not grant administrator access to an ordinary user token', async (t) => {
 if (!USER_TOKEN) {
-t.skip(‘Set CONTROLLER_TEST_USER_TOKEN.’);
+t.skip('Set CONTROLLER_TEST_USER_TOKEN.');
 return;
 }
 

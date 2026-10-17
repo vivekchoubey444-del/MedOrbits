@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -18,7 +18,7 @@
 * EMAIL_FROM
     */
 
-const { EmailProvider } = require(’./email.provider’);
+const { EmailProvider } = require('./email.provider');
 
 const DEFAULT_CONNECTION_TIMEOUT_MS = 10_000;
 const DEFAULT_GREETING_TIMEOUT_MS = 10_000;
@@ -26,7 +26,7 @@ const DEFAULT_SOCKET_TIMEOUT_MS = 20_000;
 const MAX_RECIPIENTS = 100;
 
 function requiredString(value, name) {
-if (typeof value !== ‘string’ || !value.trim()) {
+if (typeof value !== 'string' || !value.trim()) {
 throw new Error(${name} is required.);
 }
 
@@ -34,7 +34,7 @@ return value.trim();
 }
 
 function positiveInteger(value, name, fallback, max = 120_000) {
-if (value == null || value === ‘’) {
+if (value == null || value === '') {
 return fallback;
 }
 
@@ -52,29 +52,29 @@ return number;
 }
 
 function parseBoolean(value, name, fallback) {
-if (value == null || value === ‘’) {
+if (value == null || value === '') {
 return fallback;
 }
 
-if (typeof value === ‘boolean’) {
+if (typeof value === 'boolean') {
 return value;
 }
 
-if (typeof value !== ‘string’) {
+if (typeof value !== 'string') {
 throw new Error(${name} must be true or false.);
 }
 
 const normalized = value.trim().toLowerCase();
 
-if (normalized === ‘true’) return true;
-if (normalized === ‘false’) return false;
+if (normalized === 'true') return true;
+if (normalized === 'false') return false;
 
 throw new Error(${name} must be true or false.);
 }
 
 function validateEmailAddress(value, name) {
 if (
-typeof value !== ‘string’ ||
+typeof value !== 'string' ||
 value.length > 254 ||
 /[\r\n\0]/.test(value) ||
 !/^[^\s@<>(),;:"\[]]+@[^\s@<>(),;:"\[]]+.[^\s@<>(),;:"\[]]+$/.test(value)
@@ -91,7 +91,7 @@ const addresses = Array.isArray(value) ? value : [value];
 if (
 addresses.length === 0 ||
 addresses.length > MAX_RECIPIENTS ||
-addresses.some(address => typeof address !== ‘string’ || !address.trim())
+addresses.some(address => typeof address !== 'string' || !address.trim())
 ) {
 throw new TypeError(Invalid ${name} recipient list.);
 }
@@ -127,8 +127,8 @@ this.closePromise = null;
 }
 
 static fromEnv(env = process.env) {
-if (!env || typeof env !== ‘object’) {
-throw new TypeError(‘SMTP environment configuration is required.’);
+if (!env || typeof env !== 'object') {
+throw new TypeError('SMTP environment configuration is required.');
 }
 
 const host = requiredString(env.SMTP_HOST, 'SMTP_HOST');
@@ -196,7 +196,7 @@ return new SmtpProvider({
 
 async send(message) {
 if (this.closed) {
-throw new Error(‘SMTP provider is closed.’);
+throw new Error('SMTP provider is closed.');
 }
 
 if (!message || typeof message !== 'object') {
