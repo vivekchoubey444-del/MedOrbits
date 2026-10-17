@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "updatedAt": "2026-10-17T00:00:00+05:30",
+  "metadata": {
+    "title": "MedOrbits Public Information Bulletin",
+    "description": "First-party, published education and career resources. This feed is not an official notice service.",
+    "defaultLanguage": "en",
+    "timezone": "Asia/Kolkata",
+    "editorialPolicy": "Display only published entries. Verify official dates and requirements with the issuing authority."
+  },
+  "bulletins": [
+    {
+      "id": "bulletin-notice-verification-checklist",
+      "title": "A checklist for verifying notices",
+      "summary": "Use the issuing authority's own website to confirm the source, date, instructions, and any later corrections before acting.",
+      "categories": ["education", "career"],
+      "kind": "resource",
+      "publicationStatus": "published",
+      "verificationStatus": "content_reviewed",
+      "active": true,
+      "publishedAt": "2026-10-17T00:00:00+05:30",
+      "expiresAt": null,
+      "source": {
+        "name": "MedOrbits",
+        "type": "first_party_resource",
+        "url": "https://medorbits.in/education/resources/"
+      },
+      "relatedDocuments": [
+        {
+          "id": "official-notice-verification-checklist",
+          "title": "Official Notice Verification Checklist",
+          "path": "/assets/documents/checklists/general/official-notice-verification-checklist.pdf",
+          "format": "application/pdf",
+          "publicationStatus": "published"
+        }
+      ]
+    },
+    {
+      "id": "bulletin-career-notice-verification-checklist",
+      "title": "Check recruitment and career notices at the source",
+      "summary": "Before sharing information or acting on a job or recruitment update, confirm the employer and instructions through its official website or verified contact channel.",
+      "categories": ["career"],
+      "kind": "resource",
+      "publicationStatus": "published",
+      "verificationStatus": "content_reviewed",
+      "active": true,
+      "publishedAt": "2026-10-17T00:00:00+05:30",
+      "expiresAt": null,
+      "source": {
+        "name": "MedOrbits",
+        "type": "first_party_resource",
+        "url": "https://medorbits.in/career/resources/"
+      },
+      "relatedDocuments": [
+        {
+          "id": "official-notice-verification-checklist",
+          "title": "Official Notice Verification Checklist",
+          "path": "/assets/documents/checklists/general/official-notice-verification-checklist.pdf",
+          "format": "application/pdf",
+          "publicationStatus": "published"
+        }
+      ]
+    }
+  ]
+}

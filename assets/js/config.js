@@ -140,8 +140,10 @@
       accessibility: "/pages/accessibility.html",
       sitemap: "/pages/sitemap.html",
       notFound: "/pages/404.html",
+      badRequest: "/pages/400.html",
       serverError: "/pages/500.html",
-      offline: "/pages/offline.html"
+      offline: "/pages/offline.html",
+      maintenance: "/pages/maintenance.html"
     },
 
     account: {

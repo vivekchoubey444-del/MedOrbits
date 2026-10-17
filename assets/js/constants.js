@@ -72,8 +72,10 @@
       ACCESSIBILITY: "/pages/accessibility.html",
       SITEMAP: "/pages/sitemap.html",
       NOT_FOUND: "/pages/404.html",
+      BAD_REQUEST: "/pages/400.html",
       SERVER_ERROR: "/pages/500.html",
-      OFFLINE: "/pages/offline.html"
+      OFFLINE: "/pages/offline.html",
+      MAINTENANCE: "/pages/maintenance.html"
     }),
 
     ACCOUNT: Object.freeze({

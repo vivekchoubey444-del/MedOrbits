@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#100B0A">
+  <meta name="robots" content="noindex, follow">
+  <meta name="description" content="The request could not be understood. Review the information and try again.">
+  <title>Bad Request 400 | MedOrbits</title>
+  <link rel="icon" href="/assets/images/logo/medorbits-logo.png" type="image/png">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    .system-error{min-height:68vh;display:grid;place-items:center;padding:54px 0;background:radial-gradient(ellipse at 50% 35%,rgba(112,37,53,.2),transparent 44%),linear-gradient(145deg,#100b0a,#211317 58%,#2a171d)}
+    .system-error__body{width:min(760px,100%);padding:clamp(24px,5vw,54px);border:1px solid var(--line);border-radius:12px;background:rgba(24,15,17,.92);text-align:center}
+    .system-error__code{margin:0;color:#ead8ae;font:600 clamp(72px,16vw,132px)/.95 'Playfair Display',Georgia,serif}
+    .system-error h1{margin:18px 0 10px;color:var(--white);font:600 clamp(26px,4vw,40px)/1.2 'Playfair Display',Georgia,serif}
+    .system-error p{max-width:560px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.8}
+    .system-error__actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:24px}
+    @media(max-width:520px){.system-error__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.system-error__actions a{min-width:0}}
+  </style>
+</head>
+<body>
+  <main class="system-error" id="main-content">
+    <section class="container system-error__body" aria-labelledby="errorTitle">
+      <span class="kicker">Request check</span>
+      <p class="system-error__code" aria-label="Error 400">400</p>
+      <h1 id="errorTitle">We could not process that request.</h1>
+      <p>Check the information you entered and try again. If you followed an old link, return to the homepage and open the page again.</p>
+      <div class="system-error__actions"><a class="btn" href="/index.html">Go to homepage</a><a class="btn btn-outline" href="/pages/contact.html">Contact MedOrbits</a></div>
+    </section>
+  </main>
+</body>
+</html>

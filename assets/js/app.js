@@ -678,6 +678,20 @@
     }
   };
 
+  const documentLibrary = {
+    init() {
+      const pathname = window.location.pathname;
+      if (!(pathname === "/" || /\/index\.html$/.test(pathname))) return;
+      if (/^\/(admin|account|legal)(\/|$)/.test(pathname)) return;
+      if (helpers.query('script[data-document-library]')) return;
+
+      const script = document.createElement("script");
+      script.src = "/assets/js/document-library.js";
+      script.dataset.documentLibrary = "";
+      document.head.appendChild(script);
+    }
+  };
+
   // --------------------------------------------------
   // Cookie consent helpers
   // --------------------------------------------------
@@ -762,6 +776,7 @@
       footer.init();
       catalogSliders.init();
       siteTools.init();
+      documentLibrary.init();
       errorHandling.init();
 
       logger.info("Application initialized", {
