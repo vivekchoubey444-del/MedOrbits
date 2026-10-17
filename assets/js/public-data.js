@@ -449,14 +449,31 @@
   }
 
   async function loadDataset(config) {
-    const response = await fetch(`/assets/data/${config.file}`, {
-      headers: { Accept: "application/json" },
-      credentials: "same-origin",
-      cache: "no-cache"
-    });
-    if (!response.ok) throw new Error(`Unable to load ${config.file} (${response.status}).`);
+    const datasetName = config.file.replace(/\.json$/i, "");
+    let data;
+    try {
+      const response = await fetch(`/api/v1/public-data/${encodeURIComponent(datasetName)}`, {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        cache: "no-cache"
+      });
+      if (!response.ok) throw new Error(`Public data API returned ${response.status}.`);
+      const payload = await response.json();
+      if (payload?.success !== true || !payload.data || typeof payload.data !== "object") {
+        throw new Error("Public data API returned an invalid response.");
+      }
+      data = payload.data;
+    } catch (apiError) {
+      console.warn(`[MedOrbits data] API unavailable for ${config.file}; using the static snapshot.`, apiError);
+      const response = await fetch(`/assets/data/${config.file}`, {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        cache: "no-cache"
+      });
+      if (!response.ok) throw new Error(`Unable to load ${config.file} (${response.status}).`);
+      data = await response.json();
+    }
 
-    const data = await response.json();
     const collections = Array.isArray(config.collection) ? config.collection : [config.collection];
     const records = collections.flatMap((collection) => {
       if (!Array.isArray(data[collection])) {

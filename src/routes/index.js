@@ -43,6 +43,7 @@ const routeDefinitions = [
   ['/employers', 'employer.routes.js'],
   ['/recruitment', 'recruitment.routes.js'],
   ['/services', 'service.routes.js'],
+  ['/public-data', 'public-data.routes.js'],
   ['/search', 'search.routes.js'],
   ['/notifications', 'notification.routes.js'],
   ['/public-releases', 'public-release.routes.js'],

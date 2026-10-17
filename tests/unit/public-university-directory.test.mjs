@@ -53,14 +53,14 @@ async function loadPage(pagePath, collection, records) {
   );
   dom.window.fetch = async () => ({
     ok: true,
-    json: async () => ({ [collection]: records }),
+    json: async () => ({ success: true, data: { [collection]: records } }),
   });
   dom.window.eval(publicDataScript);
   await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
   return dom;
 }
 
-test("shows UGC-backed pending records and filters them by state", async () => {
+test("loads UGC-backed pending records from the API and filters by state", async () => {
   const dom = await loadPage("/education/universities.html", "universities", universities);
   const document = dom.window.document;
 
