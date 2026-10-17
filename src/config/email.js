@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -19,9 +19,9 @@
 * The env module is expected to validate and normalize configuration values.
     */
 
-const nodemailer = require(‘nodemailer’);
-const { env } = require(’./env’);
-const logger = require(’./logger’);
+const nodemailer = require('nodemailer');
+const { env } = require('./env');
+const logger = require('./logger');
 
 let transporter;
 let transporterConfigKey;
@@ -29,26 +29,26 @@ let transporterConfigKey;
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+.[^\s@]+$/;
 
 function isNonEmptyString(value) {
-return typeof value === ‘string’ && value.trim().length > 0;
+return typeof value === 'string' && value.trim().length > 0;
 }
 
 function validateEmailAddress(value, fieldName) {
 if (
-typeof value !== ‘string’ ||
+typeof value !== 'string' ||
 value.length > 254 ||
 !EMAIL_ADDRESS_PATTERN.test(value.trim())
 ) {
-throw new TypeError(${fieldName} must be a valid email address.);
+throw new TypeError(`${fieldName} must be a valid email address.`);
 }
 
 return value.trim();
 }
 
-function normalizeRecipients(value, fieldName = ‘to’) {
+function normalizeRecipients(value, fieldName = 'to') {
 const recipients = Array.isArray(value) ? value : [value];
 
 if (recipients.length === 0) {
-throw new TypeError(${fieldName} must contain at least one recipient.);
+throw new TypeError(`${fieldName} must contain at least one recipient.`);
 }
 
 return recipients.map((recipient) =>
@@ -60,20 +60,20 @@ function validateMessage({ to, subject, text, html }) {
 const recipients = normalizeRecipients(to);
 
 if (!isNonEmptyString(subject)) {
-throw new TypeError(‘Email subject must be a non-empty string.’);
+throw new TypeError('Email subject must be a non-empty string.');
 }
 
 if (subject.length > 998) {
-throw new TypeError(‘Email subject exceeds the permitted length.’);
+throw new TypeError('Email subject exceeds the permitted length.');
 }
 
 if (
 (!isNonEmptyString(text) && !isNonEmptyString(html)) ||
-(text !== undefined && typeof text !== ‘string’) ||
-(html !== undefined && typeof html !== ‘string’)
+(text !== undefined && typeof text !== 'string') ||
+(html !== undefined && typeof html !== 'string')
 ) {
 throw new TypeError(
-‘Email requires non-empty text or HTML string content.’
+'Email requires non-empty text or HTML string content.'
 );
 }
 
@@ -83,15 +83,15 @@ return { recipients };
 function getTransportConfig() {
 if (!env.EMAIL_ENABLED) {
 throw new Error(
-‘Email is disabled. Set EMAIL_ENABLED=true to enable it.’
+'Email is disabled. Set EMAIL_ENABLED=true to enable it.'
 );
 }
 
 const required = [
-[‘SMTP_HOST’, env.SMTP_HOST],
-[‘SMTP_USER’, env.SMTP_USER],
-[‘SMTP_PASSWORD’, env.SMTP_PASSWORD],
-[‘EMAIL_FROM_ADDRESS’, env.EMAIL_FROM_ADDRESS],
+['SMTP_HOST', env.SMTP_HOST],
+['SMTP_USER', env.SMTP_USER],
+['SMTP_PASSWORD', env.SMTP_PASSWORD],
+['EMAIL_FROM_ADDRESS', env.EMAIL_FROM_ADDRESS],
 ];
 
 const missing = required
@@ -100,7 +100,7 @@ const missing = required
 
 if (missing.length > 0) {
 throw new Error(
-Email configuration is incomplete. Missing: ${missing.join(', ')}.
+`Email configuration is incomplete. Missing: ${missing.join(', ')}.`
 );
 }
 
@@ -108,15 +108,15 @@ const port = Number(env.SMTP_PORT);
 const timeout = Number(env.EMAIL_SEND_TIMEOUT_MS);
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
-throw new Error(‘SMTP_PORT must be an integer between 1 and 65535.’);
+throw new Error('SMTP_PORT must be an integer between 1 and 65535.');
 }
 
 if (!Number.isSafeInteger(timeout) || timeout <= 0) {
-throw new Error(‘EMAIL_SEND_TIMEOUT_MS must be a positive integer.’);
+throw new Error('EMAIL_SEND_TIMEOUT_MS must be a positive integer.');
 }
 
-if (typeof env.SMTP_SECURE !== ‘boolean’) {
-throw new Error(‘SMTP_SECURE must be a boolean.’);
+if (typeof env.SMTP_SECURE !== 'boolean') {
+throw new Error('SMTP_SECURE must be a boolean.');
 }
 
 if (
@@ -125,22 +125,22 @@ port === 587
 ) {
 logger.warn(
 { port },
-‘SMTP_SECURE=true on port 587; confirm the provider expects implicit TLS.’
+'SMTP_SECURE=true on port 587; confirm the provider expects implicit TLS.'
 );
 }
 
 const fromAddress = validateEmailAddress(
 env.EMAIL_FROM_ADDRESS,
-‘EMAIL_FROM_ADDRESS’
+'EMAIL_FROM_ADDRESS'
 );
 
 const replyTo = isNonEmptyString(env.EMAIL_REPLY_TO)
-? validateEmailAddress(env.EMAIL_REPLY_TO, ‘EMAIL_REPLY_TO’)
+? validateEmailAddress(env.EMAIL_REPLY_TO, 'EMAIL_REPLY_TO')
 : undefined;
 
 const fromName = isNonEmptyString(env.EMAIL_FROM_NAME)
 ? env.EMAIL_FROM_NAME.trim()
-: ‘MedOrbits’;
+: 'MedOrbits';
 
 return {
 host: env.SMTP_HOST.trim(),
@@ -222,7 +222,7 @@ html,
 const config = getTransportConfig();
 
 const validatedReplyTo = isNonEmptyString(replyTo)
-? validateEmailAddress(replyTo, ‘replyTo’)
+? validateEmailAddress(replyTo, 'replyTo')
 : config.replyTo;
 
 const transport = getEmailTransporter();
@@ -233,8 +233,8 @@ from: config.from,
 replyTo: validatedReplyTo,
 to: recipients,
 subject: subject.trim(),
-…(isNonEmptyString(text) ? { text } : {}),
-…(isNonEmptyString(html) ? { html } : {}),
+...(isNonEmptyString(text) ? { text } : {}),
+...(isNonEmptyString(html) ? { html } : {}),
 });
 
 logger.info(
@@ -269,7 +269,7 @@ code: error.code,
 command: error.command,
 responseCode: error.responseCode,
 },
-‘Email submission failed’
+'Email submission failed'
 );
 
 throw error;
@@ -293,7 +293,7 @@ code: error.code,
 command: error.command,
 responseCode: error.responseCode,
 },
-‘SMTP transport verification failed’
+'SMTP transport verification failed'
 );
 
 throw error;

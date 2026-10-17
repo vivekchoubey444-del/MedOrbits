@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -14,10 +14,10 @@
 * ●	./env
         */
 
-const helmet = require(‘helmet’);
-const { env } = require(’./env’);
+const helmet = require('helmet');
+const { env } = require('./env');
 
-const IS_PRODUCTION = env.NODE_ENV === ‘production’;
+const IS_PRODUCTION = env.NODE_ENV === 'production';
 
 function parseDirectiveSources(value, fallback, name) {
 if (value === undefined || value === null) {
@@ -25,25 +25,25 @@ return fallback;
 }
 
 if (!Array.isArray(value)) {
-throw new TypeError(${name} must be an array of CSP sources.);
+throw new TypeError(`${name} must be an array of CSP sources.`);
 }
 
 const sources = value
-.filter((item) => typeof item === ‘string’)
+.filter((item) => typeof item === 'string')
 .map((item) => item.trim())
 .filter(Boolean);
 
 if (sources.length !== value.length) {
-throw new TypeError(${name} contains invalid CSP source values.);
+throw new TypeError(`${name} contains invalid CSP source values.`);
 }
 
-if (IS_PRODUCTION && sources.includes("‘unsafe-eval’")) {
+if (IS_PRODUCTION && sources.includes("'unsafe-eval'")) {
 throw new Error(
-${name} must not contain 'unsafe-eval' in production.
+`${name} must not contain 'unsafe-eval' in production.`
 );
 }
 
-return […new Set(sources)];
+return [...new Set(sources)];
 }
 
 function buildContentSecurityPolicy() {
@@ -52,19 +52,19 @@ return false;
 }
 
 const directives = {
-defaultSrc: ["‘self’"],
-baseUri: ["‘self’"],
-objectSrc: ["‘none’"],
-frameAncestors: ["‘self’"],
-formAction: ["‘self’"],
-scriptSrc: ["‘self’"],
-styleSrc: ["‘self’"],
-imgSrc: ["‘self’", ‘data:’],
-fontSrc: ["‘self’", ‘data:’],
-connectSrc: ["‘self’"],
-mediaSrc: ["‘self’"],
-workerSrc: ["‘self’"],
-manifestSrc: ["‘self’"],
+defaultSrc: ["'self'"],
+baseUri: ["'self'"],
+objectSrc: ["'none'"],
+frameAncestors: ["'self'"],
+formAction: ["'self'"],
+scriptSrc: ["'self'"],
+styleSrc: ["'self'"],
+imgSrc: ["'self'", 'data:'],
+fontSrc: ["'self'", 'data:'],
+connectSrc: ["'self'"],
+mediaSrc: ["'self'"],
+workerSrc: ["'self'"],
+manifestSrc: ["'self'"],
 };
 
 /*
@@ -72,7 +72,7 @@ manifestSrc: ["‘self’"],
 * Optional source overrides must be supplied as arrays by env.js.
 * Configure only the external origins that MedOrbits actually uses.
 * Example:
-* CSP_SCRIPT_SRC=["‘self’","https://trusted.example"]
+* CSP_SCRIPT_SRC=["'self'","https://trusted.example"]
     */
     const configurableDirectives = {
     scriptSrc: env.CSP_SCRIPT_SRC,

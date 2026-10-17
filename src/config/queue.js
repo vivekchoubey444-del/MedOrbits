@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -16,9 +16,9 @@
 * ●	./logger
         */
 
-const { createClient } = require(‘redis’);
-const { env } = require(’./env’);
-const logger = require(’./logger’);
+const { createClient } = require('redis');
+const { env } = require('./env');
+const logger = require('./logger');
 
 let client;
 let connectPromise;
@@ -64,10 +64,10 @@ return;
 }
 
 if (
-typeof env.REDIS_HOST !== ‘string’ ||
+typeof env.REDIS_HOST !== 'string' ||
 !env.REDIS_HOST.trim()
 ) {
-throw new Error(‘REDIS_HOST is required when REDIS_URL is not configured.’);
+throw new Error('REDIS_HOST is required when REDIS_URL is not configured.');
 }
 
 if (
@@ -75,14 +75,14 @@ if (
 env.REDIS_PORT < 1 ||
 env.REDIS_PORT > 65535
 ) {
-throw new Error(‘REDIS_PORT must be an integer between 1 and 65535.’);
+throw new Error('REDIS_PORT must be an integer between 1 and 65535.');
 }
 
 if (
 !Number.isInteger(env.REDIS_DB) ||
 env.REDIS_DB < 0
 ) {
-throw new Error(‘REDIS_DB must be a non-negative integer.’);
+throw new Error('REDIS_DB must be a non-negative integer.');
 }
 }
 
@@ -91,7 +91,7 @@ const reconnectStrategy = (retries) => {
 if (retries >= MAX_RECONNECT_ATTEMPTS) {
 logger.error(
 { retries },
-‘Redis reconnect limit exceeded’
+'Redis reconnect limit exceeded'
 );
 
   return new Error('Redis reconnect limit exceeded.');
@@ -131,7 +131,7 @@ reconnectStrategy,
 function createRedisClient() {
 const redisClient = createClient(getRedisOptions());
 
-redisClient.on(‘error’, (error) => {
+redisClient.on('error', (error) => {
 // Do not log connection URLs or credentials.
 logger.error(
 {
@@ -140,24 +140,24 @@ name: error.name,
 message: error.message,
 },
 },
-‘Redis client error’
+'Redis client error'
 );
 });
 
-redisClient.on(‘connect’, () => {
-logger.info(‘Redis connection established’);
+redisClient.on('connect', () => {
+logger.info('Redis connection established');
 });
 
-redisClient.on(‘ready’, () => {
-logger.info(‘Redis client ready’);
+redisClient.on('ready', () => {
+logger.info('Redis client ready');
 });
 
-redisClient.on(‘reconnecting’, () => {
-logger.warn(‘Redis client reconnecting’);
+redisClient.on('reconnecting', () => {
+logger.warn('Redis client reconnecting');
 });
 
-redisClient.on(‘end’, () => {
-logger.info(‘Redis connection ended’);
+redisClient.on('end', () => {
+logger.info('Redis connection ended');
 });
 
 return redisClient;
@@ -170,7 +170,7 @@ return null;
 
 if (closing || closePromise) {
 throw new Error(
-‘Redis is shutting down. A new connection cannot be started.’
+'Redis is shutting down. A new connection cannot be started.'
 );
 }
 

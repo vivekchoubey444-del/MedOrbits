@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -15,47 +15,47 @@
 * verify payment signatures, process webhooks, or confirm settlements.
     */
 
-const { env } = require(’./env’);
+const { env } = require('./env');
 
 const SUPPORTED_PROVIDERS = [
-‘razorpay’,
-‘cashfree’,
-‘stripe’,
+'razorpay',
+'cashfree',
+'stripe',
 ];
 
 const SUPPORTED_CURRENCIES = new Set([
-‘INR’,
-‘USD’,
-‘EUR’,
-‘GBP’,
-‘AUD’,
-‘CAD’,
-‘SGD’,
+'INR',
+'USD',
+'EUR',
+'GBP',
+'AUD',
+'CAD',
+'SGD',
 ]);
 
 const SUPPORTED_MODES = new Set([
-‘test’,
-‘live’,
+'test',
+'live',
 ]);
 
 function isPresent(value) {
-return typeof value === ‘string’ && value.trim().length > 0;
+return typeof value === 'string' && value.trim().length > 0;
 }
 
 function requireValue(value, name) {
 if (!isPresent(value)) {
-throw new Error(${name} is required for the enabled payment provider.);
+throw new Error(`${name} is required for the enabled payment provider.`);
 }
 
 return value.trim();
 }
 
 function getPaymentConfig() {
-const currency = String(env.PAYMENT_CURRENCY || ‘INR’)
+const currency = String(env.PAYMENT_CURRENCY || 'INR')
 .trim()
 .toUpperCase();
 
-const mode = String(env.PAYMENT_MODE || ‘test’)
+const mode = String(env.PAYMENT_MODE || 'test')
 .trim()
 .toLowerCase();
 
@@ -90,7 +90,7 @@ return deepFreeze(config);
 function deepFreeze(value) {
 if (
 value &&
-typeof value === ‘object’ &&
+typeof value === 'object' &&
 !Object.isFrozen(value)
 ) {
 Object.freeze(value);
@@ -113,13 +113,13 @@ return true;
 
 if (!SUPPORTED_MODES.has(config.mode)) {
 throw new Error(
-PAYMENT_MODE must be one of: ${[...SUPPORTED_MODES].join(', ')}.
+`PAYMENT_MODE must be one of: ${[...SUPPORTED_MODES].join(', ')}.`
 );
 }
 
 if (!SUPPORTED_CURRENCIES.has(config.currency)) {
 throw new Error(
-Unsupported PAYMENT_CURRENCY "${config.currency}".
+`Unsupported PAYMENT_CURRENCY "${config.currency}".`
 );
 }
 
@@ -129,17 +129,17 @@ const enabledProviders = SUPPORTED_PROVIDERS.filter(
 
 if (enabledProviders.length !== 1) {
 throw new Error(
-‘Enable exactly one payment provider when PAYMENTS_ENABLED=true.’
+'Enable exactly one payment provider when PAYMENTS_ENABLED=true.'
 );
 }
 
 if (
-config.mode === ‘live’ &&
-config.currency === ‘INR’ &&
+config.mode === 'live' &&
+config.currency === 'INR' &&
 config.stripe.enabled
 ) {
 // Provider availability and supported currency combinations can change.
-// Confirm the account’s current Stripe capabilities before deployment.
+// Confirm the account's current Stripe capabilities before deployment.
 }
 
 validateProviderCredentials(config, enabledProviders[0]);
@@ -149,7 +149,7 @@ return true;
 
 function validateProviderCredentials(config, provider) {
 switch (provider) {
-case ‘razorpay’: {
+case 'razorpay': {
 const payment = config.razorpay;
 
   requireValue(payment.keyId, 'RAZORPAY_KEY_ID');
@@ -189,10 +189,10 @@ default:
 function validateModeConsistency(secret, mode, variableName) {
 // These prefixes are provider conventions, not a substitute for validating
 // credentials with the provider. Avoid assuming prefixes for other providers.
-if (variableName === ‘STRIPE_SECRET_KEY’) {
-if (mode === ‘live’ && !secret.startsWith(‘sk_live_’)) {
+if (variableName === 'STRIPE_SECRET_KEY') {
+if (mode === 'live' && !secret.startsWith('sk_live_')) {
 throw new Error(
-‘PAYMENT_MODE=live requires a live Stripe secret key.’
+'PAYMENT_MODE=live requires a live Stripe secret key.'
 );
 }
 
@@ -204,10 +204,10 @@ if (mode === 'test' && !secret.startsWith('sk_test_')) {
 
 }
 
-if (variableName === ‘RAZORPAY_KEY_ID’) {
-if (mode === ‘live’ && !secret.startsWith(‘rzp_live_’)) {
+if (variableName === 'RAZORPAY_KEY_ID') {
+if (mode === 'live' && !secret.startsWith('rzp_live_')) {
 throw new Error(
-‘PAYMENT_MODE=live requires a live Razorpay key ID.’
+'PAYMENT_MODE=live requires a live Razorpay key ID.'
 );
 }
 
