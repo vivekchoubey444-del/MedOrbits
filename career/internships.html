@@ -67,6 +67,9 @@
 .career-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
 .career-card{padding:20px;border:1px solid rgba(201,169,110,.22);border-radius:14px;background:linear-gradient(145deg,#2b1d36,#191023);transition:transform .2s,border-color .2s}
 .career-card:hover{transform:translateY(-3px);border-color:rgba(201,169,110,.65)}
+.career-card img{width:100%;height:145px;object-fit:cover;border-radius:9px;margin-bottom:14px}
+.career-card .btn{margin-top:14px}
+.career-card:focus-within{outline:2px solid var(--gold-light);outline-offset:3px}
 .career-icon{display:grid;place-items:center;width:42px;height:42px;margin-bottom:14px;border-radius:12px;border:1px solid var(--line);background:rgba(201,169,110,.09);color:var(--gold-light);font-size:20px}
 .career-card h3{margin:0 0 8px;font:600 19px 'Playfair Display',Georgia,serif;color:#eee2f3}
 .career-card p{margin:0 0 13px;color:var(--muted);font-size:12px;line-height:1.8}
@@ -125,7 +128,27 @@
     </div>
   </header>
 
-  <main id="main-content"><section class="career-hero"><div class="container career-hero-grid"><div><span class="eyebrow">MEDORBITS CAREERS</span><h1>Learn, contribute and <em>grow.</em></h1><p class="career-lead">Explore internship listing layouts and review the expected learning outcomes, duration, work arrangement and eligibility before applying.</p></div><div class="career-panel"><span class="kicker">Study · Work · Grow</span><h2>Early-career opportunities</h2><p class="body-copy">A connected destination for career exploration, practical preparation and employer services.</p><div class="career-actions"><a class="btn" href="/career/register.html">Create Candidate Profile ↗</a><a class="btn btn-outline" href="/career/employer-services.html">For Employers</a></div></div></div></section><section class="section"><div class="container"><div class="section-head"><div><span class="kicker">Internship directory</span><h2>Explore <span>internships</span></h2><p>Sample cards illustrate how verified internship opportunities will appear.</p></div></div><div class="career-grid"><article class="career-card"><div class="career-icon" aria-hidden="true">✦</div><h3>Business Operations Intern</h3><p>Example internship layout for operations and business support roles.</p><a class="text-link" href="/career/internship-details.html?id=sample-operations">View internship ↗</a></article><article class="career-card"><div class="career-icon" aria-hidden="true">⌘</div><h3>Digital & Technology Intern</h3><p>Example internship layout for digital, IT and technical learning opportunities.</p><a class="text-link" href="/career/internship-details.html?id=sample-digital">View internship ↗</a></article><article class="career-card"><div class="career-icon" aria-hidden="true">◎</div><h3>Content & Research Intern</h3><p>Example internship layout for research, content and communication roles.</p><a class="text-link" href="/career/internship-details.html?id=sample-research">View internship ↗</a></article></div><div class="career-actions"><a class="btn" href="/career/register.html">Create Candidate Profile</a><a class="btn btn-outline" href="/career/guidance.html">Career Guidance</a></div></div></section></main>
+  <main id="main-content">
+    <section class="career-hero">
+      <div class="container career-hero-grid">
+        <div><span class="eyebrow">MEDORBITS CAREERS</span><h1>Learn, contribute and <em>grow.</em></h1><p class="career-lead">Browse official internship and apprenticeship portals, then use these guides to prepare. Confirm each opening, eligibility, stipend, and deadline with its provider.</p></div>
+        <div class="career-panel"><span class="kicker">Study · Work · Grow</span><h2>Early-career opportunities</h2><p class="body-copy">The AICTE portal reported no live postings when checked on 17 October 2026. Its listings can change at any time.</p><div class="career-actions"><a class="btn" href="https://internship.aicte-india.org/internships" target="_blank" rel="noopener noreferrer">Browse AICTE listings ↗</a><a class="btn btn-outline" href="https://nats.education.gov.in/" target="_blank" rel="noopener noreferrer">NATS apprenticeships ↗</a></div></div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <div class="section-head"><div><span class="kicker">Official portals and resources</span><h2>Choose a <span>next step</span></h2><p>Open the official source for current listings or download a practical preparation guide.</p></div></div>
+        <div class="career-grid">
+          <article class="career-card"><img src="/assets/images/career/internship-guidance.webp" alt="Internship guidance and opportunity research" loading="lazy" width="800" height="500"><h3>AICTE National Internship Portal</h3><p>Search internships published through the Ministry of Education’s National Internship Portal. Live listings and deadlines change.</p><a class="btn" href="https://internship.aicte-india.org/internships" target="_blank" rel="noopener noreferrer">Browse official listings ↗</a></article>
+          <article class="career-card"><img src="/assets/images/career/professional-development.webp" alt="Professional development and apprenticeship learning" loading="lazy" width="800" height="500"><h3>NATS Apprenticeships</h3><p>Find apprenticeship training information through the National Apprenticeship Training Scheme. Apprenticeships are distinct from internship vacancies.</p><a class="btn" href="https://nats.education.gov.in/" target="_blank" rel="noopener noreferrer">Visit NATS ↗</a></article>
+          <article class="career-card"><img src="/assets/images/career/career-guidance.webp" alt="Preparing an internship application" loading="lazy" width="800" height="500"><h3>Application Guide</h3><p>Review opportunity fit, eligibility checks, application preparation, and safe offer evaluation.</p><a class="btn" href="/assets/documents/career-resources/internships/internship-application-guide.pdf">Download guide PDF ↓</a></article>
+          <article class="career-card"><img src="/assets/images/career/internship-guidance.webp" alt="Preparing for internship interviews" loading="lazy" width="800" height="500"><h3>Interview Guide</h3><p>Prepare for internship interviews and professional conversations.</p><a class="btn" href="/assets/documents/career-resources/internships/internship-interview-guide.pdf">Download guide PDF ↓</a></article>
+          <article class="career-card"><img src="/assets/images/career/job-search.webp" alt="Checklist for internship readiness" loading="lazy" width="800" height="500"><h3>Preparation Checklist</h3><p>Use a printable checklist to organize documents and prepare for a placement.</p><a class="btn" href="/assets/documents/career-resources/internships/internship-preparation-checklist.pdf">Download checklist PDF ↓</a></article>
+          <article class="career-card"><img src="/assets/images/career/career-guidance.webp" alt="Reviewing an internship resume" loading="lazy" width="800" height="500"><h3>Resume Checklist</h3><p>Review skills, projects, coursework, and experience before you apply.</p><a class="btn" href="/assets/documents/career-resources/internships/internship-resume-checklist.pdf">Download checklist PDF ↓</a></article>
+        </div>
+      </div>
+    </section>
+  </main>
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">

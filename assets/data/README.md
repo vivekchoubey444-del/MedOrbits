@@ -55,10 +55,11 @@ locations.json	countries, states, cities	Seeded	Documented as 41 countries and 3
 sectors.json	sectors	Seeded — 16 records	Editorial sector groupings without salary or demand claims.
 services.json	services	Seeded — 8 drafts	Proposed services; active: false until approved by the business.
 faqs.json	faqs	Seeded — 5 records	Public informational questions and answers.
-scholarships.json	To be confirmed	Schema-only	Includes a scholarship-type catalogue.
+scholarships.json	scholarships	4 current-cycle records	NSP lists these 2026-27 schemes with application windows ending 31 October 2026; verify current details on the official portal.
 recruitment.json	To be confirmed	Schema-only	Includes recruitment-body and stage catalogues.
 admissions.json	admissions	Schema-only	Documented schema version 1.2.0.
-universities.json	universities	Schema-only	Canonical source of institution identifiers.
+universities.json	universities	Schema-only	Canonical source for institution records; no institutions are currently listed.
+colleges.json	colleges	Empty	No college records are currently listed; use universities.json as the canonical institution source unless a verified college record is available.
 fees.json	fees	Schema-only	Fee record structure.
 hostels.json	hostels	Schema-only	Accommodation record structure.
 internships.json	internships	Schema-only	Internship record structure.
@@ -83,7 +84,7 @@ Update the inventory whenever datasets, collection keys, record counts, or imple
 2.3 Previously listed datasets
 
 File	Current handling
-colleges.json	Prefer universities.json as the canonical institution source, using institutionType to distinguish colleges. Create a separate dataset only if a genuine consumer requires it.
+colleges.json	Prefer universities.json as the canonical institution source. Add a college record only when required by a consumer and supported by verified sources.
 countries.json	Countries currently belong to locations.json. A separate dataset must not become a competing source of truth.
 categories.json	Not currently listed as created.
 admission-process.json	Not currently listed as created.
