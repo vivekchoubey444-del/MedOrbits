@@ -15,47 +15,47 @@
 * also be verified against the actual schema and database engine.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.DB_CONSTRAINT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const REGISTER_PATH =
 process.env.DB_CONSTRAINT_REGISTER_PATH ||
-‘/api/auth/register’;
+'/api/auth/register';
 
 const LOGIN_PATH =
 process.env.DB_CONSTRAINT_LOGIN_PATH ||
-‘/api/auth/login’;
+'/api/auth/login';
 
 const APPLICATIONS_PATH =
 process.env.DB_CONSTRAINT_APPLICATIONS_PATH ||
-‘/api/applications’;
+'/api/applications';
 
 const APPLICATION_PATH =
 process.env.DB_CONSTRAINT_APPLICATION_PATH ||
-‘/api/applications/:id’;
+'/api/applications/:id';
 
 const USER_TOKEN =
-process.env.DB_CONSTRAINT_TEST_USER_TOKEN || ‘’;
+process.env.DB_CONSTRAINT_TEST_USER_TOKEN || '';
 
 const TEST_PASSWORD =
 process.env.DB_CONSTRAINT_TEST_PASSWORD ||
-‘Database-Constraint-Test-92!’;
+'Database-Constraint-Test-92!';
 
 const TIMEOUT_MS = Number(
 process.env.DB_CONSTRAINT_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_DB_CONSTRAINT_MUTATING_TESTS === ‘true’;
+process.env.RUN_DB_CONSTRAINT_MUTATING_TESTS === 'true';
 
 /**
 
@@ -63,16 +63,16 @@ process.env.RUN_DB_CONSTRAINT_MUTATING_TESTS === ‘true’;
 * the corresponding fields and validation rules.
     */
     const APPLICATION_REFERENCE_FIELD =
-    process.env.DB_CONSTRAINT_REFERENCE_FIELD || ‘’;
+    process.env.DB_CONSTRAINT_REFERENCE_FIELD || '';
 
 const INVALID_REFERENCE_VALUE =
 process.env.DB_CONSTRAINT_INVALID_REFERENCE_VALUE ||
-‘invalid-reference-does-not-exist’;
+'invalid-reference-does-not-exist';
 
 function validateConfiguration() {
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘DB_CONSTRAINT_TIMEOUT_MS must be positive.’
+'DB_CONSTRAINT_TIMEOUT_MS must be positive.'
 );
 
 for (const [name, path] of Object.entries({
@@ -82,14 +82,14 @@ APPLICATIONS_PATH,
 APPLICATION_PATH,
 })) {
 assert.ok(
-path.startsWith(’/’),
+path.startsWith('/'),
 ${name} must start with /.
 );
 }
 
 assert.ok(
-APPLICATION_PATH.includes(’:id’),
-‘DB_CONSTRAINT_APPLICATION_PATH must contain the :id placeholder.’
+APPLICATION_PATH.includes(':id'),
+'DB_CONSTRAINT_APPLICATION_PATH must contain the :id placeholder.'
 );
 }
 
@@ -103,13 +103,13 @@ return ${BASE_URL}${path};
 
 function applicationUrl(id) {
 return APPLICATION_PATH.replace(
-‘:id’,
+':id',
 encodeURIComponent(String(id))
 );
 }
 
 async function request(path, {
-method = ‘GET’,
+method = 'GET',
 token,
 body,
 headers = {},
@@ -121,8 +121,8 @@ TIMEOUT_MS
 );
 
 const requestHeaders = {
-Accept: ‘application/json’,
-…headers,
+Accept: 'application/json',
+...headers,
 };
 
 if (token) {
@@ -130,7 +130,7 @@ requestHeaders.Authorization = Bearer ${token};
 }
 
 if (body !== undefined) {
-requestHeaders[‘Content-Type’] = ‘application/json’;
+requestHeaders['Content-Type'] = 'application/json';
 }
 
 try {
@@ -139,7 +139,7 @@ method,
 headers: requestHeaders,
 body: body === undefined ? undefined : JSON.stringify(body),
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const rawBody = await response.text();
@@ -182,7 +182,7 @@ ${label}: expected a client error, received HTTP ${response.status}.
 function extractUser(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -192,7 +192,7 @@ return body.user || body.data?.user || body.data || body;
 function extractApplication(response) {
 const body = response.body;
 
-if (!body || typeof body !== ‘object’) {
+if (!body || typeof body !== 'object') {
 return null;
 }
 
@@ -205,7 +205,7 @@ body
 }
 
 function extractId(record) {
-if (!record || typeof record !== ‘object’) {
+if (!record || typeof record !== 'object') {
 return null;
 }
 
@@ -216,29 +216,29 @@ function requireMutationOptIn() {
 assert.equal(
 RUN_MUTATING_TESTS,
 true,
-‘Set RUN_DB_CONSTRAINT_MUTATING_TESTS=true only in an isolated integration-test environment.’
+'Set RUN_DB_CONSTRAINT_MUTATING_TESTS=true only in an isolated integration-test environment.'
 );
 }
 
 function requireUserToken() {
 assert.ok(
 USER_TOKEN,
-‘DB_CONSTRAINT_TEST_USER_TOKEN is required for authenticated application tests.’
+'DB_CONSTRAINT_TEST_USER_TOKEN is required for authenticated application tests.'
 );
 }
 
-describe(‘MedOrbits database constraints integration tests’, () => {
+describe('MedOrbits database constraints integration tests', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘database/API connectivity’, () => {
-it(‘handles an authentication request without an internal server error’, async () => {
+describe('database/API connectivity', () => {
+it('handles an authentication request without an internal server error', async () => {
 const response = await request(LOGIN_PATH, {
-method: ‘POST’,
+method: 'POST',
 body: {
 email: nonexistent-${crypto.randomUUID()}@example.com,
-password: ‘Invalid-Database-Test-Password!’,
+password: 'Invalid-Database-Test-Password!',
 },
 });
 
@@ -251,9 +251,9 @@ password: ‘Invalid-Database-Test-Password!’,
 
 });
 
-describe(‘unique account constraints’, () => {
+describe('unique account constraints', () => {
 it(
-‘does not create two accounts with the same normalized email’,
+'does not create two accounts with the same normalized email',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutationOptIn();
@@ -322,9 +322,9 @@ it(
 
 });
 
-describe(‘application persistence constraints’, () => {
+describe('application persistence constraints', () => {
 it(
-‘rejects an application that omits required fields’,
+'rejects an application that omits required fields',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutationOptIn();
@@ -386,9 +386,9 @@ it(
 
 });
 
-describe(‘constraint error handling’, () => {
+describe('constraint error handling', () => {
 it(
-‘does not expose SQL details when a request is rejected’,
+'does not expose SQL details when a request is rejected',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 requireMutationOptIn();

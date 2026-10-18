@@ -13,103 +13,103 @@
 * Never run mutating webhook tests against production.
     */
 
-‘use strict’;
+'use strict';
 
-const { describe, it, before } = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
-const crypto = require(‘node:crypto’);
+const { describe, it, before } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
-‘http://127.0.0.1:3000’
-).replace(//+$/, ‘’);
+'http://127.0.0.1:3000'
+).replace(//+$/, '');
 
 const WEBHOOK_PATH =
 process.env.PAYMENT_WEBHOOK_TEST_PATH ||
-‘/api/payments/webhook’;
+'/api/payments/webhook';
 
 const PAYMENT_PATH =
 process.env.PAYMENT_TEST_PATH ||
-‘/api/payments/:paymentId’;
+'/api/payments/:paymentId';
 
-const PAYMENT_ID = process.env.TEST_PAYMENT_ID || ‘’;
-const TEST_TOKEN = process.env.PAYMENT_TEST_TOKEN || ‘’;
+const PAYMENT_ID = process.env.TEST_PAYMENT_ID || '';
+const TEST_TOKEN = process.env.PAYMENT_TEST_TOKEN || '';
 const WEBHOOK_SECRET =
-process.env.PAYMENT_WEBHOOK_TEST_SECRET || ‘’;
+process.env.PAYMENT_WEBHOOK_TEST_SECRET || '';
 
 const SIGNATURE_HEADER =
 process.env.PAYMENT_WEBHOOK_SIGNATURE_HEADER ||
-‘x-webhook-signature’;
+'x-webhook-signature';
 
 const SIGNATURE_FORMAT =
-process.env.PAYMENT_WEBHOOK_SIGNATURE_FORMAT || ‘hex’;
+process.env.PAYMENT_WEBHOOK_SIGNATURE_FORMAT || 'hex';
 
 const WEBHOOK_AUTH_MODE =
-process.env.PAYMENT_WEBHOOK_AUTH_MODE || ‘hmac-sha256’;
+process.env.PAYMENT_WEBHOOK_AUTH_MODE || 'hmac-sha256';
 
 const EVENT_ID_HEADER =
-process.env.PAYMENT_EVENT_ID_HEADER || ‘x-event-id’;
+process.env.PAYMENT_EVENT_ID_HEADER || 'x-event-id';
 
 const EVENT_ID_FIELD =
-process.env.PAYMENT_EVENT_ID_FIELD || ‘id’;
+process.env.PAYMENT_EVENT_ID_FIELD || 'id';
 
 const EVENT_TYPE =
-process.env.PAYMENT_TEST_EVENT_TYPE || ‘payment.succeeded’;
+process.env.PAYMENT_TEST_EVENT_TYPE || 'payment.succeeded';
 
 const AMOUNT_MINOR = Number(
 process.env.TEST_PAYMENT_AMOUNT_MINOR || 10000
 );
 
 const CURRENCY =
-process.env.TEST_PAYMENT_CURRENCY || ‘INR’;
+process.env.TEST_PAYMENT_CURRENCY || 'INR';
 
 const TIMEOUT_MS = Number(
 process.env.PAYMENT_TEST_TIMEOUT_MS || 15000
 );
 
 const RUN_MUTATING_TESTS =
-process.env.RUN_MUTATING_PAYMENT_TESTS === ‘true’;
+process.env.RUN_MUTATING_PAYMENT_TESTS === 'true';
 
 function validateConfiguration() {
 assert.ok(
-WEBHOOK_PATH.startsWith(’/’),
-‘PAYMENT_WEBHOOK_TEST_PATH must start with /.’
+WEBHOOK_PATH.startsWith('/'),
+'PAYMENT_WEBHOOK_TEST_PATH must start with /.'
 );
 
 assert.ok(
 Number.isSafeInteger(AMOUNT_MINOR) && AMOUNT_MINOR > 0,
-‘TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.’
+'TEST_PAYMENT_AMOUNT_MINOR must be a positive integer in minor currency units.'
 );
 
 assert.ok(
 Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-‘PAYMENT_TEST_TIMEOUT_MS must be a positive number.’
+'PAYMENT_TEST_TIMEOUT_MS must be a positive number.'
 );
 
 assert.ok(
-[‘hex’, ‘sha256=’, ‘base64’].includes(SIGNATURE_FORMAT),
-‘PAYMENT_WEBHOOK_SIGNATURE_FORMAT must be hex, sha256=, or base64.’
+['hex', 'sha256=', 'base64'].includes(SIGNATURE_FORMAT),
+'PAYMENT_WEBHOOK_SIGNATURE_FORMAT must be hex, sha256=, or base64.'
 );
 
-if (WEBHOOK_AUTH_MODE === ‘hmac-sha256’) {
+if (WEBHOOK_AUTH_MODE === 'hmac-sha256') {
 assert.ok(
 WEBHOOK_SECRET,
-‘PAYMENT_WEBHOOK_TEST_SECRET is required for HMAC webhook tests.’
+'PAYMENT_WEBHOOK_TEST_SECRET is required for HMAC webhook tests.'
 );
 }
 
-if (WEBHOOK_AUTH_MODE === ‘bearer’) {
+if (WEBHOOK_AUTH_MODE === 'bearer') {
 assert.ok(
 TEST_TOKEN,
-‘PAYMENT_TEST_TOKEN is required for bearer-authenticated webhook tests.’
+'PAYMENT_TEST_TOKEN is required for bearer-authenticated webhook tests.'
 );
 }
 }
 
 function createEvent({
 id = evt_${crypto.randomUUID()},
-paymentId = PAYMENT_ID || ‘pay_test_fixture’,
+paymentId = PAYMENT_ID || 'pay_test_fixture',
 amount = AMOUNT_MINOR,
 type = EVENT_TYPE,
 currency = CURRENCY,
@@ -123,7 +123,7 @@ object: {
 id: paymentId,
 amount,
 currency,
-status: ‘succeeded’,
+status: 'succeeded',
 },
 },
 };
@@ -131,11 +131,11 @@ status: ‘succeeded’,
 
 function createSignature(rawBody) {
 const digest = crypto
-.createHmac(‘sha256’, WEBHOOK_SECRET)
+.createHmac('sha256', WEBHOOK_SECRET)
 .update(rawBody)
-.digest(SIGNATURE_FORMAT === ‘base64’ ? ‘base64’ : ‘hex’);
+.digest(SIGNATURE_FORMAT === 'base64' ? 'base64' : 'hex');
 
-return SIGNATURE_FORMAT === ‘sha256=’
+return SIGNATURE_FORMAT === 'sha256='
 ? sha256=${digest}
 : digest;
 }
@@ -147,7 +147,7 @@ signature,
 omitSignature = false,
 omitEventIdHeader = false,
 headerEventId,
-contentType = ‘application/json’,
+contentType = 'application/json',
 extraHeaders = {},
 } = {}) {
 const body =
@@ -156,9 +156,9 @@ rawBody !== undefined
 : JSON.stringify(event);
 
 const headers = {
-‘Content-Type’: contentType,
-Accept: ‘application/json’,
-…extraHeaders,
+'Content-Type': contentType,
+Accept: 'application/json',
+...extraHeaders,
 };
 
 if (!omitEventIdHeader) {
@@ -170,10 +170,10 @@ if (id !== undefined && id !== null && String(id).length > 0) {
 
 }
 
-if (WEBHOOK_AUTH_MODE === ‘hmac-sha256’ && !omitSignature) {
+if (WEBHOOK_AUTH_MODE === 'hmac-sha256' && !omitSignature) {
 headers[SIGNATURE_HEADER] =
 signature ?? createSignature(body);
-} else if (WEBHOOK_AUTH_MODE === ‘bearer’) {
+} else if (WEBHOOK_AUTH_MODE === 'bearer') {
 headers.Authorization = Bearer ${TEST_TOKEN};
 }
 
@@ -187,11 +187,11 @@ try {
 const response = await fetch(
 ${BASE_URL}${WEBHOOK_PATH},
 {
-method: ‘POST’,
+method: 'POST',
 headers,
 body,
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 }
 );
 
@@ -219,16 +219,16 @@ clearTimeout(timer);
 async function getPayment() {
 assert.ok(
 PAYMENT_ID,
-‘TEST_PAYMENT_ID is required to inspect payment state.’
+'TEST_PAYMENT_ID is required to inspect payment state.'
 );
 
 assert.ok(
 TEST_TOKEN,
-‘PAYMENT_TEST_TOKEN is required to inspect payment state.’
+'PAYMENT_TEST_TOKEN is required to inspect payment state.'
 );
 
 const path = PAYMENT_PATH.replace(
-‘:paymentId’,
+':paymentId',
 encodeURIComponent(PAYMENT_ID)
 );
 
@@ -240,13 +240,13 @@ TIMEOUT_MS
 
 try {
 const response = await fetch(${BASE_URL}${path}, {
-method: ‘GET’,
+method: 'GET',
 headers: {
 Authorization: Bearer ${TEST_TOKEN},
-Accept: ‘application/json’,
+Accept: 'application/json',
 },
 signal: controller.signal,
-redirect: ‘manual’,
+redirect: 'manual',
 });
 
 const text = await response.text();
@@ -289,7 +289,7 @@ return [200, 201, 202, 204].includes(response.status);
 
 function extractPayment(response) {
 const body = response.body;
-if (!body || typeof body !== ‘object’) return null;
+if (!body || typeof body !== 'object') return null;
 
 return body.payment || body.data?.payment || body.data || body;
 }
@@ -298,13 +298,13 @@ function eventId() {
 return evt_test_${crypto.randomUUID()};
 }
 
-describe(‘Payment webhook integration’, () => {
+describe('Payment webhook integration', () => {
 before(() => {
 validateConfiguration();
 });
 
-describe(‘webhook endpoint’, () => {
-it(‘does not redirect webhook requests to another URL’, async () => {
+describe('webhook endpoint', () => {
+it('does not redirect webhook requests to another URL', async () => {
 const event = createEvent();
 
   const response = await sendWebhook({ event });
@@ -340,13 +340,13 @@ it(
 
 });
 
-describe(‘signature verification’, () => {
+describe('signature verification', () => {
 it(
-‘rejects a missing signature’,
+'rejects a missing signature',
 {
 skip:
 !RUN_MUTATING_TESTS ||
-WEBHOOK_AUTH_MODE !== ‘hmac-sha256’,
+WEBHOOK_AUTH_MODE !== 'hmac-sha256',
 },
 async () => {
 const event = createEvent({ id: eventId() });
@@ -407,12 +407,12 @@ it(
 
 });
 
-describe(‘payload validation’, () => {
+describe('payload validation', () => {
 it(
-‘rejects malformed JSON’,
+'rejects malformed JSON',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
-const rawBody = ‘{"id":’;
+const rawBody = '{"id":';
 
     const response = await sendWebhook({
       event: undefined,
@@ -469,14 +469,14 @@ it(
 
 });
 
-describe(‘idempotency and duplicate delivery’, () => {
+describe('idempotency and duplicate delivery', () => {
 it(
-‘acknowledges repeated delivery without repeating payment effects’,
+'acknowledges repeated delivery without repeating payment effects',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 assert.ok(
 PAYMENT_ID,
-‘Set TEST_PAYMENT_ID to a dedicated sandbox payment.’
+'Set TEST_PAYMENT_ID to a dedicated sandbox payment.'
 );
 
     const event = createEvent({
@@ -561,9 +561,9 @@ it(
 
 });
 
-describe(‘payment-state integrity’, () => {
+describe('payment-state integrity', () => {
 it(
-‘keeps payment amounts valid after event processing’,
+'keeps payment amounts valid after event processing',
 { skip: !RUN_MUTATING_TESTS },
 async () => {
 const response = await getPayment();

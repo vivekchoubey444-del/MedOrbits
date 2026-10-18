@@ -1,10 +1,10 @@
-‘use strict’;
+'use strict';
 
 const {
 getTestDatabaseConnection,
-} = require(’./helpers/database-test-helper’);
+} = require('./helpers/database-test-helper');
 
-describe(‘database transactions’, () => {
+describe('database transactions', () => {
 let connection;
 let tableName;
 
@@ -26,7 +26,7 @@ beforeEach(async () => {
 await connection.query(DELETE FROM \${tableName}``);
 });
 
-test(‘commits successful operations’, async () => {
+test('commits successful operations', async () => {
 await connection.beginTransaction();
 
 try {
@@ -48,7 +48,7 @@ expect(rows[0].value).toBe('committed');
 
 });
 
-test(‘rolls back failed multi-step operations’, async () => {
+test('rolls back failed multi-step operations', async () => {
 await connection.beginTransaction();
 
 try {
@@ -70,7 +70,7 @@ expect(rows).toHaveLength(0);
 
 });
 
-test(‘preserves integrity under concurrent updates where applicable’, async () => {
+test('preserves integrity under concurrent updates where applicable', async () => {
 // This example requires a separate connection for each transaction.
 // Implement with the production transaction helper and a shared,
 // deterministic test record before enabling this test.

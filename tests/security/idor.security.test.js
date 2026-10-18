@@ -11,52 +11,52 @@
 * repository-backed ownership checks.
     */
 
-‘use strict’;
+'use strict';
 
-const applicationPolicy = require(’../../src/policies/application.policy’);
-const admissionPolicy = require(’../../src/policies/admission.policy’);
-const documentPolicy = require(’../../src/policies/document.policy’);
+const applicationPolicy = require('../../src/policies/application.policy');
+const admissionPolicy = require('../../src/policies/admission.policy');
+const documentPolicy = require('../../src/policies/document.policy');
 
 const applicantA = {
-id: ‘user-a’,
-roles: [‘user’],
+id: 'user-a',
+roles: ['user'],
 permissions: [],
 };
 
 const applicantB = {
-id: ‘user-b’,
-roles: [‘user’],
+id: 'user-b',
+roles: ['user'],
 permissions: [],
 };
 
 const admin = {
-id: ‘admin-1’,
-roles: [‘admin’],
+id: 'admin-1',
+roles: ['admin'],
 permissions: [],
 };
 
 const applicationA = {
-id: ‘application-a’,
-applicantId: ‘user-a’,
-status: ‘draft’,
+id: 'application-a',
+applicantId: 'user-a',
+status: 'draft',
 };
 
 const admissionA = {
-id: ‘admission-a’,
-applicantId: ‘user-a’,
-status: ‘draft’,
+id: 'admission-a',
+applicantId: 'user-a',
+status: 'draft',
 };
 
 const documentA = {
-id: ‘document-a’,
-userId: ‘user-a’,
-status: ‘uploaded’,
+id: 'document-a',
+userId: 'user-a',
+status: 'uploaded',
 isDeleted: false,
 };
 
-describe(‘IDOR security -- MedOrbits authorization policies’, () => {
-describe(‘Application access isolation’, () => {
-test(‘allows an applicant to view their own application’, () => {
+describe('IDOR security -- MedOrbits authorization policies', () => {
+describe('Application access isolation', () => {
+test('allows an applicant to view their own application', () => {
 expect(
 applicationPolicy.canViewApplication(applicantA, applicationA),
 ).toBe(true);
@@ -117,13 +117,13 @@ test('allows an explicitly authorized administrator to view another application'
 
 });
 
-describe(‘Application modification and ownership escalation’, () => {
-test(‘allows an owner to update permitted fields on a draft application’, () => {
+describe('Application modification and ownership escalation', () => {
+test('allows an owner to update permitted fields on a draft application', () => {
 expect(
 applicationPolicy.canUpdateApplication(
 applicantA,
 applicationA,
-{ personalStatement: ‘Updated statement’ },
+{ personalStatement: 'Updated statement' },
 ),
 ).toBe(true);
 });
@@ -210,8 +210,8 @@ test('denies deletion of a submitted application by its owner', () => {
 
 });
 
-describe(‘Admission access isolation’, () => {
-test(‘allows an applicant to view their own admission’, () => {
+describe('Admission access isolation', () => {
+test('allows an applicant to view their own admission', () => {
 expect(
 admissionPolicy.canViewAdmission(applicantA, admissionA),
 ).toBe(true);
@@ -315,8 +315,8 @@ test('denies another applicant from deleting an admission', () => {
 
 });
 
-describe(‘Document access and download isolation’, () => {
-test(‘allows the document owner to view their document’, () => {
+describe('Document access and download isolation', () => {
+test('allows the document owner to view their document', () => {
 expect(
 documentPolicy.canViewDocument(applicantA, documentA),
 ).toBe(true);
@@ -426,12 +426,12 @@ test('allows an explicitly authorized administrator to view a document', () => {
 
 });
 
-describe(‘Authorization identity normalization’, () => {
-test(‘matches numeric and string owner IDs consistently’, () => {
+describe('Authorization identity normalization', () => {
+test('matches numeric and string owner IDs consistently', () => {
 const numericOwnerResource = {
-id: ‘application-numeric-owner’,
+id: 'application-numeric-owner',
 applicantId: 123,
-status: ‘draft’,
+status: 'draft',
 };
 
   const numericActor = {

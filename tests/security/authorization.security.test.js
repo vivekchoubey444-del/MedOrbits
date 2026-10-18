@@ -13,12 +13,12 @@
 * ●	Resource ownership / IDOR checks
 * ●	Asynchronous ownership checks and error propagation
 * These tests exercise the authorization middleware directly. Route-level
-* security must additionally be tested against the application’s real routes.
+* security must additionally be tested against the application's real routes.
     */
 
-‘use strict’;
+'use strict';
 
-const authorize = require(’../../src/middleware/authorize’);
+const authorize = require('../../src/middleware/authorize');
 
 function createRequest({
 user,
@@ -26,8 +26,8 @@ params = {},
 query = {},
 body = {},
 headers = {},
-method = ‘GET’,
-path = ‘/api/v1/resource’,
+method = 'GET',
+path = '/api/v1/resource',
 } = {}) {
 return {
 user,
@@ -74,10 +74,10 @@ return String(requestedResourceId) === String(resourceOwnerId.resourceId) &&
 };
 }
 
-describe(‘Authorization security’, () => {
-describe(‘Authentication prerequisite’, () => {
-test(‘denies requests without an authenticated user’, async () => {
-const middleware = authorize({ roles: [‘admin’] });
+describe('Authorization security', () => {
+describe('Authentication prerequisite', () => {
+test('denies requests without an authenticated user', async () => {
+const middleware = authorize({ roles: ['admin'] });
 const result = await invokeMiddleware(middleware, createRequest());
 
   expect(result.nextCalled).toBe(true);
@@ -109,13 +109,13 @@ test('allows an authenticated user when no role or permission is required', asyn
 
 });
 
-describe(‘Role-based access control’, () => {
-test(‘allows a user with a required role’, async () => {
-const middleware = authorize({ roles: [‘admin’] });
+describe('Role-based access control', () => {
+test('allows a user with a required role', async () => {
+const middleware = authorize({ roles: ['admin'] });
 const result = await invokeMiddleware(
 middleware,
 createRequest({
-user: { id: ‘user-1’, roles: [‘admin’] },
+user: { id: 'user-1', roles: ['admin'] },
 }),
 );
 
@@ -198,16 +198,16 @@ test('does not grant access based on spoofed identity headers', async () => {
 
 });
 
-describe(‘Permission-based access control’, () => {
-test(‘allows a user with a required permission’, async () => {
-const middleware = authorize({ permissions: [‘records:read’] });
+describe('Permission-based access control', () => {
+test('allows a user with a required permission', async () => {
+const middleware = authorize({ permissions: ['records:read'] });
 const result = await invokeMiddleware(
 middleware,
 createRequest({
 user: {
-id: ‘user-1’,
-roles: [‘user’],
-permissions: [‘records:read’],
+id: 'user-1',
+roles: ['user'],
+permissions: ['records:read'],
 },
 }),
 );
@@ -305,11 +305,11 @@ test('does not accept permissions supplied only in query parameters', async () =
 
 });
 
-describe(‘Combined role and permission requirements’, () => {
-test(‘requires both a matching role and a matching permission’, async () => {
+describe('Combined role and permission requirements', () => {
+test('requires both a matching role and a matching permission', async () => {
 const middleware = authorize({
-roles: [‘admin’],
-permissions: [‘users:delete’],
+roles: ['admin'],
+permissions: ['users:delete'],
 });
 
   const result = await invokeMiddleware(
@@ -345,12 +345,12 @@ test('allows access when both role and permission requirements are satisfied', a
 
 });
 
-describe(‘Resource ownership and IDOR protection’, () => {
-test(‘allows access when the ownership callback confirms ownership’, async () => {
+describe('Resource ownership and IDOR protection', () => {
+test('allows access when the ownership callback confirms ownership', async () => {
 const middleware = authorize({
 ownership: createOwnershipCheck({
-resourceId: ‘record-1’,
-ownerId: ‘user-1’,
+resourceId: 'record-1',
+ownerId: 'user-1',
 }),
 });
 
@@ -469,9 +469,9 @@ test('does not allow an ownership callback to bypass missing authentication', as
 
 });
 
-describe(‘Convenience authorization helpers’, () => {
-test(‘requireRole enforces the specified role’, async () => {
-const middleware = authorize.requireRole(‘admin’);
+describe('Convenience authorization helpers', () => {
+test('requireRole enforces the specified role', async () => {
+const middleware = authorize.requireRole('admin');
 
   const denied = await invokeMiddleware(
     middleware,
@@ -517,9 +517,9 @@ test('forbidden creates a standardized 403 error', () => {
 
 });
 
-describe(‘Denial response safety’, () => {
-test(‘uses a generic forbidden message by default’, async () => {
-const middleware = authorize({ roles: [‘admin’] });
+describe('Denial response safety', () => {
+test('uses a generic forbidden message by default', async () => {
+const middleware = authorize({ roles: ['admin'] });
 
   const result = await invokeMiddleware(
     middleware,

@@ -1,4 +1,4 @@
-‘use strict’;
+'use strict';
 
 /**
 
@@ -11,9 +11,9 @@
 * delete(key)
     */
 
-const { loadStorageConfig } = require(’./storage.config’);
+const { loadStorageConfig } = require('./storage.config');
 
-const DEFAULT_CONTENT_TYPE = ‘application/octet-stream’;
+const DEFAULT_CONTENT_TYPE = 'application/octet-stream';
 const MAX_KEY_LENGTH = 1024;
 
 class S3StorageProvider {
@@ -21,12 +21,12 @@ constructor({
 client,
 commands,
 bucket,
-prefix = ‘’,
+prefix = '',
 maxFileBytes,
-serverSideEncryption = ‘AES256’,
+serverSideEncryption = 'AES256',
 } = {}) {
-if (!client || typeof client.send !== ‘function’) {
-throw new TypeError(‘A valid S3 client is required.’);
+if (!client || typeof client.send !== 'function') {
+throw new TypeError('A valid S3 client is required.');
 }
 
 if (!commands || typeof commands.PutObjectCommand !== 'function' ||
@@ -95,7 +95,7 @@ return new S3StorageProvider({
 }
 
 normalizePrefix(prefix) {
-const trimmed = prefix.replace(/^/+|/+$/g, ‘’);
+const trimmed = prefix.replace(/^\/+|\/+$/g, '');
 
 if (!trimmed) {
   return '';
@@ -107,14 +107,14 @@ return `${trimmed}/`;
 
 validateKey(key) {
 if (
-typeof key !== ‘string’ ||
+typeof key !== 'string' ||
 key.length === 0 ||
 key.length > MAX_KEY_LENGTH ||
-key.startsWith(’/’) ||
-key.includes(’\’) ||
-key.includes(’\0’)
+key.startsWith('/') ||
+key.includes('\\') ||
+key.includes('\0')
 ) {
-throw new TypeError(‘Invalid object key.’);
+throw new TypeError('Invalid object key.');
 }
 
 const segments = key.split('/');
@@ -134,7 +134,7 @@ return key;
 }
 
 key(key) {
-return ${this.prefix}${this.validateKey(key)};
+return `${this.prefix}${this.validateKey(key)}`;
 }
 
 normalizeBody(body) {
@@ -151,13 +151,13 @@ throw new TypeError('body must be a Buffer or Uint8Array.');
 
 validateContentType(contentType) {
 if (
-typeof contentType !== ‘string’ ||
+typeof contentType !== 'string' ||
 contentType.length === 0 ||
 contentType.length > 255 ||
 /[\r\n\0]/.test(contentType) ||
-!/^[a-zA-Z0-9!#$&^.+-]+/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
+!/^[a-zA-Z0-9!#$&^.+-]+\/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
 ) {
-throw new TypeError(‘Invalid content type.’);
+throw new TypeError('Invalid content type.');
 }
 
 return contentType;
@@ -265,7 +265,7 @@ return {
 }
 
 async close() {
-if (typeof this.client.destroy === ‘function’) {
+if (typeof this.client.destroy === 'function') {
 this.client.destroy();
 }
 }

@@ -1,18 +1,18 @@
-‘use strict’;
+'use strict';
 
-const fs = require(‘node:fs/promises’);
-const path = require(‘node:path’);
-const crypto = require(‘node:crypto’);
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const crypto = require('node:crypto');
 
-const { loadStorageConfig } = require(’./storage.config’);
+const { loadStorageConfig } = require('./storage.config');
 
-const DEFAULT_CONTENT_TYPE = ‘application/octet-stream’;
+const DEFAULT_CONTENT_TYPE = 'application/octet-stream';
 const CONTENT_TYPE_MAX_LENGTH = 255;
 
 class LocalStorageProvider {
 constructor(config = loadStorageConfig()) {
-if (!config || typeof config !== ‘object’) {
-throw new TypeError(‘Storage configuration is required.’);
+if (!config || typeof config !== 'object') {
+throw new TypeError('Storage configuration is required.');
 }
 
 if (typeof config.root !== 'string' || !config.root.trim()) {
@@ -33,15 +33,15 @@ this.maxFileBytes = config.maxFileBytes;
 
 resolveKey(key) {
 if (
-typeof key !== ‘string’ ||
+typeof key !== 'string' ||
 key.length === 0 ||
 key.length > 1024 ||
-key.includes(’\0’) ||
-key.includes(’\’) ||
-key.startsWith(’/’) ||
+key.includes('\0') ||
+key.includes('\\') ||
+key.startsWith('/') ||
 path.posix.isAbsolute(key)
 ) {
-throw new TypeError(‘Invalid storage key.’);
+throw new TypeError('Invalid storage key.');
 }
 
 const segments = key.split('/');
@@ -84,13 +84,13 @@ throw new TypeError('body must be a Buffer or Uint8Array.');
 
 validateContentType(contentType) {
 if (
-typeof contentType !== ‘string’ ||
+typeof contentType !== 'string' ||
 contentType.length === 0 ||
 contentType.length > CONTENT_TYPE_MAX_LENGTH ||
 /[\r\n\0]/.test(contentType) ||
-!/^[a-zA-Z0-9!#$&^.+-]+/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
+!/^[a-zA-Z0-9!#$&^.+-]+\/[a-zA-Z0-9!#$&^.+-]+(?:\s*;\s*[a-zA-Z0-9!#$&^.+-]+=[a-zA-Z0-9!#$&^.+-]+)*$/.test(contentType)
 ) {
-throw new TypeError(‘Invalid content type.’);
+throw new TypeError('Invalid content type.');
 }
 
 return contentType;
