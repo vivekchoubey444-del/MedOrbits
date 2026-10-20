@@ -820,7 +820,7 @@ describe('session.service', () => {
       }),
     );
   });
-  test('rejects access to another user's session', async () => {
+  test("rejects access to another user's session", async () => {
     const service = createSessionService({
       sessionRepository: {
         findById: jest.fn().mockResolvedValue({
@@ -983,7 +983,7 @@ describe('notification.service', () => {
       status: 422,
     });
   });
-  test('does not allow a user to read another user's notification', async () => {
+  test("does not allow a user to read another user's notification", async () => {
     const service = createNotificationService({
       notificationRepository: {
         findById: jest.fn().mockResolvedValue({

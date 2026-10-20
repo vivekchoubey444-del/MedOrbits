@@ -1,12 +1,12 @@
+
 'use strict';
 
 /**
  * MedOrbits central API router.
  *
- * Mounted by server.js at:
- *   /api/v1
+ * Mounted by server.js at /api/v1.
  *
- * Individual route files should export an Express Router:
+ * Every route module must export an Express Router:
  *   module.exports = router;
  */
 
@@ -20,10 +20,6 @@ const ROUTES_DIR = __dirname;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV === 'production';
 
-/*
- * Keep route prefixes and filenames aligned with the existing project.
- * Do not add a route here until its corresponding module exists.
- */
 const routeDefinitions = [
   ['/auth', 'auth.routes.js'],
   ['/sessions', 'session.routes.js'],
@@ -45,6 +41,7 @@ const routeDefinitions = [
   ['/services', 'service.routes.js'],
   ['/public-data', 'public-data.routes.js'],
   ['/search', 'search.routes.js'],
+  ['/site-search', 'site-search.routes.js'],
   ['/notifications', 'notification.routes.js'],
   ['/public-releases', 'public-release.routes.js'],
   ['/payments', 'payment.routes.js'],
@@ -73,34 +70,95 @@ function resolveRouter(exported, filename) {
   }
 
   throw new TypeError(
-    `${filename} must export an Express Router.`
+    `Route module "${filename}" must export an Express Router. ` +
+    'Expected module.exports = router.'
   );
 }
 
+function validateDefinitions() {
+  const prefixes = new Set();
+  const filenames = new Set();
+
+  for (const [prefix, filename] of routeDefinitions) {
+    if (
+      typeof prefix !== 'string' ||
+      !prefix.startsWith('/') ||
+      prefix === '/'
+    ) {
+      throw new Error(`Invalid route prefix: ${String(prefix)}`);
+    }
+
+    if (
+      typeof filename !== 'string' ||
+      filename.length === 0 ||
+      path.basename(filename) !== filename
+    ) {
+      throw new Error(`Invalid route filename: ${String(filename)}`);
+    }
+
+    if (prefixes.has(prefix)) {
+      throw new Error(`Duplicate route prefix: ${prefix}`);
+    }
+
+    if (filenames.has(filename)) {
+      throw new Error(`Duplicate route module: ${filename}`);
+    }
+
+    prefixes.add(prefix);
+    filenames.add(filename);
+  }
+}
+
 function mountRoutes() {
+  validateDefinitions();
+
   const missing = [];
+  const mounted = [];
 
   for (const [prefix, filename] of routeDefinitions) {
     const absolutePath = path.join(ROUTES_DIR, filename);
 
     if (!fs.existsSync(absolutePath)) {
-      missing.push(filename);
+      missing.push(`${prefix} -> ${filename}`);
       continue;
     }
 
     let exported;
 
     try {
+      // Resolve modules relative to this route directory.
       exported = require(absolutePath);
-    } catch (error) {
-      error.message =
-        `Unable to load route module "${filename}": ${error.message}`;
-      throw error;
+    } catch (cause) {
+      throw new Error(
+        `[MedOrbits][Routes] Failed to load "${filename}" ` +
+        `for prefix "${prefix}": ${cause.message}`,
+        { cause }
+      );
     }
 
-    const route = resolveRouter(exported, filename);
+    let route;
 
-    router.use(prefix, route);
+    try {
+      route = resolveRouter(exported, filename);
+    } catch (cause) {
+      throw new Error(
+        `[MedOrbits][Routes] Invalid export for "${filename}" ` +
+        `at prefix "${prefix}": ${cause.message}`,
+        { cause }
+      );
+    }
+
+    try {
+      router.use(prefix, route);
+    } catch (cause) {
+      throw new Error(
+        `[MedOrbits][Routes] Failed to mount "${filename}" ` +
+        `at prefix "${prefix}": ${cause.message}`,
+        { cause }
+      );
+    }
+
+    mounted.push(prefix);
 
     console.log(
       `[MedOrbits][Routes] Mounted /api/v1${prefix} -> ${filename}`
@@ -109,21 +167,22 @@ function mountRoutes() {
 
   if (missing.length > 0) {
     const message =
-      `Missing route modules: ${missing.join(', ')}`;
+      `Missing route modules:\n- ${missing.join('\n- ')}`;
 
     if (IS_PRODUCTION) {
-      throw new Error(message);
+      throw new Error(
+        `[MedOrbits][Routes] Production startup aborted.\n${message}`
+      );
     }
 
     console.warn(`[MedOrbits][Routes] ${message}`);
   }
+
+  console.log(
+    `[MedOrbits][Routes] Mounted ${mounted.length} route module(s).`
+  );
 }
 
 mountRoutes();
 
-/*
- * Router-level fallback for unmatched API requests.
- * The server's API 404 handler handles requests that reach the end
- * of the mounted central router.
- */
 module.exports = router;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "updatedAt": null,
+  "updatedAt": "2026-10-19T18:59:15.704Z",
   "metadata": {
     "title": "MedOrbits News and Notifications",
     "description": "News, official notices and updates about exams, admissions, counselling, courses and policy. Items are published only with a traceable official or reputable source.",
@@ -12,62 +12,294 @@
     "editorialPolicy": "Summarise in original wording. Link to the official notice. Do not copy articles, and do not publish rumours or unverified claims as fact."
   },
   "fields": [
-    "id", "title", "slug", "summary", "body", "category", "tags", "newsType", "priority",
-    "countryCode", "stateIds", "examIds", "courseIds", "institutionIds", "admissionIds",
-    "impact", "actionRequired", "effectiveFrom", "deadlineDate",
-    "source", "officialNoticeUrl", "sourceUrl", "noticeNumber", "noticeDate",
-    "language", "image", "relatedNewsIds", "supersedesId", "isBreaking", "isPinned",
-    "publicationStatus", "publishedAt", "expiresAt", "author", "reviewedBy",
-    "verificationStatus", "verifiedAt", "verifiedBy", "reviewDueAt",
-    "active", "createdAt", "updatedAt"
+    "id",
+    "title",
+    "slug",
+    "summary",
+    "body",
+    "category",
+    "tags",
+    "newsType",
+    "priority",
+    "countryCode",
+    "stateIds",
+    "examIds",
+    "courseIds",
+    "institutionIds",
+    "admissionIds",
+    "impact",
+    "actionRequired",
+    "effectiveFrom",
+    "deadlineDate",
+    "source",
+    "officialNoticeUrl",
+    "sourceUrl",
+    "noticeNumber",
+    "noticeDate",
+    "language",
+    "image",
+    "relatedNewsIds",
+    "supersedesId",
+    "isBreaking",
+    "isPinned",
+    "publicationStatus",
+    "publishedAt",
+    "expiresAt",
+    "author",
+    "reviewedBy",
+    "verificationStatus",
+    "verifiedAt",
+    "verifiedBy",
+    "reviewDueAt",
+    "active",
+    "createdAt",
+    "updatedAt"
   ],
   "fieldDefinitions": {
-    "id": { "type": "string", "required": true, "unique": true, "example": "news-2026-neet-ug-notice" },
-    "title": { "type": "string", "required": true, "maxLength": 160 },
-    "slug": { "type": "string", "required": true, "unique": true, "format": "kebab-case" },
-    "summary": { "type": "string", "required": true, "maxLength": 300, "note": "Original wording; never copied from the source." },
-    "body": { "type": "string", "required": false, "nullable": true, "format": "markdown", "note": "Original wording; no long quotations from sources." },
-    "category": { "type": "string", "required": true, "enum": "allowedValues.category" },
-    "tags": { "type": "array", "required": false, "default": [], "itemType": "string" },
-    "newsType": { "type": "string", "required": true, "enum": "allowedValues.newsType" },
-    "priority": { "type": "string", "required": false, "default": "normal", "enum": "allowedValues.priority" },
-    "countryCode": { "type": "string", "required": false, "nullable": true, "format": "ISO 3166-1 alpha-2" },
-    "stateIds": { "type": "array", "default": [], "references": "locations.states.id" },
-    "examIds": { "type": "array", "default": [], "references": "entrance-exams.exams.id" },
-    "courseIds": { "type": "array", "default": [], "references": "courses.id" },
-    "institutionIds": { "type": "array", "default": [], "references": "institutions.id" },
-    "admissionIds": { "type": "array", "default": [], "references": "admissions.id" },
-    "impact": { "type": "string", "required": false, "nullable": true, "enum": "allowedValues.impact" },
-    "actionRequired": { "type": "string", "required": false, "nullable": true, "note": "Plain-language action, only if the official notice requires one." },
-    "effectiveFrom": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
-    "deadlineDate": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
+    "id": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "example": "news-2026-neet-ug-notice"
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 160
+    },
+    "slug": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "format": "kebab-case"
+    },
+    "summary": {
+      "type": "string",
+      "required": true,
+      "maxLength": 300,
+      "note": "Original wording; never copied from the source."
+    },
+    "body": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "markdown",
+      "note": "Original wording; no long quotations from sources."
+    },
+    "category": {
+      "type": "string",
+      "required": true,
+      "enum": "allowedValues.category"
+    },
+    "tags": {
+      "type": "array",
+      "required": false,
+      "default": [],
+      "itemType": "string"
+    },
+    "newsType": {
+      "type": "string",
+      "required": true,
+      "enum": "allowedValues.newsType"
+    },
+    "priority": {
+      "type": "string",
+      "required": false,
+      "default": "normal",
+      "enum": "allowedValues.priority"
+    },
+    "countryCode": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "ISO 3166-1 alpha-2"
+    },
+    "stateIds": {
+      "type": "array",
+      "default": [],
+      "references": "locations.states.id"
+    },
+    "examIds": {
+      "type": "array",
+      "default": [],
+      "references": "entrance-exams.exams.id"
+    },
+    "courseIds": {
+      "type": "array",
+      "default": [],
+      "references": "courses.id"
+    },
+    "institutionIds": {
+      "type": "array",
+      "default": [],
+      "references": "institutions.id"
+    },
+    "admissionIds": {
+      "type": "array",
+      "default": [],
+      "references": "admissions.id"
+    },
+    "impact": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "enum": "allowedValues.impact"
+    },
+    "actionRequired": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "note": "Plain-language action, only if the official notice requires one."
+    },
+    "effectiveFrom": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "YYYY-MM-DD"
+    },
+    "deadlineDate": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "YYYY-MM-DD"
+    },
     "source": {
       "type": "object",
       "required": true,
-      "shape": { "name": "string", "sourceType": "enum allowedValues.sourceType", "url": "https URL or null" }
+      "shape": {
+        "name": "string",
+        "sourceType": "enum allowedValues.sourceType",
+        "url": "https URL or null"
+      }
     },
-    "officialNoticeUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
-    "sourceUrl": { "type": "string", "required": false, "nullable": true, "format": "https URL" },
-    "noticeNumber": { "type": "string", "required": false, "nullable": true },
-    "noticeDate": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
-    "language": { "type": "string", "required": false, "default": "en", "format": "BCP 47" },
-    "image": { "type": "object", "required": false, "nullable": true, "shape": { "url": "string", "alt": "string", "credit": "string or null" }, "note": "Use only images MedOrbits has the right to use." },
-    "relatedNewsIds": { "type": "array", "default": [], "references": "news.id" },
-    "supersedesId": { "type": "string", "required": false, "nullable": true, "references": "news.id", "note": "Set when an update replaces an earlier item." },
-    "isBreaking": { "type": "boolean", "default": false },
-    "isPinned": { "type": "boolean", "default": false },
-    "publicationStatus": { "type": "string", "required": true, "enum": "allowedValues.publicationStatus", "default": "draft" },
-    "publishedAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
-    "expiresAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
-    "author": { "type": "string", "required": false, "nullable": true },
-    "reviewedBy": { "type": "string", "required": false, "nullable": true },
-    "verificationStatus": { "type": "string", "required": true, "enum": "allowedValues.verificationStatus", "default": "unverified" },
-    "verifiedAt": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
-    "verifiedBy": { "type": "string", "required": false, "nullable": true },
-    "reviewDueAt": { "type": "string", "required": false, "nullable": true, "format": "YYYY-MM-DD" },
-    "active": { "type": "boolean", "required": true, "default": true },
-    "createdAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" },
-    "updatedAt": { "type": "string", "required": false, "nullable": true, "format": "ISO 8601 datetime" }
+    "officialNoticeUrl": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "https URL"
+    },
+    "sourceUrl": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "https URL"
+    },
+    "noticeNumber": {
+      "type": "string",
+      "required": false,
+      "nullable": true
+    },
+    "noticeDate": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "YYYY-MM-DD"
+    },
+    "language": {
+      "type": "string",
+      "required": false,
+      "default": "en",
+      "format": "BCP 47"
+    },
+    "image": {
+      "type": "object",
+      "required": false,
+      "nullable": true,
+      "shape": {
+        "url": "string",
+        "alt": "string",
+        "credit": "string or null"
+      },
+      "note": "Use only images MedOrbits has the right to use."
+    },
+    "relatedNewsIds": {
+      "type": "array",
+      "default": [],
+      "references": "news.id"
+    },
+    "supersedesId": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "references": "news.id",
+      "note": "Set when an update replaces an earlier item."
+    },
+    "isBreaking": {
+      "type": "boolean",
+      "default": false
+    },
+    "isPinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "publicationStatus": {
+      "type": "string",
+      "required": true,
+      "enum": "allowedValues.publicationStatus",
+      "default": "draft"
+    },
+    "publishedAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "ISO 8601 datetime"
+    },
+    "expiresAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "ISO 8601 datetime"
+    },
+    "author": {
+      "type": "string",
+      "required": false,
+      "nullable": true
+    },
+    "reviewedBy": {
+      "type": "string",
+      "required": false,
+      "nullable": true
+    },
+    "verificationStatus": {
+      "type": "string",
+      "required": true,
+      "enum": "allowedValues.verificationStatus",
+      "default": "unverified"
+    },
+    "verifiedAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "YYYY-MM-DD"
+    },
+    "verifiedBy": {
+      "type": "string",
+      "required": false,
+      "nullable": true
+    },
+    "reviewDueAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "YYYY-MM-DD"
+    },
+    "active": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "createdAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "ISO 8601 datetime"
+    },
+    "updatedAt": {
+      "type": "string",
+      "required": false,
+      "nullable": true,
+      "format": "ISO 8601 datetime"
+    }
   },
   "allowedValues": {
     "category": [
@@ -96,20 +328,76 @@
       "correction",
       "other"
     ],
-    "priority": ["low", "normal", "high", "critical"],
-    "impact": ["applicants", "students", "institutions", "professionals", "general"],
-    "sourceType": ["examination_authority", "regulator", "government", "counselling_authority", "institution", "press_release", "news_media", "other"],
-    "publicationStatus": ["draft", "in_review", "scheduled", "published", "archived", "retracted"],
-    "verificationStatus": ["unverified", "pending_review", "verified", "outdated", "rejected"]
+    "priority": [
+      "low",
+      "normal",
+      "high",
+      "critical"
+    ],
+    "impact": [
+      "applicants",
+      "students",
+      "institutions",
+      "professionals",
+      "general"
+    ],
+    "sourceType": [
+      "examination_authority",
+      "regulator",
+      "government",
+      "counselling_authority",
+      "institution",
+      "press_release",
+      "news_media",
+      "other"
+    ],
+    "publicationStatus": [
+      "draft",
+      "in_review",
+      "scheduled",
+      "published",
+      "archived",
+      "retracted"
+    ],
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ]
   },
   "workflow": {
-    "statuses": ["draft", "in_review", "scheduled", "published", "archived", "retracted"],
+    "statuses": [
+      "draft",
+      "in_review",
+      "scheduled",
+      "published",
+      "archived",
+      "retracted"
+    ],
     "allowedTransitions": {
-      "draft": ["in_review", "archived"],
-      "in_review": ["draft", "scheduled", "published", "archived"],
-      "scheduled": ["published", "draft"],
-      "published": ["archived", "retracted"],
-      "archived": ["draft"],
+      "draft": [
+        "in_review",
+        "archived"
+      ],
+      "in_review": [
+        "draft",
+        "scheduled",
+        "published",
+        "archived"
+      ],
+      "scheduled": [
+        "published",
+        "draft"
+      ],
+      "published": [
+        "archived",
+        "retracted"
+      ],
+      "archived": [
+        "draft"
+      ],
       "retracted": []
     },
     "notes": "A published item that is wrong must be corrected with a 'correction' item that sets supersedesId, or retracted with a visible note."
@@ -131,10 +419,27 @@
     "The active field controls display only; it does not indicate that anything is open or in force."
   ],
   "displayRules": {
-    "defaultSort": ["isPinned desc", "priority desc", "publishedAt desc"],
-    "hideFromPublicWhen": ["active == false", "publicationStatus in ['draft','in_review','retracted']", "verificationStatus == 'rejected'"],
-    "showStaleWarningWhen": ["deadlineDate < today", "expiresAt < now", "verificationStatus == 'outdated'", "reviewDueAt < today"],
-    "alwaysShow": ["source.name", "publishedAt", "verificationStatus"],
+    "defaultSort": [
+      "isPinned desc",
+      "priority desc",
+      "publishedAt desc"
+    ],
+    "hideFromPublicWhen": [
+      "active == false",
+      "publicationStatus in ['draft','in_review','retracted']",
+      "verificationStatus == 'rejected'"
+    ],
+    "showStaleWarningWhen": [
+      "deadlineDate < today",
+      "expiresAt < now",
+      "verificationStatus == 'outdated'",
+      "reviewDueAt < today"
+    ],
+    "alwaysShow": [
+      "source.name",
+      "publishedAt",
+      "verificationStatus"
+    ],
     "unverifiedLabel": "Unverified - check the official source before acting on this update.",
     "disclaimer": "MedOrbits shares informational updates and does not replace official notices. Always confirm dates, eligibility and instructions on the official website of the relevant authority."
   },
@@ -142,5 +447,108 @@
     "defaultPageSize": 20,
     "maxPageSize": 100
   },
-  "news": []
+  "news": [
+    {
+      "id": "news-release-4d50c0684eaa1584bade",
+      "title": "स्कूली शिक्षा और साक्षरता विभाग ‘विशेष अभियान 6’ के हिस्से के रूप में प्रशासनिक दक्षता, साफ-सुथरे स्कूल परिसर और ई-कचरे के जिम्मेदार प्रबंधन पर ध्यान केन्द्रित ",
+      "slug": "release-4d50c0684eaa1584bade",
+      "summary": "A new official release was detected from Press Information Bureau, Government of India. Review the original source before acting.",
+      "body": null,
+      "category": "general",
+      "tags": [
+        "official-feed",
+        "pib-government-releases"
+      ],
+      "newsType": "announcement",
+      "priority": "normal",
+      "countryCode": "IN",
+      "stateIds": [],
+      "examIds": [],
+      "courseIds": [],
+      "institutionIds": [],
+      "admissionIds": [],
+      "impact": "general",
+      "actionRequired": null,
+      "effectiveFrom": null,
+      "deadlineDate": null,
+      "source": {
+        "name": "Press Information Bureau, Government of India",
+        "sourceType": "press_release",
+        "url": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2324989"
+      },
+      "officialNoticeUrl": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2324989",
+      "sourceUrl": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2324989",
+      "noticeNumber": null,
+      "noticeDate": null,
+      "language": "hi",
+      "image": null,
+      "relatedNewsIds": [],
+      "supersedesId": null,
+      "isBreaking": false,
+      "isPinned": false,
+      "publicationStatus": "draft",
+      "publishedAt": null,
+      "expiresAt": null,
+      "author": "release-feed-worker",
+      "reviewedBy": null,
+      "verificationStatus": "pending_review",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-19T07:08:21.308Z",
+      "updatedAt": "2026-10-19T07:08:21.308Z"
+    },
+    {
+      "id": "news-release-afe59100958a8c3d316f",
+      "title": "सम्मिलित रक्षा सेवा परीक्षा (II), 2026 – लिखित परीक्षा परिणाम की घोषणा",
+      "slug": "release-afe59100958a8c3d316f",
+      "summary": "A new official release was detected from Press Information Bureau, Government of India. Review the original source before acting.",
+      "body": null,
+      "category": "exams",
+      "tags": [
+        "official-feed",
+        "pib-government-releases"
+      ],
+      "newsType": "announcement",
+      "priority": "normal",
+      "countryCode": "IN",
+      "stateIds": [],
+      "examIds": [],
+      "courseIds": [],
+      "institutionIds": [],
+      "admissionIds": [],
+      "impact": "general",
+      "actionRequired": null,
+      "effectiveFrom": null,
+      "deadlineDate": null,
+      "source": {
+        "name": "Press Information Bureau, Government of India",
+        "sourceType": "press_release",
+        "url": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2325341"
+      },
+      "officialNoticeUrl": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2325341",
+      "sourceUrl": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2325341",
+      "noticeNumber": null,
+      "noticeDate": null,
+      "language": "hi",
+      "image": null,
+      "relatedNewsIds": [],
+      "supersedesId": null,
+      "isBreaking": false,
+      "isPinned": false,
+      "publicationStatus": "draft",
+      "publishedAt": null,
+      "expiresAt": null,
+      "author": "release-feed-worker",
+      "reviewedBy": null,
+      "verificationStatus": "pending_review",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-19T18:59:15.704Z",
+      "updatedAt": "2026-10-19T18:59:15.704Z"
+    }
+  ]
 }

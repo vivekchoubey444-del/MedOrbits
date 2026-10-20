@@ -1,180 +1,4896 @@
 {
-"schemaVersion": "1.1.0",
-"updatedAt": null,
-"metadata": {
-"title": "MedOrbits College Directory",
-"description": "Structured directory of educational institutions for college discovery, admissions guidance and course comparisons.",
-"language": "en",
-"defaultCountryCode": "IN",
-"supportedCountryCodes": [
-"IN"
-],
-"defaultCurrency": "INR",
-"dateFormat": "YYYY-MM-DD",
-"disclaimer": "College information is provided for guidance. Confirm recognition, eligibility, fees, admission deadlines and course availability with the relevant institution and official authorities."
-},
-"colleges": [],
-"recordSchema": {
-"id": "Unique stable college identifier, such as college-example-001.",
-"slug": "URL-friendly unique identifier.",
-"name": "Official institution name.",
-"shortName": "Common abbreviation, if applicable.",
-"institutionType": "Government, private, deemed, public, autonomous or other applicable classification.",
-"countryCode": "ISO 3166-1 alpha-2 country code.",
-"stateCode": "State or region identifier, where applicable.",
-"location": {
-"address": null,
-"city": null,
-"district": null,
-"state": null,
-"postalCode": null,
-"country": null,
-"latitude": null,
-"longitude": null
-},
-"contact": {
-"officialWebsite": null,
-"admissionsUrl": null,
-"email": null,
-"phone": null
-},
-"officialSources": [
-{
-"title": "Source title",
-"url": null,
-"sourceType": "institution | regulator | government | counselling_authority",
-"verifiedAt": null
-}
-],
-"recognition": {
-"status": "unverified",
-"recognizingAuthority": null,
-"recognitionNumber": null,
-"sourceUrl": null,
-"verifiedAt": null
-},
-"courseIds": [],
-"admissions": {
-"admissionTypes": [],
-"entranceExamIds": [],
-"officialApplicationUrl": null,
-"admissionProcessId": null,
-"academicYears": [],
-"eligibilitySummary": null,
-"applicationStatus": "unknown",
-"applicationStart": null,
-"applicationEnd": null,
-"officialNotificationUrl": null,
-"verifiedAt": null
-},
-"fees": {
-"currency": "INR",
-"minimumAmount": null,
-"maximumAmount": null,
-"period": null,
-"academicYear": null,
-"feeComponents": [],
-"officialFeeUrl": null,
-"verifiedAt": null
-},
-"facilities": [],
-"accreditation": [],
-"studentServices": [],
-"media": {
-"logoUrl": null,
-"coverImageUrl": null,
-"gallery": []
-},
-"status": {
-"active": true,
-"featured": false,
-"verificationStatus": "unverified",
-"lastReviewedAt": null
-},
-"createdAt": null,
-"updatedAt": null,
-"notes": []
-},
-"allowedValues": {
-"institutionType": [
-"government",
-"private",
-"deemed",
-"public",
-"autonomous",
-"public_private",
-"other",
-"unknown"
-],
-"recognitionStatus": [
-"unverified",
-"verified",
-"pending_review",
-"outdated",
-"not_recognized",
-"unknown"
-],
-"applicationStatus": [
-"upcoming",
-"open",
-"closed",
-"extended",
-"awaiting_notification",
-"not_applicable",
-"unknown"
-],
-"verificationStatus": [
-"unverified",
-"pending_review",
-"verified",
-"outdated",
-"rejected"
-],
-"feePeriod": [
-"per_year",
-"per_semester",
-"per_month",
-"entire_program",
-"one_time",
-"other",
-"unknown"
-]
-},
-"validationRules": [
-"Every college record must have a unique id and slug.",
-"College names must match the institution’s official name or clearly identify an approved display name.",
-"All courseIds must reference existing records in courses.json.",
-"Entrance exam IDs must reference existing examination records when such a dataset is available.",
-"Admission process IDs must reference existing admission-process records when used.",
-"Official websites and application links must be checked before publication.",
-"Recognition claims must be supported by an authoritative source.",
-"Fees must identify the currency, relevant academic year and fee period when known.",
-"Unknown values must remain null or use the explicitly defined unknown status.",
-"Dates must use YYYY-MM-DD or null.",
-"Application end dates must not precede application start dates when both are provided.",
-"Verification dates must reflect actual checks and must never be fabricated.",
-"A featured or active record must not be represented as verified solely because it is enabled for display.",
-"Outdated admission details must be reviewed before being displayed as current.",
-"Never invent college names, affiliations, recognition, fees, rankings or admission deadlines."
-],
-"displaySettings": {
-"showCollegeLogo": true,
-"showLocation": true,
-"showOfficialWebsite": true,
-"showAvailableCourses": true,
-"showAdmissionStatus": true,
-"showFeesWhenVerified": true,
-"showRecognitionStatus": true,
-"showVerificationDate": true,
-"showDisclaimer": true
-},
-"dataGovernance": {
-"requireOfficialSourceForRecognition": true,
-"requireOfficialSourceForAdmissionDeadlines": true,
-"requireOfficialSourceForPublishedFees": true,
-"hideUnverifiedClaims": true,
-"preserveSourceAttribution": true,
-"reviewOutdatedRecords": true
-},
-"note": "Populate college records using current institutional, regulator and government sources. Verify course availability and admission details for each relevant academic year before publishing them as confirmed information."
+  "schemaVersion": "1.1.0",
+  "updatedAt": null,
+  "metadata": {
+    "title": "MedOrbits College Directory",
+    "description": "Structured directory of educational institutions for college discovery, admissions guidance and course comparisons.",
+    "language": "en",
+    "defaultCountryCode": "IN",
+    "supportedCountryCodes": [
+      "IN"
+    ],
+    "defaultCurrency": "INR",
+    "dateFormat": "YYYY-MM-DD",
+    "disclaimer": "College information is provided for guidance. Confirm recognition, eligibility, fees, admission deadlines and course availability with the relevant institution and official authorities."
+  },
+  "colleges": [
+    {
+      "id": "college-in-001",
+      "slug": "aiims-delhi",
+      "name": "All India Institute of Medical Sciences, New Delhi",
+      "shortName": "AIIMS Delhi",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.aiims.edu",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.aiims.edu",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-dm",
+        "course-mch",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-002",
+      "slug": "aiims-rishikesh",
+      "name": "All India Institute of Medical Sciences, Rishikesh",
+      "shortName": "AIIMS Rishikesh",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "UK",
+      "location": {
+        "address": null,
+        "city": "Rishikesh",
+        "district": null,
+        "state": "Uttarakhand",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://aiimsrishikesh.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://aiimsrishikesh.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-003",
+      "slug": "aiims-jodhpur",
+      "name": "All India Institute of Medical Sciences, Jodhpur",
+      "shortName": "AIIMS Jodhpur",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "RJ",
+      "location": {
+        "address": null,
+        "city": "Jodhpur",
+        "district": null,
+        "state": "Rajasthan",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://aiimsjodhpur.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://aiimsjodhpur.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-004",
+      "slug": "aiims-bhubaneswar",
+      "name": "All India Institute of Medical Sciences, Bhubaneswar",
+      "shortName": "AIIMS Bhubaneswar",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "OD",
+      "location": {
+        "address": null,
+        "city": "Bhubaneswar",
+        "district": null,
+        "state": "Odisha",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://aiimsbhubaneswar.nic.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://aiimsbhubaneswar.nic.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-005",
+      "slug": "aiims-patna",
+      "name": "All India Institute of Medical Sciences, Patna",
+      "shortName": "AIIMS Patna",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "BR",
+      "location": {
+        "address": null,
+        "city": "Patna",
+        "district": null,
+        "state": "Bihar",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://aiimspatna.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://aiimspatna.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-006",
+      "slug": "jipmer",
+      "name": "Jawaharlal Institute of Postgraduate Medical Education and Research",
+      "shortName": "JIPMER",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "PY",
+      "location": {
+        "address": null,
+        "city": "Puducherry",
+        "district": null,
+        "state": "Puducherry",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://jipmer.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://jipmer.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-007",
+      "slug": "pgimer",
+      "name": "Postgraduate Institute of Medical Education and Research",
+      "shortName": "PGIMER",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "CH",
+      "location": {
+        "address": null,
+        "city": "Chandigarh",
+        "district": null,
+        "state": "Chandigarh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://pgimer.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://pgimer.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-dm",
+        "course-mch"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-008",
+      "slug": "maulana-azad-medical-college",
+      "name": "Maulana Azad Medical College",
+      "shortName": "MAMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-009",
+      "slug": "lady-hardinge-medical-college",
+      "name": "Lady Hardinge Medical College",
+      "shortName": "LHMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-010",
+      "slug": "vardhman-mahavir-medical-college-and-safdarjung-hospital",
+      "name": "Vardhman Mahavir Medical College and Safdarjung Hospital",
+      "shortName": "VMMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://vmmc-sjh.nic.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://vmmc-sjh.nic.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-011",
+      "slug": "armed-forces-medical-college",
+      "name": "Armed Forces Medical College",
+      "shortName": "AFMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "MH",
+      "location": {
+        "address": null,
+        "city": "Pune",
+        "district": null,
+        "state": "Maharashtra",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://afmc.nic.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://afmc.nic.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-012",
+      "slug": "grant-medical-college",
+      "name": "Grant Government Medical College, Mumbai",
+      "shortName": "Grant Medical College",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "MH",
+      "location": {
+        "address": null,
+        "city": "Mumbai",
+        "district": null,
+        "state": "Maharashtra",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-013",
+      "slug": "seth-gordhandas-sunderdas-medical-college",
+      "name": "Seth Gordhandas Sunderdas Medical College",
+      "shortName": "GSMC",
+      "institutionType": "public",
+      "countryCode": "IN",
+      "stateCode": "MH",
+      "location": {
+        "address": null,
+        "city": "Mumbai",
+        "district": null,
+        "state": "Maharashtra",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-014",
+      "slug": "madras-medical-college",
+      "name": "Madras Medical College",
+      "shortName": "MMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "TN",
+      "location": {
+        "address": null,
+        "city": "Chennai",
+        "district": null,
+        "state": "Tamil Nadu",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-015",
+      "slug": "king-george-s-medical-university",
+      "name": "King George's Medical University",
+      "shortName": "KGMU",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "UP",
+      "location": {
+        "address": null,
+        "city": "Lucknow",
+        "district": null,
+        "state": "Uttar Pradesh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://kgmu.org",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://kgmu.org",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-016",
+      "slug": "cmc-vellore",
+      "name": "Christian Medical College, Vellore",
+      "shortName": "CMC Vellore",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "TN",
+      "location": {
+        "address": null,
+        "city": "Vellore",
+        "district": null,
+        "state": "Tamil Nadu",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.cmch-vellore.edu",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.cmch-vellore.edu",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-017",
+      "slug": "kmc-manipal",
+      "name": "Kasturba Medical College, Manipal",
+      "shortName": "KMC Manipal",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Manipal",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://manipal.edu",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://manipal.edu",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-018",
+      "slug": "st-john-s-medical-college",
+      "name": "St. John's Medical College",
+      "shortName": "SJMC",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Bengaluru",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.stjohns.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.stjohns.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-019",
+      "slug": "bangalore-medical-college-and-research-institute",
+      "name": "Bangalore Medical College and Research Institute",
+      "shortName": "BMCRI",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Bengaluru",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-020",
+      "slug": "gmc-thiruvananthapuram",
+      "name": "Government Medical College, Thiruvananthapuram",
+      "shortName": "GMC Thiruvananthapuram",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "KL",
+      "location": {
+        "address": null,
+        "city": "Thiruvananthapuram",
+        "district": null,
+        "state": "Kerala",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-021",
+      "slug": "ims-bhu",
+      "name": "Institute of Medical Sciences, Banaras Hindu University",
+      "shortName": "IMS BHU",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "UP",
+      "location": {
+        "address": null,
+        "city": "Varanasi",
+        "district": null,
+        "state": "Uttar Pradesh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://bhu.ac.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://bhu.ac.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-022",
+      "slug": "jnmc-amu",
+      "name": "Aligarh Muslim University - Jawaharlal Nehru Medical College",
+      "shortName": "JNMC AMU",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "UP",
+      "location": {
+        "address": null,
+        "city": "Aligarh",
+        "district": null,
+        "state": "Uttar Pradesh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.amu.ac.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.amu.ac.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-023",
+      "slug": "gmch-chandigarh",
+      "name": "Government Medical College and Hospital, Chandigarh",
+      "shortName": "GMCH Chandigarh",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "CH",
+      "location": {
+        "address": null,
+        "city": "Chandigarh",
+        "district": null,
+        "state": "Chandigarh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-024",
+      "slug": "sum-hospital",
+      "name": "Institute of Medical Sciences and SUM Hospital",
+      "shortName": "SUM Hospital",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "OD",
+      "location": {
+        "address": null,
+        "city": "Bhubaneswar",
+        "district": null,
+        "state": "Odisha",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-025",
+      "slug": "kims-bhubaneswar",
+      "name": "Kalinga Institute of Medical Sciences",
+      "shortName": "KIMS Bhubaneswar",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "OD",
+      "location": {
+        "address": null,
+        "city": "Bhubaneswar",
+        "district": null,
+        "state": "Odisha",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-026",
+      "slug": "sriher",
+      "name": "Sri Ramachandra Institute of Higher Education and Research",
+      "shortName": "SRIHER",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "TN",
+      "location": {
+        "address": null,
+        "city": "Chennai",
+        "district": null,
+        "state": "Tamil Nadu",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.sriramachandra.edu.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.sriramachandra.edu.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-027",
+      "slug": "saveetha",
+      "name": "Saveetha Medical College",
+      "shortName": "Saveetha",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "TN",
+      "location": {
+        "address": null,
+        "city": "Chennai",
+        "district": null,
+        "state": "Tamil Nadu",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-028",
+      "slug": "vims-bengaluru",
+      "name": "Vydehi Institute of Medical Sciences and Research Centre",
+      "shortName": "VIMS Bengaluru",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Bengaluru",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-029",
+      "slug": "msrmc",
+      "name": "M. S. Ramaiah Medical College",
+      "shortName": "MSRMC",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Bengaluru",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.msrmc.ac.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.msrmc.ac.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-030",
+      "slug": "aims-kochi",
+      "name": "Amrita Institute of Medical Sciences",
+      "shortName": "AIMS Kochi",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "KL",
+      "location": {
+        "address": null,
+        "city": "Kochi",
+        "district": null,
+        "state": "Kerala",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.amrita.edu",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.amrita.edu",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-031",
+      "slug": "gmc-kozhikode",
+      "name": "Government Medical College, Kozhikode",
+      "shortName": "GMC Kozhikode",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "KL",
+      "location": {
+        "address": null,
+        "city": "Kozhikode",
+        "district": null,
+        "state": "Kerala",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-032",
+      "slug": "omc",
+      "name": "Osmania Medical College",
+      "shortName": "OMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "TS",
+      "location": {
+        "address": null,
+        "city": "Hyderabad",
+        "district": null,
+        "state": "Telangana",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-033",
+      "slug": "gandhi-medical-college",
+      "name": "Gandhi Medical College, Hyderabad",
+      "shortName": "Gandhi Medical College",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "TS",
+      "location": {
+        "address": null,
+        "city": "Hyderabad",
+        "district": null,
+        "state": "Telangana",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-034",
+      "slug": "amc-visakhapatnam",
+      "name": "Andhra Medical College",
+      "shortName": "AMC Visakhapatnam",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "AP",
+      "location": {
+        "address": null,
+        "city": "Visakhapatnam",
+        "district": null,
+        "state": "Andhra Pradesh",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-035",
+      "slug": "bjgmc",
+      "name": "B. J. Government Medical College",
+      "shortName": "BJGMC",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "MH",
+      "location": {
+        "address": null,
+        "city": "Pune",
+        "district": null,
+        "state": "Maharashtra",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-036",
+      "slug": "dypmc-pimpri",
+      "name": "Dr. D. Y. Patil Medical College, Pimpri",
+      "shortName": "DYPMC Pimpri",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "MH",
+      "location": {
+        "address": null,
+        "city": "Pune",
+        "district": null,
+        "state": "Maharashtra",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-037",
+      "slug": "nhlmmc",
+      "name": "Smt. NHL Municipal Medical College",
+      "shortName": "NHLMMC",
+      "institutionType": "public",
+      "countryCode": "IN",
+      "stateCode": "GJ",
+      "location": {
+        "address": null,
+        "city": "Ahmedabad",
+        "district": null,
+        "state": "Gujarat",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-038",
+      "slug": "bjmc-ahmedabad",
+      "name": "B. J. Medical College, Ahmedabad",
+      "shortName": "BJMC Ahmedabad",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "GJ",
+      "location": {
+        "address": null,
+        "city": "Ahmedabad",
+        "district": null,
+        "state": "Gujarat",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-039",
+      "slug": "sms-medical-college",
+      "name": "Sawai Man Singh Medical College",
+      "shortName": "SMS Medical College",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "RJ",
+      "location": {
+        "address": null,
+        "city": "Jaipur",
+        "district": null,
+        "state": "Rajasthan",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-040",
+      "slug": "pgims-rohtak",
+      "name": "Pt. B. D. Sharma Post Graduate Institute of Medical Sciences",
+      "shortName": "PGIMS Rohtak",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "HR",
+      "location": {
+        "address": null,
+        "city": "Rohtak",
+        "district": null,
+        "state": "Haryana",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-041",
+      "slug": "gmc-patiala",
+      "name": "Government Medical College, Patiala",
+      "shortName": "GMC Patiala",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "PB",
+      "location": {
+        "address": null,
+        "city": "Patiala",
+        "district": null,
+        "state": "Punjab",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-042",
+      "slug": "cmc-ludhiana",
+      "name": "Christian Medical College, Ludhiana",
+      "shortName": "CMC Ludhiana",
+      "institutionType": "private",
+      "countryCode": "IN",
+      "stateCode": "PB",
+      "location": {
+        "address": null,
+        "city": "Ludhiana",
+        "district": null,
+        "state": "Punjab",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.cmcludhiana.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.cmcludhiana.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bsc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-043",
+      "slug": "igims",
+      "name": "Indira Gandhi Institute of Medical Sciences",
+      "shortName": "IGIMS",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "BR",
+      "location": {
+        "address": null,
+        "city": "Patna",
+        "district": null,
+        "state": "Bihar",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-044",
+      "slug": "rims-ranchi",
+      "name": "Rajendra Institute of Medical Sciences",
+      "shortName": "RIMS Ranchi",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "JH",
+      "location": {
+        "address": null,
+        "city": "Ranchi",
+        "district": null,
+        "state": "Jharkhand",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-045",
+      "slug": "gmch-guwahati",
+      "name": "Gauhati Medical College and Hospital",
+      "shortName": "GMCH Guwahati",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "AS",
+      "location": {
+        "address": null,
+        "city": "Guwahati",
+        "district": null,
+        "state": "Assam",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-046",
+      "slug": "mck",
+      "name": "Medical College, Kolkata",
+      "shortName": "MCK",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "WB",
+      "location": {
+        "address": null,
+        "city": "Kolkata",
+        "district": null,
+        "state": "West Bengal",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-047",
+      "slug": "rg-kar",
+      "name": "R. G. Kar Medical College",
+      "shortName": "RG Kar",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "WB",
+      "location": {
+        "address": null,
+        "city": "Kolkata",
+        "district": null,
+        "state": "West Bengal",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-048",
+      "slug": "nrs-medical-college",
+      "name": "Nil Ratan Sircar Medical College",
+      "shortName": "NRS Medical College",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "WB",
+      "location": {
+        "address": null,
+        "city": "Kolkata",
+        "district": null,
+        "state": "West Bengal",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-049",
+      "slug": "mmimsr",
+      "name": "Maharishi Markandeshwar Institute of Medical Sciences and Research",
+      "shortName": "MMIMSR",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "HR",
+      "location": {
+        "address": null,
+        "city": "Ambala",
+        "district": null,
+        "state": "Haryana",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-mbbs",
+        "course-md",
+        "course-ms-surgery",
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-050",
+      "slug": "maids",
+      "name": "Maulana Azad Institute of Dental Sciences",
+      "shortName": "MAIDS",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-051",
+      "slug": "mcods",
+      "name": "Manipal College of Dental Sciences",
+      "shortName": "MCODS",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Manipal",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-052",
+      "slug": "gdcri",
+      "name": "Government Dental College and Research Institute, Bengaluru",
+      "shortName": "GDCRI",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "KA",
+      "location": {
+        "address": null,
+        "city": "Bengaluru",
+        "district": null,
+        "state": "Karnataka",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bds"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-053",
+      "slug": "aiia",
+      "name": "All India Institute of Ayurveda",
+      "shortName": "AIIA",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://aiia.gov.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://aiia.gov.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bams",
+        "course-md-ayurveda"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-054",
+      "slug": "nia-jaipur",
+      "name": "National Institute of Ayurveda",
+      "shortName": "NIA Jaipur",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "RJ",
+      "location": {
+        "address": null,
+        "city": "Jaipur",
+        "district": null,
+        "state": "Rajasthan",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bams",
+        "course-md-ayurveda"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [
+          "exam-neet-ug"
+        ],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-055",
+      "slug": "niper-mohali",
+      "name": "National Institute of Pharmaceutical Education and Research, Mohali",
+      "shortName": "NIPER Mohali",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "PB",
+      "location": {
+        "address": null,
+        "city": "Mohali",
+        "district": null,
+        "state": "Punjab",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://www.niper.ac.in",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://www.niper.ac.in",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-m-pharm"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-056",
+      "slug": "jamia-hamdard",
+      "name": "Jamia Hamdard",
+      "shortName": "Jamia Hamdard",
+      "institutionType": "deemed",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": "https://jamiahamdard.edu",
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [
+        {
+          "title": "Official website",
+          "url": "https://jamiahamdard.edu",
+          "sourceType": "institution",
+          "verifiedAt": null
+        }
+      ],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-b-pharm",
+        "course-m-pharm",
+        "course-bpt"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    },
+    {
+      "id": "college-in-057",
+      "slug": "aiims-college-of-nursing",
+      "name": "College of Nursing, All India Institute of Medical Sciences, New Delhi",
+      "shortName": "AIIMS College of Nursing",
+      "institutionType": "government",
+      "countryCode": "IN",
+      "stateCode": "DL",
+      "location": {
+        "address": null,
+        "city": "New Delhi",
+        "district": null,
+        "state": "Delhi",
+        "postalCode": null,
+        "country": "India",
+        "latitude": null,
+        "longitude": null
+      },
+      "contact": {
+        "officialWebsite": null,
+        "admissionsUrl": null,
+        "email": null,
+        "phone": null
+      },
+      "officialSources": [],
+      "recognition": {
+        "status": "unverified",
+        "recognizingAuthority": null,
+        "recognitionNumber": null,
+        "sourceUrl": null,
+        "verifiedAt": null
+      },
+      "courseIds": [
+        "course-bsc-nursing",
+        "course-msc-nursing"
+      ],
+      "admissions": {
+        "admissionTypes": [],
+        "entranceExamIds": [],
+        "officialApplicationUrl": null,
+        "admissionProcessId": null,
+        "academicYears": [],
+        "eligibilitySummary": null,
+        "applicationStatus": "unknown",
+        "applicationStart": null,
+        "applicationEnd": null,
+        "officialNotificationUrl": null,
+        "verifiedAt": null
+      },
+      "fees": {
+        "currency": "INR",
+        "minimumAmount": null,
+        "maximumAmount": null,
+        "period": null,
+        "academicYear": null,
+        "feeComponents": [],
+        "officialFeeUrl": null,
+        "verifiedAt": null
+      },
+      "facilities": [],
+      "accreditation": [],
+      "studentServices": [],
+      "media": {
+        "logoUrl": null,
+        "coverImageUrl": null,
+        "gallery": []
+      },
+      "status": {
+        "active": true,
+        "featured": false,
+        "verificationStatus": "unverified",
+        "lastReviewedAt": null
+      },
+      "createdAt": null,
+      "updatedAt": null,
+      "notes": "Listing only. Recognition, fees, seats and admission details are unverified; confirm with the institution, NMC and the counselling authority."
+    }
+  ],
+  "recordSchema": {
+    "id": "Unique stable college identifier, such as college-example-001.",
+    "slug": "URL-friendly unique identifier.",
+    "name": "Official institution name.",
+    "shortName": "Common abbreviation, if applicable.",
+    "institutionType": "Government, private, deemed, public, autonomous or other applicable classification.",
+    "countryCode": "ISO 3166-1 alpha-2 country code.",
+    "stateCode": "State or region identifier, where applicable.",
+    "location": {
+      "address": null,
+      "city": null,
+      "district": null,
+      "state": null,
+      "postalCode": null,
+      "country": null,
+      "latitude": null,
+      "longitude": null
+    },
+    "contact": {
+      "officialWebsite": null,
+      "admissionsUrl": null,
+      "email": null,
+      "phone": null
+    },
+    "officialSources": [
+      {
+        "title": "Source title",
+        "url": null,
+        "sourceType": "institution | regulator | government | counselling_authority",
+        "verifiedAt": null
+      }
+    ],
+    "recognition": {
+      "status": "unverified",
+      "recognizingAuthority": null,
+      "recognitionNumber": null,
+      "sourceUrl": null,
+      "verifiedAt": null
+    },
+    "courseIds": [],
+    "admissions": {
+      "admissionTypes": [],
+      "entranceExamIds": [],
+      "officialApplicationUrl": null,
+      "admissionProcessId": null,
+      "academicYears": [],
+      "eligibilitySummary": null,
+      "applicationStatus": "unknown",
+      "applicationStart": null,
+      "applicationEnd": null,
+      "officialNotificationUrl": null,
+      "verifiedAt": null
+    },
+    "fees": {
+      "currency": "INR",
+      "minimumAmount": null,
+      "maximumAmount": null,
+      "period": null,
+      "academicYear": null,
+      "feeComponents": [],
+      "officialFeeUrl": null,
+      "verifiedAt": null
+    },
+    "facilities": [],
+    "accreditation": [],
+    "studentServices": [],
+    "media": {
+      "logoUrl": null,
+      "coverImageUrl": null,
+      "gallery": []
+    },
+    "status": {
+      "active": true,
+      "featured": false,
+      "verificationStatus": "unverified",
+      "lastReviewedAt": null
+    },
+    "createdAt": null,
+    "updatedAt": null,
+    "notes": []
+  },
+  "allowedValues": {
+    "institutionType": [
+      "government",
+      "private",
+      "deemed",
+      "public",
+      "autonomous",
+      "public_private",
+      "other",
+      "unknown"
+    ],
+    "recognitionStatus": [
+      "unverified",
+      "verified",
+      "pending_review",
+      "outdated",
+      "not_recognized",
+      "unknown"
+    ],
+    "applicationStatus": [
+      "upcoming",
+      "open",
+      "closed",
+      "extended",
+      "awaiting_notification",
+      "not_applicable",
+      "unknown"
+    ],
+    "verificationStatus": [
+      "unverified",
+      "pending_review",
+      "verified",
+      "outdated",
+      "rejected"
+    ],
+    "feePeriod": [
+      "per_year",
+      "per_semester",
+      "per_month",
+      "entire_program",
+      "one_time",
+      "other",
+      "unknown"
+    ]
+  },
+  "validationRules": [
+    "Every college record must have a unique id and slug.",
+    "College names must match the institution’s official name or clearly identify an approved display name.",
+    "All courseIds must reference existing records in courses.json.",
+    "Entrance exam IDs must reference existing examination records when such a dataset is available.",
+    "Admission process IDs must reference existing admission-process records when used.",
+    "Official websites and application links must be checked before publication.",
+    "Recognition claims must be supported by an authoritative source.",
+    "Fees must identify the currency, relevant academic year and fee period when known.",
+    "Unknown values must remain null or use the explicitly defined unknown status.",
+    "Dates must use YYYY-MM-DD or null.",
+    "Application end dates must not precede application start dates when both are provided.",
+    "Verification dates must reflect actual checks and must never be fabricated.",
+    "A featured or active record must not be represented as verified solely because it is enabled for display.",
+    "Outdated admission details must be reviewed before being displayed as current.",
+    "Never invent college names, affiliations, recognition, fees, rankings or admission deadlines."
+  ],
+  "displaySettings": {
+    "showCollegeLogo": true,
+    "showLocation": true,
+    "showOfficialWebsite": true,
+    "showAvailableCourses": true,
+    "showAdmissionStatus": true,
+    "showFeesWhenVerified": true,
+    "showRecognitionStatus": true,
+    "showVerificationDate": true,
+    "showDisclaimer": true
+  },
+  "dataGovernance": {
+    "requireOfficialSourceForRecognition": true,
+    "requireOfficialSourceForAdmissionDeadlines": true,
+    "requireOfficialSourceForPublishedFees": true,
+    "hideUnverifiedClaims": true,
+    "preserveSourceAttribution": true,
+    "reviewOutdatedRecords": true
+  },
+  "note": "Populate college records using current institutional, regulator and government sources. Verify course availability and admission details for each relevant academic year before publishing them as confirmed information."
 }

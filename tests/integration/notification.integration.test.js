@@ -396,7 +396,7 @@ it('rejects invalid pagination values or handles them safely', async (t) => {
 
 describe('notification retrieval and ownership', () => {
 it(
-'prevents one user from reading another user's private notification',
+"prevents one user from reading another user's private notification",
 { skip: !RUN_MUTATING_TESTS },
 async (t) => {
 requireMutationOptIn();
@@ -495,7 +495,7 @@ requireMutationOptIn();
   }
 );
 it(
-  'does not allow one user to mark another user's notification as read',
+  "does not allow one user to mark another user's notification as read",
   { skip: !RUN_MUTATING_TESTS },
   async (t) => {
     requireMutationOptIn();
