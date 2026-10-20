@@ -33,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
       - name: Validate tracked JSON files
@@ -73,7 +73,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
