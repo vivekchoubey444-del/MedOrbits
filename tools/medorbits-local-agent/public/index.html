@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MedOrbits Local Coding Agent</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">MEDORBITS · LOCAL AI</p>
+      <h1>Coding Agent</h1>
+      <p>Inspect your repository, propose repairs, review changes, and approve them explicitly.</p>
+      <p id="status">Checking Ollama connection…</p>
+    </header>
+
+    <section>
+      <h2>New coding request</h2>
+      <label for="request">What should the agent inspect or improve?</label>
+      <textarea id="request" rows="5" placeholder="Example: Inspect the existing search page and propose a minimal fix. Do not change unrelated files."></textarea>
+      <button id="propose">Inspect and propose</button>
+      <p id="message" role="status"></p>
+    </section>
+
+    <section id="review" hidden>
+      <h2>Review proposed changes</h2>
+      <p id="summary"></p>
+      <div id="changes"></div>
+      <h3>Suggested checks</h3>
+      <ul id="tests"></ul>
+
+      <label for="confirmation">Type APPROVE FILE CHANGES to authorize edits.</label>
+      <input id="confirmation" autocomplete="off">
+      <button id="approve" disabled>Approve and apply changes</button>
+      <button id="reject" class="secondary">Reject proposal</button>
+    </section>
+
+    <footer>Approval required · No automatic Git or deployment actions</footer>
+  </main>
+</body>
+</html>
