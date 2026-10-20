@@ -212,3 +212,7 @@ Important Notes
 Ownership: MedOrbits
 Scope: Account frontend pages and backend integration expectations
 Production readiness: Verify actual routes, security controls, page behavior, and deployment paths before launch.
+
+Pages added
+
+* application-details.html: shows one application (opened from applications.html with ?id=). It reads GET /api/applications/:id, handles sign-in required, not found and service errors, and links to documents, counselling, payments, support and contact.

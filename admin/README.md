@@ -230,3 +230,7 @@ Important Notes
 Ownership: MedOrbits
 Scope: Administrative frontend pages and backend integration expectations
 Production readiness: Verify actual APIs, permissions, database operations, and deployment paths before launch.
+
+Pages added
+
+* search.html: admin search across applications, users, payments, courses, colleges, jobs and audit logs (?q= and ?area=). It is the target of the quick-search form on index.html, is marked noindex, and relies on authenticated admin APIs. Server-side authorization remains required.
