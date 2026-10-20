@@ -168,10 +168,6 @@ jobs:
             console.log('All discovered JSON files parse successfully.');
           }
           NODE
-      - name: Validate YAML workflow syntax
-        run: |
-          npm exec --yes --package yaml -- \
-            -c "const fs=require('node:fs'); const YAML=require('yaml'); const dir='.github/workflows'; for(const file of fs.readdirSync(dir).filter(f=>/\.ya?ml$/i.test(f))){const path=require('node:path').join(dir,file); const doc=YAML.parseDocument(fs.readFileSync(path,'utf8'),{uniqueKeys:true}); if(doc.errors.length){console.error(path); for(const error of doc.errors) console.error(error.message); process.exitCode=1;} else {console.log('Valid YAML:',path);}}"
       - name: Verify npm lockfile synchronization
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Ensure validation did not modify tracked package files
@@ -184,39 +180,6 @@ jobs:
           fi
       - name: Verify clean dependency installation
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Validate JSON files
-        shell: bash
-        run: |
-          set -euo pipefail
-          errors=0
-          count=0
-          while IFS= read -r -d '' file; do
-            count=$((count + 1))
-            echo "Checking JSON: $file"
-            node <<'NODE' "$file"
-            try {
-              const fs = require('node:fs');
-              JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
-            } catch (err) {
-              console.error(`${process.argv[1]}: ${err.message}`);
-              process.exit(1);
-            }
-            NODE
-            if [ $? -ne 0 ]; then
-              errors=$((errors + 1))
-            fi
-          done < <(
-            find . \
-              -type d \( -name node_modules -o -name .git -o -name coverage \) -prune \
-              -o -type f -name '*.json' -print0
-          )
-
-          echo "Validated $count JSON file(s). Errors: $errors"
-          if [ "$errors" -ne 0 ]; then
-            echo "::error::JSON validation failed ($errors file(s))"
-            exit 1
-          fi
-
       - name: Validate YAML syntax
         shell: ruby
         run: |
