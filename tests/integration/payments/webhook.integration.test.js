@@ -23,7 +23,7 @@ const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
 'http://127.0.0.1:3000'
-).replace(//+$/, '');
+).replace(/\/+$/, '');
 
 const WEBHOOK_PATH =
 process.env.PAYMENT_WEBHOOK_TEST_PATH ||
@@ -108,7 +108,7 @@ TEST_TOKEN,
 }
 
 function createEvent({
-id = evt_${crypto.randomUUID()},
+id = `evt_${crypto.randomUUID()}`,
 paymentId = PAYMENT_ID || 'pay_test_fixture',
 amount = AMOUNT_MINOR,
 type = EVENT_TYPE,
@@ -136,7 +136,7 @@ const digest = crypto
 .digest(SIGNATURE_FORMAT === 'base64' ? 'base64' : 'hex');
 
 return SIGNATURE_FORMAT === 'sha256='
-? sha256=${digest}
+? `sha256=${digest}`
 : digest;
 }
 
@@ -174,7 +174,7 @@ if (WEBHOOK_AUTH_MODE === 'hmac-sha256' && !omitSignature) {
 headers[SIGNATURE_HEADER] =
 signature ?? createSignature(body);
 } else if (WEBHOOK_AUTH_MODE === 'bearer') {
-headers.Authorization = Bearer ${TEST_TOKEN};
+headers.Authorization = `Bearer ${TEST_TOKEN}`;
 }
 
 const controller = new AbortController();
@@ -185,7 +185,7 @@ TIMEOUT_MS
 
 try {
 const response = await fetch(
-${BASE_URL}${WEBHOOK_PATH},
+`${BASE_URL}${WEBHOOK_PATH}`,
 {
 method: 'POST',
 headers,
@@ -239,10 +239,10 @@ TIMEOUT_MS
 );
 
 try {
-const response = await fetch(${BASE_URL}${path}, {
+const response = await fetch(`${BASE_URL}${path}`, {
 method: 'GET',
 headers: {
-Authorization: Bearer ${TEST_TOKEN},
+Authorization: `Bearer ${TEST_TOKEN}`,
 Accept: 'application/json',
 },
 signal: controller.signal,
@@ -272,14 +272,14 @@ clearTimeout(timer);
 function assertNoServerError(response, label) {
 assert.ok(
 response.status < 500,
-${label} returned HTTP ${response.status}: ${JSON.stringify(response.body)}
+`${label} returned HTTP ${response.status}: ${JSON.stringify(response.body)}`
 );
 }
 
 function assertRejected(response, label) {
 assert.ok(
 [400, 401, 403, 404, 409, 415, 422].includes(response.status),
-${label}: expected a client-error response, received HTTP ${response.status}.
+`${label}: expected a client-error response, received HTTP ${response.status}.`
 );
 }
 
@@ -295,7 +295,7 @@ return body.payment || body.data?.payment || body.data || body;
 }
 
 function eventId() {
-return evt_test_${crypto.randomUUID()};
+return `evt_test_${crypto.randomUUID()}`;
 }
 
 describe('Payment webhook integration', () => {

@@ -23,7 +23,7 @@ await connection.end();
 });
 
 beforeEach(async () => {
-await connection.query(DELETE FROM \${tableName}``);
+await connection.query(`DELETE FROM \`${tableName}\``);
 });
 
 test('commits successful operations', async () => {

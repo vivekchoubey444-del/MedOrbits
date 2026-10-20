@@ -26,7 +26,7 @@ const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
 'http://127.0.0.1:3000'
-).replace(//+$/, '');
+).replace(/\/+$/, '');
 
 const WEBHOOK_PATH =
 process.env.PAYMENT_WEBHOOK_TEST_PATH ||
@@ -114,7 +114,7 @@ type = EVENT_TYPE,
 currency = CURRENCY,
 } = {}) {
 return {
-[EVENT_ID_FIELD]: id || evt_${crypto.randomUUID()},
+[EVENT_ID_FIELD]: id || `evt_${crypto.randomUUID()}`,
 type,
 created: Math.floor(Date.now() / 1000),
 data: {
@@ -135,7 +135,7 @@ const digest = crypto
 .digest(SIGNATURE_FORMAT === 'base64' ? 'base64' : 'hex');
 
 return SIGNATURE_FORMAT === 'sha256='
-? sha256=${digest}
+? `sha256=${digest}`
 : digest;
 }
 
@@ -157,7 +157,7 @@ assert.ok(
 TEST_TOKEN,
 'PAYMENT_TEST_TOKEN is required for bearer-authenticated webhook tests.'
 );
-headers.Authorization = Bearer ${TEST_TOKEN};
+headers.Authorization = `Bearer ${TEST_TOKEN}`;
 } else if (WEBHOOK_AUTH_MODE === 'hmac-sha256') {
 headers[SIGNATURE_HEADER] = signatureFor(rawBody);
 }
@@ -181,7 +181,7 @@ REQUEST_TIMEOUT_MS
 );
 
 try {
-const response = await fetch(${BASE_URL}${WEBHOOK_PATH}, {
+const response = await fetch(`${BASE_URL}${WEBHOOK_PATH}`, {
 method: 'POST',
 headers,
 body: rawBody,
@@ -225,10 +225,10 @@ REQUEST_TIMEOUT_MS
 );
 
 try {
-const response = await fetch(${BASE_URL}${path}, {
+const response = await fetch(`${BASE_URL}${path}`, {
 method: 'GET',
 headers: {
-Authorization: Bearer ${TEST_TOKEN},
+Authorization: `Bearer ${TEST_TOKEN}`,
 Accept: 'application/json',
 },
 signal: controller.signal,
@@ -262,7 +262,7 @@ return [200, 201, 202, 204].includes(response.status);
 function assertNoServerError(response, label) {
 assert.ok(
 response.status < 500,
-${label} returned HTTP ${response.status}: ${JSON.stringify(response.body)}
+`${label} returned HTTP ${response.status}: ${JSON.stringify(response.body)}`
 );
 }
 
@@ -287,7 +287,7 @@ null
 }
 
 function newEventId(prefix = 'evt_test') {
-return ${prefix}_${crypto.randomUUID()};
+return `${prefix}_${crypto.randomUUID()}`;
 }
 
 describe('Duplicate payment event integration tests', () => {

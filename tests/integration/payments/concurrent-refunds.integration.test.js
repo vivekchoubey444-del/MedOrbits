@@ -27,7 +27,7 @@ const BASE_URL = (
 process.env.PAYMENT_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
 'http://127.0.0.1:3000'
-).replace(//+$/, '');
+).replace(/\/+$/, '');
 
 const REFUND_PATH =
 process.env.REFUND_TEST_PATH || '/api/payments/:paymentId/refunds';
@@ -93,12 +93,12 @@ Number.isFinite(REQUEST_TIMEOUT_MS) && REQUEST_TIMEOUT_MS > 0,
 }
 
 function endpoint(pathTemplate, paymentId = PAYMENT_ID) {
-return ${BASE_URL}${pathTemplate.replace( ':paymentId', encodeURIComponent(paymentId) )};
+return `${BASE_URL}${pathTemplate.replace( ':paymentId', encodeURIComponent(paymentId) )}`;
 }
 
 function authHeaders(extra = {}) {
 return {
-Authorization: Bearer ${TEST_TOKEN},
+Authorization: `Bearer ${TEST_TOKEN}`,
 Accept: 'application/json',
 ...extra,
 };
@@ -112,7 +112,7 @@ REQUEST_TIMEOUT_MS
 );
 
 try {
-const response = await fetch(${BASE_URL}${path}, {
+const response = await fetch(`${BASE_URL}${path}`, {
 ...options,
 headers: authHeaders(options.headers || {}),
 signal: controller.signal,
@@ -212,19 +212,19 @@ return Number.isSafeInteger(amount) ? amount : null;
 function assertNoServerError(response, message) {
 assert.ok(
 response.status < 500,
-${message}: unexpected server error ${response.status}; body=${JSON.stringify(response.body)}
+`${message}: unexpected server error ${response.status}; body=${JSON.stringify(response.body)}`
 );
 }
 
 function assertRefundRejected(response, message) {
 assert.ok(
 [400, 401, 403, 404, 409, 422, 429].includes(response.status),
-${message}: expected a client error or conflict response, got ${response.status}
+`${message}: expected a client error or conflict response, got ${response.status}`
 );
 }
 
 function newIdempotencyKey(prefix) {
-return ${prefix}-${crypto.randomUUID()};
+return `${prefix}-${crypto.randomUUID()}`;
 }
 
 describe('Concurrent refund integration tests', () => {

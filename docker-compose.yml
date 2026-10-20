@@ -1,243 +1,208 @@
-MedOrbits -- Production-Oriented Docker Compose
-
-File: docker-compose.yml
-
-Requirements:
-
-- Docker Compose v2
-
-- A compatible production Dockerfile
-
-- A configured .env file
-
-- MySQL 8.4 and Redis 7
-
-IMPORTANT:
-
-- Do not commit .env or production secrets.
-
-- Run database migrations through an explicit deployment procedure.
-
-- Review the resource limits against your server capacity.
+# ============================================================
+# MedOrbits -- Production-Oriented Docker Compose
+#
+# File: docker-compose.yml
+#
+# Requirements:
+# - Docker Compose v2
+# - A compatible production Dockerfile
+# - A configured .env file
+# - MySQL 8.4 and Redis 7
+#
+# IMPORTANT:
+# - Do not commit .env or production secrets.
+# - Run database migrations through an explicit deployment procedure.
+# - Review the resource limits against your server capacity.
+# ============================================================
 
 name: medorbits
 
 services:
+  # --------------------------------------
+  # 1. MEDORBITS WEB APPLICATION
+  # --------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medorbits:latest
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      # MySQL connection: Docker service hostname.
+      DB_CLIENT: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-medorbits}
+      DB_USER: ${DB_USER:-medorbits_app}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      # Redis connection.
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_ENABLED: ${REDIS_ENABLED:-true}
+    # Bind to localhost by default for use behind a host
+    # reverse proxy such as Nginx or Caddy.
+    # Override APP_BIND_IP only when direct access is intended.
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    volumes:
+      # These paths must match the application implementation.
+      # Ensure the container user can write to these mounts.
+      - app-private-storage:/app/storage/private
+      - app-temporary-storage:/app/storage/temporary
+      - app-logs:/app/storage/logs
+    # Enable only if the Dockerfile and application support
+    # a read-only root filesystem and non-root execution.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 768m
+    cpus: 1.50
+    # Node.js 20+ supports the built-in fetch API.
+    # The Express application must implement /health.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    stop_grace_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
---------------------------------------
-
-1. MEDORBITS WEB APPLICATION
-
---------------------------------------
-
-app:
-build:
-context: .
-dockerfile: Dockerfile
-
-image: medorbits:latest
-restart: unless-stopped
-init: true
-env_file:
-  - .env
-environment:
-  NODE_ENV: production
-  APP_ENV: production
-  HOST: 0.0.0.0
-  PORT: 3000
-  # MySQL connection: Docker service hostname.
-  DB_CLIENT: mysql
-  DB_HOST: mysql
-  DB_PORT: 3306
-  DB_NAME: ${DB_NAME:-medorbits}
-  DB_USER: ${DB_USER:-medorbits_app}
-  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-  # Redis connection.
-  REDIS_HOST: redis
-  REDIS_PORT: 6379
-  REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-  REDIS_ENABLED: ${REDIS_ENABLED:-true}
-# Bind to localhost by default for use behind a host
-# reverse proxy such as Nginx or Caddy.
-# Override APP_BIND_IP only when direct access is intended.
-ports:
-  - "${APP_BIND_IP:-127.0.0.1}:${APP_PORT:-3000}:3000"
-depends_on:
+  # --------------------------------------
+  # 2. MYSQL DATABASE
+  # --------------------------------------
   mysql:
-    condition: service_healthy
+    image: mysql:8.4
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-medorbits}
+      MYSQL_USER: ${DB_USER:-medorbits_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    # Deliberately do not publish port 3306.
+    # Only services on the backend network can connect.
+    expose:
+      - "3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    # Validate against available RAM and the database workload.
+    mem_limit: 1g
+    cpus: 2.00
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'mysqladmin ping -h 127.0.0.1 -u root -p"$${MYSQL_ROOT_PASSWORD}" --silent'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # --------------------------------------
+  # 3. REDIS CACHE / SESSION / RATE-LIMIT STORAGE
+  # --------------------------------------
   redis:
-    condition: service_healthy
-networks:
-  - frontend
-  - backend
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Password authentication is enabled.
+    # For stronger secret handling, use a supported Redis ACL
+    # configuration and an appropriately managed secret file.
+    command:
+      - sh
+      - -c
+      - 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    # Deliberately do not publish port 6379.
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 1.00
+    pids_limit: 128
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping 2>/dev/null | grep -q PONG'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+# --------------------------------------
+# 4. PERSISTENT VOLUMES
+# --------------------------------------
 volumes:
-  # These paths must match the application implementation.
-  # Ensure the container user can write to these mounts.
-  - app-private-storage:/app/storage/private
-  - app-temporary-storage:/app/storage/temporary
-  - app-logs:/app/storage/logs
-# Enable only if the Dockerfile and application support
-# a read-only root filesystem and non-root execution.
-read_only: true
-tmpfs:
-  - /tmp:rw,noexec,nosuid,size=64m
-security_opt:
-  - no-new-privileges:true
-cap_drop:
-  - ALL
-pids_limit: 256
-mem_limit: 768m
-cpus: 1.50
-# Node.js 20+ supports the built-in fetch API.
-# The Express application must implement /health.
-healthcheck:
-  test:
-    - CMD
-    - node
-    - -e
-    - "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-  interval: 30s
-  timeout: 5s
-  retries: 3
-  start_period: 40s
-stop_grace_period: 20s
-logging:
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "5"
+  mysql-data:
+    name: medorbits-mysql-data
+  redis-data:
+    name: medorbits-redis-data
+  app-private-storage:
+    name: medorbits-private-storage
+  app-temporary-storage:
+    name: medorbits-temporary-storage
+  app-logs:
+    name: medorbits-logs
 
---------------------------------------
-
-2. MYSQL DATABASE
-
---------------------------------------
-
-mysql:
-image: mysql:8.4
-restart: unless-stopped
-stop_grace_period: 60s
-
-environment:
-  MYSQL_DATABASE: ${DB_NAME:-medorbits}
-  MYSQL_USER: ${DB_USER:-medorbits_app}
-  MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-  MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
-# Deliberately do not publish port 3306.
-# Only services on the backend network can connect.
-expose:
-  - "3306"
-volumes:
-  - mysql-data:/var/lib/mysql
+# --------------------------------------
+# 5. NETWORK SEGMENTATION
+# --------------------------------------
 networks:
-  - backend
-security_opt:
-  - no-new-privileges:true
-# Validate against available RAM and the database workload.
-mem_limit: 1g
-cpus: 2.00
-healthcheck:
-  test:
-    - CMD-SHELL
-    - 'mysqladmin ping -h 127.0.0.1 -u root -p"$${MYSQL_ROOT_PASSWORD}" --silent'
-  interval: 10s
-  timeout: 5s
-  retries: 10
-  start_period: 60s
-logging:
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "5"
-
---------------------------------------
-
-3. REDIS CACHE / SESSION / RATE-LIMIT STORAGE
-
---------------------------------------
-
-redis:
-image: redis:7-alpine
-restart: unless-stopped
-
-# Password authentication is enabled.
-# For stronger secret handling, use a supported Redis ACL
-# configuration and an appropriately managed secret file.
-command:
-  - sh
-  - -c
-  - 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"'
-environment:
-  REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-# Deliberately do not publish port 6379.
-expose:
-  - "6379"
-volumes:
-  - redis-data:/data
-networks:
-  - backend
-security_opt:
-  - no-new-privileges:true
-mem_limit: 256m
-cpus: 1.00
-pids_limit: 128
-healthcheck:
-  test:
-    - CMD-SHELL
-    - 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping 2>/dev/null | grep -q PONG'
-  interval: 10s
-  timeout: 5s
-  retries: 5
-  start_period: 15s
-logging:
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "5"
-
---------------------------------------–
-
-4. PERSISTENT VOLUMES
-
---------------------------------------–
-
-volumes:
-mysql-data:
-name: medorbits-mysql-data
-
-redis-data:
-name: medorbits-redis-data
-
-app-private-storage:
-name: medorbits-private-storage
-
-app-temporary-storage:
-name: medorbits-temporary-storage
-
-app-logs:
-name: medorbits-logs
-
---------------------------------------–
-
-5. NETWORK SEGMENTATION
-
---------------------------------------–
-
-networks:
-
-The application uses this network for its published port
-
-and communication with approved external services.
-
-frontend:
-name: medorbits-frontend
-driver: bridge
-
-MySQL and Redis are isolated from direct external networks.
-
-The app is the only application service attached here.
-
-backend:
-name: medorbits-backend
-driver: bridge
-internal: true
+  # The application uses this network for its published port
+  # and communication with approved external services.
+  frontend:
+    name: medorbits-frontend
+    driver: bridge
+  # MySQL and Redis are isolated from direct external networks.
+  # The app is the only application service attached here.
+  backend:
+    name: medorbits-backend
+    driver: bridge

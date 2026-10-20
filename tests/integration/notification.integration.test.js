@@ -27,7 +27,7 @@ const BASE_URL = (
 process.env.NOTIFICATION_TEST_BASE_URL ||
 process.env.TEST_BASE_URL ||
 'http://127.0.0.1:3000'
-).replace(//+$/, '');
+).replace(/\/+$/, '');
 
 const NOTIFICATIONS_PATH =
 process.env.NOTIFICATIONS_TEST_PATH || '/api/notifications';
@@ -70,7 +70,7 @@ READ_ALL_PATH,
 })) {
 assert.ok(
 path.startsWith('/'),
-${name} must start with /.
+`${name} must start with /.`
 );
 }
 
@@ -86,7 +86,7 @@ READ_PATH.includes(':id'),
 }
 
 function urlFor(path) {
-return ${BASE_URL}${path};
+return `${BASE_URL}${path}`;
 }
 
 function notificationUrl(id) {
@@ -122,7 +122,7 @@ Accept: 'application/json',
 };
 
 if (token) {
-requestHeaders.Authorization = Bearer ${token};
+requestHeaders.Authorization = `Bearer ${token}`;
 }
 
 if (body !== undefined) {
@@ -162,14 +162,14 @@ clearTimeout(timer);
 function assertNoServerError(response, label) {
 assert.ok(
 response.status < 500,
-${label}: unexpected HTTP ${response.status}; response=${JSON.stringify(response.body)}
+`${label}: unexpected HTTP ${response.status}; response=${JSON.stringify(response.body)}`
 );
 }
 
 function assertDenied(response, label) {
 assert.ok(
 [401, 403, 404].includes(response.status),
-${label}: expected access denial, received HTTP ${response.status}.
+`${label}: expected access denial, received HTTP ${response.status}.`
 );
 }
 
@@ -178,7 +178,7 @@ assert.ok(
 [400, 401, 403, 404, 405, 409, 413, 415, 422, 429].includes(
 response.status
 ),
-${label}: expected a client-error response, received HTTP ${response.status}.
+`${label}: expected a client-error response, received HTTP ${response.status}.`
 );
 }
 
