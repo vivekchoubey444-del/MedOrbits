@@ -71,14 +71,7 @@ function parseTrustProxy(value) {
   return normalized;
 }
 
-function jsonError(
-  res,
-  status,
-  code,
-  message,
-  requestId,
-  extra = {}
-) {
+function jsonError(res, status, code, message, requestId, extra = {}) {
   return res.status(status).json({
     success: false,
     error: {
@@ -105,18 +98,15 @@ function getRequestId(req) {
 
 function safeRequire(file) {
   if (!fs.existsSync(file)) return null;
-
   return require(file);
 }
 
 function isWebhookPath(pathname) {
   const prefix = API_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const pattern = new RegExp(
+  return new RegExp(
     `^${prefix}/(?:payments/webhook|webhooks/(?:razorpay|cashfree|stripe))(?:/|$)`
-  );
-
-  return pattern.test(pathname);
+  ).test(pathname);
 }
 
 function isHealthPath(pathname) {
@@ -132,6 +122,7 @@ function isHealthPath(pathname) {
 app.disable('x-powered-by');
 app.set('env', env.NODE_ENV);
 app.set('trust proxy', parseTrustProxy(env.TRUST_PROXY));
+
 app.locals.serviceName = 'medorbits';
 app.locals.apiPrefix = API_PREFIX;
 
@@ -143,7 +134,6 @@ app.locals.apiPrefix = API_PREFIX;
 
 app.use((req, res, next) => {
   req.id = getRequestId(req);
-
   res.setHeader('X-Request-ID', req.id);
 
   if (shuttingDown && !isHealthPath(req.path)) {
@@ -186,9 +176,11 @@ if (env.HELMET_ENABLED !== false) {
 */
 
 const allowedOrigins = Array.isArray(env.CORS_ALLOWED_ORIGINS)
-  ? env.CORS_ALLOWED_ORIGINS
-      .map((origin) => String(origin).trim())
-      .filter(Boolean)
+  ? [...new Set(
+      env.CORS_ALLOWED_ORIGINS
+        .map((origin) => String(origin).trim())
+        .filter(Boolean)
+    )]
   : [];
 
 if (
@@ -212,17 +204,13 @@ if (
 app.use(
   cors({
     origin(origin, callback) {
-      // Requests without an Origin header are not browser CORS requests.
-      if (!origin) {
-        return callback(null, true);
-      }
+      if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
       const error = new Error('Origin is not allowed by CORS.');
-
       error.status = 403;
       error.code = 'CORS_ORIGIN_DENIED';
       error.publicMessage = 'This origin is not allowed.';
@@ -250,9 +238,7 @@ app.use(
     ],
 
     exposedHeaders: ['X-Request-ID'],
-
     maxAge: positiveInteger(env.CORS_MAX_AGE_SECONDS, 600),
-
     optionsSuccessStatus: 204,
   })
 );
@@ -263,10 +249,7 @@ app.use(compression());
 |--------------------------------------------------------------------------
 | Request body parsing
 |--------------------------------------------------------------------------
-|
-| Payment webhooks must be verified against the original request bytes.
-| Parse their bodies as raw Buffers before registering the JSON parser.
-|
+| Webhook handlers must verify signatures using raw request bytes.
 */
 
 const rawWebhookBodyParser = express.raw({
@@ -275,9 +258,7 @@ const rawWebhookBodyParser = express.raw({
 });
 
 app.use((req, res, next) => {
-  if (!isWebhookPath(req.path)) {
-    return next();
-  }
+  if (!isWebhookPath(req.path)) return next();
 
   rawWebhookBodyParser(req, res, (error) => {
     if (error) return next(error);
@@ -286,7 +267,7 @@ app.use((req, res, next) => {
       req.rawBody = Buffer.from(req.body);
     }
 
-    return next();
+    next();
   });
 });
 
@@ -320,7 +301,7 @@ if (env.HTTP_LOGGING_ENABLED) {
       const durationMs =
         Number(process.hrtime.bigint() - start) / 1e6;
 
-      const entry = {
+      console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
         level: res.statusCode >= 500 ? 'error' : 'info',
         requestId: req.id,
@@ -328,9 +309,7 @@ if (env.HTTP_LOGGING_ENABLED) {
         path: req.path,
         status: res.statusCode,
         durationMs: Math.round(durationMs * 100) / 100,
-      };
-
-      console.log(JSON.stringify(entry));
+      }));
     });
 
     next();
@@ -368,17 +347,14 @@ if (env.RATE_LIMIT_ENABLED) {
       legacyHeaders: false,
 
       handler(req, res) {
-        res.setHeader(
-          'Retry-After',
-          String(
-            Math.ceil(
-              positiveInteger(
-                env.RATE_LIMIT_WINDOW_MS,
-                15 * 60 * 1000
-              ) / 1000
-            )
-          )
+        const windowSeconds = Math.ceil(
+          positiveInteger(
+            env.RATE_LIMIT_WINDOW_MS,
+            15 * 60 * 1000
+          ) / 1000
         );
+
+        res.setHeader('Retry-After', String(windowSeconds));
 
         return jsonError(
           res,
@@ -394,7 +370,7 @@ if (env.RATE_LIMIT_ENABLED) {
 
 /*
 |--------------------------------------------------------------------------
-| Database adapter and health checks
+| Database adapter
 |--------------------------------------------------------------------------
 */
 
@@ -428,9 +404,7 @@ async function checkDatabase() {
       const pool = await db.getPool();
 
       if (!pool || typeof pool.query !== 'function') {
-        throw new Error(
-          'Database pool does not expose query().'
-        );
+        throw new Error('Database pool does not expose query().');
       }
 
       await pool.query('SELECT 1');
@@ -499,16 +473,12 @@ if (env.HEALTH_CHECK_ENABLED !== false) {
       try {
         const database = await checkDatabase();
 
-        return res
-          .status(database.healthy ? 200 : 503)
-          .json({
-            success: database.healthy,
-            status: database.healthy ? 'ready' : 'not-ready',
-            dependencies: {
-              database,
-            },
-            requestId: req.id,
-          });
+        return res.status(database.healthy ? 200 : 503).json({
+          success: database.healthy,
+          status: database.healthy ? 'ready' : 'not-ready',
+          dependencies: { database },
+          requestId: req.id,
+        });
       } catch (error) {
         return next(error);
       }
@@ -524,9 +494,7 @@ if (env.HEALTH_CHECK_ENABLED !== false) {
 
 if (env.MAINTENANCE_MODE) {
   app.use((req, res, next) => {
-    if (isHealthPath(req.path)) {
-      return next();
-    }
+    if (isHealthPath(req.path)) return next();
 
     res.setHeader('Retry-After', '300');
 
@@ -542,32 +510,37 @@ if (env.MAINTENANCE_MODE) {
 
 /*
 |--------------------------------------------------------------------------
-| API routes
+| API router
 |--------------------------------------------------------------------------
 */
 
-const routesFile = path.join(
-  SRC_DIR,
-  'routes',
-  'index.js'
-);
+const routesFile = path.join(SRC_DIR, 'routes', 'index.js');
 
 if (!fs.existsSync(routesFile) && IS_PRODUCTION) {
-  throw new Error(
-    'Required src/routes/index.js is missing.'
-  );
+  throw new Error('Required src/routes/index.js is missing.');
 }
 
 if (fs.existsSync(routesFile)) {
-  const router = require(routesFile);
+  const routeModule = require(routesFile);
 
-  if (typeof router !== 'function') {
+  const apiRouter =
+    routeModule &&
+    typeof routeModule === 'object' &&
+    routeModule.default
+      ? routeModule.default
+      : routeModule;
+
+  if (
+    typeof apiRouter !== 'function' ||
+    typeof apiRouter.use !== 'function' ||
+    typeof apiRouter.handle !== 'function'
+  ) {
     throw new TypeError(
       'src/routes/index.js must export an Express Router.'
     );
   }
 
-  app.use(API_PREFIX, router);
+  app.use(API_PREFIX, apiRouter);
 }
 
 /*
@@ -601,7 +574,7 @@ function mountStatic(prefix, folder) {
           res.setHeader('Cache-Control', 'no-cache');
         }
 
-        if (/\.(?:js|css|svg|png|jpe?g|JPG|woff2?)$/i.test(file)) {
+        if (/\.(?:js|css|svg|png|jpe?g|woff2?)$/i.test(file)) {
           res.setHeader('X-Content-Type-Options', 'nosniff');
         }
       },
@@ -618,10 +591,7 @@ for (const name of [
   'legal',
   'pages',
 ]) {
-  mountStatic(
-    `/${name}`,
-    path.join(ROOT_DIR, name)
-  );
+  mountStatic(`/${name}`, path.join(ROOT_DIR, name));
 }
 
 /*
@@ -630,16 +600,14 @@ for (const name of [
 |--------------------------------------------------------------------------
 */
 
-const metadataFiles = [
+for (const name of [
   'robots.txt',
   'sitemap.xml',
   'ads.txt',
   'humans.txt',
   'manifest.json',
   'browserconfig.xml',
-];
-
-for (const name of metadataFiles) {
+]) {
   const file = path.join(PUBLIC_DIR, name);
 
   if (!fs.existsSync(file)) continue;
@@ -658,16 +626,13 @@ const securityTxt = path.join(
 );
 
 if (fs.existsSync(securityTxt)) {
-  app.get(
-    '/.well-known/security.txt',
-    (_req, res, next) => {
-      res.type('text/plain');
+  app.get('/.well-known/security.txt', (_req, res, next) => {
+    res.type('text/plain');
 
-      res.sendFile(securityTxt, (error) => {
-        if (error) next(error);
-      });
-    }
-  );
+    res.sendFile(securityTxt, (error) => {
+      if (error) next(error);
+    });
+  });
 }
 
 /*
@@ -685,7 +650,7 @@ app.get('/', (_req, res, next) => {
     );
   }
 
-  return res.sendFile(file, (error) => {
+  res.sendFile(file, (error) => {
     if (error) next(error);
   });
 });
@@ -711,19 +676,12 @@ app.use((req, res, next) => {
     ['GET', 'HEAD'].includes(req.method) &&
     req.accepts('html')
   ) {
-    const file = path.join(
-      ROOT_DIR,
-      'pages',
-      '404.html'
-    );
+    const file = path.join(ROOT_DIR, 'pages', '404.html');
 
     if (fs.existsSync(file)) {
-      return res.status(404).sendFile(
-        file,
-        (error) => {
-          if (error) next(error);
-        }
-      );
+      return res.status(404).sendFile(file, (error) => {
+        if (error) next(error);
+      });
     }
   }
 
@@ -748,25 +706,21 @@ const errorHandlerPath = path.join(
   'error-handler.js'
 );
 
-const configuredErrorHandler = safeRequire(
-  errorHandlerPath
-);
+const configuredErrorHandler = safeRequire(errorHandlerPath);
 
 if (
   configuredErrorHandler !== null &&
   typeof configuredErrorHandler !== 'function'
 ) {
   throw new TypeError(
-    'src/middleware/error-handler.js must export an error-handling middleware function.'
+    'src/middleware/error-handler.js must export error-handling middleware.'
   );
 }
 
 app.use(
   configuredErrorHandler ||
     ((error, req, res, next) => {
-      if (res.headersSent) {
-        return next(error);
-      }
+      if (res.headersSent) return next(error);
 
       let status =
         Number.isInteger(error.status) &&
@@ -806,32 +760,22 @@ app.use(
       }
 
       if (status >= 500) {
-        console.error(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'error',
-            requestId: req.id,
-            message: error.message,
-            ...(IS_PRODUCTION
-              ? {}
-              : { stack: error.stack }),
-          })
-        );
+        console.error(JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: 'error',
+          requestId: req.id,
+          message: error.message,
+          ...(IS_PRODUCTION ? {} : { stack: error.stack }),
+        }));
       }
 
-      return jsonError(
-        res,
-        status,
-        code,
-        message,
-        req.id
-      );
+      return jsonError(res, status, code, message, req.id);
     })
 );
 
 /*
 |--------------------------------------------------------------------------
-| Database and resource cleanup
+| Resource cleanup
 |--------------------------------------------------------------------------
 */
 
@@ -855,10 +799,7 @@ async function closeResources() {
     return;
   }
 
-  if (
-    db.pool &&
-    typeof db.pool.end === 'function'
-  ) {
+  if (db.pool && typeof db.pool.end === 'function') {
     await db.pool.end();
   }
 }
@@ -870,9 +811,7 @@ async function closeResources() {
 */
 
 function shutdown(signal = 'shutdown') {
-  if (shutdownPromise) {
-    return shutdownPromise;
-  }
+  if (shutdownPromise) return shutdownPromise;
 
   shuttingDown = true;
 
@@ -881,46 +820,29 @@ function shutdown(signal = 'shutdown') {
   );
 
   shutdownPromise = (async () => {
-    let timeout;
-    let timedOut = false;
+    let deadlineTimer;
 
     try {
-      const httpClosed = new Promise((resolve, reject) => {
-        if (!server || !server.listening) {
-          resolve();
-          return;
-        }
+      if (server && server.listening) {
+        await new Promise((resolve, reject) => {
+          server.close((error) => {
+            if (error) reject(error);
+            else resolve();
+          });
 
-        server.close((error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
+          if (typeof server.closeIdleConnections === 'function') {
+            server.closeIdleConnections();
           }
+
+          deadlineTimer = setTimeout(() => {
+            if (typeof server.closeAllConnections === 'function') {
+              server.closeAllConnections();
+            }
+          }, SHUTDOWN_TIMEOUT_MS);
+
+          deadlineTimer.unref();
         });
-
-        if (
-          typeof server.closeIdleConnections === 'function'
-        ) {
-          server.closeIdleConnections();
-        }
-      });
-
-      const timeoutPromise = new Promise((_, reject) => {
-        timeout = setTimeout(() => {
-          timedOut = true;
-          reject(
-            new Error('Graceful shutdown timed out.')
-          );
-        }, SHUTDOWN_TIMEOUT_MS);
-
-        timeout.unref();
-      });
-
-      await Promise.race([
-        httpClosed,
-        timeoutPromise,
-      ]);
+      }
 
       await closeResources();
     } catch (error) {
@@ -931,7 +853,6 @@ function shutdown(signal = 'shutdown') {
       );
 
       if (
-        timedOut &&
         server &&
         typeof server.closeAllConnections === 'function'
       ) {
@@ -946,9 +867,7 @@ function shutdown(signal = 'shutdown') {
         );
       }
     } finally {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      if (deadlineTimer) clearTimeout(deadlineTimer);
     }
   })();
 
@@ -962,15 +881,13 @@ function shutdown(signal = 'shutdown') {
 */
 
 function startServer() {
-  if (server) {
-    return server;
-  }
+  if (server) return server;
 
   server = http.createServer(app);
 
-  server.requestTimeout = 120_000;
-  server.headersTimeout = 65_000;
-  server.keepAliveTimeout = 5_000;
+  server.requestTimeout = 120000;
+  server.headersTimeout = 65000;
+  server.keepAliveTimeout = 5000;
   server.maxHeadersCount = 100;
 
   server.on('error', (error) => {
@@ -981,44 +898,33 @@ function startServer() {
     );
   });
 
-  server.listen(
-    env.PORT,
-    env.HOST,
-    () => {
-      console.log(
-        JSON.stringify({
-          service: 'medorbits',
-          environment: env.NODE_ENV,
-          host: env.HOST,
-          port: env.PORT,
-          apiPrefix: API_PREFIX,
-          pid: process.pid,
-        })
-      );
-    }
-  );
+  server.listen(env.PORT, env.HOST, () => {
+    console.log(JSON.stringify({
+      service: 'medorbits',
+      environment: env.NODE_ENV,
+      host: env.HOST,
+      port: env.PORT,
+      apiPrefix: API_PREFIX,
+      pid: process.pid,
+    }));
+  });
 
   return server;
 }
 
 /*
 |--------------------------------------------------------------------------
-| Process signal and fatal error handlers
+| Process lifecycle handlers
 |--------------------------------------------------------------------------
 */
 
 async function handleFatalError(label, error) {
-  if (fatalErrorInProgress) {
-    return;
-  }
+  if (fatalErrorInProgress) return;
 
   fatalErrorInProgress = true;
   process.exitCode = 1;
 
-  console.error(
-    `[MedOrbits] ${label}:`,
-    error
-  );
+  console.error(`[MedOrbits] ${label}:`, error);
 
   await shutdown(label);
 
@@ -1038,27 +944,20 @@ process.once('SIGINT', () => {
 });
 
 process.once('unhandledRejection', (reason) => {
-  const error =
-    reason instanceof Error
-      ? reason
-      : new Error(String(reason));
+  const error = reason instanceof Error
+    ? reason
+    : new Error(String(reason));
 
-  void handleFatalError(
-    'Unhandled rejection',
-    error
-  );
+  void handleFatalError('Unhandled rejection', error);
 });
 
 process.once('uncaughtException', (error) => {
-  void handleFatalError(
-    'Uncaught exception',
-    error
-  );
+  void handleFatalError('Uncaught exception', error);
 });
 
 /*
 |--------------------------------------------------------------------------
-| Application entry point
+| Entry point
 |--------------------------------------------------------------------------
 */
 
