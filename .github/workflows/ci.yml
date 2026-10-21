@@ -6,10 +6,12 @@ on:
     branches:
       - main
       - master
+
   pull_request:
     branches:
       - main
       - master
+
   workflow_dispatch:
 
 permissions:
@@ -21,24 +23,40 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Build and Test
+    name: Unit and integration tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Verify project structure
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f package.json ]; then
+            echo "::error::package.json is missing from the repository root."
+            exit 1
+          fi
+
+          echo "Project structure verified."
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Validate package metadata
+        run: node -e "const p=require('./package.json'); if (!p.name || !p.version || !p.scripts) process.exit(1); console.log('Package metadata is valid.')"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate JSON
+      - name: Validate JSON files
         run: npm run validate:json
 
       - name: Validate application data
@@ -53,11 +71,23 @@ jobs:
       - name: Run ESLint
         run: npm run lint --if-present
 
+      - name: Run unit and integration tests
+        run: npm test --if-present
+
       - name: Run tests with coverage
         run: npm run test:coverage --if-present
 
-      - name: Run tests
-        run: npm test --if-present
-
       - name: Build application
         run: npm run build --if-present
+
+      - name: Upload test coverage and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medorbits-test-results
+          path: |
+            coverage/
+            test-results/
+            reports/
+          if-no-files-found: ignore
+          retention-days: 14
