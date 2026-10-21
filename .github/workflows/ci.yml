@@ -3,15 +3,9 @@ name: MedOrbits CI
 
 on:
   push:
-    branches:
-      - main
-      - master
-
+    branches: [main, master]
   pull_request:
-    branches:
-      - main
-      - master
-
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
@@ -35,23 +29,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          if [ ! -f package.json ]; then
+          test -f package.json || {
             echo "::error::package.json is missing from the repository root."
             exit 1
-          fi
-
+          }
           echo "Project structure verified."
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Validate package metadata
-        run: node -e "const p=require('./package.json'); if (!p.name || !p.version || !p.scripts) process.exit(1); console.log('Package metadata is valid.')"
+        run: node -e "const p=require('./package.json'); if (!p.name || !p.version || !p.scripts) throw new Error('Invalid package metadata'); console.log('Package metadata is valid')"
+
+      - name: Verify npm lockfile
+        shell: bash
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "::error::package-lock.json is missing. Generate it with npm install and commit it."
+            exit 1
+          fi
+          node -e "const p=require('./package-lock.json'); if (!p.lockfileVersion) throw new Error('Invalid npm lockfile'); console.log('Lockfile found')"
 
       - name: Install dependencies
         run: npm ci
