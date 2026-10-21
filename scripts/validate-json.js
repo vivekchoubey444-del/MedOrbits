@@ -1,53 +1,40 @@
 
-#!/usr/bin/env node
-'use strict';
+"use strict";
 
-const fs = require('node:fs');
-const path = require('node:path');
+const fs = require("node:fs");
+const path = require("node:path");
 
-const ROOT = process.cwd();
-const STRICT = process.argv.includes('--strict');
+const ROOT_DIR = path.resolve(__dirname, "..");
 
 const EXCLUDED_DIRS = new Set([
-  'node_modules',
-  '.git',
-  '.next',
-  'dist',
-  'build',
-  'coverage'
+  ".git",
+  "node_modules",
+  ".next",
+  ".nuxt",
+  "dist",
+  "build",
+  "coverage",
+  ".wrangler",
 ]);
 
-const IGNORED_FILES = new Set([
-  'package-lock.json',
-  'composer.lock'
+const EXCLUDED_FILES = new Set([
+  "package-lock.json",
+  "npm-shrinkwrap.json",
 ]);
 
-let checked = 0;
-let errors = 0;
+const JSON_EXTENSIONS = new Set([".json"]);
 
-function validateJson(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    JSON.parse(content);
-    checked++;
-    console.log(`PASS ${path.relative(ROOT, filePath)}`);
-  } catch (error) {
-    errors++;
-    console.error(
-      `FAIL ${path.relative(ROOT, filePath)}: ${error.message}`
-    );
-  }
-}
-
-function walk(directory) {
+function collectJsonFiles(directory, results = []) {
   let entries;
 
   try {
     entries = fs.readdirSync(directory, { withFileTypes: true });
   } catch (error) {
-    errors++;
-    console.error(`Cannot read ${directory}: ${error.message}`);
-    return;
+    console.error(
+      `ERROR: Cannot read directory "${directory}": ${error.message}`
+    );
+    process.exitCode = 1;
+    return results;
   }
 
   for (const entry of entries) {
@@ -55,29 +42,109 @@ function walk(directory) {
 
     if (entry.isDirectory()) {
       if (!EXCLUDED_DIRS.has(entry.name)) {
-        walk(fullPath);
+        collectJsonFiles(fullPath, results);
       }
       continue;
     }
 
-    if (!entry.isFile() || !entry.name.endsWith('.json')) {
+    if (!entry.isFile()) {
       continue;
     }
 
-    if (IGNORED_FILES.has(entry.name)) {
-      continue;
+    if (
+      JSON_EXTENSIONS.has(path.extname(entry.name).toLowerCase()) &&
+      !EXCLUDED_FILES.has(entry.name)
+    ) {
+      results.push(fullPath);
+    }
+  }
+
+  return results;
+}
+
+function getErrorPosition(source, position) {
+  const safePosition = Math.max(0, Math.min(position, source.length));
+  const precedingText = source.slice(0, safePosition);
+  const lines = precedingText.split(/\r\n|\r|\n/);
+
+  return {
+    line: lines.length,
+    column: lines[lines.length - 1].length + 1,
+  };
+}
+
+function validateJsonFile(filePath) {
+  let source;
+
+  try {
+    source = fs.readFileSync(filePath, "utf8");
+  } catch (error) {
+    console.error(
+      `FAIL ${path.relative(ROOT_DIR, filePath)}: ${error.message}`
+    );
+    return false;
+  }
+
+  try {
+    JSON.parse(source);
+    console.log(`PASS ${path.relative(ROOT_DIR, filePath)}`);
+    return true;
+  } catch (error) {
+    const match = error.message.match(/position\s+(\d+)/i);
+
+    if (match) {
+      const { line, column } = getErrorPosition(
+        source,
+        Number(match[1])
+      );
+
+      console.error(
+        `FAIL ${path.relative(ROOT_DIR, filePath)}:${line}:${column}`
+      );
+      console.error(`  ${error.message}`);
+    } else {
+      console.error(
+        `FAIL ${path.relative(ROOT_DIR, filePath)}`
+      );
+      console.error(`  ${error.message}`);
     }
 
-    validateJson(fullPath);
+    return false;
   }
 }
 
-walk(ROOT);
+function main() {
+  const files = collectJsonFiles(ROOT_DIR);
 
-console.log(`\nJSON validation: ${checked} passed, ${errors} failed.`);
+  if (files.length === 0) {
+    console.log("No JSON files found.");
+    return;
+  }
 
-if (errors > 0) {
-  process.exitCode = 1;
-} else {
-  console.log(STRICT ? 'Strict validation passed.' : 'Validation passed.');
+  console.log(`Validating ${files.length} JSON file(s)...\n`);
+
+  let passed = 0;
+  let failed = 0;
+
+  for (const file of files) {
+    if (validateJsonFile(file)) {
+      passed += 1;
+    } else {
+      failed += 1;
+    }
+  }
+
+  console.log("\nJSON validation summary");
+  console.log(`Total:  ${files.length}`);
+  console.log(`Passed: ${passed}`);
+  console.log(`Failed: ${failed}`);
+
+  if (failed > 0) {
+    process.exitCode = 1;
+    console.error("\nJSON validation failed.");
+  } else {
+    console.log("\nAll JSON files are valid.");
+  }
 }
+
+main();
