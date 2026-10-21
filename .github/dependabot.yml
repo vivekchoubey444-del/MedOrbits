@@ -1,16 +1,8 @@
-
-# ============================================================
-# MedOrbits -- Dependabot Configuration
-# File: .github/dependabot.yml
-# Purpose: Automated dependency updates and maintenance
-# ============================================================
-
+# .github/dependabot.yml
 version: 2
 
 updates:
-  # ----------------------------------------------------------
-  # 1. NPM -- Node.js application dependencies
-  # ----------------------------------------------------------
+  # 1. NPM
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -18,46 +10,35 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
-
     open-pull-requests-limit: 10
     versioning-strategy: increase
-
     labels:
       - dependencies
       - npm
       - automated-update
-
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
-      include: scope
-
-    # Cooldown for routine version updates.
-    # Security updates may follow GitHub's separate security-update process.
+    # Cooldown applies to version updates only, not security updates.
     cooldown:
       default-days: 7
       semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
-
     groups:
       production-dependencies:
         dependency-type: production
         update-types:
           - minor
           - patch
-
       development-dependencies:
         dependency-type: development
         update-types:
           - minor
           - patch
+    # Major updates stay as separate PRs for focused review.
 
-    # Major updates remain separate for focused review.
-
-  # ----------------------------------------------------------
-  # 2. GITHUB ACTIONS -- CI/CD workflow dependencies
-  # ----------------------------------------------------------
+  # 2. GitHub Actions
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -65,31 +46,24 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
-
     open-pull-requests-limit: 5
-
     labels:
       - dependencies
       - github-actions
       - ci
-
     commit-message:
       prefix: "ci"
-      include: scope
-
     cooldown:
       default-days: 7
-
     groups:
       github-actions:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
 
-  # ----------------------------------------------------------
-  # 3. DOCKER -- Container image dependencies
-  # ----------------------------------------------------------
-  # Keep this entry only if a Dockerfile exists at the root.
-  # Add separate entries for Dockerfiles in other directories.
+  # 3. Docker (remove if there is no Dockerfile at the repo root)
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -97,17 +71,12 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
-
     open-pull-requests-limit: 5
-
     labels:
       - dependencies
       - docker
       - infrastructure
-
     commit-message:
       prefix: "docker"
-      include: scope
-
     cooldown:
       default-days: 7
