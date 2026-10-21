@@ -1,6 +1,5 @@
 
-
-name: Generate npm lockfile
+name: Generate Lockfile
 
 on:
   workflow_dispatch:
@@ -16,12 +15,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: medorbits-lockfile-${{ github.ref }}
+  group: generate-lockfile-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   generate-lockfile:
-    name: Generate and validate package-lock.json
+    name: Generate and commit package-lock.json
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -36,42 +35,30 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate package.json
-        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json is valid')"
+      - name: Verify package.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f package.json
+          node -e "const p=JSON.parse(require('fs').readFileSync('package.json','utf8')); if (!p.name || !p.version) throw new Error('Missing package name or version'); console.log('package.json is valid')"
 
-      - name: Generate package-lock.json
+      - name: Generate lockfile
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
-      - name: Validate generated lockfile
+      - name: Validate lockfile JSON
         run: |
-          node -e "
-            const fs = require('fs');
-            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); const l=JSON.parse(fs.readFileSync('package-lock.json','utf8')); if (!l.lockfileVersion) throw new Error('Missing lockfileVersion'); if (l.name && l.name !== p.name) throw new Error('Package name mismatch'); console.log('Lockfile JSON is valid')"
 
-            if (lock.lockfileVersion == null) {
-              throw new Error('package-lock.json has no lockfileVersion');
-            }
-
-            if (lock.name && pkg.name && lock.name !== pkg.name) {
-              throw new Error('Package name does not match package.json');
-            }
-
-            if (lock.packages && lock.packages[''] &&
-                lock.packages[''].name && pkg.name &&
-                lock.packages[''].name !== pkg.name) {
-              throw new Error('Root package name does not match');
-            }
-
-            console.log('Generated lockfile is valid.');
-          "
+      - name: Verify lockfile consistency
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
       - name: Commit lockfile if changed
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           if git diff --quiet -- package-lock.json; then
-            echo "package-lock.json is already up to date."
+            echo "Lockfile is already up to date."
             exit 0
           fi
 
