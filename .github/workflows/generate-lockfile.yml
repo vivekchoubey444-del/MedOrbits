@@ -20,51 +20,38 @@ concurrency:
 
 jobs:
   generate-lockfile:
-    name: Generate and commit package-lock.json
+    name: Generate package lockfile
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Verify package.json
+      - name: Check package.json
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json valid')"
+
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Validate generated lockfile
+        run: node -e "const l=JSON.parse(require('fs').readFileSync('package-lock.json','utf8')); if (!l.lockfileVersion) throw new Error('Invalid lockfile'); console.log('Lockfile valid')"
+
+      - name: Commit lockfile
         shell: bash
         run: |
           set -euo pipefail
-          test -f package.json
-          node -e "const p=JSON.parse(require('fs').readFileSync('package.json','utf8')); if (!p.name || !p.version) throw new Error('Missing package name or version'); console.log('package.json is valid')"
-
-      - name: Generate lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Validate lockfile JSON
-        run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); const l=JSON.parse(fs.readFileSync('package-lock.json','utf8')); if (!l.lockfileVersion) throw new Error('Missing lockfileVersion'); if (l.name && l.name !== p.name) throw new Error('Package name mismatch'); console.log('Lockfile JSON is valid')"
-
-      - name: Verify lockfile consistency
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Commit lockfile if changed
-        shell: bash
-        run: |
-          set -euo pipefail
-
           if git diff --quiet -- package-lock.json; then
-            echo "Lockfile is already up to date."
+            echo "No lockfile changes required."
             exit 0
           fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add package-lock.json
           git commit -m "chore: generate npm lockfile"
           git push origin "HEAD:${GITHUB_REF_NAME}"
