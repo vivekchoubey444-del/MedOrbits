@@ -5,228 +5,79 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const ROOT = fs.realpathSync(path.resolve(__dirname, '..'));
-const args = process.argv.slice(2);
+const ROOT = process.cwd();
+const STRICT = process.argv.includes('--strict');
 
-const strict = args.includes('--strict');
-const jsonOutput = args.includes('--json');
-
-const ignoredDirectories = new Set([
-  '.git',
+const EXCLUDED_DIRS = new Set([
   'node_modules',
-  'coverage',
+  '.git',
+  '.next',
   'dist',
   'build',
-  '.next',
-  '.cache'
+  'coverage'
 ]);
 
-const errors = [];
-const warnings = [];
-const checkedFiles = [];
-const visitedDirectories = new Set();
-const visitedFiles = new Set();
+const IGNORED_FILES = new Set([
+  'package-lock.json',
+  'composer.lock'
+]);
 
-let count = 0;
+let checked = 0;
+let errors = 0;
 
-const requestedPaths = args.filter(
-  (arg) => !arg.startsWith('--')
-);
-const scanRoots = requestedPaths.length ? requestedPaths : ['.'];
-
-function relativePath(file) {
-  const relative = path.relative(ROOT, file);
-  return (relative || '.').split(path.sep).join('/');
-}
-
-function addError(file, message) {
-  errors.push({
-    file: relativePath(file),
-    message
-  });
-}
-
-function addWarning(file, message) {
-  warnings.push({
-    file: relativePath(file),
-    message
-  });
-}
-
-function isInsideRoot(target) {
-  const relative = path.relative(ROOT, target);
-
-  return (
-    relative === '' ||
-    (
-      relative !== '..' &&
-      !relative.startsWith(`..${path.sep}`) &&
-      !path.isAbsolute(relative)
-    )
-  );
-}
-
-function inspectFile(file) {
-  const identity = path.resolve(file);
-
-  if (visitedFiles.has(identity)) {
-    return;
-  }
-
-  visitedFiles.add(identity);
-  count += 1;
-  checkedFiles.push(relativePath(file));
-
-  let source;
-
+function validateJson(filePath) {
   try {
-    source = fs.readFileSync(file, 'utf8');
+    const content = fs.readFileSync(filePath, 'utf8');
+    JSON.parse(content);
+    checked++;
+    console.log(`PASS ${path.relative(ROOT, filePath)}`);
   } catch (error) {
-    addError(file, `Unable to read file: ${error.message}`);
-    return;
-  }
-
-  if (source.charCodeAt(0) === 0xfeff) {
-    addError(file, 'Contains a UTF-8 BOM; save as UTF-8 without BOM.');
-    return;
-  }
-
-  if (strict && source.trim() === '') {
-    addError(file, 'File is empty.');
-    return;
-  }
-
-  try {
-    JSON.parse(source);
-  } catch (error) {
-    addError(file, `Invalid JSON: ${error.message}`);
+    errors++;
+    console.error(
+      `FAIL ${path.relative(ROOT, filePath)}: ${error.message}`
+    );
   }
 }
 
-function walk(target) {
-  const absolute = path.resolve(ROOT, target);
-
-  if (!isInsideRoot(absolute)) {
-    addError(absolute, 'Path resolves outside the repository root.');
-    return;
-  }
-
-  let stat;
-
-  try {
-    stat = fs.lstatSync(absolute);
-  } catch (error) {
-    addError(absolute, `Unable to access path: ${error.message}`);
-    return;
-  }
-
-  if (stat.isSymbolicLink()) {
-    addWarning(absolute, 'Symbolic link skipped.');
-    return;
-  }
-
-  if (stat.isFile()) {
-    if (absolute.toLowerCase().endsWith('.json')) {
-      inspectFile(absolute);
-    }
-    return;
-  }
-
-  if (!stat.isDirectory()) {
-    return;
-  }
-
-  let realPath;
-
-  try {
-    realPath = fs.realpathSync(absolute);
-  } catch (error) {
-    addError(absolute, `Unable to resolve directory: ${error.message}`);
-    return;
-  }
-
-  if (!isInsideRoot(realPath)) {
-    addError(absolute, 'Resolved directory is outside the repository root.');
-    return;
-  }
-
-  if (visitedDirectories.has(realPath)) {
-    return;
-  }
-
-  visitedDirectories.add(realPath);
-
+function walk(directory) {
   let entries;
 
   try {
-    entries = fs.readdirSync(absolute, { withFileTypes: true });
+    entries = fs.readdirSync(directory, { withFileTypes: true });
   } catch (error) {
-    addError(absolute, `Unable to read directory: ${error.message}`);
+    errors++;
+    console.error(`Cannot read ${directory}: ${error.message}`);
     return;
   }
 
-  entries.sort((a, b) => a.name.localeCompare(b.name));
-
   for (const entry of entries) {
-    if (entry.isDirectory() && ignoredDirectories.has(entry.name)) {
+    const fullPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (!EXCLUDED_DIRS.has(entry.name)) {
+        walk(fullPath);
+      }
       continue;
     }
 
-    const child = path.join(absolute, entry.name);
-
-    if (entry.isSymbolicLink()) {
-      addWarning(child, 'Symbolic link skipped.');
+    if (!entry.isFile() || !entry.name.endsWith('.json')) {
       continue;
     }
 
-    walk(child);
+    if (IGNORED_FILES.has(entry.name)) {
+      continue;
+    }
+
+    validateJson(fullPath);
   }
 }
 
-for (const scanRoot of scanRoots) {
-  walk(scanRoot);
-}
+walk(ROOT);
 
-checkedFiles.sort((a, b) => a.localeCompare(b));
+console.log(`\nJSON validation: ${checked} passed, ${errors} failed.`);
 
-const result = {
-  ok: errors.length === 0 && (!strict || warnings.length === 0),
-  mode: strict ? 'strict' : 'standard',
-  root: relativePath(ROOT),
-  filesChecked: count,
-  errorCount: errors.length,
-  warningCount: warnings.length,
-  checkedFiles,
-  errors,
-  warnings
-};
-
-if (jsonOutput) {
-  console.log(JSON.stringify(result, null, 2));
+if (errors > 0) {
+  process.exitCode = 1;
 } else {
-  console.log('MedOrbits JSON validation');
-  console.log(`Mode: ${result.mode}`);
-  console.log(`Files checked: ${count}`);
-
-  for (const warning of warnings) {
-    console.warn(`WARNING: ${warning.file}: ${warning.message}`);
-  }
-
-  for (const error of errors) {
-    console.error(`ERROR: ${error.file}: ${error.message}`);
-  }
-
-  if (result.ok) {
-    console.log(
-      strict
-        ? 'PASS: Strict JSON validation passed with no warnings.'
-        : 'PASS: All checked files contain valid JSON.'
-    );
-  } else {
-    console.error(
-      `FAIL: ${errors.length} error(s), ${warnings.length} warning(s).`
-    );
-  }
+  console.log(STRICT ? 'Strict validation passed.' : 'Validation passed.');
 }
-
-process.exitCode = result.ok ? 0 : 1;

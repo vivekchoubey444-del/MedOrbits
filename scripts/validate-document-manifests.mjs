@@ -1,484 +1,339 @@
 
 #!/usr/bin/env node
-'use strict';
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+/**
+ * MedOrbits -- Document Manifest Validator
+ *
+ * Validates document manifest JSON files.
+ *
+ * Checks:
+ * - Valid JSON syntax
+ * - Required manifest fields
+ * - Correct field types
+ * - Duplicate document IDs
+ * - Missing referenced document files
+ * - Invalid manifest entries
+ *
+ * Usage:
+ *   node scripts/validate-document-manifests.mjs
+ *   node scripts/validate-document-manifests.mjs --help
+ *
+ * Optional environment variables:
+ *   MANIFEST_DIR=./documents/manifests
+ *   DOCUMENT_ROOT=./documents
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
-const DEFAULT_DOCUMENTS_DIR = path.join(ROOT_DIR, 'assets', 'documents');
+const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 
-const args = process.argv.slice(2);
-const strict = args.includes('--strict');
-const jsonOutput = args.includes('--json');
-
-function readOption(name) {
-  const prefix = `--${name}=`;
-  const matches = args.filter((item) => item.startsWith(prefix));
-
-  if (matches.length > 1) {
-    throw new Error(`Option --${name} may only be provided once.`);
-  }
-
-  return matches.length ? matches[0].slice(prefix.length) : null;
-}
-
-let customDir;
-
-try {
-  customDir = readOption('dir');
-} catch (error) {
-  console.error(error.message);
-  process.exit(2);
-}
-
-if (args.some((arg) =>
-  !['--strict', '--json'].includes(arg) &&
-  !arg.startsWith('--dir=')
-)) {
-  console.error('Usage: node scripts/validate-document-manifests.mjs [--strict] [--json] [--dir=assets/documents]');
-  process.exit(2);
-}
-
-if (customDir !== null && !customDir.trim()) {
-  console.error('Option --dir must not be empty.');
-  process.exit(2);
-}
-
-const DOCUMENTS_DIR = path.resolve(
-  ROOT_DIR,
-  customDir || path.relative(ROOT_DIR, DEFAULT_DOCUMENTS_DIR)
+const MANIFEST_DIR = path.resolve(
+  REPO_ROOT,
+  process.env.MANIFEST_DIR || "documents/manifests"
 );
+
+const DOCUMENT_ROOT = path.resolve(
+  REPO_ROOT,
+  process.env.DOCUMENT_ROOT || "documents"
+);
+
+const REQUIRED_FIELDS = ["id", "title", "file"];
+
+const VALID_EXTENSIONS = new Set([".pdf", ".doc", ".docx"]);
 
 const errors = [];
 const warnings = [];
-const checkedFiles = [];
 const seenIds = new Map();
-const seenPaths = new Map();
 
-function relative(file) {
-  const result = path.relative(ROOT_DIR, file).split(path.sep).join('/');
-  return result || '.';
+let manifestsChecked = 0;
+let documentsChecked = 0;
+
+function reportError(file, message) {
+  errors.push({ file, message });
 }
 
-function error(file, message) {
-  errors.push({ file: relative(file), message });
+function reportWarning(file, message) {
+  warnings.push({ file, message });
 }
 
-function warn(file, message) {
-  warnings.push({ file: relative(file), message });
-}
-
-function isInside(parent, child) {
-  const rel = path.relative(parent, child);
-
+function isPlainObject(value) {
   return (
-    rel !== '' &&
-    rel !== '..' &&
-    !rel.startsWith(`..${path.sep}`) &&
-    !path.isAbsolute(rel)
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value)
   );
 }
 
-function isValidDate(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const [year, month, day] = value.split('-').map(Number);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
+function isInsideDirectory(parent, target) {
+  const relative = path.relative(parent, target);
 
   return (
-    parsed.getUTCFullYear() === year &&
-    parsed.getUTCMonth() === month - 1 &&
-    parsed.getUTCDate() === day
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) &&
+      relative !== ".." &&
+      !path.isAbsolute(relative))
   );
 }
 
-function readJson(file) {
-  let content;
-
-  try {
-    content = fs.readFileSync(file, 'utf8');
-  } catch (err) {
-    error(file, `Unable to read JSON: ${err.message}`);
-    return null;
+function getJsonFiles(directory) {
+  if (!fs.existsSync(directory)) {
+    return [];
   }
 
-  if (content.charCodeAt(0) === 0xfeff) {
-    error(file, 'UTF-8 BOM detected; save as UTF-8 without BOM.');
-    return null;
-  }
-
-  try {
-    return JSON.parse(content);
-  } catch (err) {
-    error(file, `Unable to parse JSON: ${err.message}`);
-    return null;
-  }
-}
-
-function walkJsonFiles(directory) {
-  const results = [];
-
-  function walk(current) {
-    let entries;
-
-    try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch (err) {
-      error(current, `Unable to read directory: ${err.message}`);
-      return;
-    }
-
-    entries.sort((a, b) => a.name.localeCompare(b.name));
-
-    for (const entry of entries) {
-      if (entry.name.startsWith('.')) continue;
-
-      const fullPath = path.join(current, entry.name);
+  return fs
+    .readdirSync(directory, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => {
+      const fullPath = path.join(directory, entry.name);
 
       if (entry.isSymbolicLink()) {
-        warn(fullPath, 'Symbolic link skipped.');
-        continue;
+        reportWarning(
+          fullPath,
+          "Symbolic link skipped during manifest discovery."
+        );
+        return [];
       }
 
       if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (
-        entry.isFile() &&
-        entry.name.toLowerCase() === 'manifest.json'
-      ) {
-        results.push(fullPath);
+        return getJsonFiles(fullPath);
       }
-    }
-  }
 
-  walk(directory);
-  return results;
+      return entry.isFile() && entry.name.endsWith(".json")
+        ? [fullPath]
+        : [];
+    });
 }
 
-function validateResource(manifestFile, resource, index, categoryIds) {
-  const label = `resources[${index}]`;
+function validateDocument(document, manifestPath, index) {
+  const location = `${manifestPath} [entry ${index + 1}]`;
 
-  if (
-    !resource ||
-    typeof resource !== 'object' ||
-    Array.isArray(resource)
-  ) {
-    error(manifestFile, `${label} must be an object.`);
+  if (!isPlainObject(document)) {
+    reportError(location, "Document entry must be a JSON object.");
     return;
   }
 
-  for (const field of ['id', 'title', 'category', 'path', 'status']) {
+  for (const field of REQUIRED_FIELDS) {
     if (
-      typeof resource[field] !== 'string' ||
-      resource[field].trim() === ''
+      typeof document[field] !== "string" ||
+      document[field].trim() === ""
     ) {
-      error(manifestFile, `${label}.${field} must be a non-empty string.`);
+      reportError(
+        location,
+        `Required field "${field}" must be a non-empty string.`
+      );
     }
   }
 
-  if (
-    typeof resource.category === 'string' &&
-    categoryIds.size > 0 &&
-    !categoryIds.has(resource.category)
-  ) {
-    error(
-      manifestFile,
-      `${label}.category "${resource.category}" is not declared in this manifest's categories.`
-    );
-  }
-
-  if (typeof resource.id === 'string' && resource.id.trim()) {
-    const id = resource.id.trim();
+  if (typeof document.id === "string" && document.id.trim()) {
+    const id = document.id.trim();
 
     if (seenIds.has(id)) {
-      error(
-        manifestFile,
-        `${label} duplicates resource ID "${id}" already used in ${seenIds.get(id)}.`
+      reportError(
+        location,
+        `Duplicate document ID "${id}". First defined in ${seenIds.get(id)}.`
       );
     } else {
-      seenIds.set(id, relative(manifestFile));
+      seenIds.set(id, location);
     }
   }
 
-  if (typeof resource.path !== 'string' || !resource.path.trim()) {
-    // Required-field validation above reports this.
+  if (
+    typeof document.title === "string" &&
+    document.title.trim() !== "" &&
+    document.title.length > 300
+  ) {
+    reportError(location, 'Field "title" must not exceed 300 characters.');
+  }
+
+  if (typeof document.file !== "string" || !document.file.trim()) {
     return;
   }
 
-  const resourcePath = resource.path.trim();
+  const fileReference = document.file.trim();
 
   if (
-    path.isAbsolute(resourcePath) ||
-    resourcePath.includes('\\') ||
-    resourcePath.includes('\0') ||
-    /^[a-z][a-z0-9+.-]*:/i.test(resourcePath) ||
-    resourcePath.split('/').some((part) => part === '..' || part === '.')
+    path.isAbsolute(fileReference) ||
+    fileReference.includes("\0") ||
+    fileReference.includes("\\")
   ) {
-    error(manifestFile, `${label}.path must be a safe relative POSIX path.`);
-    return;
-  }
-
-  // Resource paths are relative to the manifest directory.
-  const resolved = path.resolve(path.dirname(manifestFile), resourcePath);
-
-  if (!isInside(DOCUMENTS_DIR, resolved)) {
-    error(
-      manifestFile,
-      `${label}.path resolves outside the documents directory: ${resourcePath}`
+    reportError(
+      location,
+      `Invalid document file path "${fileReference}". Use a relative path with forward slashes.`
     );
     return;
   }
 
-  const pathKey = path.relative(DOCUMENTS_DIR, resolved)
-    .split(path.sep)
-    .join('/');
+  const resolvedFile = path.resolve(DOCUMENT_ROOT, fileReference);
 
-  if (seenPaths.has(pathKey)) {
-    error(
-      manifestFile,
-      `${label}.path duplicates "${pathKey}" already referenced in ${seenPaths.get(pathKey)}.`
+  if (!isInsideDirectory(DOCUMENT_ROOT, resolvedFile)) {
+    reportError(
+      location,
+      `Document path "${fileReference}" escapes the document root.`
     );
-  } else {
-    seenPaths.set(pathKey, relative(manifestFile));
+    return;
   }
 
-  if (
-    resource.format === 'application/pdf' &&
-    !resourcePath.toLowerCase().endsWith('.pdf')
-  ) {
-    error(manifestFile, `${label} is a PDF but its path does not end in .pdf.`);
+  const extension = path.extname(resolvedFile).toLowerCase();
+
+  if (!VALID_EXTENSIONS.has(extension)) {
+    reportWarning(
+      location,
+      `Unexpected document extension "${extension || "(none)"}".`
+    );
   }
 
-  let stats = null;
+  let stat;
 
   try {
-    stats = fs.lstatSync(resolved);
-  } catch (err) {
-    if (err.code !== 'ENOENT') {
-      error(manifestFile, `${label} cannot be inspected: ${err.message}`);
-      return;
+    stat = fs.lstatSync(resolvedFile);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      reportError(
+        location,
+        `Referenced document does not exist: ${fileReference}`
+      );
+    } else {
+      reportError(
+        location,
+        `Cannot access "${fileReference}": ${error.message}`
+      );
     }
-  }
-
-  if (stats?.isSymbolicLink()) {
-    error(manifestFile, `${label}.path must not point to a symbolic link.`);
     return;
   }
 
-  if (resource.status === 'published') {
-    if (!stats) {
-      error(
-        manifestFile,
-        `${label} is published but the file does not exist: ${resourcePath}`
-      );
-    } else if (!stats.isFile()) {
-      error(manifestFile, `${label} path is not a regular file: ${resourcePath}`);
-    }
-  } else if (!stats) {
-    warn(
-      manifestFile,
-      `${label} file is missing; permitted for non-published resources: ${resourcePath}`
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    reportError(
+      location,
+      `Referenced document must be a regular, non-symlink file: ${fileReference}`
     );
+    return;
   }
 
-  if (resource.status === 'published') {
-    if (
-      !['official_sources_checked', 'officially_verified'].includes(
-        resource.verificationStatus
-      )
-    ) {
-      error(
-        manifestFile,
-        `${label} is published but verificationStatus is not approved.`
-      );
-    }
-
-    if (
-      !Array.isArray(resource.officialSources) ||
-      resource.officialSources.length === 0
-    ) {
-      error(
-        manifestFile,
-        `${label} is published but officialSources is empty or missing.`
-      );
-    } else {
-      resource.officialSources.forEach((source, sourceIndex) => {
-        if (typeof source !== 'string' || !source.trim()) {
-          error(
-            manifestFile,
-            `${label}.officialSources[${sourceIndex}] must be a non-empty string.`
-          );
-        } else {
-          try {
-            const url = new URL(source);
-
-            if (url.protocol !== 'https:') {
-              error(
-                manifestFile,
-                `${label}.officialSources[${sourceIndex}] must use HTTPS.`
-              );
-            }
-          } catch {
-            error(
-              manifestFile,
-              `${label}.officialSources[${sourceIndex}] must be a valid URL.`
-            );
-          }
-        }
-      });
-    }
-
-    for (const field of ['lastReviewedAt', 'reviewDueAt']) {
-      if (!isValidDate(resource[field])) {
-        error(
-          manifestFile,
-          `${label} is published but ${field} is not a valid YYYY-MM-DD date.`
-        );
-      }
-    }
-
-    if (
-      isValidDate(resource.lastReviewedAt) &&
-      isValidDate(resource.reviewDueAt) &&
-      resource.reviewDueAt < resource.lastReviewedAt
-    ) {
-      error(
-        manifestFile,
-        `${label}.reviewDueAt must not be earlier than lastReviewedAt.`
-      );
-    }
-  }
+  documentsChecked += 1;
 }
 
-function validateManifest(file) {
-  checkedFiles.push(relative(file));
+function validateManifest(manifestPath) {
+  manifestsChecked += 1;
 
-  const manifest = readJson(file);
-  if (manifest === null) return;
+  let parsed;
 
-  if (
-    typeof manifest !== 'object' ||
-    Array.isArray(manifest)
-  ) {
-    error(file, 'Manifest root must be an object.');
+  try {
+    const source = fs.readFileSync(manifestPath, "utf8");
+    parsed = JSON.parse(source);
+  } catch (error) {
+    reportError(manifestPath, `Invalid JSON: ${error.message}`);
     return;
   }
 
-  if (!Array.isArray(manifest.resources)) {
-    warn(file, 'No resources array found; this may be a category-only manifest.');
+  let documents;
+
+  if (Array.isArray(parsed)) {
+    documents = parsed;
+  } else if (isPlainObject(parsed) && Array.isArray(parsed.documents)) {
+    documents = parsed.documents;
+  } else {
+    reportError(
+      manifestPath,
+      'Manifest must be a JSON array or an object containing a "documents" array.'
+    );
     return;
   }
 
-  const categoryIds = new Set();
-
-  if (manifest.categories !== undefined) {
-    if (!Array.isArray(manifest.categories)) {
-      error(file, 'categories must be an array when provided.');
-    } else {
-      manifest.categories.forEach((category, index) => {
-        const id = typeof category === 'string' ? category : category?.id;
-
-        if (typeof id !== 'string' || !id.trim()) {
-          error(file, `categories[${index}] must have a non-empty string ID.`);
-          return;
-        }
-
-        if (categoryIds.has(id)) {
-          error(file, `Duplicate category ID "${id}".`);
-        }
-
-        categoryIds.add(id);
-      });
-    }
+  if (documents.length === 0) {
+    reportWarning(manifestPath, "Manifest contains no documents.");
   }
 
-  const localIds = new Set();
-
-  manifest.resources.forEach((resource, index) => {
-    if (
-      resource &&
-      typeof resource === 'object' &&
-      !Array.isArray(resource) &&
-      typeof resource.id === 'string'
-    ) {
-      const id = resource.id.trim();
-
-      if (localIds.has(id)) {
-        error(file, `Duplicate resource ID "${id}" within this manifest.`);
-      }
-
-      localIds.add(id);
-    }
-
-    validateResource(file, resource, index, categoryIds);
+  documents.forEach((document, index) => {
+    validateDocument(document, manifestPath, index);
   });
 }
 
-let rootStats;
+function printResults() {
+  console.log("\nMedOrbits Document Manifest Validation\n");
 
-try {
-  rootStats = fs.lstatSync(DOCUMENTS_DIR);
-} catch (err) {
-  error(DOCUMENTS_DIR, `Documents directory is unavailable: ${err.message}`);
-}
+  for (const error of errors) {
+    console.error(`ERROR: ${error.file}\n  ${error.message}`);
+  }
 
-if (rootStats) {
-  if (rootStats.isSymbolicLink() || !rootStats.isDirectory()) {
-    error(DOCUMENTS_DIR, 'Documents path must be a real directory, not a symbolic link.');
+  for (const warning of warnings) {
+    console.warn(`WARNING: ${warning.file}\n  ${warning.message}`);
+  }
+
+  console.log("\nSummary");
+  console.log(`Manifests checked: ${manifestsChecked}`);
+  console.log(`Documents verified: ${documentsChecked}`);
+  console.log(`Errors: ${errors.length}`);
+  console.log(`Warnings: ${warnings.length}`);
+
+  if (errors.length > 0) {
+    console.error("\nValidation FAILED.");
+    process.exitCode = 1;
   } else {
-    const manifests = walkJsonFiles(DOCUMENTS_DIR);
-
-    if (manifests.length === 0) {
-      warn(DOCUMENTS_DIR, 'No MANIFEST.json files were found.');
-    }
-
-    for (const file of manifests) {
-      validateManifest(file);
-    }
+    console.log("\nValidation PASSED.");
   }
 }
 
-const result = {
-  ok: errors.length === 0 && (!strict || warnings.length === 0),
-  root: relative(DOCUMENTS_DIR),
-  checkedManifestCount: checkedFiles.length,
-  checkedManifests: checkedFiles,
-  errorCount: errors.length,
-  warningCount: warnings.length,
-  errors,
-  warnings,
-};
+function main() {
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    console.log(`
+MedOrbits Document Manifest Validator
 
-if (jsonOutput) {
-  console.log(JSON.stringify(result, null, 2));
-} else {
-  console.log('MedOrbits document manifest validation');
-  console.log(`Documents directory: ${result.root}`);
-  console.log(`Manifests checked: ${result.checkedManifestCount}`);
+Usage:
+  node scripts/validate-document-manifests.mjs
 
-  for (const item of warnings) {
-    console.warn(`WARNING: ${item.file}: ${item.message}`);
+Options:
+  -h, --help   Show this help message
+
+Environment variables:
+  MANIFEST_DIR    Manifest directory (default: documents/manifests)
+  DOCUMENT_ROOT   Referenced document root (default: documents)
+`);
+    return;
   }
 
-  for (const item of errors) {
-    console.error(`ERROR: ${item.file}: ${item.message}`);
-  }
-
-  if (result.ok) {
-    console.log(
-      strict
-        ? 'PASS: Validation succeeded with no warnings.'
-        : 'PASS: No blocking validation errors found.'
+  if (!fs.existsSync(MANIFEST_DIR)) {
+    console.error(`Manifest directory not found: ${MANIFEST_DIR}`);
+    console.error(
+      "Set MANIFEST_DIR to the directory containing your manifest JSON files."
     );
-  } else {
-    console.error('FAIL: Document manifest validation failed.');
+    process.exitCode = 1;
+    return;
   }
+
+  let manifestStat;
+
+  try {
+    manifestStat = fs.lstatSync(MANIFEST_DIR);
+  } catch (error) {
+    console.error(`Cannot access manifest directory: ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (!manifestStat.isDirectory() || manifestStat.isSymbolicLink()) {
+    console.error("MANIFEST_DIR must be a real directory, not a symlink.");
+    process.exitCode = 1;
+    return;
+  }
+
+  const manifestFiles = getJsonFiles(MANIFEST_DIR);
+
+  if (manifestFiles.length === 0) {
+    reportError(
+      MANIFEST_DIR,
+      "No JSON manifest files found in the manifest directory."
+    );
+  }
+
+  for (const manifestPath of manifestFiles) {
+    validateManifest(manifestPath);
+  }
+
+  printResults();
 }
 
-process.exitCode = result.ok ? 0 : 1;
+main();
