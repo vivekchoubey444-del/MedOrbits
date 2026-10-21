@@ -66,3 +66,4 @@ jobs:
           git add package-lock.json
           git commit -m "chore: regenerate package-lock.json"
           git push origin HEAD:main
+
