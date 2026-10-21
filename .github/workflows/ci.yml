@@ -1,50 +1,92 @@
+
 name: MedOrbits CI
 
 on:
-push:
-branches:
-- main
-- master
-pull_request:
-branches:
-- main
-- master
-workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
 
 permissions:
-contents: read
+  contents: read
 
 concurrency:
-group: ci-${{ github.workflow }}-${{ github.ref }}
-cancel-in-progress: true
+  group: medorbits-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-build-and-test:
-name: Build and Test
-runs-on: ubuntu-latest
-timeout-minutes: 20
+  build-and-test:
+    name: Unit and integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: 22
-      cache: npm
-  - name: Install dependencies
-    run: npm ci
-  - name: Validate application data
-    run: npm run check:data --if-present
-  - name: Check JavaScript syntax
-    run: npm run check:syntax --if-present
-  - name: Check code formatting
-    run: npm run format:check --if-present
-  - name: Run ESLint
-    run: npm run lint --if-present
-  - name: Run tests with coverage
-    run: npm run test:coverage --if-present
-  - name: Run tests
-    run: npm test --if-present
-  - name: Build application
-    run: npm run build --if-present
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify project structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f package.json || {
+            echo "::error::package.json is missing from the repository root."
+            exit 1
+          }
+          echo "Project structure verified."
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate package metadata
+        run: node -e "const p=require('./package.json'); if (!p.name || !p.version || !p.scripts) throw new Error('Invalid package metadata'); console.log('Package metadata is valid')"
+
+      - name: Verify npm lockfile
+        shell: bash
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "::error::package-lock.json is missing. Generate it with npm install and commit it."
+            exit 1
+          fi
+          node -e "const p=require('./package-lock.json'); if (!p.lockfileVersion) throw new Error('Invalid npm lockfile'); console.log('Lockfile found')"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate JSON files
+        run: npm run validate:json
+
+      - name: Validate application data
+        run: npm run check:data --if-present
+
+      - name: Check JavaScript syntax
+        run: npm run check:syntax --if-present
+
+      - name: Check code formatting
+        run: npm run format:check --if-present
+
+      - name: Run ESLint
+        run: npm run lint --if-present
+
+      - name: Run unit and integration tests
+        run: npm test --if-present
+
+      - name: Run tests with coverage
+        run: npm run test:coverage --if-present
+
+      - name: Build application
+        run: npm run build --if-present
+
+      - name: Upload test coverage and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medorbits-test-results
+          path: |
+            coverage/
+            test-results/
+            reports/
+          if-no-files-found: ignore
+          retention-days: 14
