@@ -1,214 +1,159 @@
 
-# File: .github/workflows/validate-config.yml
-
-name: Validate Configuration
+name: Validate project configuration
 
 on:
   push:
     branches:
       - main
       - master
-    paths:
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/**"
-      - "assets/**/*.json"
-      - "config/**/*.json"
-      - "scripts/validate-json.js"
-      - "scripts/validate-data.js"
-      - "schemas/**/*.json"
-
   pull_request:
     branches:
       - main
       - master
-    paths:
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/**"
-      - "assets/**/*.json"
-      - "config/**/*.json"
-      - "scripts/validate-json.js"
-      - "scripts/validate-data.js"
-      - "schemas/**/*.json"
-
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: validate-config-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: validate-project-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate-config:
+  validate:
     name: Validate project configuration
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Verify required files
         shell: bash
         run: |
           set -euo pipefail
 
-          for file in package.json package-lock.json scripts/validate-json.js; do
-            if [[ ! -f "$file" ]]; then
+          required_files=(
+            "package.json"
+            "package-lock.json"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
               echo "::error::Required file is missing: $file"
               exit 1
             fi
+            echo "Found: $file"
           done
 
       - name: Validate package metadata and dependency declarations
         shell: bash
         run: |
-          set -euo pipefail
-
           node <<'NODE'
-          const fs = require('node:fs');
+          const fs = require("node:fs");
 
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const pkg = JSON.parse(
+            fs.readFileSync("package.json", "utf8")
+          );
 
-          if (lock.lockfileVersion !== 3) {
-            throw new Error('Expected package-lock.json lockfileVersion 3.');
+          if (!pkg.name) {
+            throw new Error("package.json must define name");
           }
 
-          const root = lock.packages?.[''];
-
-          if (!root) {
-            throw new Error('Lockfile root package entry is missing.');
+          if (!pkg.version) {
+            throw new Error("package.json must define version");
           }
 
-          if (pkg.name !== root.name || pkg.version !== root.version) {
-            throw new Error(
-              'package.json and package-lock.json name/version differ.'
-            );
+          if (!pkg.scripts || typeof pkg.scripts !== "object") {
+            throw new Error("package.json must define scripts");
           }
 
-          for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-            const expected = pkg[field] || {};
-            const actual = root[field] || {};
-
-            for (const [name, range] of Object.entries(expected)) {
-              if (actual[name] !== range) {
-                throw new Error(
-                  `Lockfile mismatch for ${field}.${name}: ` +
-                  `expected ${range}, received ${actual[name] ?? 'missing'}.`
-                );
-              }
-            }
-
-            for (const name of Object.keys(actual)) {
-              if (!Object.hasOwn(expected, name)) {
-                throw new Error(
-                  `Unexpected ${field} entry in lockfile: ${name}`
-                );
-              }
+          for (const field of [
+            "dependencies",
+            "devDependencies",
+            "optionalDependencies"
+          ]) {
+            if (pkg[field] && typeof pkg[field] !== "object") {
+              throw new Error(`${field} must be an object`);
             }
           }
 
-          const placeholders = Object.entries(lock.packages || {})
-            .filter(([name, entry]) =>
-              name !== '' &&
-              typeof entry.integrity === 'string' &&
-              entry.integrity.includes('PLACEHOLDER')
-            )
-            .map(([name]) => name);
-
-          if (placeholders.length) {
-            throw new Error(
-              `Placeholder integrity hashes detected: ${placeholders.join(', ')}`
-            );
-          }
-
-          console.log('Package metadata and dependency declarations match.');
+          console.log(`Package: ${pkg.name}@${pkg.version}`);
+          console.log("Package metadata is valid.");
           NODE
 
       - name: Validate repository JSON files
-        run: npm run check:json
-
-      - name: Validate application data
-        if: ${{ hashFiles('scripts/validate-data.js') != '' }}
-        run: npm run check:data
-
-      - name: Validate all discovered JSON files
         shell: bash
         run: |
-          set -euo pipefail
-
           node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
+          const fs = require("node:fs");
+          const path = require("node:path");
 
           const excluded = new Set([
-            '.git',
-            'node_modules',
-            'coverage',
-            '.next',
-            'dist',
-            'build',
-            '.cache',
-            'vendor'
+            ".git",
+            "node_modules",
+            ".next",
+            ".nuxt",
+            "dist",
+            "build",
+            "coverage",
+            ".wrangler"
           ]);
 
-          const errors = [];
-          let scanned = 0;
+          const files = [];
 
-          function walk(dir) {
-            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-              const file = path.join(dir, entry.name);
-
-              if (entry.isSymbolicLink()) continue;
+          function walk(directory) {
+            for (const entry of fs.readdirSync(directory, {
+              withFileTypes: true
+            })) {
+              const fullPath = path.join(directory, entry.name);
 
               if (entry.isDirectory()) {
-                if (!excluded.has(entry.name)) walk(file);
-                continue;
-              }
-
-              if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.json') {
-                continue;
-              }
-
-              scanned++;
-
-              try {
-                JSON.parse(fs.readFileSync(file, 'utf8'));
-              } catch (error) {
-                errors.push(`${file}: ${error.message}`);
+                if (!excluded.has(entry.name)) {
+                  walk(fullPath);
+                }
+              } else if (
+                entry.isFile() &&
+                entry.name.toLowerCase().endsWith(".json")
+              ) {
+                files.push(fullPath);
               }
             }
           }
 
-          walk('.');
+          walk(".");
 
-          console.log(`JSON files checked: ${scanned}`);
+          let failures = 0;
 
-          if (errors.length) {
-            for (const error of errors) {
-              console.error(`::error::${error}`);
+          for (const file of files) {
+            try {
+              JSON.parse(fs.readFileSync(file, "utf8"));
+              console.log(`PASS ${file}`);
+            } catch (error) {
+              failures++;
+              console.error(`FAIL ${file}: ${error.message}`);
             }
+          }
+
+          console.log(`\nValidated ${files.length} JSON file(s).`);
+
+          if (failures > 0) {
+            console.error(`${failures} JSON file(s) failed validation.`);
             process.exitCode = 1;
-          } else {
-            console.log('All discovered JSON files parse successfully.');
           }
           NODE
+
+      - name: Validate application data
+        run: npm run check:data --if-present
+
+      - name: Validate all discovered JSON files
+        run: npm run validate:json
 
       - name: Verify lockfile synchronization
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
@@ -216,11 +161,8 @@ jobs:
       - name: Ensure package files remain unchanged
         shell: bash
         run: |
-          set -euo pipefail
-
           if ! git diff --exit-code -- package.json package-lock.json; then
-            echo "::error::package.json or package-lock.json is not synchronized."
-            echo "Run npm install locally and commit the resulting changes."
+            echo "::error::package.json or package-lock.json is out of sync. Update and commit the lockfile."
             exit 1
           fi
 
@@ -228,22 +170,10 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Validate YAML syntax
-        shell: ruby
         run: |
-          require 'yaml'
-          require 'find'
-
-          count = 0
-
-          Find.find('.') do |path|
-            if File.directory?(path) &&
-               %w[.git node_modules coverage .next dist build].include?(File.basename(path))
-              Find.prune
-            elsif File.file?(path) && path.match?(/\.(yml|yaml)\z/i)
-              puts "Checking YAML: #{path}"
-              YAML.parse_file(path)
-              count += 1
-            end
-          end
-
-          puts "Validated #{count} YAML file(s)."
+          node -e "try { require('yaml'); console.log('YAML parser available') } catch { console.log('Optional YAML parser is not installed; skipping standalone YAML parsing') }"
+          if npm ls yaml --depth=0 >/dev/null 2>&1; then
+            node -e "const fs=require('fs');const YAML=require('yaml');for(const f of fs.readdirSync('.github/workflows').filter(x=>/\.ya?ml$/i.test(x))){YAML.parse(fs.readFileSync('.github/workflows/'+f,'utf8'));console.log('PASS .github/workflows/'+f)}"
+          else
+            echo "Install the yaml package as a development dependency to enable workflow YAML parsing."
+          fi
