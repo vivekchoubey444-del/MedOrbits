@@ -1,735 +1,391 @@
 
 /**
- * MedOrbits -- Colleges Manager
- * File: assets/js/colleges.js
+ * MedOrbits -- College Directory
+ * File: /assets/js/colleges.js
+ * Version: 1.2.0
  *
- * Handles college data, searching, filtering, sorting,
- * comparison, details, and college listing UI.
+ * Renders /assets/data/colleges.json into #college-results.
+ * Supports URL filters: q, course, state, type.
  */
-
-(() => {
+(function (window, document) {
   "use strict";
 
-  const CONSTANTS = window.MedOrbitsConstants || {};
-  const CONFIG = window.MedOrbitsConfig || {};
+  var RESULTS_ID = "college-results";
+  var DATA_URL = "/assets/data/colleges.json";
+  var REQUEST_TIMEOUT_MS = 15000;
 
-  const API = CONSTANTS.API || {
-    PREFIX: "/api",
-    ENDPOINTS: { COLLEGES: "/colleges" }
-  };
+  var box = document.getElementById(RESULTS_ID);
+  if (!box) return;
 
-  const DATA_FILES = CONSTANTS.DATA_FILES || {
-    COLLEGES: "/assets/data/colleges.json"
-  };
+  var requestController = null;
 
-  const API_BASE_URL = String(
-    CONFIG.API_BASE_URL || API.PREFIX || "/api"
-  ).replace(/\/+$/, "");
+  function createElement(tag, text, className) {
+    var node = document.createElement(tag);
 
-  const ENDPOINT = API.ENDPOINTS?.COLLEGES || "/colleges";
-
-  const state = {
-    colleges: [],
-    currentCollege: null,
-    comparison: [],
-    loading: false,
-    error: null,
-    filters: {
-      search: "",
-      country: "all",
-      state: "all",
-      course: "all",
-      type: "all",
-      maxFees: null
+    if (text !== undefined && text !== null) {
+      node.textContent = String(text);
     }
-  };
 
-  const listeners = new Set();
+    if (className) {
+      node.className = className;
+    }
 
-  class CollegeError extends Error {
-    constructor(message, options = {}) {
-      super(message);
-      this.name = "CollegeError";
-      this.code = options.code || "COLLEGE_ERROR";
-      this.status = options.status || 0;
+    return node;
+  }
+
+  function normalize(value) {
+    return String(value == null ? "" : value)
+      .trim()
+      .toLowerCase();
+  }
+
+  function getObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+  }
+
+  function getArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function getFilters() {
+    var params = new URLSearchParams(window.location.search);
+
+    return {
+      q: normalize(params.get("q")),
+      course: normalize(params.get("course")),
+      state: normalize(params.get("state")),
+      type: normalize(params.get("type"))
+    };
+  }
+
+  function getCourseId(course) {
+    if (!course) return "";
+
+    // Accept an existing ID or a course slug.
+    return course.indexOf("course-") === 0
+      ? course
+      : "course-" + course;
+  }
+
+  function getCollegeName(college) {
+    return String(college.name || college.shortName || "Unnamed institution");
+  }
+
+  function getLocation(college) {
+    var location = getObject(college.location);
+
+    return {
+      city: String(location.city || ""),
+      state: String(location.state || "")
+    };
+  }
+
+  function isActive(college) {
+    var status = getObject(college.status);
+
+    return status.active !== false;
+  }
+
+  function matchesSearch(college, query) {
+    if (!query) return true;
+
+    var location = getLocation(college);
+    var searchText = [
+      college.name,
+      college.shortName,
+      college.institutionType,
+      location.city,
+      location.state
+    ].join(" ");
+
+    return normalize(searchText).indexOf(query) !== -1;
+  }
+
+  function matchesCourse(college, course) {
+    if (!course) return true;
+
+    var courseId = getCourseId(course);
+    var courseIds = getArray(college.courseIds);
+
+    return courseIds.some(function (id) {
+      return normalize(id) === courseId;
+    });
+  }
+
+  function filterColleges(colleges, filters) {
+    return colleges.filter(function (rawCollege) {
+      var college = getObject(rawCollege);
+
+      if (!isActive(college)) return false;
+      if (!matchesSearch(college, filters.q)) return false;
+
+      var location = getLocation(college);
+
+      if (
+        filters.state &&
+        normalize(location.state) !== filters.state
+      ) {
+        return false;
+      }
+
+      if (
+        filters.type &&
+        normalize(college.institutionType) !== filters.type
+      ) {
+        return false;
+      }
+
+      if (!matchesCourse(college, filters.course)) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  function createOfficialWebsite(college) {
+    var contact = getObject(college.contact);
+    var website = String(contact.officialWebsite || "").trim();
+
+    if (!website) return null;
+
+    try {
+      var url = new URL(website, window.location.origin);
+
+      // Only link to HTTPS websites.
+      if (url.protocol !== "https:") return null;
+
+      var link = createElement(
+        "a",
+        "Official website ↗",
+        "card-link"
+      );
+
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.referrerPolicy = "no-referrer";
+
+      return link;
+    } catch (error) {
+      return null;
     }
   }
 
-  // --------------------------------------------------
-  // Utilities
-  // --------------------------------------------------
+  function createCollegeCard(rawCollege) {
+    var college = getObject(rawCollege);
+    var location = getLocation(college);
 
-  const utils = {
-    emit(name, detail = {}) {
-      document.dispatchEvent(
-        new CustomEvent(`medorbits:${name}`, { detail })
-      );
-    },
+    var card = createElement("article", null, "card");
+    var body = createElement("div", null, "card-body");
 
-    normalize(college) {
-      if (!college || typeof college !== "object") return null;
-      return Object.freeze({ ...college });
-    },
+    var type = String(college.institutionType || "Institution");
+    body.appendChild(createElement("span", type, "tag"));
 
-    extractList(payload) {
-      if (Array.isArray(payload)) return payload;
-      if (Array.isArray(payload?.colleges)) return payload.colleges;
-      if (Array.isArray(payload?.data?.colleges)) return payload.data.colleges;
-      if (Array.isArray(payload?.data)) return payload.data;
-      return [];
-    },
-
-    extractItem(payload) {
-      return payload?.college || payload?.data?.college ||
-        payload?.data || payload;
-    },
-
-    getId(college) {
-      return college?.id ?? college?.college_id ?? college?.slug ?? null;
-    },
-
-    getName(college) {
-      return String(
-        college?.name ||
-        college?.college_name ||
-        college?.institution_name ||
-        "Unnamed College"
-      );
-    },
-
-    getFees(college) {
-      const value = Number(
-        college?.annual_fees ??
-        college?.fees ??
-        college?.tuition_fee ??
-        college?.total_fees
-      );
-
-      return Number.isFinite(value) && value >= 0 ? value : null;
-    },
-
-    formatCurrency(value, currency = "INR") {
-      const amount = Number(value);
-
-      if (!Number.isFinite(amount)) return "Not available";
-
-      try {
-        return new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency,
-          maximumFractionDigits: 0
-        }).format(amount);
-      } catch {
-        return String(amount);
-      }
-    },
-
-    getCsrfToken() {
-      return document.querySelector('meta[name="csrf-token"]')
-        ?.getAttribute("content") || "";
-    }
-  };
-
-  // --------------------------------------------------
-  // HTTP client
-  // --------------------------------------------------
-
-  async function request(path = "", options = {}) {
-    const { method = "GET", body, signal } = options;
-    const controller = new AbortController();
-
-    const timeout = window.setTimeout(
-      () => controller.abort(),
-      Number(API.DEFAULT_TIMEOUT_MS || 15000)
+    body.appendChild(
+      createElement("h3", getCollegeName(college))
     );
 
-    let abortHandler;
-
-    if (signal) {
-      if (signal.aborted) {
-        controller.abort();
-      } else {
-        abortHandler = () => controller.abort();
-        signal.addEventListener("abort", abortHandler, { once: true });
-      }
-    }
-
-    const headers = { Accept: "application/json" };
-
-    if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
-    }
-
-    const csrfToken = utils.getCsrfToken();
-
-    if (csrfToken && method !== "GET" && method !== "HEAD") {
-      headers["X-CSRF-Token"] = csrfToken;
-    }
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}${ENDPOINT}${path}`,
-        {
-          method,
-          headers,
-          credentials: "same-origin",
-          cache: "no-store",
-          redirect: "error",
-          body: body === undefined ? undefined : JSON.stringify(body),
-          signal: controller.signal
-        }
-      );
-
-      const contentType = response.headers.get("content-type") || "";
-      let payload = null;
-
-      if (response.status !== 204) {
-        if (contentType.includes("application/json")) {
-          payload = await response.json().catch(() => null);
-        } else {
-          await response.text().catch(() => "");
-        }
-      }
-
-      if (!response.ok) {
-        throw new CollegeError(
-          payload?.message || "Unable to load college information.",
-          {
-            code: payload?.code || "REQUEST_FAILED",
-            status: response.status
-          }
-        );
-      }
-
-      return payload;
-    } catch (error) {
-      if (error instanceof CollegeError) throw error;
-
-      throw new CollegeError(
-        error?.name === "AbortError"
-          ? "The college request timed out."
-          : "Unable to connect to the college service.",
-        { code: error?.name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR" }
-      );
-    } finally {
-      window.clearTimeout(timeout);
-
-      if (signal && abortHandler) {
-        signal.removeEventListener("abort", abortHandler);
-      }
-    }
-  }
-
-  // --------------------------------------------------
-  // Events and state
-  // --------------------------------------------------
-
-  function notify(reason) {
-    const detail = Object.freeze({
-      reason,
-      colleges: [...state.colleges],
-      currentCollege: state.currentCollege,
-      comparison: [...state.comparison],
-      loading: state.loading,
-      error: state.error,
-      filters: Object.freeze({ ...state.filters })
+    var locationParts = [
+      college.shortName,
+      location.city,
+      location.state
+    ].filter(function (part) {
+      return Boolean(String(part || "").trim());
     });
 
-    utils.emit("colleges-updated", detail);
-
-    listeners.forEach((listener) => {
-      try {
-        listener(detail);
-      } catch (error) {
-        console.error("[MedOrbits Colleges] Listener failed.", error);
-      }
-    });
-  }
-
-  function setColleges(colleges, reason = "loaded") {
-    state.colleges = colleges.map(utils.normalize).filter(Boolean);
-    state.error = null;
-    notify(reason);
-    return [...state.colleges];
-  }
-
-  // --------------------------------------------------
-  // Load colleges
-  // --------------------------------------------------
-
-  async function getAll(options = {}) {
-    const params = new URLSearchParams();
-
-    if (options.page) params.set("page", String(options.page));
-    if (options.limit) params.set("limit", String(options.limit));
-    if (options.search) params.set("search", String(options.search).trim());
-    if (options.country) params.set("country", options.country);
-    if (options.state) params.set("state", options.state);
-    if (options.course) params.set("course", options.course);
-    if (options.type) params.set("type", options.type);
-
-    state.loading = true;
-    state.error = null;
-    notify("loading");
-
-    try {
-      const query = params.toString();
-      const payload = await request(
-        query ? `?${query}` : "",
-        { signal: options.signal }
-      );
-
-      return setColleges(utils.extractList(payload));
-    } catch (error) {
-      state.error = error;
-      notify("error");
-      throw error;
-    } finally {
-      state.loading = false;
-      notify("loading-complete");
-    }
-  }
-
-  async function getFromJSON(options = {}) {
-    const url = options.url || DATA_FILES.COLLEGES;
-
-    state.loading = true;
-    state.error = null;
-    notify("loading");
-
-    try {
-      const response = await fetch(url, {
-        cache: "no-store",
-        signal: options.signal
-      });
-
-      if (!response.ok) {
-        throw new CollegeError("Unable to load the colleges data file.", {
-          status: response.status,
-          code: "DATA_FILE_ERROR"
-        });
-      }
-
-      const payload = await response.json();
-      return setColleges(utils.extractList(payload), "json-loaded");
-    } catch (error) {
-      state.error = error;
-      notify("error");
-      throw error;
-    } finally {
-      state.loading = false;
-      notify("loading-complete");
-    }
-  }
-
-  async function load(options = {}) {
-    try {
-      return await getAll(options);
-    } catch (error) {
-      if (options.fallbackToJSON === true) {
-        return getFromJSON(options);
-      }
-
-      throw error;
-    }
-  }
-
-  // --------------------------------------------------
-  // College details
-  // --------------------------------------------------
-
-  async function getById(id, options = {}) {
-    if (id === null || id === undefined || id === "") {
-      throw new CollegeError("A college ID is required.");
-    }
-
-    const encodedId = encodeURIComponent(String(id));
-
-    try {
-      const payload = await request(`/${encodedId}`, {
-        signal: options.signal
-      });
-
-      const college = utils.normalize(utils.extractItem(payload));
-
-      if (!college) {
-        throw new CollegeError("College details were not returned.");
-      }
-
-      state.currentCollege = college;
-      notify("details-loaded");
-
-      return college;
-    } catch (error) {
-      if (options.allowLocal !== false) {
-        const local = state.colleges.find(
-          (item) => String(utils.getId(item)) === String(id)
-        );
-
-        if (local) {
-          state.currentCollege = local;
-          notify("details-loaded");
-          return local;
-        }
-      }
-
-      throw error;
-    }
-  }
-
-  // --------------------------------------------------
-  // Search and filters
-  // --------------------------------------------------
-
-  function search(query, colleges = state.colleges) {
-    const term = String(query || "").trim().toLowerCase();
-
-    if (!term) return [...colleges];
-
-    return colleges.filter((college) => {
-      const searchable = [
-        utils.getName(college),
-        college.city,
-        college.state,
-        college.country,
-        college.type,
-        college.category,
-        college.university,
-        college.courses,
-        college.approved_by,
-        college.accreditation
-      ]
-        .flat()
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchable.includes(term);
-    });
-  }
-
-  function setFilters(filters = {}) {
-    state.filters = { ...state.filters, ...filters };
-    notify("filters-changed");
-    return getFiltered();
-  }
-
-  function getFiltered() {
-    const filters = state.filters;
-
-    let results = search(filters.search);
-
-    if (filters.country !== "all") {
-      results = results.filter(
-        (college) =>
-          String(college.country || "India").toLowerCase() ===
-          String(filters.country).toLowerCase()
+    if (locationParts.length) {
+      body.appendChild(
+        createElement("p", locationParts.join(" · "))
       );
     }
 
-    if (filters.state !== "all") {
-      results = results.filter(
-        (college) =>
-          String(college.state || "").toLowerCase() ===
-          String(filters.state).toLowerCase()
-      );
+    var websiteLink = createOfficialWebsite(college);
+
+    if (websiteLink) {
+      body.appendChild(websiteLink);
     }
 
-    if (filters.course !== "all") {
-      results = results.filter((college) => {
-        const courses = Array.isArray(college.courses)
-          ? college.courses
-          : [college.courses || college.course || ""];
-
-        return courses.some(
-          (course) =>
-            String(course).toLowerCase() ===
-            String(filters.course).toLowerCase()
-        );
-      });
-    }
-
-    if (filters.type !== "all") {
-      results = results.filter(
-        (college) =>
-          String(college.type || college.category || "").toLowerCase() ===
-          String(filters.type).toLowerCase()
-      );
-    }
-
-    if (filters.maxFees !== null && filters.maxFees !== "") {
-      const maxFees = Number(filters.maxFees);
-
-      if (Number.isFinite(maxFees)) {
-        results = results.filter((college) => {
-          const fees = utils.getFees(college);
-          return fees !== null && fees <= maxFees;
-        });
-      }
-    }
-
-    return results;
-  }
-
-  // --------------------------------------------------
-  // Sorting
-  // --------------------------------------------------
-
-  function sort(colleges = getFiltered(), field = "name", direction = "asc") {
-    const multiplier = direction === "desc" ? -1 : 1;
-
-    return [...colleges].sort((a, b) => {
-      let first;
-      let second;
-
-      if (field === "fees") {
-        first = utils.getFees(a) ?? Infinity;
-        second = utils.getFees(b) ?? Infinity;
-      } else if (field === "rating") {
-        first = Number(a.rating) || 0;
-        second = Number(b.rating) || 0;
-      } else {
-        first = utils.getName(a).toLowerCase();
-        second = utils.getName(b).toLowerCase();
-      }
-
-      if (first < second) return -1 * multiplier;
-      if (first > second) return 1 * multiplier;
-      return 0;
-    });
-  }
-
-  // --------------------------------------------------
-  // College comparison
-  // --------------------------------------------------
-
-  function addToComparison(college) {
-    const item = typeof college === "object"
-      ? college
-      : state.colleges.find(
-          (entry) => String(utils.getId(entry)) === String(college)
-        );
-
-    if (!item) {
-      throw new CollegeError("College not found.");
-    }
-
-    const id = utils.getId(item);
-
-    if (id === null) {
-      throw new CollegeError("College has no valid identifier.");
-    }
-
-    if (
-      state.comparison.some(
-        (entry) => String(utils.getId(entry)) === String(id)
+    body.appendChild(
+      createElement(
+        "p",
+        "Listing information may be incomplete or unverified. " +
+          "Confirm recognition, fees, eligibility and admissions " +
+          "directly with the institution and relevant authorities.",
+        "search-note"
       )
-    ) {
-      return [...state.comparison];
-    }
-
-    if (state.comparison.length >= 4) {
-      throw new CollegeError("You can compare up to four colleges.");
-    }
-
-    state.comparison.push(item);
-    notify("comparison-updated");
-
-    return [...state.comparison];
-  }
-
-  function removeFromComparison(id) {
-    state.comparison = state.comparison.filter(
-      (college) => String(utils.getId(college)) !== String(id)
     );
 
-    notify("comparison-updated");
-    return [...state.comparison];
+    card.appendChild(body);
+
+    return card;
   }
 
-  function clearComparison() {
-    state.comparison = [];
-    notify("comparison-cleared");
+  function renderLoading() {
+    box.setAttribute("aria-live", "polite");
+    box.setAttribute("aria-busy", "true");
+    box.textContent = "Loading colleges…";
   }
 
-  // --------------------------------------------------
-  // Render college cards
-  // --------------------------------------------------
+  function renderError() {
+    box.textContent = "";
 
-  function renderList(container, colleges = getFiltered()) {
-    if (typeof container === "string") {
-      container = document.querySelector(container);
-    }
+    var message = createElement(
+      "p",
+      "Colleges could not be loaded. Please try again.",
+      "search-note"
+    );
 
-    if (!(container instanceof Element)) {
-      throw new TypeError("A valid college container is required.");
-    }
+    message.setAttribute("role", "alert");
+    box.appendChild(message);
 
-    const fragment = document.createDocumentFragment();
+    var retry = createElement("button", "Try again", "button");
+    retry.type = "button";
+
+    retry.addEventListener("click", loadColleges);
+
+    box.appendChild(retry);
+    box.setAttribute("aria-busy", "false");
+  }
+
+  function renderColleges(colleges) {
+    box.textContent = "";
+
+    var heading = createElement(
+      "h3",
+      colleges.length +
+        (colleges.length === 1
+          ? " college found"
+          : " colleges found")
+    );
+
+    box.appendChild(heading);
 
     if (!colleges.length) {
-      const empty = document.createElement("p");
-      empty.className = "college-empty";
-      empty.textContent = "No colleges found.";
-      container.replaceChildren(empty);
+      box.appendChild(
+        createElement(
+          "p",
+          "No colleges match your search. Try fewer filters.",
+          "search-note"
+        )
+      );
+
+      box.setAttribute("aria-busy", "false");
       return;
     }
 
-    colleges.forEach((college) => {
-      const card = document.createElement("article");
-      card.className = "college-card";
+    var grid = createElement("div", null, "cards");
 
-      const heading = document.createElement("h3");
-      heading.textContent = utils.getName(college);
+    colleges.forEach(function (college) {
+      grid.appendChild(createCollegeCard(college));
+    });
 
-      const location = document.createElement("p");
-      location.className = "college-card__location";
-      location.textContent = [
-        college.city,
-        college.state,
-        college.country
-      ].filter(Boolean).join(", ") || "Location not available";
+    box.appendChild(grid);
+    box.setAttribute("aria-busy", "false");
+  }
 
-      const fees = document.createElement("p");
-      fees.className = "college-card__fees";
+  function loadColleges() {
+    if (requestController) {
+      requestController.abort();
+    }
 
-      const amount = utils.getFees(college);
-      fees.textContent = amount === null
-        ? "Fees not available"
-        : `Fees: ${utils.formatCurrency(amount)}`;
+    renderLoading();
 
-      const actions = document.createElement("div");
-      actions.className = "college-card__actions";
+    var controller =
+      typeof window.AbortController === "function"
+        ? new window.AbortController()
+        : null;
 
-      const details = document.createElement("button");
-      details.type = "button";
-      details.textContent = "View details";
+    requestController = controller;
 
-      details.addEventListener("click", () => {
-        utils.emit("college-view-requested", {
-          id: utils.getId(college)
-        });
-      });
+    var timeoutId = null;
 
-      const compare = document.createElement("button");
-      compare.type = "button";
-      compare.textContent = "Compare";
+    if (controller) {
+      timeoutId = window.setTimeout(function () {
+        controller.abort();
+      }, REQUEST_TIMEOUT_MS);
+    }
 
-      compare.addEventListener("click", () => {
+    var options = {
+      method: "GET",
+      headers: {
+        Accept: "application/json"
+      },
+      cache: "no-cache",
+      credentials: "same-origin"
+    };
+
+    if (controller) {
+      options.signal = controller.signal;
+    }
+
+    fetch(DATA_URL, options)
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("College data request failed.");
+        }
+
+        return response.json();
+      })
+      .then(function (json) {
+        if (!json || !Array.isArray(json.colleges)) {
+          throw new Error("Invalid college data format.");
+        }
+
+        var filters = getFilters();
+        var colleges = filterColleges(json.colleges, filters);
+
+        renderColleges(colleges);
+
         try {
-          addToComparison(college);
+          document.dispatchEvent(
+            new CustomEvent("medorbits:colleges-loaded", {
+              detail: {
+                count: colleges.length,
+                filters: filters
+              }
+            })
+          );
         } catch (error) {
-          if (window.MedOrbits?.toast) {
-            window.MedOrbits.toast.warning(error.message);
-          }
+          // Rendering should not depend on custom-event support.
+        }
+      })
+      .catch(function (error) {
+        if (error && error.name === "AbortError") {
+          // A superseded request should not overwrite newer results.
+          if (requestController !== controller) return;
+        }
+
+        renderError();
+
+        try {
+          document.dispatchEvent(
+            new CustomEvent("medorbits:colleges-error", {
+              detail: {
+                message: "College listings could not be loaded."
+              }
+            })
+          );
+        } catch (eventError) {
+          // Ignore event-dispatch failures.
+        }
+      })
+      .then(function () {
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+        }
+
+        if (requestController === controller) {
+          requestController = null;
         }
       });
-
-      actions.append(details, compare);
-      card.append(heading, location, fees, actions);
-      fragment.appendChild(card);
-    });
-
-    container.replaceChildren(fragment);
   }
 
-  // --------------------------------------------------
-  // Change subscriptions
-  // --------------------------------------------------
+  window.MedOrbitsColleges = {
+    load: loadColleges
+  };
 
-  function onChange(callback) {
-    if (typeof callback !== "function") {
-      throw new TypeError("onChange expects a function.");
-    }
-
-    listeners.add(callback);
-    return () => listeners.delete(callback);
-  }
-
-  // --------------------------------------------------
-  // Initialization
-  // --------------------------------------------------
-
-  function init() {
-    document.querySelectorAll("[data-college-search]").forEach((input) => {
-      input.addEventListener("input", () => {
-        setFilters({ search: input.value });
-
-        const container = document.querySelector("[data-college-list]");
-        if (container) renderList(container);
-      });
-    });
-
-    document.querySelectorAll("[data-college-filter]").forEach((input) => {
-      input.addEventListener("change", () => {
-        const key = input.dataset.collegeFilter;
-
-        if (!key) return;
-
-        setFilters({ [key]: input.value });
-
-        const container = document.querySelector("[data-college-list]");
-        if (container) renderList(container);
-      });
-    });
-
-    document.querySelectorAll("[data-college-list]").forEach((container) => {
-      renderList(container);
-    });
-  }
-
-  // --------------------------------------------------
-  // Public interface
-  // --------------------------------------------------
-
-  const MedOrbitsColleges = Object.freeze({
-    CollegeError,
-
-    getAll,
-    getFromJSON,
-    load,
-    getById,
-
-    search,
-    setFilters,
-    getFiltered,
-    sort,
-
-    addToComparison,
-    removeFromComparison,
-    clearComparison,
-
-    renderList,
-    onChange,
-    init,
-
-    get state() {
-      return Object.freeze({
-        colleges: [...state.colleges],
-        currentCollege: state.currentCollege,
-        comparison: [...state.comparison],
-        loading: state.loading,
-        error: state.error,
-        filters: Object.freeze({ ...state.filters })
-      });
-    }
-  });
-
-  if (window.MedOrbitsColleges) {
-    console.warn("[MedOrbits] Colleges module already loaded.");
-    return;
-  }
-
-  Object.defineProperty(window, "MedOrbitsColleges", {
-    value: MedOrbitsColleges,
-    writable: false,
-    configurable: false,
-    enumerable: true
-  });
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
-  } else {
-    init();
-  }
-})();
+  loadColleges();
+})(window, document);

@@ -1,18 +1,25 @@
-# MedOrbits API Tests
-## 1. Purpose
-The `tests/api/` directory contains automated tests for the MedOrbits HTTP API.
+MedOrbits API Tests
+
+1. Purpose
+
+The tests/api/ directory contains automated tests for the MedOrbits HTTP API.
+
 These tests verify:
-- API endpoint availability and response contracts.
-- Authentication and authorization requirements.
-- Request validation and error handling.
-- User ownership and Insecure Direct Object Reference (IDOR) protection.
-- Payment initiation and webhook signature verification.
-- University, college, course, job, and document catalog behavior.
-- Sensitive-data protection and mass-assignment prevention.
-- Safe handling of malformed requests and unsupported HTTP methods.
+
+* API endpoint availability and response contracts.
+* Authentication and authorization requirements.
+* Request validation and error handling.
+* User ownership and Insecure Direct Object Reference (IDOR) protection.
+* Payment initiation, webhook signature verification, and payment-state integrity.
+* University, college, course, job, document, and public-release catalog behavior.
+* Sensitive-data protection and mass-assignment prevention.
+* Safe handling of malformed requests and unsupported HTTP methods.
+* Public dataset access, publication status, pagination, and path traversal protection.
+
 The tests use Jest as the test runner and Supertest to send HTTP requests to the Express application.
-## 2. Directory structure
-```text
+
+2. Directory structure
+
 tests/
 └── api/
     ├── README.md
@@ -25,27 +32,31 @@ tests/
     ├── health.api.test.js
     ├── jobs.api.test.js
     ├── payments.api.test.js
+    ├── public-data.api.test.js
+    ├── public-release.api.test.js
     ├── universities.api.test.js
     └── user.api.test.js
 
-This inventory reflects the API test files identified for this suite. Keep the directory listing synchronized with the actual repository.
+This inventory reflects the test files identified for this suite. Keep it synchronized with the actual repository. Additional API tests may exist.
 
 3. Test file responsibilities
 
 Test file	Responsibility
 applications.api.test.js	Application listing, retrieval, submission, ownership, validation, and authorization
 auth.api.test.js	Registration, login, authentication errors, and credential handling
-colleges.api.test.js	College catalog, search, filtering, pagination, and college details
+colleges.api.test.js	College catalog, search, filtering, pagination, and details
 courses.api.test.js	Course catalog, course details, query validation, and read-only access
 documents.api.test.js	Document access, upload validation, downloads, ownership, and storage-path protection
-error-responses.api.test.js	Error response consistency, malformed requests, missing routes, and information leakage
-health.api.test.js	Application health, liveness, readiness, and infrastructure information exposure
-jobs.api.test.js	Job listing, search, filtering, job details, and privileged-field protection
+error-responses.api.test.js	Error consistency, malformed requests, missing routes, and information leakage
+health.api.test.js	Health, liveness, readiness, and infrastructure information exposure
+jobs.api.test.js	Job listing, search, filtering, details, and privileged-field protection
 payments.api.test.js	Payment authorization, initiation validation, webhook signatures, and payment-state integrity
-universities.api.test.js	University catalog, university details, search, filters, and pagination
+public-data.api.test.js	Public university snapshots, dataset response structure, unknown datasets, and path traversal protection
+public-release.api.test.js	Published bulletins, notices, pagination totals, and public-release mutation protection
+universities.api.test.js	University catalog, details, search, filters, pagination, and data integrity
 user.api.test.js	User profiles, ownership, profile updates, registration security, and sensitive-data protection
 
-Tests must reflect the implemented route definitions and documented API contracts. A test file’s presence does not imply that its corresponding endpoint has been implemented.
+A test file’s presence does not imply that its corresponding endpoint has been implemented. Tests must reflect actual route definitions and documented API contracts.
 
 4. Technology requirements
 
@@ -65,13 +76,13 @@ The application should expose its Express instance from:
 
 src/app.js
 
-Typical test imports:
+Typical CommonJS test imports:
 
 ‘use strict’;
 const request = require(‘supertest’);
 const app = require(‘../../src/app’);
 
-Tests should import the app without unintentionally starting a production server or binding a network port.
+Tests should import the Express app without unintentionally starting a production server or binding a network port.
 
 5. Running API tests
 
@@ -83,15 +94,27 @@ Run one test file:
 
 npx jest tests/api/courses.api.test.js —runInBand
 
-Run the payment tests:
+Run payment tests:
 
 npx jest tests/api/payments.api.test.js —runInBand
 
-Run the document tests:
+Run document tests:
 
 npx jest tests/api/documents.api.test.js —runInBand
 
-Run tests in watch mode during development:
+Run university tests:
+
+npx jest tests/api/universities.api.test.js —runInBand
+
+Run public-data tests:
+
+npx jest tests/api/public-data.api.test.js —runInBand
+
+Run public-release tests:
+
+npx jest tests/api/public-release.api.test.js —runInBand
+
+Run tests in watch mode:
 
 npx jest tests/api —watch
 
@@ -105,7 +128,7 @@ If package.json already defines equivalent scripts, prefer the repository’s es
 
 The project should have one consistent Jest configuration.
 
-Example configuration:
+Example CommonJS configuration in jest.config.cjs:
 
 ‘use strict’;
 module.exports = {
@@ -119,23 +142,25 @@ module.exports = {
   testTimeout: 15000,
 };
 
-If the repository already has a root Jest configuration that includes unit, integration, security, accessibility, or end-to-end tests, do not replace it with this API-only example. Merge the relevant settings instead.
+If the repository already has a root Jest configuration covering unit, integration, security, accessibility, or end-to-end tests, merge the relevant settings rather than replacing that configuration.
+
+For an ESM project, verify Jest’s module configuration and the format of each test file before applying this CommonJS example.
 
 7. Test environment and database safety
 
 Tests that create, update, or delete records must use a dedicated test environment.
 
-Recommended environment variables:
+Example environment variables:
 
 NODE_ENV=test
 TEST_DATABASE_URL=mysql://test_user:test_password@127.0.0.1:3306/medorbits_test
 
-Use the database driver and connection configuration actually implemented by the project.
+Use the database driver and connection configuration actually implemented by the project. Do not assume MySQL if the application uses PostgreSQL or another database.
 
 Before running database-dependent tests, verify that:
 
 * The test database exists.
-* The connection points to the test database, not production.
+* The connection targets the test database, not production.
 * Required migrations have been applied.
 * Required seed data has been loaded.
 * Test records can be safely created and cleaned up.
@@ -160,16 +185,18 @@ async function authenticateAs(role, userId) {
   // Return the issued token and user ID.
 }
 
-Expected helper return shape:
+Expected return shape:
 
 {
   token: ‘test-issued-access-token’,
-  userId: ‘TEST-USER-001’
+  userId: ‘TEST-USER-001’,
 }
 
 This is an interface example, not a valid token or a complete implementation.
 
 Tests must not bypass authentication by trusting a client-supplied role, user ID, or administrator flag.
+
+Where multiple test files use the same authentication mechanism, prefer a shared test helper over duplicated implementations.
 
 9. Seed data and fixtures
 
@@ -182,20 +209,25 @@ Example fixture categories:
 * Pending and completed payment records.
 * Documents with known owners and access permissions.
 * Universities, colleges, courses, and jobs.
+* Published and unpublished public-release records.
 * Valid and invalid request payloads.
 
 Use unique test identifiers where appropriate.
 
-Environment variables used by payment and ownership tests may include:
+Relevant test environment variables may include:
 
 TEST_OWNED_PAYMENT_ID=
 TEST_PENDING_PAYMENT_ID=
 TEST_OTHER_USER_ID=
 TEST_FOREIGN_APPLICATION_ID=
+UNIVERSITIES_TEST_MAX_LIMIT=100
+JOBS_TEST_MAX_LIMIT=100
 
 Populate these values only with IDs from the dedicated test database.
 
 If a test requires a fixture, seed it during test setup or provide a documented fixture-loading step. Avoid relying on manually created records that may disappear or change.
+
+For static public datasets, document whether the tests use repository fixtures, generated data, or a database-backed catalog.
 
 10. Standard API response contracts
 
@@ -227,6 +259,8 @@ Where applicable, test:
 * Absence of sensitive fields.
 * Consistency between success and error responses.
 
+Some endpoints may use different response structures. For example, public-data endpoints may expose a data.universities collection, while public-release endpoints may expose data.notices, data.bulletins, and pagination totals. Test each endpoint against its own documented contract.
+
 11. HTTP status expectations
 
 Use the status codes defined by each endpoint’s contract.
@@ -237,7 +271,7 @@ Status	Typical meaning
 204 No Content	Successful operation with no response body
 400 Bad Request	Malformed or invalid request
 401 Unauthorized	Authentication is missing or invalid
-403 Forbidden	The caller is authenticated but lacks permission
+403 Forbidden	Caller is authenticated but lacks permission
 404 Not Found	Resource or endpoint does not exist or is intentionally concealed
 405 Method Not Allowed	HTTP method is unsupported
 409 Conflict	Resource conflicts with existing state
@@ -248,6 +282,8 @@ Status	Typical meaning
 503 Service Unavailable	Required service is unavailable
 
 Avoid accepting many unrelated status codes merely to make tests pass. Use exact assertions after confirming the endpoint’s intended behavior.
+
+A 404 response and a 405 response are not interchangeable when the route is documented and implemented. Similarly, a 401 and a 403 represent different authorization conditions.
 
 12. Security testing requirements
 
@@ -271,7 +307,7 @@ Client input must not grant privileged properties such as:
 
 Payment integrity
 
-Payment state must be established through trusted server-side gateway verification, not through client-supplied status fields.
+Payment state must be established through trusted server-side gateway verification, not client-supplied status fields.
 
 Webhook requests must follow the configured provider’s signature-verification requirements.
 
@@ -295,11 +331,11 @@ Input validation
 
 Test malformed JSON, invalid identifiers, unsupported content types, invalid pagination, unexpected fields, and injection-like input.
 
-A response that avoids a 500 status does not, by itself, prove that the input was handled correctly. Validate the expected status and resulting application behavior.
+A response that avoids a 500 status does not, by itself, prove that input was handled correctly. Validate the expected status and resulting application behavior.
 
 13. Health endpoint testing
 
-The health tests should reflect the actual routes implemented by the application.
+Health tests should reflect the actual routes implemented by the application.
 
 Typical endpoints include:
 
@@ -326,6 +362,8 @@ The test suite should verify:
 * Payment amounts and currencies are checked against trusted server-side records.
 
 Do not treat a hard-coded invalid signature as sufficient coverage of successful webhook verification.
+
+For integration tests, use provider sandbox credentials or a controlled mock. Verify that webhook parsing middleware preserves the raw body when the provider requires signature verification over the original request bytes.
 
 15. Test isolation and cleanup
 
@@ -361,6 +399,8 @@ API tests should:
 
 A placeholder helper that throws an error is an implementation requirement, not a passing test. Complete such helpers before treating the suite as executable.
 
+Tests should not assume that a resource is private, a route is public, or a mutation method is forbidden unless that behavior is part of the actual API contract.
+
 17. Troubleshooting
 
 Cannot find module supertest
@@ -393,6 +433,14 @@ Tests pass with overly broad status assertions
 
 Replace broad status alternatives with the endpoint’s documented contract and add assertions about response contents and persisted state.
 
+Public-data tests fail on encoded paths
+
+Check Express path decoding, router matching, static-file configuration, and the application’s error middleware. Verify that traversal attempts cannot return files outside the permitted public dataset directory.
+
+Tests disagree about response envelopes
+
+Compare the test assertions with the actual router, controller, validation schema, and response middleware. Keep each endpoint’s documented contract consistent across tests and implementation.
+
 18. Completion checklist
 
 Before considering the API suite ready:
@@ -406,6 +454,8 @@ Before considering the API suite ready:
 * [ ]	Mutation tests clean up their data.
 * [ ]	Security assertions verify actual authorization behavior.
 * [ ]	Error responses do not leak sensitive implementation details.
+* [ ]	Public dataset paths cannot expose arbitrary files.
+* [ ]	Published release endpoints return only records permitted by their publication policy.
 * [ ]	Tests pass individually and as a complete suite.
 * [ ]	CI runs the tests using test-only credentials and infrastructure.
 

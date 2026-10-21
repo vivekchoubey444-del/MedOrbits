@@ -1,13 +1,12 @@
-
 # MedOrbits Templates
 
 **Directory:** `src/templates/`
 
-**Brand direction:** Deep Plum, Royal Plum, Burgundy Plum, and Champagne Gold
+**Brand direction:** Deep Plum · Royal Plum · Burgundy Plum · Champagne Gold
 
 ## 1. Purpose
 
-The `src/templates/` directory contains reusable presentation templates used by the MedOrbits application.
+The `src/templates/` directory contains reusable presentation templates for the MedOrbits application.
 
 Templates define the structure and presentation of generated content, including transactional emails, account notifications, application communications, payment messages, and printable documents.
 
@@ -18,7 +17,7 @@ The directory contains two primary template categories:
 - `email/` — HTML and plain-text templates for transactional and service-related communications.
 - `documents/` — Standalone HTML templates for printable documents and document-generation workflows.
 
-The presence of a template does not establish that its rendering, delivery, PDF conversion, or integration workflow has been implemented.
+**Implementation note:** The presence of a template does not establish that its rendering, delivery, PDF conversion, or integration workflow has been implemented.
 
 ## 2. Directory Structure
 
@@ -53,7 +52,7 @@ src/templates/
 
 This tree describes the intended organization, not a verified inventory of existing files.
 
-Verify the actual repository before assuming that every listed template, README, base file, or integration exists.
+Verify the actual repository before assuming that every listed template, README, base file, or integration exists. Keep this directory-level README synchronized with the email and document subdirectories.
 
 ## 3. Shared Brand System
 
@@ -81,16 +80,17 @@ These are design tokens, not a guarantee of accessibility. Validate the contrast
 - Avoid unnecessary external resources and network dependencies.
 - Use verified asset paths and ensure assets are available to the rendering environment.
 - Do not assume website components or website navigation are appropriate for email or printable documents.
+- Use a consistent MedOrbits wordmark and approved brand assets where supported.
 
 Email and document templates may use different layout strategies while sharing the same brand palette.
 
 ## 4. Template Categories
 
-### 4.1 Email Templates
+### 4.1 Email templates
 
-Directory: `src/templates/email/`
+**Directory:** `src/templates/email/`
 
-Email templates support transactional and service-related communication, including:
+Email templates support transactional and service-related communications, including:
 
 - Account registration and welcome messages.
 - Email verification.
@@ -103,13 +103,11 @@ Email templates support transactional and service-related communication, includi
 
 Email templates should use a centered, table-based HTML layout with inline CSS for broad email-client compatibility.
 
-Important transactional emails should have corresponding plain-text alternatives.
+Important transactional emails should have corresponding plain-text alternatives. The email-specific README defines the intended template inventory, placeholder contracts, shared shell conventions, and delivery requirements.
 
-The email-specific README defines the intended email inventory, placeholder contracts, shared shell conventions, and delivery requirements.
+### 4.2 Document templates
 
-### 4.2 Document Templates
-
-Directory: `src/templates/documents/`
+**Directory:** `src/templates/documents/`
 
 Document templates support printable output, including:
 
@@ -121,9 +119,7 @@ Document templates support printable output, including:
 
 Document templates should use standalone layouts suitable for browser previews and controlled PDF generation.
 
-They must not depend on website navigation, dashboards, or interactive website components.
-
-Document-specific branding may appear inside the document when appropriate.
+They must not depend on website navigation, dashboards, or interactive website components. Document-specific branding may appear inside the document when appropriate.
 
 The document-specific README defines layout, data validation, security, rendering, and PDF conversion requirements.
 
@@ -154,6 +150,7 @@ Do not assume that the project supports template inheritance, partials, loops, c
 - Reject invalid required values rather than producing misleading documents or messages.
 - Keep formatting logic in shared helpers or services.
 - Avoid business logic inside presentation templates.
+- Fail safely if rendering fails; do not send partially rendered transactional content.
 
 ### Context-aware output handling
 
@@ -181,11 +178,11 @@ Templates must display prepared application data rather than independently deter
 - Interview details must originate from confirmed scheduling information.
 - Resume content must preserve candidate-provided facts.
 - Counselling recommendations must be distinguished from confirmed institutional requirements.
-- Document checklists must reflect the applicable requirements and recorded document states.
+- Document checklists must reflect applicable requirements and recorded document states.
 
 A rendered email or document must not automatically be treated as proof of payment, admission, approval, eligibility, employment, or credential authenticity.
 
-The relevant application service must validate business rules before preparing the template data.
+The relevant application service must validate business rules before preparing template data.
 
 ## 7. Security and Privacy
 
@@ -224,7 +221,7 @@ The relevant application service must validate business rules before preparing t
 
 ## 8. Integration Boundaries
 
-| Module | Responsibility |
+| Module | Intended responsibility |
 |—|—|
 | `src/controllers/` | Handles authorized requests and standardized responses |
 | `src/services/` | Coordinates workflows and prepares validated presentation data |
@@ -251,6 +248,7 @@ Where supported by the application architecture:
 - Apply bounded retries to transient provider or renderer failures.
 - Clean up temporary files after document generation.
 - Record operational metadata without logging secrets or complete confidential content.
+- Prevent retries from producing duplicate payment, application, or subscription notifications.
 
 A successful rendering operation does not guarantee successful email delivery. A successful email-provider response does not necessarily guarantee that a recipient read the message.
 
@@ -271,6 +269,7 @@ Do not document these capabilities as implemented until they have been verified.
 - [ ] Missing values do not expose raw placeholders.
 - [ ] Long text and special characters render correctly.
 - [ ] Financial values and dates are formatted consistently.
+- [ ] Rendering failures do not produce partially populated transactional messages.
 
 ### Email templates
 
@@ -299,6 +298,7 @@ Do not document these capabilities as implemented until they have been verified.
 - [ ] Token expiry and single-use behavior are verified.
 - [ ] URL and renderer restrictions are tested.
 - [ ] Synthetic data is used in automated tests.
+- [ ] Private document links enforce authorization and expiry where required.
 
 ## 11. Maintenance and Implementation Status
 
@@ -329,4 +329,4 @@ The presence of a template or README does not prove that its associated applicat
 
 **MedOrbits — Study · Work · Grow**
 
-Reusable templates designed for consistent presentation, data integrity, privacy, and controlled access.
+*Reusable templates designed for consistent presentation, data integrity, privacy, and controlled access.*

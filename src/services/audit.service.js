@@ -1,35 +1,42 @@
-
 'use strict';
 
 const {
   ServiceError,
   requireDependency,
   requiredString,
-  requiredId,
   plainObject,
 } = require('./service-utils');
 
-const REDACT = /password|passphrase|token|secret|authorization|cookie|paymentMethod|cardNumber|cvv|cvc|documentContent|documentData|privateKey|apiKey|accessKey|refreshToken|sessionToken|credential|otp|recoveryCode|bankAccount|accountNumber/i;
+const REDACT = /password|passphrase|token|secret|authorization|cookie|paymentMethod|cardNumber|cvv|cvc|documentContent|documentData|privateKey|apiKey|accessKey|refreshToken|sessionToken|credential|otp|recoveryCode|bankAccount|accountNumber|securityCode|clientSecret|webhookSecret|signature/i;
 
 const MAX_DEPTH = 5;
 const MAX_ITEMS = 50;
 const MAX_STRING_LENGTH = 500;
+const MAX_KEY_LENGTH = 100;
 const MAX_METADATA_BYTES = 16_384;
+const MAX_ACTION_LENGTH = 160;
+const MAX_ENTITY_LENGTH = 100;
+const MAX_ID_LENGTH = 128;
+const MAX_REQUEST_ID_LENGTH = 128;
+const MAX_IP_LENGTH = 64;
+const MAX_CURSOR_LENGTH = 512;
+const MAX_LIMIT = 100;
 
 function redact(value, depth = 0, seen = new WeakSet()) {
-  if (value == null) return value;
+  if (value == null) {
+    return value;
+  }
 
   if (typeof value === 'string') {
     return value.slice(0, MAX_STRING_LENGTH);
   }
 
-  if (
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return Number.isFinite(value) || typeof value === 'boolean'
-      ? value
-      : null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
   }
 
   if (typeof value !== 'object') {
@@ -51,14 +58,21 @@ function redact(value, depth = 0, seen = new WeakSet()) {
   if (Array.isArray(value)) {
     output = value
       .slice(0, MAX_ITEMS)
-      .map((item) => redact(item, depth + 1, seen));
+      .map((item) => redact(item, depth + 1, seen))
+      .map((item) =>
+        item === undefined ? null : item
+      );
   } else {
-    output = {};
+    output = Object.create(null);
 
-    for (const [key, item] of Object.entries(value).slice(0, MAX_ITEMS)) {
-      if (REDACT.test(key)) continue;
+    for (
+      const [key, item] of Object.entries(value).slice(0, MAX_ITEMS)
+    ) {
+      if (REDACT.test(key)) {
+        continue;
+      }
 
-      const safeKey = key.slice(0, 100);
+      const safeKey = key.slice(0, MAX_KEY_LENGTH);
       const safeValue = redact(item, depth + 1, seen);
 
       if (safeValue !== undefined) {
@@ -71,22 +85,50 @@ function redact(value, depth = 0, seen = new WeakSet()) {
   return output;
 }
 
-function normalizeOptionalId(value, field, max = 128) {
-  if (value == null || value === '') return null;
+function normalizeOptionalId(value, field, max = MAX_ID_LENGTH) {
+  if (value == null || value === '') {
+    return null;
+  }
 
-  const result = requiredString(String(value), field, {
-    max,
-  });
+  if (
+    typeof value !== 'string' &&
+    typeof value !== 'number'
+  ) {
+    throw new ServiceError(
+      `${field} must be a string or number.`,
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
 
-  return result;
+  return requiredString(String(value), field, { max });
 }
 
 function normalizeDate(value, field) {
-  if (value == null || value === '') return undefined;
+  if (value == null || value === '') {
+    return undefined;
+  }
 
-  const date = value instanceof Date
-    ? new Date(value.getTime())
-    : new Date(value);
+  if (
+    typeof value !== 'string' &&
+    typeof value !== 'number' &&
+    !(value instanceof Date)
+  ) {
+    throw new ServiceError(
+      `${field} must be a valid date.`,
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
+
+  const date =
+    value instanceof Date
+      ? new Date(value.getTime())
+      : new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     throw new ServiceError(
@@ -102,9 +144,15 @@ function normalizeDate(value, field) {
 }
 
 function normalizeLimit(value, fallback = 50) {
-  const parsed = Number(value);
+  if (value == null || value === '') {
+    return fallback;
+  }
 
-  if (value == null || value === '') return fallback;
+  const parsed =
+    typeof value === 'number' ||
+    typeof value === 'string'
+      ? Number(value)
+      : NaN;
 
   if (!Number.isSafeInteger(parsed) || parsed < 1) {
     throw new ServiceError(
@@ -116,7 +164,74 @@ function normalizeLimit(value, fallback = 50) {
     );
   }
 
-  return Math.min(parsed, 100);
+  return Math.min(parsed, MAX_LIMIT);
+}
+
+function validateIpAddress(value) {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  const ipAddress = requiredString(
+    String(value),
+    'ipAddress',
+    { max: MAX_IP_LENGTH }
+  );
+
+  // Reject control characters and whitespace. Full IP address
+  // validation should use a trusted IP parsing utility.
+  if (/[\s\u0000-\u001f\u007f]/.test(ipAddress)) {
+    throw new ServiceError(
+      'ipAddress has an invalid format.',
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
+
+  return ipAddress;
+}
+
+function serializeMetadata(metadata) {
+  let serialized;
+
+  try {
+    serialized = JSON.stringify(metadata);
+  } catch {
+    throw new ServiceError(
+      'Audit metadata could not be serialized.',
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
+
+  if (typeof serialized !== 'string') {
+    throw new ServiceError(
+      'Audit metadata must be serializable.',
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
+
+  if (
+    Buffer.byteLength(serialized, 'utf8') >
+    MAX_METADATA_BYTES
+  ) {
+    throw new ServiceError(
+      'Audit metadata exceeds the allowed size.',
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      }
+    );
+  }
+
+  return metadata;
 }
 
 function createAuditService({
@@ -137,86 +252,55 @@ function createAuditService({
 
   return {
     async record(event) {
-      if (
-        !event ||
-        typeof event !== 'object' ||
-        Array.isArray(event)
-      ) {
-        throw new ServiceError(
-          'Audit event must be an object.',
-          {
-            code: 'VALIDATION_ERROR',
-            status: 422,
-          }
-        );
-      }
+      const input = plainObject(event, 'event');
 
       const action = requiredString(
-        event.action,
+        input.action,
         'action',
-        { max: 160 }
+        {
+          min: 1,
+          max: MAX_ACTION_LENGTH,
+        }
       );
 
-      const entity = event.entity == null
-        ? null
-        : requiredString(String(event.entity), 'entity', {
-            max: 100,
-          });
+      const entity =
+        input.entity == null
+          ? null
+          : requiredString(
+              String(input.entity),
+              'entity',
+              {
+                min: 1,
+                max: MAX_ENTITY_LENGTH,
+              }
+            );
 
       const entityId = normalizeOptionalId(
-        event.entityId,
+        input.entityId,
         'entityId'
       );
 
       const actorId = normalizeOptionalId(
-        event.actorId,
+        input.actorId,
         'actorId'
       );
 
       const requestId = normalizeOptionalId(
-        event.requestId,
-        'requestId'
+        input.requestId,
+        'requestId',
+        MAX_REQUEST_ID_LENGTH
       );
 
-      const ipAddress = normalizeOptionalId(
-        event.ipAddress,
-        'ipAddress',
-        64
+      const ipAddress = validateIpAddress(input.ipAddress);
+
+      const metadataInput =
+        input.metadata == null
+          ? {}
+          : plainObject(input.metadata, 'metadata');
+
+      const metadata = serializeMetadata(
+        redact(metadataInput)
       );
-
-      const metadataInput = event.metadata == null
-        ? {}
-        : plainObject(event.metadata, 'metadata');
-
-      const metadata = redact(metadataInput);
-
-      // Bound serialized metadata size before persistence.
-      let serializedMetadata;
-
-      try {
-        serializedMetadata = JSON.stringify(metadata);
-      } catch {
-        throw new ServiceError(
-          'Audit metadata could not be serialized.',
-          {
-            code: 'VALIDATION_ERROR',
-            status: 422,
-          }
-        );
-      }
-
-      if (
-        Buffer.byteLength(serializedMetadata, 'utf8') >
-        MAX_METADATA_BYTES
-      ) {
-        throw new ServiceError(
-          'Audit metadata exceeds the allowed size.',
-          {
-            code: 'VALIDATION_ERROR',
-            status: 422,
-          }
-        );
-      }
 
       const createdAt = clock();
 
@@ -240,6 +324,8 @@ function createAuditService({
         createdAt: new Date(createdAt.getTime()),
       };
 
+      // The repository should enforce append-only behavior and
+      // appropriate access controls for audit records.
       return auditRepository.create(entry);
     },
 
@@ -247,20 +333,12 @@ function createAuditService({
       return this.record(event);
     },
 
+    async write(event) {
+      return this.record(event);
+    },
+
     async list(query = {}) {
-      if (
-        !query ||
-        typeof query !== 'object' ||
-        Array.isArray(query)
-      ) {
-        throw new ServiceError(
-          'Audit query must be an object.',
-          {
-            code: 'VALIDATION_ERROR',
-            status: 422,
-          }
-        );
-      }
+      const input = plainObject(query, 'query');
 
       if (typeof auditRepository.list !== 'function') {
         throw new TypeError(
@@ -268,9 +346,9 @@ function createAuditService({
         );
       }
 
-      const limit = normalizeLimit(query.limit, 50);
-      const from = normalizeDate(query.from, 'from');
-      const to = normalizeDate(query.to, 'to');
+      const limit = normalizeLimit(input.limit, 50);
+      const from = normalizeDate(input.from, 'from');
+      const to = normalizeDate(input.to, 'to');
 
       if (from && to && from > to) {
         throw new ServiceError(
@@ -282,43 +360,63 @@ function createAuditService({
         );
       }
 
-      const cursor = query.cursor == null
-        ? undefined
-        : requiredString(query.cursor, 'cursor', {
-            max: 512,
-          });
+      const cursor =
+        input.cursor == null
+          ? undefined
+          : requiredString(
+              input.cursor,
+              'cursor',
+              {
+                min: 1,
+                max: MAX_CURSOR_LENGTH,
+              }
+            );
 
-      const filters = {
-        limit,
-        cursor,
-      };
+      const filters = { limit };
 
-      if (query.actorId != null && query.actorId !== '') {
+      if (cursor !== undefined) {
+        filters.cursor = cursor;
+      }
+
+      if (input.actorId != null && input.actorId !== '') {
         filters.actorId = normalizeOptionalId(
-          query.actorId,
+          input.actorId,
           'actorId'
         );
       }
 
-      if (query.entity != null && query.entity !== '') {
+      if (input.entity != null && input.entity !== '') {
         filters.entity = requiredString(
-          query.entity,
+          input.entity,
           'entity',
-          { max: 100 }
+          {
+            min: 1,
+            max: MAX_ENTITY_LENGTH,
+          }
         );
       }
 
-      if (query.action != null && query.action !== '') {
+      if (input.action != null && input.action !== '') {
         filters.action = requiredString(
-          query.action,
+          input.action,
           'action',
-          { max: 160 }
+          {
+            min: 1,
+            max: MAX_ACTION_LENGTH,
+          }
         );
       }
 
-      if (from) filters.from = from;
-      if (to) filters.to = to;
+      if (from) {
+        filters.from = from;
+      }
 
+      if (to) {
+        filters.to = to;
+      }
+
+      // Authorization for audit-log access must be enforced by
+      // the calling service/controller or an explicit policy layer.
       return auditRepository.list(filters);
     },
   };
@@ -327,4 +425,6 @@ function createAuditService({
 module.exports = {
   createAuditService,
   redact,
+  normalizeDate,
+  normalizeLimit,
 };

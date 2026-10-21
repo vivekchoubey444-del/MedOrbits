@@ -1,100 +1,197 @@
+
 'use strict';
+
 /**
  * MedOrbits -- Repository Integration Tests
  *
  * File: tests/integration/repositories.integration.test.js
+ * Runtime: Node.js >= 20
  *
- * Purpose:
- * - Verify persisted records can be retrieved consistently.
- * - Verify user-scoped records remain isolated between users.
- * - Verify malformed and invalid identifiers are handled safely.
- * - Verify unauthorized requests cannot access protected repository data.
- * - Verify repository-backed writes persist across independent requests.
- * - Verify deleting or updating a record respects ownership.
- *
- * Runtime:
- *   Node.js >= 20
- *
- * Run:
- *   node --test tests/integration/repositories.integration.test.js
- *
- * Optional environment variables:
- *   TEST_BASE_URL
- *   REPOSITORY_TEST_BASE_URL
- *   REPOSITORY_TEST_PATH
- *   REPOSITORY_TEST_ITEM_PATH
- *   REPOSITORY_TEST_USER_A_TOKEN
- *   REPOSITORY_TEST_USER_B_TOKEN
- *   REPOSITORY_TEST_ITEM_ID
- *   REPOSITORY_TEST_RESOURCE
- *   REPOSITORY_TEST_TIMEOUT_MS
- *   RUN_MUTATING_REPOSITORY_TESTS=true
+ * Coverage:
+ * - Collection endpoint availability
+ * - Authentication and authorization
+ * - Record retrieval and response consistency
+ * - Malformed and unknown identifiers
+ * - Cross-user ownership isolation
+ * - Create and read-after-write persistence
+ * - Invalid payload handling
+ * - Protected-field mass assignment
+ * - Cross-user deletion protection
+ * - Sensitive information disclosure
  *
  * IMPORTANT:
- * The default endpoints are examples. Configure the paths and tokens to
- * match the actual MedOrbits API and test database. These tests do not
- * directly import repository modules because their actual paths and
- * interfaces must be confirmed in the application source.
+ * Configure paths and payloads to match the actual MedOrbits API.
+ * Never run mutation tests against production.
  */
-const test = require('node:test');
+
+const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+
 const BASE_URL = (
   process.env.REPOSITORY_TEST_BASE_URL ||
   process.env.TEST_BASE_URL ||
   'http://127.0.0.1:3000'
 ).replace(/\/+$/, '');
+
 const COLLECTION_PATH =
   process.env.REPOSITORY_TEST_PATH || '/api/applications';
+
 const ITEM_PATH_TEMPLATE =
-  process.env.REPOSITORY_TEST_ITEM_PATH || `${COLLECTION_PATH}/:id`;
+  process.env.REPOSITORY_TEST_ITEM_PATH ||
+  `${COLLECTION_PATH}/:id`;
+
 const USER_A_TOKEN =
   process.env.REPOSITORY_TEST_USER_A_TOKEN || '';
+
 const USER_B_TOKEN =
   process.env.REPOSITORY_TEST_USER_B_TOKEN || '';
+
 const EXISTING_ITEM_ID =
   process.env.REPOSITORY_TEST_ITEM_ID || '';
+
 const RESOURCE_NAME =
   process.env.REPOSITORY_TEST_RESOURCE || 'repository-test';
+
 const TIMEOUT_MS = Number(
   process.env.REPOSITORY_TEST_TIMEOUT_MS || 10000
 );
+
 const RUN_MUTATING_TESTS =
   process.env.RUN_MUTATING_REPOSITORY_TESTS === 'true';
+
+const ALLOW_REMOTE_MUTATIONS =
+  process.env.REPOSITORY_TEST_ALLOW_REMOTE_MUTATIONS === 'true';
+
 const JSON_HEADERS = {
   Accept: 'application/json',
   'Content-Type': 'application/json',
 };
+
+function validateConfiguration() {
+  let base;
+
+  try {
+    base = new URL(BASE_URL);
+  } catch {
+    assert.fail('REPOSITORY_TEST_BASE_URL must be a valid URL.');
+  }
+
+  assert.ok(
+    ['http:', 'https:'].includes(base.protocol),
+    'Repository test URL must use HTTP or HTTPS.'
+  );
+
+  assert.ok(
+    Number.isFinite(TIMEOUT_MS) &&
+      Number.isInteger(TIMEOUT_MS) &&
+      TIMEOUT_MS > 0,
+    'REPOSITORY_TEST_TIMEOUT_MS must be a positive integer.'
+  );
+
+  for (const [name, path] of Object.entries({
+    COLLECTION_PATH,
+    ITEM_PATH_TEMPLATE,
+  })) {
+    assert.ok(
+      typeof path === 'string' &&
+        path.startsWith('/') &&
+        !path.startsWith('//'),
+      `${name} must start with exactly one slash.`
+    );
+
+    assert.ok(
+      !/[\r\n]/.test(path),
+      `${name} must not contain newline characters.`
+    );
+  }
+
+  if (RUN_MUTATING_TESTS) {
+    assert.equal(
+      process.env.NODE_ENV,
+      'test',
+      'Mutating tests require NODE_ENV=test.'
+    );
+
+    const isLoopback = [
+      'localhost',
+      '127.0.0.1',
+      '::1',
+    ].includes(base.hostname.toLowerCase());
+
+    assert.ok(
+      isLoopback || ALLOW_REMOTE_MUTATIONS,
+      'Remote mutations are blocked. Use an isolated test API or explicitly enable remote test mutations.'
+    );
+
+    assert.ok(
+      USER_A_TOKEN,
+      'Mutating tests require REPOSITORY_TEST_USER_A_TOKEN.'
+    );
+  }
+}
+
 function makeTestMarker() {
   return `${RESOURCE_NAME}-${crypto.randomUUID()}`;
 }
+
 function buildItemPath(id) {
+  assert.ok(
+    id !== undefined && id !== null && String(id).length > 0,
+    'Record ID must not be empty.'
+  );
+
   const encodedId = encodeURIComponent(String(id));
+
   if (ITEM_PATH_TEMPLATE.includes(':id')) {
     return ITEM_PATH_TEMPLATE.replace(':id', encodedId);
   }
+
   return `${ITEM_PATH_TEMPLATE.replace(/\/+$/, '')}/${encodedId}`;
 }
+
 function authHeaders(token) {
   return {
     ...JSON_HEADERS,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
+
+function urlFor(path) {
+  const base = new URL(BASE_URL);
+  const url = new URL(path, `${BASE_URL}/`);
+
+  assert.equal(
+    url.origin,
+    base.origin,
+    'Request must not change the configured API origin.'
+  );
+
+  return url;
+}
+
 async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  const timeout = setTimeout(
+    () => controller.abort(),
+    TIMEOUT_MS
+  );
+
   try {
-    const response = await fetch(`${BASE_URL}${path}`, {
+    const response = await fetch(urlFor(path), {
       ...options,
       headers: {
         ...JSON_HEADERS,
         ...(options.headers || {}),
       },
       signal: controller.signal,
+      redirect: 'manual',
     });
+
     const rawBody = await response.text();
     let body = null;
+
     if (rawBody) {
       try {
         body = JSON.parse(rawBody);
@@ -102,6 +199,7 @@ async function request(path, options = {}) {
         body = rawBody;
       }
     }
+
     return {
       status: response.status,
       headers: response.headers,
@@ -111,14 +209,17 @@ async function request(path, options = {}) {
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error(
-        `Request timed out after ${TIMEOUT_MS}ms: ${options.method || 'GET'} ${path}`
+        `Request timed out after ${TIMEOUT_MS}ms: ` +
+        `${options.method || 'GET'} ${path}`
       );
     }
+
     throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
+
 function isJsonObject(value) {
   return (
     value !== null &&
@@ -126,57 +227,61 @@ function isJsonObject(value) {
     !Array.isArray(value)
   );
 }
+
 function extractRecord(body) {
   if (!isJsonObject(body)) {
     return null;
   }
-  if (isJsonObject(body.data)) {
-    return body.data;
+
+  for (const key of [
+    'record',
+    'application',
+    'item',
+    'data',
+  ]) {
+    if (isJsonObject(body[key])) {
+      return body[key];
+    }
   }
-  if (isJsonObject(body.record)) {
-    return body.record;
-  }
-  if (isJsonObject(body.application)) {
-    return body.application;
-  }
-  if (isJsonObject(body.item)) {
-    return body.item;
-  }
+
   return body;
 }
+
 function extractRecords(body) {
   if (Array.isArray(body)) {
     return body;
   }
+
   if (!isJsonObject(body)) {
     return null;
   }
-  if (Array.isArray(body.data)) {
-    return body.data;
+
+  for (const key of [
+    'records',
+    'applications',
+    'items',
+    'data',
+  ]) {
+    if (Array.isArray(body[key])) {
+      return body[key];
+    }
   }
-  if (Array.isArray(body.items)) {
-    return body.items;
-  }
-  if (Array.isArray(body.records)) {
-    return body.records;
-  }
-  if (Array.isArray(body.applications)) {
-    return body.applications;
-  }
+
   return null;
 }
+
 function assertStatus(response, expectedStatuses, context) {
   assert.ok(
     expectedStatuses.includes(response.status),
     `${context}: expected HTTP ${expectedStatuses.join(' or ')}, ` +
-      `received ${response.status}. Response: ${JSON.stringify(response.body)}`
+    `received ${response.status}. Response: ` +
+    `${JSON.stringify(response.body)}`
   );
 }
+
 function assertSafeErrorResponse(response) {
-  if (!isJsonObject(response.body)) {
-    return;
-  }
-  const serialized = JSON.stringify(response.body);
+  const serialized = JSON.stringify(response.body ?? '');
+
   const sensitivePatterns = [
     /password\s*["']?\s*:/i,
     /passwordHash/i,
@@ -184,19 +289,24 @@ function assertSafeErrorResponse(response) {
     /privateKey/i,
     /databaseUrl/i,
     /DATABASE_URL/i,
+    /refreshToken/i,
+    /accessToken/i,
   ];
+
   for (const pattern of sensitivePatterns) {
     assert.equal(
       pattern.test(serialized),
       false,
-      `Error response may expose sensitive information matching ${pattern}`
+      `Error response may expose sensitive information matching ${pattern}.`
     );
   }
 }
+
 function assertNoCredentialFields(record) {
   if (!isJsonObject(record)) {
     return;
   }
+
   const forbiddenKeys = new Set([
     'password',
     'passwordHash',
@@ -210,120 +320,152 @@ function assertNoCredentialFields(record) {
     'secretAccessKey',
     'privateKey',
   ]);
+
   for (const key of Object.keys(record)) {
     assert.equal(
       forbiddenKeys.has(key),
       false,
-      `Repository response must not expose credential field "${key}"`
+      `Repository response must not expose credential field "${key}".`
     );
   }
 }
-function isAcceptedCreateStatus(status) {
-  return [200, 201, 202].includes(status);
-}
+
 function canRunAuthenticatedTests() {
   return Boolean(USER_A_TOKEN);
 }
+
 function canRunOwnershipTests() {
-  return Boolean(USER_A_TOKEN && USER_B_TOKEN && EXISTING_ITEM_ID);
-}
-function canRunMutationTests() {
   return Boolean(
-    RUN_MUTATING_TESTS &&
-    USER_A_TOKEN
+    USER_A_TOKEN &&
+    USER_B_TOKEN &&
+    EXISTING_ITEM_ID &&
+    USER_A_TOKEN !== USER_B_TOKEN
   );
 }
-function skipIf(condition, reason) {
-  return condition ? reason : false;
+
+function canRunMutationTests() {
+  return RUN_MUTATING_TESTS && Boolean(USER_A_TOKEN);
 }
-test('repository integration test configuration is valid', () => {
-  assert.doesNotThrow(() => new URL(BASE_URL));
-  assert.ok(
-    COLLECTION_PATH.startsWith('/'),
-    'REPOSITORY_TEST_PATH must be an absolute URL path beginning with "/"'
+
+function acceptedCreateStatus(status) {
+  return [200, 201, 202].includes(status);
+}
+
+function getRecordId(record) {
+  if (!isJsonObject(record)) {
+    return null;
+  }
+
+  return (
+    record.id ??
+    record._id ??
+    record.applicationId ??
+    record.recordId ??
+    null
   );
-  assert.ok(
-    ITEM_PATH_TEMPLATE.startsWith('/'),
-    'REPOSITORY_TEST_ITEM_PATH must begin with "/"'
-  );
-  assert.ok(
-    Number.isInteger(TIMEOUT_MS) && TIMEOUT_MS > 0,
-    'REPOSITORY_TEST_TIMEOUT_MS must be a positive integer'
-  );
+}
+
+test('repository integration configuration is valid', () => {
+  validateConfiguration();
 });
-test('repository-backed collection endpoint responds consistently', async (t) => {
+
+test('authenticated collection retrieval returns a recognized response', async (t) => {
   if (!canRunAuthenticatedTests()) {
-    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN to enable authenticated repository tests.');
+    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN.');
     return;
   }
+
   const response = await request(COLLECTION_PATH, {
     method: 'GET',
     headers: authHeaders(USER_A_TOKEN),
   });
+
   assertStatus(
     response,
     [200, 204],
     'Authenticated collection retrieval'
   );
+
   if (response.status === 200) {
     const records = extractRecords(response.body);
+
     assert.ok(
       records !== null,
-      'Collection endpoint should return an array or a recognized collection envelope.'
+      'Collection endpoint must return an array or a recognized collection envelope.'
     );
+
     for (const record of records) {
       assertNoCredentialFields(record);
     }
   }
 });
-test('repository-backed collection rejects unauthenticated access when protected', async () => {
+
+test('unauthenticated collection access follows endpoint policy', async () => {
   const response = await request(COLLECTION_PATH, {
     method: 'GET',
     headers: JSON_HEADERS,
   });
-  // Public collection endpoints may legitimately return 200 or 204.
-  // Protected endpoints should reject requests without credentials.
+
   assert.ok(
-    [200, 204, 401, 403].includes(response.status),
-    `Unexpected status for unauthenticated collection request: ${response.status}`
+    [200, 204, 401, 403, 404].includes(response.status),
+    `Unexpected unauthenticated collection status: ${response.status}.`
   );
-  if ([401, 403].includes(response.status)) {
+
+  if ([401, 403, 404].includes(response.status)) {
     assertSafeErrorResponse(response);
+  } else if (response.status === 200) {
+    assert.ok(
+      extractRecords(response.body) !== null,
+      'A public collection endpoint must return a recognized collection.'
+    );
   }
 });
-test('repository-backed collection rejects an invalid bearer token when protected', async () => {
+
+test('invalid bearer token cannot authorize protected collection access', async () => {
   const response = await request(COLLECTION_PATH, {
     method: 'GET',
     headers: authHeaders('invalid.repository.test.token'),
   });
+
   assert.ok(
-    [200, 204, 401, 403].includes(response.status),
-    `Unexpected status for invalid-token request: ${response.status}`
+    [200, 204, 401, 403, 404].includes(response.status),
+    `Unexpected invalid-token response: ${response.status}.`
   );
-  if ([401, 403].includes(response.status)) {
+
+  if ([401, 403, 404].includes(response.status)) {
     assertSafeErrorResponse(response);
   }
 });
-test('repository-backed item retrieval handles a malformed identifier safely', async (t) => {
+
+test('malformed record identifiers are rejected safely', async (t) => {
   if (!canRunAuthenticatedTests()) {
-    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN to enable authenticated repository tests.');
+    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN.');
     return;
   }
-  const response = await request(buildItemPath('..%2F..%2Fadmin'), {
-    method: 'GET',
-    headers: authHeaders(USER_A_TOKEN),
-  });
+
+  // URL-encode a traversal-like identifier as one path segment.
+  const response = await request(
+    buildItemPath('../../admin'),
+    {
+      method: 'GET',
+      headers: authHeaders(USER_A_TOKEN),
+    }
+  );
+
   assert.ok(
     [400, 403, 404, 422].includes(response.status),
-    `Malformed identifiers should be rejected; received ${response.status}`
+    `Malformed identifier should be rejected; received HTTP ${response.status}.`
   );
+
   assertSafeErrorResponse(response);
 });
-test('repository-backed item retrieval handles an unknown identifier safely', async (t) => {
+
+test('unknown record identifiers do not return successful records', async (t) => {
   if (!canRunAuthenticatedTests()) {
-    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN to enable authenticated repository tests.');
+    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN.');
     return;
   }
+
   const response = await request(
     buildItemPath(`missing-${crypto.randomUUID()}`),
     {
@@ -331,145 +473,208 @@ test('repository-backed item retrieval handles an unknown identifier safely', as
       headers: authHeaders(USER_A_TOKEN),
     }
   );
+
   assert.ok(
     [400, 403, 404, 422].includes(response.status),
-    `Unknown identifier should not return a successful record; received ${response.status}`
+    `Unknown ID should not return a successful record; received HTTP ${response.status}.`
   );
+
   assertSafeErrorResponse(response);
 });
-test('repository-backed item responses do not expose credential fields', async (t) => {
+
+test('item retrieval does not expose credential fields', async (t) => {
   if (!canRunAuthenticatedTests() || !EXISTING_ITEM_ID) {
     t.skip(
-      'Set REPOSITORY_TEST_USER_A_TOKEN and REPOSITORY_TEST_ITEM_ID to enable this test.'
+      'Set REPOSITORY_TEST_USER_A_TOKEN and REPOSITORY_TEST_ITEM_ID.'
     );
     return;
   }
-  const response = await request(buildItemPath(EXISTING_ITEM_ID), {
-    method: 'GET',
-    headers: authHeaders(USER_A_TOKEN),
-  });
-  assertStatus(response, [200, 403, 404], 'Item retrieval');
+
+  const response = await request(
+    buildItemPath(EXISTING_ITEM_ID),
+    {
+      method: 'GET',
+      headers: authHeaders(USER_A_TOKEN),
+    }
+  );
+
+  assertStatus(
+    response,
+    [200, 403, 404],
+    'Repository item retrieval'
+  );
+
   if (response.status === 200) {
     const record = extractRecord(response.body);
+
     assert.ok(
       isJsonObject(record),
-      'Successful item retrieval should return a record object.'
+      'Successful item retrieval must return a record object.'
     );
+
     assertNoCredentialFields(record);
   } else {
     assertSafeErrorResponse(response);
   }
 });
-test("repository does not allow one user to read another user's record", async (t) => {
+
+test("User B cannot read User A's private record", async (t) => {
   if (!canRunOwnershipTests()) {
     t.skip(
-      'Set REPOSITORY_TEST_USER_A_TOKEN, REPOSITORY_TEST_USER_B_TOKEN, and REPOSITORY_TEST_ITEM_ID.'
+      'Configure distinct User A and User B tokens and a record owned by User A.'
     );
     return;
   }
-  // The supplied item ID must belong to User A for this test to be meaningful.
-  // A 404 is acceptable when the API conceals records the caller cannot access.
-  const response = await request(buildItemPath(EXISTING_ITEM_ID), {
-    method: 'GET',
-    headers: authHeaders(USER_B_TOKEN),
-  });
+
+  const response = await request(
+    buildItemPath(EXISTING_ITEM_ID),
+    {
+      method: 'GET',
+      headers: authHeaders(USER_B_TOKEN),
+    }
+  );
+
   assert.ok(
     [403, 404].includes(response.status),
-    `Cross-user access should be denied or concealed; received ${response.status}`
+    `Cross-user access must be denied or concealed; received HTTP ${response.status}.`
   );
+
   assertSafeErrorResponse(response);
 });
-test('repository-backed create persists a record across separate requests', async (t) => {
+
+test('create operation persists a record across independent requests', async (t) => {
   if (!canRunMutationTests()) {
     t.skip(
-      'Set RUN_MUTATING_REPOSITORY_TESTS=true and REPOSITORY_TEST_USER_A_TOKEN to enable write tests.'
+      'Set NODE_ENV=test, RUN_MUTATING_REPOSITORY_TESTS=true, and REPOSITORY_TEST_USER_A_TOKEN.'
     );
     return;
   }
+
   const marker = makeTestMarker();
-  // This payload is intentionally generic. Set REPOSITORY_TEST_RESOURCE and
-  // adapt the fields below if the application requires a domain-specific DTO.
+
+  // Adapt this DTO to the actual collection's required fields.
   const payload = {
     title: marker,
     name: marker,
     description: 'Automated repository integration test record.',
     testMarker: marker,
   };
+
   const createResponse = await request(COLLECTION_PATH, {
     method: 'POST',
     headers: authHeaders(USER_A_TOKEN),
     body: JSON.stringify(payload),
   });
-  if (!isAcceptedCreateStatus(createResponse.status)) {
+
+  if (!acceptedCreateStatus(createResponse.status)) {
     assert.ok(
-      [400, 401, 403, 404, 405, 409, 415, 422].includes(createResponse.status),
-      `Unexpected create response: ${createResponse.status}`
+      [
+        400, 401, 403, 404, 405,
+        409, 413, 415, 422, 429,
+      ].includes(createResponse.status),
+      `Unexpected create response: HTTP ${createResponse.status}.`
     );
+
+    assertSafeErrorResponse(createResponse);
+
     t.diagnostic(
-      'Creation was not accepted. The API may require a domain-specific payload or a different route.'
+      'Create was not accepted. Check the actual route, permissions, and required DTO fields.'
     );
+
     return;
   }
-  const createdRecord = extractRecord(createResponse.body);
-  const createdId =
-    createdRecord?.id ??
-    createdRecord?._id ??
-    createdRecord?.applicationId;
+
   assert.ok(
-    createdId !== undefined && createdId !== null && String(createdId).length > 0,
-    'Successful creation should return the new record identifier.'
+    createResponse.status !== 204,
+    'Creation must return a record ID to perform read-after-write verification.'
   );
-  const readResponse = await request(buildItemPath(createdId), {
-    method: 'GET',
-    headers: authHeaders(USER_A_TOKEN),
-  });
+
+  const createdRecord = extractRecord(createResponse.body);
+  const createdId = getRecordId(createdRecord);
+
+  assert.ok(
+    createdId !== undefined &&
+      createdId !== null &&
+      String(createdId).length > 0,
+    'Successful creation must return the new record identifier.'
+  );
+
+  const readResponse = await request(
+    buildItemPath(createdId),
+    {
+      method: 'GET',
+      headers: authHeaders(USER_A_TOKEN),
+    }
+  );
+
   assertStatus(readResponse, [200], 'Read-after-create');
+
   const persistedRecord = extractRecord(readResponse.body);
+
   assert.ok(
     isJsonObject(persistedRecord),
-    'Read-after-create should return the persisted record.'
+    'Read-after-create must return a persisted record object.'
   );
-  const persistedValues = JSON.stringify(persistedRecord);
+
+  assert.equal(
+    String(getRecordId(persistedRecord)),
+    String(createdId),
+    'Retrieved record ID must match the created record ID.'
+  );
+
   assert.ok(
-    persistedValues.includes(marker),
-    'The newly created marker should be present in the persisted record.'
+    JSON.stringify(persistedRecord).includes(marker),
+    'The unique test marker must appear in the persisted record.'
   );
+
   assertNoCredentialFields(persistedRecord);
 });
-test('repository-backed creation rejects malformed payloads', async (t) => {
+
+test('creation rejects malformed payloads', async (t) => {
   if (!canRunMutationTests()) {
     t.skip(
-      'Set RUN_MUTATING_REPOSITORY_TESTS=true and REPOSITORY_TEST_USER_A_TOKEN to enable write tests.'
+      'Set NODE_ENV=test, RUN_MUTATING_REPOSITORY_TESTS=true, and REPOSITORY_TEST_USER_A_TOKEN.'
     );
     return;
   }
+
   const invalidPayloads = [
     null,
     [],
     { title: '' },
     { title: 'x'.repeat(10000) },
   ];
+
   for (const payload of invalidPayloads) {
     const response = await request(COLLECTION_PATH, {
       method: 'POST',
       headers: authHeaders(USER_A_TOKEN),
       body: JSON.stringify(payload),
     });
+
     assert.ok(
-      [400, 401, 403, 404, 405, 409, 415, 422].includes(response.status),
-      `Invalid payload should not be accepted; received ${response.status}`
+      [
+        400, 401, 403, 404, 405,
+        409, 413, 415, 422, 429,
+      ].includes(response.status),
+      `Malformed payload should not be accepted; received HTTP ${response.status}.`
     );
+
     assertSafeErrorResponse(response);
   }
 });
-test('repository-backed updates cannot modify protected ownership fields', async (t) => {
+
+test('updates cannot escalate privileges through client-supplied fields', async (t) => {
   if (!canRunMutationTests() || !EXISTING_ITEM_ID) {
     t.skip(
-      'Set RUN_MUTATING_REPOSITORY_TESTS=true, REPOSITORY_TEST_USER_A_TOKEN, and REPOSITORY_TEST_ITEM_ID.'
+      'Requires mutation opt-in, User A token, and REPOSITORY_TEST_ITEM_ID.'
     );
     return;
   }
-  const response = await request(buildItemPath(EXISTING_ITEM_ID), {
+
+  const path = buildItemPath(EXISTING_ITEM_ID);
+
+  const response = await request(path, {
     method: 'PATCH',
     headers: authHeaders(USER_A_TOKEN),
     body: JSON.stringify({
@@ -480,101 +685,141 @@ test('repository-backed updates cannot modify protected ownership fields', async
       permissions: ['admin'],
     }),
   });
+
   assert.ok(
     [200, 400, 403, 404, 405, 409, 422].includes(response.status),
-    `Unexpected update response: ${response.status}`
+    `Unexpected protected-field update response: HTTP ${response.status}.`
   );
-  if (response.status === 200) {
-    const record = extractRecord(response.body);
-    if (isJsonObject(record)) {
-      assert.notEqual(record.isAdmin, true);
-      assert.notDeepEqual(record.permissions, ['admin']);
-    }
-    // Re-read the record to verify the response was not merely sanitized
-    // while privileged values were persisted.
-    const reread = await request(buildItemPath(EXISTING_ITEM_ID), {
-      method: 'GET',
-      headers: authHeaders(USER_A_TOKEN),
-    });
-    if (reread.status === 200) {
-      const persisted = extractRecord(reread.body);
-      if (isJsonObject(persisted)) {
-        assert.notEqual(persisted.isAdmin, true);
-        assert.notDeepEqual(persisted.permissions, ['admin']);
-      }
-    }
-  } else {
+
+  if (response.status !== 200) {
     assertSafeErrorResponse(response);
+    return;
   }
+
+  // Verify persisted data, not just the potentially sanitized update response.
+  const reread = await request(path, {
+    method: 'GET',
+    headers: authHeaders(USER_A_TOKEN),
+  });
+
+  assertStatus(reread, [200], 'Re-read after protected-field update');
+
+  const persisted = extractRecord(reread.body);
+
+  assert.ok(
+    isJsonObject(persisted),
+    'Re-read must return a record object.'
+  );
+
+  assert.notEqual(
+    persisted.isAdmin,
+    true,
+    'An ordinary user must not gain administrator privileges.'
+  );
+
+  assert.notDeepEqual(
+    persisted.permissions,
+    ['admin'],
+    'Client input must not grant administrator permissions.'
+  );
+
+  assert.notEqual(
+    persisted.role,
+    'admin',
+    'Client input must not promote the user to an administrator role.'
+  );
+
+  assertNoCredentialFields(persisted);
 });
-test("repository-backed delete does not disclose another user's record", async (t) => {
-  if (!canRunMutationTests() || !canRunOwnershipTests()) {
+
+test("User B cannot delete User A's record", async (t) => {
+  if (!RUN_MUTATING_TESTS || !canRunOwnershipTests()) {
     t.skip(
-      'Requires RUN_MUTATING_REPOSITORY_TESTS=true, both user tokens, and REPOSITORY_TEST_ITEM_ID.'
+      'Requires mutation opt-in, distinct user tokens, and a record owned by User A.'
     );
     return;
   }
-  // This test deliberately uses User B against an item configured to belong
-  // to User A. It must not delete the record.
-  const response = await request(buildItemPath(EXISTING_ITEM_ID), {
+
+  const path = buildItemPath(EXISTING_ITEM_ID);
+
+  const response = await request(path, {
     method: 'DELETE',
     headers: authHeaders(USER_B_TOKEN),
   });
+
   assert.ok(
     [403, 404].includes(response.status),
-    `Cross-user deletion should be denied or concealed; received ${response.status}`
+    `Cross-user deletion must be denied or concealed; received HTTP ${response.status}.`
   );
+
   assertSafeErrorResponse(response);
-  // Verify the record remains accessible to its owner.
-  const ownerRead = await request(buildItemPath(EXISTING_ITEM_ID), {
+
+  // Confirm the owner can still access the record.
+  const ownerRead = await request(path, {
     method: 'GET',
     headers: authHeaders(USER_A_TOKEN),
   });
-  assertStatus(ownerRead, [200], 'Owner read after denied cross-user deletion');
+
+  assertStatus(
+    ownerRead,
+    [200],
+    'Owner read after denied cross-user deletion'
+  );
 });
-test('repository API returns consistent response formats', async (t) => {
+
+test('repeated collection requests return recognized response formats', async (t) => {
   if (!canRunAuthenticatedTests()) {
-    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN to enable authenticated repository tests.');
+    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN.');
     return;
   }
-  const first = await request(COLLECTION_PATH, {
+
+  const options = {
     method: 'GET',
     headers: authHeaders(USER_A_TOKEN),
-  });
-  const second = await request(COLLECTION_PATH, {
-    method: 'GET',
-    headers: authHeaders(USER_A_TOKEN),
-  });
-  assertStatus(first, [200, 204], 'First collection retrieval');
-  assertStatus(second, [200, 204], 'Second collection retrieval');
-  if (first.status === 200 && second.status === 200) {
+  };
+
+  const first = await request(COLLECTION_PATH, options);
+  const second = await request(COLLECTION_PATH, options);
+
+  assertStatus(first, [200, 204], 'First collection request');
+  assertStatus(second, [200, 204], 'Second collection request');
+
+  if (first.status === 200) {
     assert.ok(
       extractRecords(first.body) !== null,
-      'First response should use a recognized collection format.'
+      'First response must contain a recognized collection.'
     );
+  }
+
+  if (second.status === 200) {
     assert.ok(
       extractRecords(second.body) !== null,
-      'Second response should use a recognized collection format.'
+      'Second response must contain a recognized collection.'
     );
   }
 });
-test('repository errors do not expose database internals', async (t) => {
+
+test('repository errors do not disclose database internals', async (t) => {
   if (!canRunAuthenticatedTests()) {
-    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN to enable authenticated repository tests.');
+    t.skip('Set REPOSITORY_TEST_USER_A_TOKEN.');
     return;
   }
+
   const response = await request(
-    buildItemPath(`invalid-${crypto.randomUUID()}`),
+    buildItemPath(`missing-${crypto.randomUUID()}`),
     {
       method: 'GET',
       headers: authHeaders(USER_A_TOKEN),
     }
   );
+
   assert.ok(
     [400, 403, 404, 422].includes(response.status),
-    `Expected a safe not-found or validation response; received ${response.status}`
+    `Expected a safe validation or not-found response; received HTTP ${response.status}.`
   );
+
   const serialized = JSON.stringify(response.body ?? '');
+
   for (const pattern of [
     /SELECT\s+.+\s+FROM/i,
     /INSERT\s+INTO/i,
@@ -584,11 +829,12 @@ test('repository errors do not expose database internals', async (t) => {
     /PrismaClientKnownRequestError/i,
     /ECONNREFUSED/i,
     /\/node_modules\//i,
+    /DATABASE_URL/i,
   ]) {
     assert.equal(
       pattern.test(serialized),
       false,
-      `Response may expose internal database details matching ${pattern}`
+      `Response may expose internal database details matching ${pattern}.`
     );
   }
 });

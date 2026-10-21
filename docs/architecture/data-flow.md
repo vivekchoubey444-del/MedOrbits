@@ -1,205 +1,488 @@
-MedOrbits Application Data Flow
 
-Purpose: Document the intended request lifecycle, document-upload process, payment processing flow, and background-job execution model.
+# MedOrbits Application Data Flow
 
-Status: Architecture guidance. Verify the actual implementation, middleware order, storage provider, payment provider, and worker infrastructure before treating these flows as implemented behavior.
+**Directory:** `docs/architecture/`  
+**Document:** `application-data-flow.md`  
+**Status:** Architecture guidance — implementation verification required  
+**Scope:** HTTP requests, document uploads, payments, background jobs, consistency, and observability
 
-1. Typical HTTP Request
+## 1. Purpose
 
-A typical request follows this logical sequence:
+This document defines the intended data-flow architecture for MedOrbits, an education consultancy, admissions guidance, career services, recruitment, and student services platform.
 
-1. Request received: A browser requests a public page or calls an API endpoint.
-2. Request processing: The server applies configured request parsing, security headers, request identification, and rate limiting.
-3. Authentication: Authentication middleware identifies the current user for protected routes.
-4. Validation: Request parameters, headers, query values, and payloads are validated.
-5. Authorization: The server checks the requested action and verifies access to the target resource.
-6. Controller: The controller coordinates the request and delegates business operations.
-7. Service: The service applies business rules and interacts with repositories, databases, or external integrations.
-8. Persistence and side effects: Required database changes are committed, and external work is performed or enqueued according to the operation’s consistency requirements.
-9. Response: The server returns the documented HTTP status and response format.
-10. Observability: Safe operational logs and relevant audit events are recorded.
+It establishes security and reliability requirements for handling requests, personal documents, payments, asynchronous tasks, and database operations.
 
-Design requirements
+**Documentation rule:** A flow described here is not proof that the corresponding functionality exists. Verify the actual routes, middleware, controllers, services, database, storage provider, payment integration, queue, and deployment configuration before treating any flow as implemented.
 
-* Apply authentication and authorization on the server, not only in the frontend.
-* Validate input before passing it to business logic.
-* Enforce resource ownership for user-specific records.
-* Use transactions when related database changes must succeed or fail together.
-* Avoid logging passwords, session tokens, secrets, or unnecessary personal information.
-* Return consistent error responses without exposing internal stack traces.
-* Avoid treating an external API response as proof of a database transaction unless the result has been verified and persisted.
+## 2. Architecture Overview
 
-The exact middleware order, module names, transaction boundaries, and logging mechanisms must be verified against the running application.
+The logical application flow is:
 
-2. Document Upload Flow
+```text
+Client / Browser
+       |
+       v
+HTTP Server and Middleware
+       |
+       v
+Route Matching
+       |
+       v
+Authentication and Authorization
+       |
+       v
+Request Validation
+       |
+       v
+Controller
+       |
+       v
+Application Service
+       |
+       +——————+
+       |                  |
+       v                  v
+Repository / Database   External Integrations
+       |                  |
+       +———+———+
+                |
+                v
+        Response / Job Dispatch
+                |
+                v
+       Logging and Audit Events
+```
 
-Document uploads may include application records, identity documents, educational certificates, and other files submitted through MedOrbits services.
+This is a conceptual model. The deployed implementation may use a different middleware order or service structure.
 
-Intended sequence
+## 3. Typical HTTP Request
 
-1. Authenticate: Identify the user and verify access to the requested upload purpose.
-2. Validate request: Enforce file-size limits, allowed formats, content validation, and request limits.
-3. Generate a storage identifier: Assign a non-guessable identifier or storage key rather than relying on the original filename.
-4. Store privately: Save the file in private storage that is not publicly browsable.
-5. Persist metadata: Record the owner, document purpose, storage reference, file metadata, and applicable status.
-6. Verify persistence: Ensure the file and metadata are consistent; handle partial failures through a defined cleanup or reconciliation process.
-7. Review when required: Apply the configured document-review or verification workflow.
-8. Authorize retrieval: Check the requesting user’s permissions before allowing a preview or download.
-9. Audit and retain: Record sensitive actions where required and apply documented retention and deletion policies.
+### 3.1 Intended lifecycle
 
-Security and integrity requirements
+1. **Receive:** The server receives an HTTP request.
+2. **Identify:** Configured middleware assigns or propagates a request or correlation identifier.
+3. **Protect:** Security headers, request-size limits, rate limits, and other applicable protections are applied.
+4. **Parse:** The server parses the permitted content types and request formats.
+5. **Authenticate:** Protected routes identify the current user or service identity.
+6. **Validate:** Request parameters, headers, query values, and body fields are validated.
+7. **Authorize:** The server checks permissions, roles, ownership, and the requested state transition.
+8. **Execute:** The controller delegates business logic to an application service.
+9. **Persist:** The service performs database operations and coordinates required side effects.
+10. **Respond:** The server returns the documented HTTP status and response envelope.
+11. **Observe:** Operational logs, metrics, and audit events are recorded through configured mechanisms.
 
-* Never place private documents in publicly served asset directories.
-* Do not trust the filename, MIME type, or file extension supplied by the browser.
-* Validate file content and enforce upload limits on the server.
-* Use malware scanning or equivalent content inspection where appropriate for the accepted file types and risk profile.
-* Prevent path traversal and storage-key manipulation.
-* Restrict document access to authorized users and permitted administrative roles.
-* Use short-lived, access-controlled download links where signed URLs are appropriate.
-* Do not expose storage credentials or internal storage paths to the browser.
-* Define cleanup behavior for uploads that succeed in storage but fail during metadata persistence, and for metadata records whose files are missing.
-* Ensure deletion and retention behavior accounts for legal and operational requirements.
+The precise ordering of parsing, security middleware, authentication, validation, and error handling must match the deployed server.
 
-Failure handling: A failed upload must not leave an application displaying a completed upload when the file is unavailable. The system should return a safe error, record sufficient operational details, and clean up or reconcile incomplete records.
+### 3.2 Requirements
 
-3. Payment Flow
+- Enforce authentication and authorization on the server.
+- Validate input before executing business operations.
+- Verify ownership of applications, documents, notifications, payments, and other user-specific records.
+- Use transactions for related database changes that must be atomic.
+- Avoid logging credentials, authentication tokens, payment secrets, or unnecessary personal data.
+- Return consistent, sanitized error responses.
+- Do not treat an external service response as proof that a database transaction committed.
+- Prevent clients from setting protected fields such as roles, ownership identifiers, payment status, or calculated prices.
 
-Payment processing must rely on trusted server-side records and provider verification rather than browser-controlled state.
+### 3.3 Failure behavior
 
-Intended sequence
+Errors should be handled according to their actual cause:
 
-1. Create payment request: The server validates the purchase or subscription and creates a payment request with the configured provider.
-2. Record the payment attempt: Persist the internal payment reference and the provider order reference where applicable.
-3. Checkout: The browser completes the provider’s checkout flow.
-4. Receive provider event: The server receives a callback or webhook using the provider’s documented protocol.
-5. Verify authenticity: Verify the webhook signature using the provider’s required method and, where required, the exact raw request body.
-6. Validate transaction details: Check the internal order reference, provider reference, amount, currency, and permitted state transition.
-7. Apply the result: Update the payment record in an idempotent transaction, preventing duplicate events from applying the same financial change more than once.
-8. Update dependent state: Update the relevant subscription, application, or service entitlement only after the required payment conditions are satisfied.
-9. Report status: Return a status derived from trusted server-side records to the frontend.
-10. Reconcile: Detect and resolve discrepancies between internal payment records and provider records using the supported reconciliation process.
+| Condition | Expected behavior |
+|—|—|
+| Invalid input | Return a validation error without executing the operation |
+| Missing authentication | Reject access to protected resources |
+| Insufficient permission | Reject the operation without disclosing private records |
+| Missing resource | Return the application’s documented not-found response |
+| Dependency unavailable | Return a safe service error and preserve recoverable state |
+| Unexpected failure | Return a sanitized server error and record diagnostic context securely |
 
-Security and integrity requirements
+The status codes and error envelope must match the actual API contract.
 
-* Never treat a browser redirect or success page as proof of payment.
-* Never trust a client-submitted payment status.
-* Verify provider signatures and validate the event’s structure before processing it.
-* Confirm that the amount and currency match the expected transaction.
-* Use idempotency keys or provider event identifiers to prevent duplicate processing.
-* Apply valid state transitions and prevent stale events from incorrectly overwriting newer transaction states.
-* Do not store payment-provider secrets in frontend code.
-* Avoid storing raw payment-card details unless the architecture and compliance requirements explicitly permit it.
-* Record payment outcomes and reconciliation information without exposing sensitive payment credentials.
-* Define handling for pending, failed, cancelled, refunded, and duplicate events according to the provider and business rules.
+## 4. Document Upload Flow
 
-Failure handling: If the provider confirms payment but the database update fails, the system must support safe retry or reconciliation. It must not mark the transaction successful solely because the browser returned to the application.
+MedOrbits may handle application forms, identity documents, educational certificates, resumes, and other sensitive files.
 
-The exact provider, webhook headers, event schema, payment states, and retry behavior must be confirmed against the selected integration.
+### 4.1 Intended lifecycle
 
-4. Background Jobs
+```text
+Authenticated Request
+        |
+        v
+Purpose and Permission Check
+        |
+        v
+File and Request Validation
+        |
+        v
+Generate Random Storage Key
+        |
+        v
+Private File Storage
+        |
+        v
+Persist Document Metadata
+        |
+        v
+Verify Consistency
+        |
+        v
+Review / Verification Workflow
+        |
+        v
+Authorized Preview or Download
+```
 
-Background jobs handle work that does not need to complete within the originating HTTP request, including notifications, reminders, cleanup, and other scheduled or asynchronous tasks.
+This flow is conceptual. The implementation may use direct-to-storage uploads or another verified approach.
 
-Intended sequence
+### 4.2 Upload requirements
 
-1. Trigger: A request or scheduled event determines that work needs to be performed.
-2. Enqueue: The application submits a job containing the minimum required data and a stable job or idempotency identifier.
-3. Validate: A worker validates the job payload and confirms that the operation remains permitted and relevant.
-4. Execute: The worker performs the operation using the appropriate service or integration.
-5. Persist outcome: Record success, failure, or retry information.
-6. Retry when appropriate: Retry transient failures according to the configured policy.
-7. Handle exhausted jobs: Move jobs that cannot be completed to the documented dead-letter or failure-handling process.
-8. Monitor: Track queue depth, processing failures, retry counts, execution duration, and job age.
+1. Authenticate the user and authorize the upload purpose.
+2. Enforce file-size, request-size, count, and rate limits.
+3. Validate allowed formats and inspect file content rather than trusting browser-provided filenames, extensions, or MIME types.
+4. Generate a non-guessable storage key independent of the original filename.
+5. Store private documents outside publicly browsable asset directories.
+6. Persist metadata including the document owner, purpose, storage reference, size, detected media type, status, and timestamps as appropriate.
+7. Ensure the document record does not indicate successful completion until the file is available and required persistence has succeeded.
+8. Apply review or verification workflows where required.
+9. Authorize each preview, download, replacement, and deletion operation.
+10. Apply retention, deletion, and audit requirements.
 
-Reliability requirements
+### 4.3 File validation and storage security
 
-* Make jobs idempotent where duplicate execution could cause unwanted side effects.
-* Distinguish transient failures from permanent validation or authorization failures.
-* Use bounded retries with an appropriate backoff policy.
-* Prevent concurrent workers from performing conflicting operations where necessary.
-* Avoid storing passwords, session tokens, or unnecessary sensitive document contents in job payloads.
-* Revalidate relevant business conditions at execution time because the underlying record may have changed after enqueueing.
-* Make failed jobs observable and provide a documented recovery procedure.
-* Ensure cleanup jobs cannot delete records or files outside their authorized retention scope.
+- Allow only business-required file types.
+- Apply file-content inspection and malware scanning where appropriate.
+- Consider archive bombs, decompression limits, malformed documents, and parser vulnerabilities.
+- Prevent path traversal, storage-key manipulation, and unauthorized overwrites.
+- Keep storage credentials and internal storage paths out of client responses.
+- Use short-lived signed download URLs only when their access scope and expiration are appropriate.
+- Prevent uploaded HTML, SVG, scripts, or other active content from executing in a trusted application origin.
+- Avoid including file contents in logs, queue payloads, or error messages.
 
-The queue technology, scheduler, worker entry points, retry policy, and dead-letter mechanism must be verified against the actual deployment.
+### 4.4 Partial failure and reconciliation
 
-5. Data Consistency and Transaction Boundaries
+Storage and database operations generally do not share a single atomic transaction.
 
-Database updates and external side effects require explicit consistency rules.
+The implementation must define behavior for at least these cases:
 
-* Use database transactions for related changes that must be atomic.
-* Do not assume a database transaction can roll back an external payment, email, or storage operation.
-* Where reliable delivery of asynchronous work is required, consider a transactional outbox or another durable dispatch mechanism.
-* Use idempotency controls for payment events, notifications, and retryable background tasks.
-* Define compensation or reconciliation behavior when a multi-step operation partially succeeds.
-* Keep internal identifiers and provider identifiers distinct.
-* Ensure logs and audit events accurately reflect the outcome of sensitive operations.
+| Failure | Required recovery behavior |
+|—|—|
+| Validation fails | Reject the upload before storing the file |
+| Storage upload fails | Do not create a completed document record |
+| File succeeds but metadata persistence fails | Delete the orphaned file or schedule durable cleanup |
+| Metadata exists but file is missing | Mark or detect the inconsistency and prevent successful download |
+| Malware scan fails | Keep the file quarantined or unavailable until the required checks succeed |
+| Deletion partially succeeds | Record the state and retry or reconcile safely |
 
-Choose the implementation appropriate to the actual database, queue, and external services used by MedOrbits.
+Cleanup jobs must be scoped to authorized storage locations and must not delete unrelated files.
 
-6. Error Handling and Observability
+## 5. Payment Flow
 
-All flows should provide operational visibility without leaking sensitive information.
+Payments must be driven by trusted server-side records and verified payment-provider events.
 
-Recommended practices:
+### 5.1 Intended lifecycle
 
-* Use consistent API error codes and response structures.
-* Assign request or correlation identifiers where supported.
-* Log relevant failures with sufficient context for investigation.
-* Record privileged actions through the configured audit mechanism.
-* Avoid recording passwords, full authentication tokens, payment secrets, or private document contents.
-* Track upload failures, payment verification failures, webhook duplicates, and exhausted background jobs.
-* Provide safe retry and recovery procedures for operations that may have partially completed.
+```text
+Client Requests Purchase
+          |
+          v
+Validate Product, Plan, and Price
+          |
+          v
+Create Internal Payment Attempt
+          |
+          v
+Create Provider Order / Checkout
+          |
+          v
+Customer Completes Checkout
+          |
+          v
+Provider Sends Callback / Webhook
+          |
+          v
+Verify Signature and Event
+          |
+          v
+Validate Amount, Currency, and References
+          |
+          v
+Apply Idempotent State Transition
+          |
+          v
+Update Subscription / Entitlement
+          |
+          v
+Expose Trusted Payment Status
+          |
+          v
+Reconcile When Necessary
+```
 
-Do not claim that a particular logging, monitoring, or tracing tool is available until it has been confirmed in the project.
+The payment provider, event format, signature mechanism, and payment states must be verified against the selected integration.
 
-7. Verification Checklist
+### 5.2 Payment creation
 
-HTTP requests
+The server should:
 
-* [ ]	Middleware order matches the deployed server.
-* [ ]	Protected routes enforce authentication and authorization.
-* [ ]	Input validation occurs before business operations.
-* [ ]	Resource ownership is verified server-side.
-* [ ]	API errors match the documented response contract.
+1. Authenticate the customer and authorize the requested purchase.
+2. Retrieve the product, subscription plan, or service from trusted server-side data.
+3. Calculate the expected price, currency, taxes, discounts, and payable amount on the server.
+4. Create a unique internal payment attempt.
+5. Create the provider order or checkout session using server-side credentials.
+6. Persist the provider reference and internal transaction association.
+7. Return only the checkout details required by the client.
 
-Document uploads
+Never accept a browser-submitted amount or payment status as authoritative.
 
-* [ ]	Private files are stored outside publicly browsable directories.
-* [ ]	File content, type, and size are validated.
-* [ ]	File metadata and ownership are persisted correctly.
-* [ ]	Downloads enforce authorization.
-* [ ]	Partial failures can be cleaned up or reconciled.
-* [ ]	Retention and deletion policies are enforced.
+### 5.3 Webhook verification
 
-Payments
+The webhook handler should:
 
-* [ ]	Provider signatures are verified correctly.
-* [ ]	Amount, currency, and transaction references are validated.
-* [ ]	Duplicate events are handled idempotently.
-* [ ]	Payment state transitions are validated.
-* [ ]	Browser redirects cannot independently mark payments successful.
-* [ ]	Failed persistence and provider discrepancies can be reconciled.
+1. Receive the provider’s documented request format.
+2. Verify the signature using the provider’s required algorithm and key configuration.
+3. Use the exact raw request body if required by the provider.
+4. Reject invalid signatures before applying business changes.
+5. Validate the event structure and relevant identifiers.
+6. Confirm the payment reference, expected amount, currency, and transaction association.
+7. Check that the requested state transition is permitted.
+8. Record the provider event identifier or another reliable idempotency key.
+9. Apply the payment transition and dependent database changes transactionally where possible.
+10. Acknowledge the event according to the provider’s retry protocol.
 
-Background jobs
+Signature verification must not be replaced with a shared secret comparison against an arbitrary client-supplied value.
 
-* [ ]	Jobs have appropriate validation and idempotency controls.
-* [ ]	Retries are bounded and use an appropriate backoff policy.
-* [ ]	Permanent failures do not retry indefinitely.
-* [ ]	Exhausted jobs have a documented recovery process.
-* [ ]	Job execution and queue health can be monitored.
+### 5.4 Idempotency and state transitions
 
-8. Maintenance
+Duplicate events must not create duplicate payments, refunds, subscriptions, or entitlements.
+
+The implementation should enforce uniqueness for relevant provider event identifiers and internal idempotency keys. Where concurrency is possible, use database constraints, locking, conditional updates, or equivalent mechanisms.
+
+A payment state machine should be defined against the actual provider and business rules. For example, a successful payment should not be overwritten by a stale pending event. Refunds and reversals should be represented explicitly rather than treated as ordinary payment failures.
+
+### 5.5 Payment recovery
+
+If the provider confirms payment but the database update fails:
+
+- Preserve enough information to identify the incomplete event.
+- Retry processing safely.
+- Reconcile internal records against provider records where supported.
+- Avoid granting entitlements based solely on a browser redirect.
+- Do not issue a second financial operation merely because the first response was lost.
+
+Payment, subscription, and entitlement updates must have documented consistency rules.
+
+## 6. Background Jobs
+
+Background jobs may handle notifications, reminders, document scanning, cleanup, reconciliation, and other work that does not need to finish during the originating HTTP request.
+
+### 6.1 Intended lifecycle
+
+```text
+Request or Scheduled Trigger
+             |
+             v
+Create Durable Job Intent
+             |
+             v
+Enqueue Job
+             |
+             v
+Worker Receives Job
+             |
+             v
+Validate Payload and Current State
+             |
+             v
+Execute Application Service
+             |
+             v
+Persist Outcome
+             |
+        +-—+-—+
+        |         |
+     Success    Failure
+        |         |
+        v         v
+    Complete   Retry / Fail
+                  |
+                  v
+           Exhausted-Job Handling
+```
+
+The queue technology, scheduler, worker entry point, and retry mechanism must be confirmed against the actual deployment.
+
+### 6.2 Job requirements
+
+- Include a stable job identifier and idempotency key where needed.
+- Store only the minimum data required to execute the task.
+- Revalidate business rules and resource permissions at execution time.
+- Make duplicate execution safe where repeated side effects are possible.
+- Apply bounded retries with backoff and jitter where appropriate.
+- Distinguish transient failures from permanent validation or authorization failures.
+- Prevent conflicting concurrent operations when necessary.
+- Record execution status, attempts, timestamps, and safe failure details.
+- Provide a documented process for exhausted jobs.
+- Monitor queue depth, job age, failure rate, retry count, and execution duration where tooling supports it.
+
+### 6.3 Job payload security
+
+Do not include passwords, session tokens, payment secrets, or unnecessary private document contents in job payloads.
+
+Prefer internal resource identifiers and retrieve sensitive data through authorized application services at execution time. Protect queue access and persisted job data with appropriate access controls and retention policies.
+
+### 6.4 Job recovery
+
+A recovery process should define how operators can inspect, retry, cancel, or replay a failed job without creating duplicate external effects. Manual replay must respect idempotency controls and authorization requirements.
+
+## 7. Data Consistency and Transaction Boundaries
+
+Database transactions can atomically protect related database changes, but they cannot generally roll back an email, storage upload, or external payment operation.
+
+### 7.1 Required design principles
+
+- Use transactions for database changes that must succeed or fail together.
+- Keep internal identifiers separate from provider-generated identifiers.
+- Use idempotency controls for payment events and retryable jobs.
+- Define compensation or reconciliation behavior for partial success.
+- Avoid publishing asynchronous work before required database changes are durable.
+- Ensure audit events accurately represent committed outcomes.
+- Do not claim that an external side effect succeeded until the result is confirmed to the extent required by the integration.
+
+### 7.2 Transactional outbox
+
+Where reliable dispatch of asynchronous work is required, consider a transactional outbox:
+
+1. Update business records and insert an outbox event in the same database transaction.
+2. Commit the transaction.
+3. A dispatcher publishes pending events to the queue.
+4. Mark events as dispatched after successful publication.
+5. Retry safely when publication fails.
+6. Make consumers idempotent because delivery may occur more than once.
+
+The outbox is an architectural option, not an assertion that MedOrbits currently implements one.
+
+## 8. Error Handling and Observability
+
+Every flow should provide enough operational visibility for diagnosis without exposing sensitive information.
+
+### 8.1 Request correlation
+
+Where supported, attach a request or correlation identifier to:
+
+- HTTP logs
+- Application-service logs
+- Relevant audit events
+- Job metadata
+- External integration diagnostics
+
+Do not accept arbitrary client-supplied identifiers as trusted identity or authorization evidence. Validate or replace them according to the logging design.
+
+### 8.2 Audit events
+
+Audit sensitive actions where required, including document access, permission changes, administrative operations, payment-state changes, and relevant data exports.
+
+Audit records should include only necessary context, such as the actor identifier, action, resource identifier, outcome, timestamp, and correlation identifier. Protect audit records against unauthorized alteration and access.
+
+### 8.3 Operational metrics
+
+Where monitoring is available, track:
+
+- HTTP error rates and latency
+- Authentication and authorization failures
+- Upload failures and orphaned-file cleanup
+- Document scanning failures
+- Payment verification failures and duplicate events
+- Payment reconciliation discrepancies
+- Queue depth, job age, retries, and exhausted jobs
+- Database and external-service availability
+
+Do not document a particular monitoring or tracing product as installed until it has been verified.
+
+## 9. Security Boundaries
+
+| Boundary | Required control |
+|—|—|
+| Browser to API | HTTPS in production, request validation, rate limits |
+| API to protected resources | Authentication, authorization, ownership checks |
+| API to database | Parameterized queries, least-privilege credentials |
+| API to file storage | Private access, scoped permissions, safe object keys |
+| API to payment provider | Server-side credentials and authenticated provider communication |
+| Provider to webhook | Provider-specific signature verification and replay protection |
+| API to queue | Authenticated access, minimal payloads, idempotent processing |
+| Worker to business records | Revalidation and scoped permissions |
+| Application to logs | Redaction, restricted access, controlled retention |
+
+## 10. Verification Checklist
+
+### HTTP requests
+
+- [ ] Middleware order matches the deployed server.
+- [ ] Protected routes enforce authentication and authorization.
+- [ ] Validation occurs before business operations.
+- [ ] Resource ownership is enforced server-side.
+- [ ] Errors match the documented response contract.
+- [ ] Logs do not expose secrets or unnecessary personal data.
+
+### Document uploads
+
+- [ ] Private files are stored outside publicly browsable directories.
+- [ ] File content, format, size, and count are validated.
+- [ ] Storage keys cannot be manipulated to access other files.
+- [ ] Metadata and ownership are persisted correctly.
+- [ ] Downloads enforce authorization.
+- [ ] Partial failures are cleaned up or reconciled.
+- [ ] Retention and deletion rules are enforced.
+
+### Payments
+
+- [ ] Provider signatures are verified using the actual provider protocol.
+- [ ] Amount, currency, and transaction references are checked.
+- [ ] Duplicate events are handled idempotently.
+- [ ] State transitions are validated.
+- [ ] Browser redirects cannot independently confirm payment.
+- [ ] Failed persistence and provider discrepancies are recoverable.
+- [ ] Refunds and reversals follow documented business rules.
+
+### Background jobs
+
+- [ ] Job payloads are validated and contain minimal data.
+- [ ] Duplicate execution is safe where required.
+- [ ] Retries are bounded and use an appropriate backoff policy.
+- [ ] Permanent failures do not retry indefinitely.
+- [ ] Exhausted jobs have a documented recovery procedure.
+- [ ] Queue health and job outcomes are observable.
+
+### Consistency and observability
+
+- [ ] Database transaction boundaries are explicit.
+- [ ] External side effects have retry or reconciliation rules.
+- [ ] Audit events reflect actual outcomes.
+- [ ] Sensitive values are redacted from logs.
+- [ ] Relevant failure-path tests exist and pass.
+
+## 11. Maintenance Workflow
 
 When an implementation changes:
 
 1. Update the relevant architecture documentation.
-2. Verify the actual middleware, service, storage, provider, or worker behavior.
-3. Update API contracts where externally visible behavior changes.
-4. Add or update integration and failure-path tests.
-5. Verify authorization and data-consistency requirements.
-6. Document operational recovery and reconciliation procedures.
-7. Keep deployment configuration and documentation aligned.
+2. Verify the actual middleware, controller, service, storage, payment, or worker behavior.
+3. Update API contracts when externally visible behavior changes.
+4. Add or update unit, integration, security, and failure-path tests.
+5. Verify authorization and transaction boundaries.
+6. Test retries, duplicate events, and partial failures where relevant.
+7. Document recovery and reconciliation procedures.
+8. Keep deployment configuration and operational procedures aligned.
 
-Maintenance principle: MedOrbits data flows should be secure, traceable, resilient to partial failures, and consistent with the actual application implementation.
+## 12. Definition of Done
+
+A data-flow change is ready for release when:
+
+- Its implementation matches the documented lifecycle.
+- Authentication, authorization, and ownership checks are verified.
+- Data consistency and partial-failure behavior are defined.
+- Relevant security and failure-path tests pass.
+- Operational recovery procedures are documented where needed.
+- The API documentation and deployment configuration are synchronized.
+
+**Maintenance principle:** MedOrbits data flows must be secure, traceable, resilient to partial failures, and consistent with the actual deployed implementation.

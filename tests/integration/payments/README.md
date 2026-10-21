@@ -6,7 +6,7 @@ This directory contains integration tests for payment processing, refund concurr
 
 The tests are designed to detect payment-related regressions, including duplicate financial operations, invalid refund amounts, webhook signature failures, and inconsistent payment states.
 
-Important: These tests are templates that must match the actual MedOrbits API, database schema, payment provider, and webhook verification implementation. A passing test suite does not by itself prove payment security.
+Important: These tests are templates that must match the actual MedOrbits API, database schema, payment provider, and webhook verification implementation. A passing test suite does not, by itself, prove payment security.
 
 2. Directory Structure
 
@@ -21,11 +21,11 @@ tests/
 Test responsibilities
 
 Test file	Coverage
-concurrent-refunds.integration.test.js	Concurrent refund requests, refundable-balance limits, idempotency, and payment-state consistency.
-duplicate-events.integration.test.js	Duplicate webhook delivery, concurrent event delivery, event identifier reuse, and conflicting event payloads.
-webhook.integration.test.js	Webhook endpoint behaviour, signature verification, payload validation, duplicate delivery, and payment-state integrity.
+concurrent-refunds.integration.test.js	Concurrent refund requests, refundable-balance limits, idempotency, and payment-state consistency
+duplicate-events.integration.test.js	Duplicate webhook delivery, concurrent event delivery, event identifier reuse, and conflicting payloads
+webhook.integration.test.js	Webhook endpoint behavior, signature verification, payload validation, duplicate delivery, and payment-state integrity
 
-The files overlap intentionally: duplicate-events.integration.test.js focuses on event deduplication, while webhook.integration.test.js covers broader webhook validation and processing behaviour.
+The files overlap intentionally. duplicate-events.integration.test.js focuses on event deduplication, while webhook.integration.test.js covers broader webhook validation and processing behavior.
 
 3. Prerequisites
 
@@ -36,33 +36,39 @@ The files overlap intentionally: duplicate-events.integration.test.js focuses on
 * A sandbox payment or deterministic payment fixture.
 * Test credentials authorized to inspect the fixture payment.
 * A sandbox webhook secret or provider-specific test-signature configuration.
-* The correct endpoint paths and payload schema for the implementation.
+* Correct endpoint paths, payload schemas, and expected response codes.
 
-Do not run mutating payment tests against production payments, live payment credentials, or production customer data.
+Never run mutating payment tests against production payments, live payment credentials, or production customer data.
 
 4. Configuration
 
 The test files support configuration through environment variables. Names and requirements vary by test file.
 
 Variable	Purpose
-PAYMENT_TEST_BASE_URL	Base URL of the test API.
-TEST_BASE_URL	Fallback base URL in applicable files.
-PAYMENT_TEST_TOKEN	Test credential for payment inspection and applicable authenticated requests.
-TEST_PAYMENT_ID	Identifier of the dedicated sandbox payment.
-PAYMENT_TEST_PATH	Payment lookup endpoint template.
-PAYMENT_WEBHOOK_TEST_PATH	Webhook endpoint path.
-PAYMENT_WEBHOOK_TEST_SECRET	Test HMAC secret where applicable.
-PAYMENT_WEBHOOK_SIGNATURE_HEADER	Signature header name.
-PAYMENT_WEBHOOK_SIGNATURE_FORMAT	Supported signature encoding in the supplied templates.
-PAYMENT_WEBHOOK_AUTH_MODE	Webhook authentication mode configured in the test.
-PAYMENT_EVENT_ID_HEADER	Optional event identifier header name.
-PAYMENT_EVENT_ID_FIELD	Event identifier field in the payload.
-TEST_PAYMENT_AMOUNT_MINOR	Fixture amount in the smallest currency unit.
-TEST_PAYMENT_CURRENCY	Fixture currency, such as INR.
-RUN_MUTATING_PAYMENT_TESTS	Explicit opt-in for tests that send mutating events or refunds.
-PAYMENT_TEST_TIMEOUT_MS	Request timeout in milliseconds.
+NODE_ENV	Must be test when running mutation tests in the supplied templates
+PAYMENT_TEST_BASE_URL	Base URL of the test API
+TEST_BASE_URL	Fallback base URL in applicable files
+PAYMENT_TEST_TOKEN	Test credential for payment inspection and applicable authenticated requests
+TEST_PAYMENT_ID	Identifier of the dedicated sandbox payment
+PAYMENT_TEST_PATH	Payment lookup endpoint template
+PAYMENT_WEBHOOK_TEST_PATH	Webhook endpoint path
+PAYMENT_WEBHOOK_TEST_SECRET	Test HMAC secret where applicable
+PAYMENT_WEBHOOK_SIGNATURE_HEADER	Signature header name
+PAYMENT_WEBHOOK_SIGNATURE_FORMAT	Signature encoding supported by the configured template
+PAYMENT_WEBHOOK_AUTH_MODE	Webhook authentication mode, such as hmac-sha256, bearer, or none, where supported
+PAYMENT_EVENT_ID_HEADER	Optional event identifier header name
+PAYMENT_EVENT_ID_FIELD	Event identifier field in the payload
+PAYMENT_TEST_EVENT_TYPE	Event type used by the test fixture
+TEST_PAYMENT_AMOUNT_MINOR	Fixture amount in the smallest currency unit
+TEST_PAYMENT_CURRENCY	Fixture currency, such as INR
+RUN_MUTATING_PAYMENT_TESTS	Set to true to opt in to supported mutating tests
+PAYMENT_TEST_TIMEOUT_MS	Request timeout in milliseconds
+PAYMENT_TEST_ALLOW_REMOTE_SANDBOX	Explicit opt-in for supported remote sandbox mutation tests
+PAYMENT_TEST_ENVIRONMENT	Set to sandbox for supported remote sandbox mutation tests
 
 Use the exact variable names referenced by each test file. Do not assume every variable is required by every test.
+
+The supplied templates may support different authentication modes or signature formats. Configure each test according to its implementation and the actual provider’s requirements.
 
 5. Running the Tests
 
@@ -70,30 +76,41 @@ Run all payment integration tests from the repository root:
 
 node —test tests/integration/payments/*.integration.test.js
 
-Run an individual test file:
+Run individual test files:
 
 node —test tests/integration/payments/concurrent-refunds.integration.test.js
 node —test tests/integration/payments/duplicate-events.integration.test.js
 node —test tests/integration/payments/webhook.integration.test.js
 
-Some tests require RUN_MUTATING_PAYMENT_TESTS=true. Tests that mutate payment state should only run after the test environment, fixtures, and provider sandbox have been verified.
+Some tests require RUN_MUTATING_PAYMENT_TESTS=true. Tests that mutate payment state should run only after the test environment, fixtures, credentials, and provider sandbox have been verified.
 
-6. Example Environment Setup
+Run the baseline suite
 
-Use your own sandbox values and adapt endpoint paths to the actual implementation.
+NODE_ENV=test node —test tests/integration/payments/*.integration.test.js
 
-export PAYMENT_TEST_BASE_URL=“http://127.0.0.1:3000”
-export PAYMENT_TEST_TOKEN=“your_test_token”
-export PAYMENT_WEBHOOK_TEST_SECRET=“your_sandbox_webhook_secret”
-export TEST_PAYMENT_ID=“your_sandbox_payment_id”
-export TEST_PAYMENT_AMOUNT_MINOR=“10000”
-export TEST_PAYMENT_CURRENCY=“INR”
-export RUN_MUTATING_PAYMENT_TESTS=“true”
+This runs the suite with mutation tests disabled by default, unless a particular test file has different behavior.
+
+Run supported mutating tests
+
+Only use disposable fixtures and a dedicated test environment:
+
+NODE_ENV=test \
+RUN_MUTATING_PAYMENT_TESTS=true \
+PAYMENT_TEST_BASE_URL=http://127.0.0.1:3000 \
+PAYMENT_TEST_TOKEN=YOUR_TEST_TOKEN \
+PAYMENT_WEBHOOK_TEST_SECRET=YOUR_TEST_WEBHOOK_SECRET \
+TEST_PAYMENT_ID=YOUR_DISPOSABLE_TEST_PAYMENT_ID \
+TEST_PAYMENT_AMOUNT_MINOR=10000 \
+TEST_PAYMENT_CURRENCY=INR \
 node —test tests/integration/payments/*.integration.test.js
 
-Never commit populated environment files containing secrets. Use a local ignored environment file or your CI secret manager.
+Replace the placeholders with actual test values. Confirm that all configured routes and authentication mechanisms match the running application before execution.
 
-7. Security and Correctness Requirements
+For a remote sandbox, use HTTPS and set the remote-sandbox opt-in variables only when the test implementation supports them.
+
+Never use production credentials or commit populated environment files containing secrets. Prefer ignored local environment files or your CI secret manager.
+
+6. Security and Correctness Requirements
 
 Webhook authentication
 
@@ -102,6 +119,8 @@ Webhook authentication
 * Reject invalid signatures and malformed payloads.
 * Validate event types, payment identifiers, currency, and amount.
 * Do not trust client-supplied payment status as proof of a successful transaction.
+* Handle timestamp validation and replay protection where required by the provider.
+* Avoid exposing signature secrets, tokens, or sensitive request details in logs.
 
 Duplicate event processing
 
@@ -110,6 +129,7 @@ Duplicate event processing
 * Handle retries without repeating financial side effects.
 * Detect conflicting payloads that reuse an existing event identifier.
 * Return the documented acknowledgement or conflict response for duplicate deliveries.
+* Verify persisted event records and business effects rather than relying only on HTTP status codes.
 
 Concurrent refunds
 
@@ -118,6 +138,7 @@ Concurrent refunds
 * Use provider idempotency keys where supported.
 * Reconcile provider and local payment states.
 * Prevent negative balances and duplicate refund records.
+* Verify persisted refund records and the final refundable balance after concurrent requests.
 
 Data integrity
 
@@ -126,7 +147,7 @@ Data integrity
 * Keep payment and refund records consistent after failures and retries.
 * Avoid logging webhook secrets, access tokens, or unnecessary personal information.
 
-8. Test Isolation and Repeatability
+7. Test Isolation and Repeatability
 
 Payment integration tests can change financial state. Use a dedicated fixture and restore or recreate it as needed.
 
@@ -135,13 +156,16 @@ Recommended fixture strategy:
 1. Create or select a dedicated sandbox payment.
 2. Record its original amount, currency, and state.
 3. Run tests with unique event identifiers and idempotency keys.
-4. Verify payment and refund records after processing.
+4. Verify payment, event, and refund records after processing.
 5. Recreate or reset the fixture before rerunning state-mutating tests.
 6. Clean up temporary records where safe and supported.
+7. Avoid parallel execution against the same mutable payment fixture.
 
 Do not assume that a payment can be refunded repeatedly or that webhook events can be replayed against the same fixture without side effects.
 
-9. Interpreting Failures
+A test that compares payment fields before and after an event must account for legitimate state transitions. For example, a valid payment-success event may change a payment from pending to succeeded. Duplicate delivery should not repeat the business operation, but the first delivery may legitimately change the state.
+
+8. Interpreting Failures
 
 When a test fails, check:
 
@@ -149,15 +173,18 @@ When a test fails, check:
 * Endpoint paths and request payload structure.
 * Authentication and authorization configuration.
 * Provider-specific webhook signature format.
+* Raw-body middleware configuration and middleware ordering.
 * Test payment state and remaining refundable balance.
 * Event deduplication and database transaction handling.
 * Whether the expected response codes match the API contract.
+* Whether the test fixture is still in the expected state.
+* Whether the payment API exposes the fields the test expects.
 
-Do not weaken an assertion solely to obtain a passing result. Establish the intended behaviour first, then correct the implementation or test.
+Do not weaken an assertion solely to obtain a passing result. Establish the intended behavior first, then correct the implementation or test.
 
-A test returning a successful HTTP status does not prove that duplicate processing was prevented. Verify persisted payment records and actual financial side effects.
+A successful HTTP status does not prove that duplicate processing was prevented. Verify persisted payment records and actual financial side effects.
 
-10. Limitations
+9. Limitations
 
 These integration tests do not replace:
 
@@ -170,7 +197,9 @@ These integration tests do not replace:
 
 The supplied templates assume particular endpoint patterns and, in places, HMAC-SHA256 webhook signatures. Adapt them when the implementation uses another provider, timestamped signatures, a different event schema, or different payment-state fields.
 
-11. CI Recommendations
+Tests that inspect payment state through an HTTP API do not independently prove that the database contains exactly one event-processing record. Add repository or database-level assertions where necessary.
+
+10. CI Recommendations
 
 For continuous integration:
 
@@ -181,22 +210,26 @@ For continuous integration:
 * Preserve test logs without exposing secrets or personal information.
 * Fail the pipeline when critical payment invariants are violated.
 * Avoid parallel execution against the same mutable payment fixture.
+* Ensure the test process exits unsuccessfully when an assertion fails.
+* Separate sandbox integration tests from production deployment workflows.
 
-12. Maintenance Checklist
+11. Maintenance Checklist
 
 When changing payment or webhook code:
 
 * [ ]	Update endpoint and payload assumptions in affected tests.
 * [ ]	Test valid and invalid webhook signatures.
+* [ ]	Test malformed JSON and invalid payloads.
 * [ ]	Test repeated and concurrent event delivery.
 * [ ]	Test conflicting event identifiers.
 * [ ]	Test concurrent refunds and over-refund prevention.
-* [ ]	Verify persisted records and payment-state consistency.
+* [ ]	Verify persisted event and refund records.
+* [ ]	Verify payment-state consistency after retries and failures.
 * [ ]	Run the complete payment integration suite.
 * [ ]	Update this README when files or configuration variables change.
 
-13. Reporting Payment Vulnerabilities
+12. Reporting Payment Vulnerabilities
 
-Report confirmed issues privately to the project maintainers. Include the affected endpoint, test environment, reproducible steps, expected behaviour, actual behaviour, and financial or security impact.
+Report confirmed issues privately to the project maintainers. Include the affected endpoint, test environment, reproducible steps, expected behavior, actual behavior, and financial or security impact.
 
 Do not include live credentials, real customer payment details, webhook secrets, or unnecessary personal information in reports.

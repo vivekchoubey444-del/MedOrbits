@@ -5,85 +5,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#100a17">
+  <meta name="theme-color" content="#071321">
 
   <title>{{documentTitle}} | MedOrbits</title>
-
-  <meta
-    name="description"
-    content="MedOrbits student counselling summary and personalized guidance record."
-  >
+  <meta name="description" content="MedOrbits student counselling summary and personalized guidance record.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
       color-scheme: dark;
-
-      --mo-bg: #100a17;
-      --mo-bg-soft: #191023;
-      --mo-panel: #21172b;
-      --mo-panel-light: #291d34;
-
-      --mo-gold: #c9a96e;
-      --mo-gold-light: #e4d0a1;
-      --mo-gold-bright: #f0d9a2;
-
-      --mo-text: #f7f1fa;
-      --mo-lavender: #d9cce4;
-      --mo-muted: #b7acbf;
-
-      --mo-line: rgba(201, 169, 110, 0.28);
-      --mo-line-soft: rgba(217, 204, 228, 0.12);
-
+      --mo-bg: #071321;
+      --mo-bg-soft: #0B1D33;
+      --mo-panel: #102743;
+      --mo-panel-light: #173656;
+      --mo-gold: #C6A568;
+      --mo-gold-light: #E4D2A5;
+      --mo-gold-bright: #F2E2B8;
+      --mo-text: #F1F5FC;
+      --mo-lavender: #C9D7E9;
+      --mo-muted: #9BAFC7;
+      --mo-line: rgba(198, 165, 104, .30);
+      --mo-line-soft: rgba(164, 190, 220, .14);
       --mo-radius: 18px;
-      --mo-shadow: 0 24px 75px rgba(0, 0, 0, 0.34);
+      --mo-shadow: 0 24px 75px rgba(0, 0, 0, .40);
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
 
-    html {
-      min-height: 100%;
-      scroll-behavior: smooth;
-    }
+    html { min-height: 100%; scroll-behavior: smooth; }
 
     body {
       min-height: 100vh;
       margin: 0;
       padding: 34px 20px;
       overflow-wrap: anywhere;
-
       color: var(--mo-text);
-      font-family: "DM Sans", Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.75;
-
+      font: 14px/1.75 "DM Sans", Arial, sans-serif;
       background:
-        radial-gradient(
-          ellipse at 10% 0%,
-          rgba(76, 43, 86, 0.35),
-          transparent 43%
-        ),
-        radial-gradient(
-          ellipse at 100% 55%,
-          rgba(101, 23, 44, 0.13),
-          transparent 35%
-        ),
-        linear-gradient(
-          145deg,
-          var(--mo-bg-soft),
-          var(--mo-bg) 70%
-        );
-
+        radial-gradient(ellipse at 10% 0%, rgba(36, 91, 151, .36), transparent 43%),
+        radial-gradient(ellipse at 100% 55%, rgba(20, 100, 155, .18), transparent 35%),
+        linear-gradient(145deg, var(--mo-bg-soft), var(--mo-bg) 70%);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
@@ -96,26 +60,17 @@
       margin: 0 auto;
       padding: clamp(22px, 5vw, 52px);
       overflow: hidden;
-
       border: 1px solid var(--mo-line);
       border-radius: var(--mo-radius);
-
-      background: linear-gradient(
-        145deg,
-        rgba(41, 29, 52, 0.97),
-        rgba(25, 16, 35, 0.98) 52%,
-        rgba(16, 10, 23, 0.99)
-      );
-
+      background: linear-gradient(145deg, rgba(23, 54, 86, .97), rgba(11, 29, 51, .98) 52%, rgba(7, 19, 33, .99));
       box-shadow: var(--mo-shadow);
       animation: document-enter 850ms ease both;
     }
 
-    .document::before,
-    .document::after {
+    .document::before, .document::after {
       position: absolute;
       z-index: -1;
-      border: 1px solid rgba(201, 169, 110, 0.12);
+      border: 1px solid rgba(198, 165, 104, .12);
       border-radius: 50%;
       content: "";
       pointer-events: none;
@@ -136,8 +91,6 @@
       height: 280px;
       animation: orbit-drift 14s ease-in-out infinite alternate-reverse;
     }
-
-    /* Brand header */
 
     .document-header {
       display: flex;
@@ -166,23 +119,20 @@
       height: 72px;
     }
 
-    .brand-mark::before,
-    .brand-mark::after {
+    .brand-mark::before, .brand-mark::after {
       position: absolute;
       inset: 0;
-      border: 1px solid rgba(201, 169, 110, 0.42);
+      border: 1px solid rgba(198, 165, 104, .42);
       border-radius: 50%;
       content: "";
       pointer-events: none;
     }
 
-    .brand-mark::before {
-      animation: ring-pulse 4s ease-in-out infinite;
-    }
+    .brand-mark::before { animation: ring-pulse 4s ease-in-out infinite; }
 
     .brand-mark::after {
       inset: 6px;
-      border-color: rgba(201, 169, 110, 0.18);
+      border-color: rgba(198, 165, 104, .18);
     }
 
     .brand-logo {
@@ -197,18 +147,16 @@
     .brand-name {
       margin: 0;
       color: var(--mo-gold-light);
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(19px, 3vw, 25px);
-      font-weight: 700;
-      letter-spacing: 0.19em;
-      line-height: 1.25;
+      font: 700 clamp(19px, 3vw, 25px)/1.25 "Playfair Display", Georgia, serif;
+      letter-spacing: .19em;
     }
 
     .brand-tagline {
-      margin: 7px 0 0;
+      display: block;
+      margin-top: 7px;
       color: var(--mo-muted);
       font-size: 10px;
-      letter-spacing: 0.13em;
+      letter-spacing: .13em;
       text-transform: uppercase;
     }
 
@@ -218,19 +166,15 @@
       border: 1px solid var(--mo-line);
       border-radius: 999px;
       color: var(--mo-gold-light);
-      background: rgba(16, 10, 23, 0.55);
+      background: rgba(7, 19, 33, .65);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: .1em;
       text-align: center;
       text-transform: uppercase;
     }
 
-    /* Document introduction */
-
-    .document-intro {
-      padding: 38px 0 28px;
-    }
+    .document-intro { padding: 38px 0 28px; }
 
     .eyebrow {
       display: flex;
@@ -240,7 +184,7 @@
       color: var(--mo-gold);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: .2em;
       text-transform: uppercase;
     }
 
@@ -251,9 +195,7 @@
       content: "";
     }
 
-    h1,
-    h2,
-    h3 {
+    h1, h2, h3 {
       font-family: "Playfair Display", Georgia, serif;
       font-weight: 600;
     }
@@ -262,7 +204,7 @@
       margin: 0;
       color: var(--mo-gold-light);
       font-size: clamp(30px, 5vw, 44px);
-      letter-spacing: -0.025em;
+      letter-spacing: -.025em;
       line-height: 1.2;
     }
 
@@ -277,15 +219,8 @@
       width: 100%;
       height: 1px;
       margin-top: 25px;
-      background: linear-gradient(
-        90deg,
-        var(--mo-gold),
-        rgba(201, 169, 110, 0.12) 75%,
-        transparent
-      );
+      background: linear-gradient(90deg, var(--mo-gold), rgba(198, 165, 104, .12) 75%, transparent);
     }
-
-    /* Student information */
 
     .summary-grid {
       display: grid;
@@ -299,18 +234,12 @@
       padding: 17px 18px;
       border: 1px solid var(--mo-line-soft);
       border-radius: 12px;
-      background: linear-gradient(
-        145deg,
-        rgba(41, 29, 52, 0.86),
-        rgba(16, 10, 23, 0.62)
-      );
-      transition:
-        border-color 220ms ease,
-        transform 220ms ease;
+      background: linear-gradient(145deg, rgba(23, 54, 86, .86), rgba(7, 19, 33, .68));
+      transition: border-color 220ms ease, transform 220ms ease;
     }
 
     .summary-item:hover {
-      border-color: rgba(201, 169, 110, 0.48);
+      border-color: rgba(198, 165, 104, .48);
       transform: translateY(-2px);
     }
 
@@ -320,7 +249,7 @@
       color: var(--mo-muted);
       font-size: 10px;
       font-weight: 600;
-      letter-spacing: 0.11em;
+      letter-spacing: .11em;
       text-transform: uppercase;
     }
 
@@ -330,14 +259,10 @@
       font-size: 13px;
       font-weight: 600;
       line-height: 1.6;
-    }
-
-    .reference-value {
-      color: var(--mo-gold-light);
       overflow-wrap: anywhere;
     }
 
-    /* Guidance sections */
+    .reference-value { color: var(--mo-gold-light); }
 
     .section {
       margin-top: 32px;
@@ -363,9 +288,7 @@
       border: 1px solid var(--mo-line);
       border-radius: 50%;
       color: var(--mo-gold);
-      font-family: "DM Sans", Arial, sans-serif;
-      font-size: 10px;
-      font-weight: 700;
+      font: 700 10px "DM Sans", Arial, sans-serif;
     }
 
     .section-description {
@@ -379,11 +302,7 @@
       padding: 20px;
       border: 1px solid var(--mo-line-soft);
       border-radius: 12px;
-      background: linear-gradient(
-        140deg,
-        rgba(41, 29, 52, 0.66),
-        rgba(16, 10, 23, 0.58)
-      );
+      background: linear-gradient(140deg, rgba(23, 54, 86, .66), rgba(7, 19, 33, .62));
     }
 
     .content-text {
@@ -409,17 +328,15 @@
       padding: 15px 16px 15px 52px;
       border: 1px solid var(--mo-line-soft);
       border-radius: 11px;
-      background: rgba(16, 10, 23, 0.45);
+      background: rgba(7, 19, 33, .55);
       color: var(--mo-lavender);
       counter-increment: action;
       overflow-wrap: anywhere;
-      transition:
-        border-color 220ms ease,
-        transform 220ms ease;
+      transition: border-color 220ms ease, transform 220ms ease;
     }
 
     .guidance-list li:hover {
-      border-color: rgba(201, 169, 110, 0.4);
+      border-color: rgba(198, 165, 104, .4);
       transform: translateX(3px);
     }
 
@@ -439,18 +356,16 @@
       content: counter(action, decimal-leading-zero);
     }
 
-    /* Important advisory */
-
     .notice {
       display: flex;
       align-items: flex-start;
       gap: 12px;
       margin-top: 30px;
       padding: 17px 18px;
-      border: 1px solid rgba(201, 169, 110, 0.22);
+      border: 1px solid rgba(198, 165, 104, .22);
       border-left: 3px solid var(--mo-gold);
       border-radius: 8px;
-      background: rgba(201, 169, 110, 0.055);
+      background: rgba(198, 165, 104, .055);
     }
 
     .notice-mark {
@@ -471,8 +386,6 @@
       color: var(--mo-muted);
       font-size: 11px;
     }
-
-    /* Footer branding */
 
     .document-footer {
       display: flex;
@@ -502,10 +415,8 @@
     .footer-brand-name {
       margin: 0;
       color: var(--mo-gold-light);
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+      font: 600 15px "Playfair Display", Georgia, serif;
+      letter-spacing: .12em;
     }
 
     .footer-caption {
@@ -530,13 +441,11 @@
 
     .footer-disclaimer {
       margin: 22px 0 0;
-      color: rgba(183, 172, 191, 0.7);
+      color: rgba(155, 175, 199, .72);
       font-size: 9px;
       line-height: 1.7;
       text-align: center;
     }
-
-    /* Document actions */
 
     .document-actions {
       display: flex;
@@ -557,13 +466,9 @@
       border-radius: 999px;
       color: var(--mo-gold-light);
       background: var(--mo-panel);
-      font-size: 12px;
-      font-weight: 600;
+      font: 600 12px "DM Sans", Arial, sans-serif;
       cursor: pointer;
-      transition:
-        background 200ms ease,
-        border-color 200ms ease,
-        transform 200ms ease;
+      transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
     }
 
     .action-button:hover {
@@ -580,86 +485,41 @@
     .action-button-primary {
       color: var(--mo-bg);
       border-color: var(--mo-gold);
-      background: linear-gradient(
-        135deg,
-        var(--mo-gold-light),
-        var(--mo-gold)
-      );
+      background: linear-gradient(135deg, var(--mo-gold-light), var(--mo-gold));
     }
 
-    .action-button-primary:hover {
-      background: var(--mo-gold-bright);
-    }
-
-    /* Motion */
+    .action-button-primary:hover { background: var(--mo-gold-bright); }
 
     @keyframes document-enter {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes section-enter {
-      from {
-        opacity: 0;
-        transform: translateY(9px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes ring-pulse {
-      0%,
-      100% {
-        transform: scale(1);
-        opacity: 0.65;
-      }
-
-      50% {
-        transform: scale(1.06);
-        opacity: 1;
-      }
+      0%, 100% { transform: scale(1); opacity: .65; }
+      50% { transform: scale(1.06); opacity: 1; }
     }
 
     @keyframes orbit-drift {
-      from {
-        transform: translate(0, 0) rotate(0deg);
-      }
-
-      to {
-        transform: translate(-16px, 12px) rotate(12deg);
-      }
+      from { transform: translate(0, 0) rotate(0deg); }
+      to { transform: translate(-16px, 12px) rotate(12deg); }
     }
 
-    /* Responsive */
-
     @media (max-width: 620px) {
-      body {
-        padding: 12px;
-      }
+      body { padding: 12px; }
 
       .document {
         padding: 23px 18px;
         border-radius: 13px;
       }
 
-      .document-header {
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .brand {
-        gap: 10px;
-      }
+      .document-header { align-items: flex-start; gap: 12px; }
+      .brand { gap: 10px; }
 
       .brand-mark {
         width: 52px;
@@ -673,45 +533,28 @@
 
       .brand-name {
         font-size: 17px;
-        letter-spacing: 0.12em;
+        letter-spacing: .12em;
       }
 
       .brand-tagline {
         max-width: 190px;
         font-size: 8px;
-        letter-spacing: 0.07em;
+        letter-spacing: .07em;
       }
 
       .record-label {
         max-width: 115px;
         padding: 7px 9px;
         font-size: 8px;
-        letter-spacing: 0.06em;
+        letter-spacing: .06em;
       }
 
-      .document-intro {
-        padding-top: 30px;
-      }
-
-      h1 {
-        font-size: 31px;
-      }
-
-      .summary-grid {
-        gap: 9px;
-      }
-
-      .summary-item {
-        padding: 13px 12px;
-      }
-
-      .field-value {
-        font-size: 12px;
-      }
-
-      .section-heading {
-        font-size: 19px;
-      }
+      .document-intro { padding-top: 30px; }
+      h1 { font-size: 31px; }
+      .summary-grid { gap: 9px; }
+      .summary-item { padding: 13px 12px; }
+      .field-value { font-size: 12px; }
+      .section-heading { font-size: 19px; }
 
       .document-footer {
         align-items: flex-start;
@@ -723,43 +566,25 @@
         text-align: left;
       }
 
-      .document-actions {
-        flex-wrap: wrap;
-      }
+      .document-actions { flex-wrap: wrap; }
 
-      .action-button {
-        flex: 1 1 140px;
-      }
+      .action-button { flex: 1 1 140px; }
     }
 
     @media (max-width: 360px) {
-      .summary-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .record-label {
-        display: none;
-      }
-
-      .document {
-        padding: 20px 14px;
-      }
+      .summary-grid { grid-template-columns: 1fr; }
+      .record-label { display: none; }
+      .document { padding: 20px 14px; }
     }
-
-    /* Reduced motion */
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
+      *, *::before, *::after {
         scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
+        animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        transition-duration: .01ms !important;
       }
     }
-
-    /* A4 print / PDF */
 
     @page {
       size: A4;
@@ -769,22 +594,21 @@
     @media print {
       :root {
         color-scheme: light;
-        --mo-text: #24182c;
-        --mo-lavender: #51445a;
-        --mo-muted: #6f6375;
-        --mo-gold-light: #805e29;
-        --mo-gold: #9c783e;
-        --mo-line: rgba(128, 94, 41, 0.35);
-        --mo-line-soft: rgba(64, 45, 72, 0.15);
+        --mo-text: #17283D;
+        --mo-lavender: #40546D;
+        --mo-muted: #617187;
+        --mo-gold-light: #795B2B;
+        --mo-gold: #9B783E;
+        --mo-line: rgba(121, 91, 43, .35);
+        --mo-line-soft: rgba(38, 66, 98, .15);
       }
 
-      html,
-      body {
+      html, body {
         width: 100%;
         min-height: 0;
         padding: 0;
         color: var(--mo-text);
-        background: #ffffff !important;
+        background: #FFFFFF !important;
         font-size: 10pt;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
@@ -799,67 +623,42 @@
         border: 0;
         border-radius: 0;
         box-shadow: none;
-        background: #ffffff !important;
+        background: #FFFFFF !important;
         animation: none !important;
       }
 
-      .document::before,
-      .document::after {
-        display: none;
+      .document::before, .document::after { display: none; }
+
+      .brand-name, h1, .section-heading, .footer-brand-name {
+        color: #24466D !important;
       }
 
-      .brand-name,
-      h1,
-      .section-heading,
-      .footer-brand-name {
-        color: #634322 !important;
+      .brand-tagline, .field-label, .footer-caption, .footer-meta,
+      .footer-disclaimer, .section-description {
+        color: #596B81 !important;
       }
 
-      .brand-tagline,
-      .field-label,
-      .footer-caption,
-      .footer-meta,
-      .footer-disclaimer,
-      .section-description {
-        color: #625668 !important;
-      }
-
-      .record-label,
-      .summary-item,
-      .content-panel,
-      .guidance-list li,
-      .notice {
-        background: #fbf8fc !important;
+      .record-label, .summary-item, .content-panel, .guidance-list li, .notice {
+        background: #F5F8FC !important;
         box-shadow: none !important;
       }
 
-      .summary-item,
-      .content-panel,
-      .guidance-list li,
-      .notice {
+      .summary-item, .content-panel, .guidance-list li, .notice {
         break-inside: avoid;
         page-break-inside: avoid;
         border-color: var(--mo-line-soft);
       }
 
-      .field-value,
-      .reference-value,
-      .guidance-list li,
-      .content-text,
-      .notice p {
-        color: #30223a !important;
+      .field-value, .reference-value, .guidance-list li, .content-text, .notice p {
+        color: #1B2D43 !important;
       }
 
-      .section {
-        animation: none !important;
-      }
-
-      .document-actions {
-        display: none !important;
-      }
+      .section { animation: none !important; }
+      .document-actions { display: none !important; }
 
       .document-footer {
         break-inside: avoid;
+        page-break-inside: avoid;
       }
     }
   </style>
@@ -867,14 +666,8 @@
 
 <body>
   <main class="document" id="counselling-document">
-
-    <!-- MedOrbits brand -->
     <header class="document-header">
-      <a
-        class="brand"
-        href="/"
-        aria-label="MedOrbits home"
-      >
+      <a class="brand" href="/" aria-label="MedOrbits home">
         <span class="brand-mark" aria-hidden="true">
           <img
             class="brand-logo"
@@ -887,38 +680,27 @@
 
         <span>
           <span class="brand-name">MEDORBITS</span>
-          <span class="brand-tagline">
-            Study · Career · Consultancy
-          </span>
+          <span class="brand-tagline">Study · Career · Consultancy</span>
         </span>
       </a>
 
-      <span class="record-label">
-        Guidance Record
-      </span>
+      <span class="record-label">Guidance Record</span>
     </header>
 
-    <!-- Title -->
     <section class="document-intro" aria-labelledby="document-title">
       <p class="eyebrow">Personalized student guidance</p>
-
-      <h1 id="document-title">
-        Counselling Summary
-      </h1>
+      <h1 id="document-title">Counselling Summary</h1>
 
       <p class="intro-description">
-        A structured record of the student's preferences,
-        guidance discussions, eligibility considerations,
-        and agreed follow-up actions.
+        A structured record of the student's preferences, guidance discussions,
+        eligibility considerations, and agreed follow-up actions.
       </p>
 
       <div class="gold-rule" aria-hidden="true"></div>
     </section>
 
-    <!-- Student and session details -->
     <section aria-label="Counselling session details">
       <div class="summary-grid">
-
         <div class="summary-item">
           <span class="field-label">Student</span>
           <span class="field-value">{{studentName}}</span>
@@ -926,9 +708,7 @@
 
         <div class="summary-item">
           <span class="field-label">Counselling reference</span>
-          <span class="field-value reference-value">
-            {{counsellingReference}}
-          </span>
+          <span class="field-value reference-value">{{counsellingReference}}</span>
         </div>
 
         <div class="summary-item">
@@ -940,11 +720,9 @@
           <span class="field-label">Adviser</span>
           <span class="field-value">{{adviserName}}</span>
         </div>
-
       </div>
     </section>
 
-    <!-- Preferences -->
     <section class="section" aria-labelledby="preferences-title">
       <h2 class="section-heading" id="preferences-title">
         <span class="section-number" aria-hidden="true">01</span>
@@ -960,7 +738,6 @@
       </div>
     </section>
 
-    <!-- Options discussed -->
     <section class="section" aria-labelledby="options-title">
       <h2 class="section-heading" id="options-title">
         <span class="section-number" aria-hidden="true">02</span>
@@ -968,8 +745,7 @@
       </h2>
 
       <p class="section-description">
-        Courses, institutions, career paths, or other options
-        considered during the counselling session.
+        Courses, institutions, career paths, or other options considered during the counselling session.
       </p>
 
       <div class="content-panel">
@@ -977,7 +753,6 @@
       </div>
     </section>
 
-    <!-- Eligibility -->
     <section class="section" aria-labelledby="eligibility-title">
       <h2 class="section-heading" id="eligibility-title">
         <span class="section-number" aria-hidden="true">03</span>
@@ -989,7 +764,6 @@
       </div>
     </section>
 
-    <!-- Action plan -->
     <section class="section" aria-labelledby="action-plan-title">
       <h2 class="section-heading" id="action-plan-title">
         <span class="section-number" aria-hidden="true">04</span>
@@ -1007,22 +781,18 @@
       </ol>
     </section>
 
-    <!-- Advisory -->
     <aside class="notice" aria-label="Important advisory">
       <span class="notice-mark" aria-hidden="true">i</span>
-
       <p>
-        Counselling notes are intended for guidance and planning.
-        Students should verify admission requirements, institutional
-        recognition, professional licensing, scholarships, fees,
-        refund policies, and career outcomes using relevant official
-        sources. Eligibility and final decisions remain subject to
-        the applicable institution, regulator, employer, and rules.
-        This summary does not guarantee admission or any other outcome.
+        Counselling notes are intended for guidance and planning. Students should
+        verify admission requirements, institutional recognition, professional
+        licensing, scholarships, fees, refund policies, and career outcomes using
+        relevant official sources. Eligibility and final decisions remain subject
+        to the applicable institution, regulator, employer, and rules. This summary
+        does not guarantee admission or any other outcome.
       </p>
     </aside>
 
-    <!-- Branded footer -->
     <footer class="document-footer">
       <div class="footer-brand">
         <img
@@ -1035,9 +805,7 @@
 
         <div>
           <p class="footer-brand-name">MEDORBITS</p>
-          <p class="footer-caption">
-            Study · Career · Consultancy
-          </p>
+          <p class="footer-caption">Study · Career · Consultancy</p>
         </div>
       </div>
 
@@ -1046,7 +814,6 @@
           <strong>Document reference:</strong>
           {{documentReference}}
         </div>
-
         <div>
           <strong>Generated:</strong>
           {{generatedAt}}
@@ -1058,25 +825,15 @@
       Retain this reference for follow-up correspondence.
       Share personal counselling records only with authorized recipients.
     </p>
-
   </main>
 
-  <!-- Print controls; hidden on paper -->
   <nav class="document-actions" aria-label="Document actions">
-    <button
-      class="action-button action-button-primary"
-      type="button"
-      id="print-document"
-    >
+    <button class="action-button action-button-primary" type="button" id="print-document">
       <span aria-hidden="true">↗</span>
       Print / Save as PDF
     </button>
 
-    <button
-      class="action-button"
-      type="button"
-      id="back-button"
-    >
+    <button class="action-button" type="button" id="back-button">
       Back
     </button>
   </nav>
@@ -1099,6 +856,7 @@
       }
     });
   </script>
+
   <script defer src="/assets/js/site-search-bar.js"></script>
 </body>
 </html>

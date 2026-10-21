@@ -1,453 +1,438 @@
-MedOrbits JavaScript Assets
 
-Directory: assets/js/
-Project: MedOrbits
-Brand identity: Royal Burgundy and Champagne Gold
-Purpose: Shared frontend utilities, application modules, account workflows, education services, API integration, and reusable user-interface functionality.
+# MedOrbits JavaScript Assets
 
-⸻
+**Directory:** `assets/js/`  
+**Project:** MedOrbits  
+**Brand identity:** Royal Burgundy and Champagne Gold  
+**Purpose:** Shared frontend utilities, account workflows, education services, API integration, and reusable UI functionality.
 
-1. Overview
+## 1. Overview
 
-The assets/js/ directory contains the reusable JavaScript modules that power the MedOrbits website and its connected user experiences.
-
-The directory is organized around shared application infrastructure, security, authentication, data access, interface components, and feature-specific functionality.
+The `assets/js/` directory contains reusable JavaScript modules powering the MedOrbits website and connected user experiences.
 
 The JavaScript layer supports:
 
-* Application initialization and shared core utilities.
-* API configuration, HTTP requests, and error handling.
-* Authentication, verification, permissions, and role-aware interfaces.
-* User profiles, dashboards, applications, and account activity.
-* Courses, colleges, search, comparison, and filtering.
-* Document uploads, storage, and document-management interfaces.
-* Payments, subscriptions, notifications, and support workflows.
-* Forms, validation, pagination, formatting, and UI components.
-* Accessibility, animations, navigation, and user feedback.
-* Career opportunities, visits, and other platform services.
+- Application initialization and shared utilities.
+- API configuration, requests, and error handling.
+- Authentication, verification, roles, and permissions.
+- User profiles, dashboards, and applications.
+- Courses, colleges, search, filtering, and comparison.
+- Document uploads and document management.
+- Payments, subscriptions, notifications, and support.
+- Forms, validation, pagination, and formatting.
+- Accessibility, navigation, animations, and user feedback.
+- Visits, career services, and other platform features.
 
-The frontend must use the configured backend APIs and existing shared utilities. Protected operations and sensitive business decisions must remain under server-side control.
+**Core principle:** The frontend manages user interaction and presentation. The backend remains responsible for authentication, authorization, data integrity, and trusted business operations.
 
-2. Directory Structure
+## 2. Directory Structure
 
-The following inventory is based on the supplied directory screenshots. It includes the visible JavaScript files and the existing README.md.
+The following inventory reflects the supplied directory screenshots and is not guaranteed to be exhaustive.
 
+```text
 assets/js/
 ├── README.md
-├── main/
-│   ├── accessibility.js
-│   ├── animations.js
-│   ├── api.js
-│   ├── app.js
-│   ├── applications.js
-│   ├── auth.js
-│   ├── colleges.js
-│   ├── compare.js
-│   ├── config.js
-│   ├── constants.js
-│   ├── core.js
-│   ├── courses.js
-│   ├── dashboard.js
-│   ├── documents.js
-│   ├── error-handler.js
-│   ├── filters.js
-│   ├── formatters.js
-│   ├── forms.js
-│   ├── main.js
-│   ├── messages.js
-│   ├── modal.js
-│   ├── navigation.js
-│   ├── notifications.js
-│   ├── pagination.js
-│   ├── payments.js
-│   ├── permissions.js
-│   ├── profile.js
-│   ├── README.md
-│   ├── role.js
-│   ├── search.js
-│   ├── storage.js
-│   ├── subscription.js
-│   ├── support.js
-│   ├── toast.js
-│   ├── uploader.js
-│   ├── user.model.js
-│   ├── utils.js
-│   ├── validation.js
-│   ├── verification.js
-│   └── visits.js
+└── main/
+    ├── accessibility.js
+    ├── animations.js
+    ├── api.js
+    ├── app.js
+    ├── applications.js
+    ├── auth.js
+    ├── colleges.js
+    ├── compare.js
+    ├── config.js
+    ├── constants.js
+    ├── core.js
+    ├── courses.js
+    ├── dashboard.js
+    ├── documents.js
+    ├── error-handler.js
+    ├── filters.js
+    ├── formatters.js
+    ├── forms.js
+    ├── main.js
+    ├── messages.js
+    ├── modal.js
+    ├── navigation.js
+    ├── notifications.js
+    ├── pagination.js
+    ├── payments.js
+    ├── permissions.js
+    ├── profile.js
+    ├── README.md
+    ├── role.js
+    ├── search.js
+    ├── storage.js
+    ├── subscription.js
+    ├── support.js
+    ├── toast.js
+    ├── uploader.js
+    ├── user.model.js
+    ├── utils.js
+    ├── validation.js
+    ├── verification.js
+    └── visits.js
+```
 
-Inventory note: The screenshots show the files listed above, but do not establish the complete contents of the directory. Verify the repository before using this list as an exhaustive inventory.
+Verify actual repository paths before changing imports, script references, or module locations.
 
-3. Module Responsibilities
+## 3. Module Responsibilities
 
-3.1 Application infrastructure
+### 3.1 Application infrastructure
 
-File	Responsibility
-app.js	Initialize shared application behaviour and common frontend functionality.
-main.js	Coordinate application startup and module initialization according to the existing architecture.
-core.js	Provide shared core functionality used by other modules.
-config.js	Read and expose approved frontend configuration.
-constants.js	Centralize shared constant values and stable identifiers.
-utils.js	Provide reusable utility functions that do not belong to a more specific module.
-error-handler.js	Normalize and handle application errors consistently.
+| File | Responsibility |
+|—|—|
+| `app.js` | Initialize shared application behaviour. |
+| `main.js` | Coordinate application startup. |
+| `core.js` | Provide shared core functionality. |
+| `config.js` | Expose approved frontend configuration. |
+| `constants.js` | Centralize stable constants and identifiers. |
+| `utils.js` | Provide reusable general-purpose utilities. |
+| `error-handler.js` | Normalize errors and coordinate safe error reporting. |
 
-Keep initialization predictable. Avoid initializing the same component or registering the same event listener multiple times.
+Keep initialization predictable. Prevent duplicate event listeners and repeated module startup.
 
-Configuration files must not contain private API keys, database credentials, signing secrets, or other server-only configuration.
+Never place private API keys, database credentials, signing secrets, or server-only configuration in frontend files.
 
-3.2 API and data access
+### 3.2 API and data access
 
-File	Responsibility
-api.js	Centralize API communication, request handling, and response processing.
-storage.js	Manage approved client-side storage operations and non-sensitive preferences.
-user.model.js	Define or normalize user data structures used by the frontend.
-formatters.js	Format dates, currency, numbers, labels, and other display values.
+| File | Responsibility |
+|—|—|
+| `api.js` | Centralize HTTP requests and response handling. |
+| `storage.js` | Manage approved client-side preferences and storage. |
+| `user.model.js` | Normalize user data structures. |
+| `formatters.js` | Format dates, currency, numbers, and display labels. |
 
-The API layer should be the consistent entry point for backend requests where supported by the existing architecture.
+Use the shared API client when it already supports the required operation. Avoid introducing duplicate API clients.
 
-It should handle applicable concerns such as:
+The API layer should handle applicable concerns such as:
 
-* Configured API base URLs.
-* Request headers and response parsing.
-* Session credentials and CSRF protection where required.
-* Network failures and HTTP errors.
-* Unauthorized and forbidden responses.
-* Request cancellation and duplicate-request prevention where appropriate.
-* Safe error messages for the user interface.
+- Configured API base URLs.
+- Request headers and response parsing.
+- Session credentials and CSRF protection.
+- Network errors and HTTP failures.
+- Unauthorized and forbidden responses.
+- Request cancellation where supported.
+- Duplicate-request prevention where appropriate.
+- Safe error messages.
 
-Do not introduce a second API client if api.js already provides the required functionality.
+Do not persist plaintext passwords, private keys, payment secrets, or sensitive authentication tokens in browser storage.
 
-The storage.js module must not be used to persist plaintext passwords, private keys, payment secrets, or sensitive authentication tokens. Authentication storage must follow the backend’s established session design.
+### 3.3 Authentication, verification, and permissions
 
-3.3 Authentication, verification, and permissions
+| File | Responsibility |
+|—|—|
+| `auth.js` | Coordinate authentication and session-aware workflows. |
+| `verification.js` | Support configured account-verification workflows. |
+| `permissions.js` | Control permission-aware presentation and interactions. |
+| `role.js` | Interpret roles for frontend behaviour. |
 
-File	Responsibility
-auth.js	Coordinate frontend authentication workflows and session-aware behaviour.
-verification.js	Support email or other configured account-verification workflows.
-permissions.js	Support permission-aware frontend presentation and interactions.
-role.js	Represent or interpret user roles for interface behaviour.
+These modules may support registration, login, logout, password recovery, verification, role-aware navigation, and account-security workflows.
 
-These modules may support:
+**Security boundary:** Client-side role and permission checks are not authorization controls. The backend must authorize every protected operation and resource independently.
 
-* Registration and login.
-* Logout and session-expiration handling.
-* Password recovery and verification workflows.
-* Role-aware navigation.
-* Permission-aware UI controls.
-* Account-security workflows.
-* Authentication state updates.
+### 3.4 Education, search, and discovery
 
-Security boundary: Client-side role checks and permission checks are not authorization controls. The backend must independently authorize every protected operation and resource.
-
-3.4 Education, search, and discovery
-
-File	Responsibility
-courses.js	Support course listings, course details, and related course interactions.
-colleges.js	Support college discovery and college-related interfaces.
-search.js	Provide search interactions and result presentation.
-filters.js	Apply supported filters to displayed datasets.
-compare.js	Support comparisons between courses, colleges, or other supported entities.
-pagination.js	Provide reusable pagination controls and page-state handling.
-
-These modules should use the platform’s approved data sources and API contracts.
+| File | Responsibility |
+|—|—|
+| `courses.js` | Course listings and details. |
+| `colleges.js` | College discovery and related interfaces. |
+| `search.js` | Search interactions and result presentation. |
+| `filters.js` | Supported dataset filtering. |
+| `compare.js` | Course, college, and entity comparisons. |
+| `pagination.js` | Pagination controls and page-state handling. |
 
 Requirements:
 
-* Handle loading, empty, and error states.
-* Validate search and filter parameters.
-* Keep filter and pagination state consistent.
-* Avoid rendering untrusted content as executable HTML.
-* Use backend pagination and filtering when supported and appropriate.
-* Do not treat client-side filtering as access control.
+- Handle loading, empty, and error states.
+- Validate search and filter parameters.
+- Keep filtering and pagination state consistent.
+- Avoid rendering untrusted content as executable HTML.
+- Use backend filtering and pagination where supported.
+- Never use client-side filtering as an access-control mechanism.
 
-3.5 Account and user workflows
+### 3.5 Account and user workflows
 
-File	Responsibility
-dashboard.js	Coordinate dashboard data and summary interfaces.
-profile.js	Support profile display and editing workflows.
-applications.js	Display and track admission or other supported applications.
-documents.js	Manage document-related frontend interactions.
-visits.js	Support visit-related interfaces and API workflows.
-subscription.js	Display and manage supported subscription workflows.
-payments.js	Support payment interfaces and transaction-status presentation.
-support.js	Support customer-service requests and ticket interfaces.
-notifications.js	Retrieve and display notifications and account alerts.
-messages.js	Support messaging interfaces where implemented.
+| File | Responsibility |
+|—|—|
+| `dashboard.js` | Dashboard data and summary interfaces. |
+| `profile.js` | Profile display and editing. |
+| `applications.js` | Application records and status tracking. |
+| `documents.js` | Document-management interactions. |
+| `visits.js` | Visit-related API workflows. |
+| `subscription.js` | Subscription status and management interfaces. |
+| `payments.js` | Payment interfaces and transaction-status presentation. |
+| `support.js` | Support requests and ticket interfaces. |
+| `notifications.js` | Account alerts and notifications. |
+| `messages.js` | Messaging interfaces where implemented. |
 
-These modules must retrieve private account data only through authorized backend endpoints.
+Retrieve private account data only through authorized backend endpoints. Never assume a record belongs to the current user because the browser supplied its identifier.
 
-They should not assume that a record belongs to the current user merely because the browser supplies a matching identifier.
+### 3.6 Forms, documents, and validation
 
-3.6 Forms, documents, and validation
-
-File	Responsibility
-forms.js	Provide reusable form-submission behaviour.
-validation.js	Provide client-side validation and accessible error presentation.
-uploader.js	Manage file selection, upload interactions, and upload progress.
-documents.js	Support document listing, preview, upload, and related interactions.
-
-Responsibilities include:
-
-* Accessible field-level validation.
-* Loading and disabled states during submission.
-* Duplicate-submission prevention.
-* Server-side validation error presentation.
-* Upload progress and failure handling.
-* File-selection guidance.
-* Clear confirmation of server-reported results.
-
-The server must independently validate submitted fields and uploaded file content, type, size, ownership, and permissions. Client-side validation alone is not a security control.
-
-3.7 User-interface components
-
-File	Responsibility
-navigation.js	Shared navigation and menu interactions.
-accessibility.js	Accessibility helpers and supported interaction enhancements.
-animations.js	Reusable animation and transition behaviour.
-modal.js	Modal-dialog behaviour, focus management, and dismissal.
-toast.js	Temporary success, error, warning, and informational messages.
-
-Use these modules to keep common UI behaviour consistent across MedOrbits pages.
+| File | Responsibility |
+|—|—|
+| `forms.js` | Reusable form-submission behaviour. |
+| `validation.js` | Client-side validation and accessible error presentation. |
+| `uploader.js` | File selection, uploads, and progress interfaces. |
+| `documents.js` | Document listing, previews, uploads, and related actions. |
 
 Requirements:
 
-* Maintain visible keyboard focus.
-* Support keyboard interaction and appropriate focus management.
-* Respect reduced-motion preferences.
-* Avoid inaccessible custom controls.
-* Ensure modal dialogs have accessible names and appropriate focus handling.
-* Keep toast messages concise and prevent them from obscuring essential controls.
+- Accessible field-level validation.
+- Loading states and duplicate-submission prevention.
+- Server-side validation error presentation.
+- Upload progress and failure handling.
+- File-selection guidance.
+- Confirmation based on actual server responses.
 
-3.8 Messaging and feedback
+The backend must independently validate submitted fields, file content, file type, size, ownership, and permissions.
 
-File	Responsibility
-messages.js	Handle supported messaging interfaces and message presentation.
-notifications.js	Present account alerts and notification states.
-toast.js	Display temporary user feedback.
-error-handler.js	Normalize errors for consistent handling by the application.
+### 3.7 User-interface components
 
-These modules serve different purposes and should not duplicate each other’s responsibilities.
+| File | Responsibility |
+|—|—|
+| `navigation.js` | Navigation and menu interactions. |
+| `accessibility.js` | Accessibility helpers and interaction enhancements. |
+| `animations.js` | Reusable animation and transition behaviour. |
+| `modal.js` | Modal behaviour, focus management, and dismissal. |
+| `toast.js` | Temporary success, error, warning, and informational messages. |
 
-Use persistent inline messages for important form errors and confirmation steps. Toasts should supplement, rather than replace, essential information.
+Requirements:
 
-4. Integration with the Account Module
+- Maintain visible keyboard focus.
+- Support keyboard interaction.
+- Respect reduced-motion preferences.
+- Provide accessible names for modal dialogs.
+- Prevent toasts from obscuring essential controls.
+- Use semantic HTML and accessible controls.
 
-The JavaScript modules may be consumed by the pages in the account/ directory.
+### 3.8 Messaging and feedback
 
-Account workflow	Relevant modules
-Login and registration	auth.js, api.js, forms.js, validation.js, toast.js
-Password recovery and verification	auth.js, verification.js, forms.js, validation.js, toast.js
-Security and permissions	auth.js, permissions.js, role.js, api.js
-Dashboard and profile	dashboard.js, profile.js, auth.js, api.js
-Admission applications	applications.js, courses.js, colleges.js, api.js
-Document management	documents.js, uploader.js, validation.js, api.js
-Payments and subscriptions	payments.js, subscription.js, api.js
-Notifications and messaging	notifications.js, messages.js, api.js, toast.js
-Saved opportunities and career features	Relevant feature module, api.js, auth.js
-Support requests	support.js, forms.js, validation.js, api.js
+`messages.js`, `notifications.js`, `toast.js`, and `error-handler.js` have separate responsibilities and should not duplicate each other.
 
-This table is a dependency guide, not a requirement to load every listed file on every page. Use the actual exports, imports, and dependencies defined by the implementation.
+Use persistent inline messages for important form errors and confirmations. Toasts should supplement, not replace, essential information.
 
-5. Script Loading and Module Conventions
+## 4. Account Module Integration
 
-Follow the module system already established in the repository.
+The following is a dependency guide, not a requirement to load every module on every page.
 
-For classic scripts, an HTML page may use:
+| Workflow | Relevant modules |
+|—|—|
+| Login and registration | `auth.js`, `api.js`, `forms.js`, `validation.js`, `toast.js` |
+| Password recovery and verification | `auth.js`, `verification.js`, `forms.js`, `validation.js` |
+| Security and permissions | `auth.js`, `permissions.js`, `role.js`, `api.js` |
+| Dashboard and profile | `dashboard.js`, `profile.js`, `auth.js`, `api.js` |
+| Admission applications | `applications.js`, `courses.js`, `colleges.js`, `api.js` |
+| Document management | `documents.js`, `uploader.js`, `validation.js`, `api.js` |
+| Payments and subscriptions | `payments.js`, `subscription.js`, `api.js` |
+| Notifications and messaging | `notifications.js`, `messages.js`, `api.js`, `toast.js` |
+| Career and saved opportunities | Relevant feature module, `api.js`, `auth.js` |
+| Support requests | `support.js`, `forms.js`, `validation.js`, `api.js` |
+| Property visits | `visits.js`, `api.js`, `auth.js` |
 
+Follow the actual imports, exports, and dependencies in the repository.
+
+## 5. Script Loading and Module Conventions
+
+Follow the module system already established by the project.
+
+Classic-script example:
+
+```html
 <script src=“../assets/js/main/app.js” defer></script>
+```
 
-For ES modules, the page may instead use:
+ES-module example:
 
+```html
 <script type=“module” src=“../assets/js/main/main.js”></script>
+```
 
-These paths are illustrative and must be adjusted to match the actual project layout.
+These paths are illustrative. Verify actual paths before using them.
 
 Before adding a script reference:
 
-1. Confirm that the file exists.
+1. Confirm the file exists.
 2. Confirm whether it uses classic scripts or ES modules.
-3. Check its imports and exports.
-4. Confirm that dependencies load in the required order.
-5. Avoid loading the same functionality twice.
-6. Ensure the page initializes only the modules it needs.
+3. Check imports and exports.
+4. Load dependencies in the required order.
+5. Prevent duplicate loading and startup.
+6. Initialize only the modules required by the page.
 
-Do not mix incompatible module-loading conventions or create duplicate startup logic.
+Do not mix incompatible module-loading conventions.
 
-6. API Configuration and Backend Integration
+## 6. API Configuration and Backend Integration
 
-All backend requests should use the configured API infrastructure, preferably through api.js when that is the established shared API client.
+Use the configured API infrastructure, preferably through `api.js` where supported.
 
-Avoid hardcoding environment-specific URLs throughout individual feature modules.
+Avoid hardcoding environment-specific URLs in feature modules.
 
-Example of an illustrative API-client integration:
+Illustrative example:
 
+```javascript
 async function loadApplications(apiClient) {
   try {
     const response = await apiClient.get(“/applications”);
     return response.data;
   } catch (error) {
-    // Delegate safe error presentation to the shared error-handling layer.
     throw error;
   }
 }
+```
 
-The route and API-client method above are examples only. Use the actual backend endpoint and method contract defined by MedOrbits.
+The method and endpoint are examples only. Use the actual MedOrbits API contract.
 
-The API integration must:
+API integrations must:
 
-* Follow the backend’s request and response formats.
-* Handle authentication and authorization failures.
-* Display safe, user-friendly error messages.
-* Respect rate limits.
-* Avoid blindly retrying sensitive state-changing requests.
-* Use idempotency mechanisms for supported financial operations.
-* Avoid exposing internal server details.
-* Prevent private data from being included unnecessarily in URLs or logs.
+- Follow the backend’s request and response formats.
+- Handle authentication and authorization failures.
+- Display safe, user-friendly errors.
+- Respect rate limits.
+- Avoid blindly retrying state-changing requests.
+- Use idempotency mechanisms for supported financial operations.
+- Avoid exposing internal server details.
+- Minimize sensitive data in URLs and logs.
 
-7. Security Requirements
+## 7. Security Requirements
 
-Authentication and session management
+### Authentication and sessions
 
-* Never store plaintext passwords in browser storage.
-* Never include private credentials or server secrets in frontend JavaScript.
-* Use the configured authentication and session strategy.
-* Handle expired sessions and unauthorized API responses consistently.
-* Clear sensitive in-memory state after logout where appropriate.
-* Do not rely on hidden buttons or client-side role checks to protect operations.
+- Never store plaintext passwords in browser storage.
+- Never embed private credentials or server secrets in frontend JavaScript.
+- Follow the configured authentication and session strategy.
+- Handle expired sessions and unauthorized responses consistently.
+- Clear sensitive in-memory state after logout where appropriate.
+- Never rely on hidden buttons or client-side roles to protect operations.
 
-API and DOM security
+### API and DOM security
 
-* Use HTTPS in production.
-* Apply the backend’s CSRF protection strategy where applicable.
-* Treat API responses, user input, filenames, and external content as untrusted.
-* Prefer safe DOM APIs such as textContent when displaying plain text.
-* Avoid inserting untrusted values through innerHTML.
-* Validate redirect destinations.
-* Do not expose stack traces, internal errors, or secrets to users.
+- Use HTTPS in production.
+- Apply the backend’s CSRF protection strategy where applicable.
+- Treat API responses, user input, filenames, and external content as untrusted.
+- Prefer `textContent` for plain-text display.
+- Avoid inserting untrusted values through `innerHTML`.
+- Validate redirect destinations.
+- Do not expose stack traces, internal errors, or secrets to users.
 
-Payments and subscriptions
+### Payments and subscriptions
 
-* Treat the backend as the authority for payment and subscription status.
-* Do not mark a transaction as successful solely because a checkout interface reports success.
-* Require trusted server-side payment-provider confirmation.
-* Never embed payment-provider secret keys in frontend files.
-* Avoid storing card details or other unnecessary payment-sensitive data.
+- Treat the backend as the authority for payment and subscription status.
+- Never mark a payment successful solely because a checkout interface reports success.
+- Require trusted server-side payment-provider confirmation.
+- Never embed payment-provider secret keys in frontend files.
+- Avoid storing card details or unnecessary payment-sensitive data.
 
-Documents and personal information
+### Documents and personal information
 
-* Validate uploaded content on the server.
-* Enforce authorization for document access and downloads.
-* Do not expose private document URLs or personal information publicly.
-* Avoid unnecessary logging of educational records, contact details, or other personal data.
+- Validate uploaded content on the server.
+- Enforce authorization for document access and downloads.
+- Do not expose private document URLs or personal information publicly.
+- Avoid unnecessary logging of educational records and contact details.
 
-Destructive and security-sensitive operations
+### Sensitive operations
 
-Operations such as account deletion, password changes, security-setting changes, and subscription cancellation must be protected by backend authorization and appropriate confirmation or re-authentication.
+Account deletion, password changes, security-setting changes, and subscription cancellation must use backend authorization and appropriate confirmation or re-authentication.
 
-8. Design and Accessibility Standards
+## 8. Design and Accessibility
 
-All JavaScript-driven components must follow the MedOrbits design system.
-
-Brand direction: Royal Burgundy and Champagne Gold, complemented by dark, premium colour palettes.
+**Brand direction:** Royal Burgundy and Champagne Gold, complemented by premium dark palettes.
 
 Requirements:
 
-* Avoid pure-white page sections.
-* Maintain readable foreground and background contrast.
-* Use consistent button, modal, form, alert, and navigation behaviour.
-* Provide visible keyboard focus indicators.
-* Use accessible labels and semantic HTML.
-* Announce important dynamic status updates to assistive technologies.
-* Respect reduced-motion preferences.
-* Support mobile, tablet, and desktop layouts.
-* Provide understandable validation and error messages.
-* Avoid communicating important information through colour or animation alone.
+- Avoid pure-white page sections.
+- Maintain readable foreground and background contrast.
+- Keep button, modal, form, alert, and navigation behaviour consistent.
+- Provide visible keyboard focus.
+- Use accessible labels and semantic HTML.
+- Announce important dynamic status updates to assistive technologies.
+- Respect reduced-motion preferences.
+- Support mobile, tablet, and desktop layouts.
+- Provide understandable validation and error messages.
+- Never communicate important information through colour or animation alone.
 
-9. Loading, Error, and Empty States
+## 9. Loading, Error, and Empty States
 
-Every API-driven interface should handle its relevant asynchronous states.
+| State | Expected behaviour |
+|—|—|
+| Loading | Display progress and prevent duplicate actions. |
+| Success | Confirm only what the server actually reports. |
+| Validation failure | Identify fields that require correction. |
+| Unauthorized | Guide the user through session recovery or sign-in. |
+| Forbidden | Explain that access is unavailable without exposing protected information. |
+| Network failure | Display a safe message and offer retry where appropriate. |
+| Empty results | Explain that no records are currently available. |
+| Pending payment | Make clear that the transaction is not confirmed. |
+| Upload failure | Explain the failure and allow a safe retry where appropriate. |
 
-State	Expected behaviour
-Loading	Display progress and prevent inappropriate duplicate actions.
-Success	Confirm the operation using the actual server response.
-Validation failure	Identify the fields that require correction.
-Unauthorized	Guide the user through session recovery or sign-in where appropriate.
-Forbidden	Explain that access is unavailable without revealing protected information.
-Network failure	Display a safe message and offer retry where appropriate.
-Empty results	Explain that no records are currently available.
-Pending payment	Make clear that the transaction is not yet confirmed.
-Upload failure	Explain the failure and allow a safe retry where possible.
+Never report a payment, upload, deletion, or other state-changing operation as successful before receiving the required server confirmation.
 
-Never present a payment, upload, account deletion, or other state-changing operation as successful before receiving the required server confirmation.
+## 10. Performance and Maintainability
 
-10. Performance and Maintainability
+- Keep modules focused on defined responsibilities.
+- Reuse shared utilities.
+- Avoid unnecessary globals and duplicate event listeners.
+- Avoid unnecessary network requests.
+- Use pagination for large datasets where supported.
+- Keep third-party dependencies minimal and maintained.
+- Document public functions and non-obvious behaviour.
+- Remove obsolete code only after checking its consumers.
+- Keep module names and import paths consistent.
+- Follow the repository’s established formatting, linting, and testing conventions.
 
-* Keep modules focused on clearly defined responsibilities.
-* Reuse shared utilities rather than duplicating logic.
-* Avoid unnecessary global variables.
-* Prevent duplicate event listeners and repeated initialization.
-* Avoid unnecessary network requests.
-* Use pagination for large datasets when supported.
-* Keep third-party dependencies minimal and maintained.
-* Document exported functions and non-obvious behaviour.
-* Remove obsolete code only after checking its consumers.
-* Keep module names and import paths consistent.
-* Follow the project’s established formatting, linting, and testing conventions.
-
-11. Testing and Validation
+## 11. Testing and Validation
 
 Before releasing JavaScript changes, verify:
 
-* [ ]	All referenced files exist.
-* [ ]	Imports and exports resolve correctly.
-* [ ]	No duplicate initialization occurs.
-* [ ]	API requests use the configured API client.
-* [ ]	Unauthenticated and unauthorized states are handled correctly.
-* [ ]	Form validation and server errors are displayed accessibly.
-* [ ]	Uploads handle invalid and oversized files.
-* [ ]	Payments distinguish pending, failed, and confirmed states.
-* [ ]	Sensitive operations require appropriate confirmation and server authorization.
-* [ ]	Keyboard navigation and focus management work correctly.
-* [ ]	Reduced-motion preferences are respected.
-* [ ]	Responsive layouts remain usable on small screens.
-* [ ]	No secrets or sensitive data are exposed in frontend code or logs.
-* [ ]	Existing application functionality remains intact.
+- [ ] Referenced files exist.
+- [ ] Imports and exports resolve correctly.
+- [ ] Duplicate initialization is prevented.
+- [ ] API requests use the configured API client where appropriate.
+- [ ] Unauthorized and forbidden states are handled correctly.
+- [ ] Form validation and server errors are accessible.
+- [ ] Uploads handle invalid and oversized files.
+- [ ] Payments distinguish pending, failed, and confirmed states.
+- [ ] Sensitive operations require appropriate confirmation and server authorization.
+- [ ] Keyboard navigation and focus management work correctly.
+- [ ] Reduced-motion preferences are respected.
+- [ ] Responsive layouts remain usable on small screens.
+- [ ] No secrets or sensitive data are exposed in frontend code or logs.
+- [ ] Existing functionality remains intact.
 
-Run the checks defined in the repository’s actual package.json and test configuration. Do not assume that a particular lint, test, or build command exists without verifying it.
+Run checks defined in the actual `package.json` and test configuration. Do not assume a particular command exists without verifying it.
 
-12. Adding a New Module
+## 12. Adding a New Module
 
-When adding a JavaScript file:
-
-1. Define its purpose and public interface.
-2. Check whether an existing module already provides the required functionality.
-3. Reuse the shared API, error-handling, validation, and notification utilities.
-4. Follow the repository’s existing module convention.
-5. Update the relevant page imports or script references.
+1. Define the module’s purpose and public interface.
+2. Check whether an existing module already provides the functionality.
+3. Reuse shared API, error-handling, validation, and notification utilities.
+4. Follow the established module convention.
+5. Update relevant imports or script references.
 6. Document the module in this README.
 7. Add tests where supported.
 8. Verify security, accessibility, performance, and error handling.
-9. Confirm that no secrets or sensitive data are exposed.
-10. Update related documentation when dependencies or API contracts change.
+9. Confirm that secrets and sensitive data are not exposed.
+10. Update documentation when dependencies or API contracts change.
 
-13. Maintenance
+## 13. Maintenance
 
-Keep this README aligned with the actual files and their responsibilities.
+Keep this README aligned with the actual repository.
 
 When modules are renamed, moved, added, or removed, review:
 
-* HTML script references.
-* JavaScript imports and exports.
-* Feature-module dependencies.
-* API integration.
-* Account-page workflows.
-* Automated tests and build configuration.
-* Related documentation.
+- HTML script references.
+- JavaScript imports and exports.
+- Feature-module dependencies.
+- API integration.
+- Account-page workflows.
+- Automated tests and build configuration.
+- Related documentation.
 
-Avoid documenting planned functionality as implemented until its code and required backend support are present.
+Do not document planned functionality as implemented until its code and required backend support exist.
 
-⸻
+—
 
-Module objective: Provide a cohesive, secure, accessible, and maintainable JavaScript foundation for MedOrbits, supporting education discovery, account management, admissions, counselling, documents, payments, subscriptions, notifications, and career services.
+**Module objective:** Provide a cohesive, secure, accessible, and maintainable JavaScript foundation for MedOrbits, supporting education discovery, account management, admissions, counselling, documents, payments, subscriptions, notifications, and career services.
 
-Core principle: The frontend manages user interaction and presentation; the backend remains responsible for authentication, authorization, data integrity, and trusted business operations.
+**Core principle:** The frontend manages user interaction and presentation; the backend remains responsible for authentication, authorization, data integrity, and trusted business operations.

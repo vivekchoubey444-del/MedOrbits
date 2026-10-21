@@ -1,11 +1,11 @@
 
 /**
  * MedOrbits -- Core Runtime
- * File: assets/js/core.js
- * Version: 1.0.0
+ * File: /assets/js/core.js
+ * Version: 1.1.0
  *
  * Responsibilities:
- * - Application constants and environment detection
+ * - Runtime defaults and environment detection
  * - Safe DOM utilities
  * - Shared event bus
  * - Storage abstraction
@@ -13,15 +13,15 @@
  * - Debounce, throttle and ID generation
  * - Safe JSON handling
  * - URL and query-string utilities
- * - Shared runtime diagnostics
+ * - Runtime diagnostics
  *
  * Dependencies: None
  *
- * This file must not implement authentication, API requests,
- * payments, permissions, or page-specific UI behavior.
+ * Does not implement authentication, API requests, payments,
+ * permissions, or page-specific UI behavior.
  */
 
-(() => {
+(function (window, document) {
   "use strict";
 
   if (window.MedOrbitsCore) {
@@ -29,13 +29,94 @@
   }
 
   // --------------------------------------------------
-  // Application configuration
+  // Configuration
   // --------------------------------------------------
 
-  const DEFAULTS = Object.freeze({
+  var ENVIRONMENTS = Object.freeze({
+    DEVELOPMENT: "development",
+    TEST: "test",
+    STAGING: "staging",
+    PRODUCTION: "production"
+  });
+
+  var STORAGE_TYPES = Object.freeze({
+    LOCAL: "local",
+    SESSION: "session"
+  });
+
+  var STORAGE_KEYS = Object.freeze({
+    THEME: "theme",
+    LOCALE: "locale",
+    COOKIE_CONSENT: "cookie-consent",
+    LAST_VISITED: "last-visited"
+  });
+
+  var HTTP_STATUS = Object.freeze({
+    OK: 200,
+    CREATED: 201,
+    ACCEPTED: 202,
+    NO_CONTENT: 204,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
+    NOT_FOUND: 404,
+    METHOD_NOT_ALLOWED: 405,
+    CONFLICT: 409,
+    UNPROCESSABLE_ENTITY: 422,
+    TOO_MANY_REQUESTS: 429,
+    SERVER_ERROR: 500,
+    SERVICE_UNAVAILABLE: 503
+  });
+
+  function detectEnvironment() {
+    var explicit = window.MEDORBITS_ENV;
+
+    if (
+      Object.keys(ENVIRONMENTS).some(function (key) {
+        return ENVIRONMENTS[key] === explicit;
+      })
+    ) {
+      return explicit;
+    }
+
+    var hostname = window.location.hostname.toLowerCase();
+
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname === "[::1]"
+    ) {
+      return ENVIRONMENTS.DEVELOPMENT;
+    }
+
+    if (
+      hostname.endsWith(".test") ||
+      hostname.endsWith(".localhost")
+    ) {
+      return ENVIRONMENTS.TEST;
+    }
+
+    if (
+      hostname.indexOf("staging.") === 0 ||
+      hostname.indexOf("test.") === 0
+    ) {
+      return ENVIRONMENTS.STAGING;
+    }
+
+    return ENVIRONMENTS.PRODUCTION;
+  }
+
+  var environment = detectEnvironment();
+
+  var locale =
+    document.documentElement.lang ||
+    "en-IN";
+
+  var DEFAULTS = Object.freeze({
     name: "MedOrbits",
-    version: "1.0.0",
-    locale: document.documentElement.lang || "en-IN",
+    version: "1.1.0",
+    locale: locale,
     currency: "INR",
     currencySymbol: "₹",
     timeZone: "Asia/Kolkata",
@@ -46,184 +127,106 @@
     debounceDelay: 300,
     throttleDelay: 200,
     storagePrefix: "medorbits:",
-    debug: false
-  });
-
-  const ENVIRONMENTS = Object.freeze({
-    DEVELOPMENT: "development",
-    TEST: "test",
-    PRODUCTION: "production"
-  });
-
-  const STORAGE_TYPES = Object.freeze({
-    LOCAL: "local",
-    SESSION: "session"
-  });
-
-  const STORAGE_KEYS = Object.freeze({
-    THEME: "theme",
-    LOCALE: "locale",
-    COOKIE_CONSENT: "cookie-consent",
-    LAST_VISITED: "last-visited"
-  });
-
-  const HTTP_STATUS = Object.freeze({
-    OK: 200,
-    CREATED: 201,
-    NO_CONTENT: 204,
-    BAD_REQUEST: 400,
-    UNAUTHORIZED: 401,
-    FORBIDDEN: 403,
-    NOT_FOUND: 404,
-    CONFLICT: 409,
-    TOO_MANY_REQUESTS: 429,
-    SERVER_ERROR: 500,
-    SERVICE_UNAVAILABLE: 503
-  });
-
-  // --------------------------------------------------
-  // Environment detection
-  // --------------------------------------------------
-
-  function detectEnvironment() {
-    const explicit = window.MEDORBITS_ENV;
-
-    if (
-      Object.values(ENVIRONMENTS).includes(explicit)
-    ) {
-      return explicit;
-    }
-
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "[::1]"
-    ) {
-      return ENVIRONMENTS.DEVELOPMENT;
-    }
-
-    if (
-      window.location.hostname.endsWith(".test") ||
-      window.location.hostname.endsWith(".localhost")
-    ) {
-      return ENVIRONMENTS.TEST;
-    }
-
-    return ENVIRONMENTS.PRODUCTION;
-  }
-
-  const environment = detectEnvironment();
-
-  const config = Object.freeze({
-    ...DEFAULTS,
-    environment,
     debug:
-      DEFAULTS.debug ||
       window.MEDORBITS_DEBUG === true ||
       environment === ENVIRONMENTS.DEVELOPMENT
   });
+
+  var config = Object.freeze(
+    Object.assign({}, DEFAULTS, {
+      environment: environment
+    })
+  );
 
   // --------------------------------------------------
   // Logging
   // --------------------------------------------------
 
-  const logger = {
-    info(message, details) {
+  var logger = {
+    info: function (message, details) {
       if (!config.debug) return;
 
       console.info(
-        `[${config.name}:core] ${message}`,
-        details ?? ""
+        "[" + config.name + ":core] " + message,
+        details === undefined ? "" : details
       );
     },
 
-    warn(message, details) {
+    warn: function (message, details) {
       console.warn(
-        `[${config.name}:core] ${message}`,
-        details ?? ""
+        "[" + config.name + ":core] " + message,
+        details === undefined ? "" : details
       );
     },
 
-    error(message, details) {
+    error: function (message, details) {
       console.error(
-        `[${config.name}:core] ${message}`,
-        details ?? ""
+        "[" + config.name + ":core] " + message,
+        details === undefined ? "" : details
       );
     },
 
-    debug(message, details) {
+    debug: function (message, details) {
       if (!config.debug) return;
 
       console.debug(
-        `[${config.name}:core] ${message}`,
-        details ?? ""
+        "[" + config.name + ":core] " + message,
+        details === undefined ? "" : details
       );
     }
   };
 
   // --------------------------------------------------
-  // Type and value helpers
+  // Type helpers
   // --------------------------------------------------
 
-  const types = {
-    isString(value) {
+  var types = {
+    isString: function (value) {
       return typeof value === "string";
     },
 
-    isNonEmptyString(value) {
-      return (
-        typeof value === "string" &&
-        value.trim().length > 0
-      );
+    isNonEmptyString: function (value) {
+      return typeof value === "string" && value.trim().length > 0;
     },
 
-    isNumber(value) {
-      return (
-        typeof value === "number" &&
-        Number.isFinite(value)
-      );
+    isNumber: function (value) {
+      return typeof value === "number" && Number.isFinite(value);
     },
 
-    isInteger(value) {
+    isInteger: function (value) {
       return Number.isSafeInteger(value);
     },
 
-    isBoolean(value) {
+    isBoolean: function (value) {
       return typeof value === "boolean";
     },
 
-    isArray(value) {
+    isArray: function (value) {
       return Array.isArray(value);
     },
 
-    isObject(value) {
-      return (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value)
-      );
+    isObject: function (value) {
+      return value !== null && typeof value === "object" &&
+        !Array.isArray(value);
     },
 
-    isPlainObject(value) {
+    isPlainObject: function (value) {
       if (!this.isObject(value)) return false;
 
-      const prototype = Object.getPrototypeOf(value);
+      var prototype = Object.getPrototypeOf(value);
 
-      return (
-        prototype === Object.prototype ||
-        prototype === null
-      );
+      return prototype === Object.prototype || prototype === null;
     },
 
-    isFunction(value) {
+    isFunction: function (value) {
       return typeof value === "function";
     },
 
-    isNullish(value) {
+    isNullish: function (value) {
       return value === null || value === undefined;
     },
 
-    isEmpty(value) {
+    isEmpty: function (value) {
       if (this.isNullish(value)) return true;
       if (this.isString(value)) return value.trim() === "";
       if (this.isArray(value)) return value.length === 0;
@@ -240,84 +243,117 @@
   // DOM utilities
   // --------------------------------------------------
 
-  const dom = {
-    query(selector, root = document) {
-      if (!types.isString(selector)) return null;
+  var dom = {
+    query: function (selector, root) {
+      root = root || document;
+
+      if (!types.isString(selector) ||
+          !root ||
+          typeof root.querySelector !== "function") {
+        return null;
+      }
 
       try {
         return root.querySelector(selector);
       } catch (error) {
         logger.warn("Invalid selector", {
-          selector,
-          error
+          selector: selector,
+          message: error.message
         });
 
         return null;
       }
     },
 
-    queryAll(selector, root = document) {
-      if (!types.isString(selector)) return [];
+    queryAll: function (selector, root) {
+      root = root || document;
+
+      if (!types.isString(selector) ||
+          !root ||
+          typeof root.querySelectorAll !== "function") {
+        return [];
+      }
 
       try {
-        return Array.from(root.querySelectorAll(selector));
+        return Array.prototype.slice.call(
+          root.querySelectorAll(selector)
+        );
       } catch (error) {
         logger.warn("Invalid selector", {
-          selector,
-          error
+          selector: selector,
+          message: error.message
         });
 
         return [];
       }
     },
 
-    byId(id, root = document) {
+    byId: function (id, root) {
+      root = root || document;
+
       if (!types.isNonEmptyString(id)) return null;
 
-      if (root === document) {
+      if (
+        root === document &&
+        typeof document.getElementById === "function"
+      ) {
         return document.getElementById(id);
       }
 
-      return this.query(`#${CSS.escape(id)}`, root);
+      // Avoid constructing a selector from an untrusted ID.
+      return this.query(
+        '[id="' + String(id).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"]',
+        root
+      );
     },
 
-    create(tagName, options = {}) {
+    create: function (tagName, options) {
+      options = options || {};
+
       if (!types.isNonEmptyString(tagName)) {
         throw new TypeError("A valid element tag is required.");
       }
 
-      const element = document.createElement(tagName);
+      if (!/^[a-z][a-z0-9-]*$/i.test(tagName)) {
+        throw new TypeError("Invalid element tag name.");
+      }
+
+      var element = document.createElement(tagName);
 
       if (options.className) {
-        element.className = options.className;
+        element.className = String(options.className);
       }
 
       if (options.id) {
-        element.id = options.id;
+        element.id = String(options.id);
       }
 
-      if (options.text !== undefined) {
+      if (options.text !== undefined && options.text !== null) {
         element.textContent = String(options.text);
       }
 
-      if (options.attributes && types.isPlainObject(options.attributes)) {
-        for (const [name, value] of Object.entries(options.attributes)) {
+      if (types.isPlainObject(options.attributes)) {
+        Object.keys(options.attributes).forEach(function (name) {
+          var value = options.attributes[name];
+
           if (
             value === null ||
             value === undefined ||
-            typeof value === "object"
+            typeof value === "object" ||
+            /^on/i.test(name) ||
+            name.toLowerCase() === "srcdoc"
           ) {
-            continue;
+            return;
           }
 
           element.setAttribute(name, String(value));
-        }
+        });
       }
 
       return element;
     },
 
-    setText(element, value) {
+    setText: function (element, value) {
       if (!element || !("textContent" in element)) return false;
 
       element.textContent = value == null ? "" : String(value);
@@ -325,25 +361,36 @@
       return true;
     },
 
-    toggleClass(element, className, force) {
-      if (!element?.classList) return false;
+    toggleClass: function (element, className, force) {
+      if (
+        !element ||
+        !element.classList ||
+        !types.isNonEmptyString(className)
+      ) {
+        return false;
+      }
 
-      return element.classList.toggle(className, force);
+      if (force === undefined) {
+        return element.classList.toggle(className);
+      }
+
+      return element.classList.toggle(className, Boolean(force));
     },
 
-    isVisible(element) {
-      if (!(element instanceof Element)) return false;
+    isVisible: function (element) {
+      if (!element || element.nodeType !== 1) return false;
 
-      const style = window.getComputedStyle(element);
+      var style = window.getComputedStyle(element);
 
       return (
         style.display !== "none" &&
         style.visibility !== "hidden" &&
+        style.visibility !== "collapse" &&
         element.getClientRects().length > 0
       );
     },
 
-    ready(callback) {
+    ready: function (callback) {
       if (!types.isFunction(callback)) {
         throw new TypeError("DOM ready callback must be a function.");
       }
@@ -361,39 +408,48 @@
   };
 
   // --------------------------------------------------
-  // Safe storage abstraction
+  // Storage abstraction
   // --------------------------------------------------
 
   function resolveStorage(type) {
-    if (type === STORAGE_TYPES.SESSION) {
-      return window.sessionStorage;
+    if (
+      type !== STORAGE_TYPES.LOCAL &&
+      type !== STORAGE_TYPES.SESSION
+    ) {
+      throw new TypeError("Unsupported storage type.");
     }
 
-    return window.localStorage;
+    return type === STORAGE_TYPES.SESSION
+      ? window.sessionStorage
+      : window.localStorage;
   }
 
   function storageKey(key) {
-    return `${config.storagePrefix}${key}`;
+    return config.storagePrefix + key;
   }
 
-  const storage = {
-    get(key, type = STORAGE_TYPES.LOCAL) {
+  var storage = {
+    get: function (key, type) {
+      type = type || STORAGE_TYPES.LOCAL;
+
       if (!types.isNonEmptyString(key)) return null;
 
       try {
         return resolveStorage(type).getItem(storageKey(key));
       } catch (error) {
         logger.warn("Storage read failed", {
-          key,
-          type,
-          error
+          key: key,
+          type: type,
+          message: error.message
         });
 
         return null;
       }
     },
 
-    set(key, value, type = STORAGE_TYPES.LOCAL) {
+    set: function (key, value, type) {
+      type = type || STORAGE_TYPES.LOCAL;
+
       if (!types.isNonEmptyString(key)) return false;
       if (value === undefined || value === null) return false;
 
@@ -406,46 +462,52 @@
         return true;
       } catch (error) {
         logger.warn("Storage write failed", {
-          key,
-          type,
-          error
+          key: key,
+          type: type,
+          message: error.message
         });
 
         return false;
       }
     },
 
-    getJSON(key, type = STORAGE_TYPES.LOCAL) {
-      const value = this.get(key, type);
+    getJSON: function (key, type) {
+      var value = this.get(key, type);
 
       if (value === null) return null;
 
       try {
         return JSON.parse(value);
       } catch (error) {
-        logger.warn("Stored JSON is invalid", { key, error });
+        logger.warn("Stored JSON is invalid", {
+          key: key,
+          message: error.message
+        });
+
         return null;
       }
     },
 
-    setJSON(key, value, type = STORAGE_TYPES.LOCAL) {
+    setJSON: function (key, value, type) {
       try {
-        const serialized = JSON.stringify(value);
+        var serialized = JSON.stringify(value);
 
         if (serialized === undefined) return false;
 
         return this.set(key, serialized, type);
       } catch (error) {
         logger.warn("JSON serialization failed", {
-          key,
-          error
+          key: key,
+          message: error.message
         });
 
         return false;
       }
     },
 
-    remove(key, type = STORAGE_TYPES.LOCAL) {
+    remove: function (key, type) {
+      type = type || STORAGE_TYPES.LOCAL;
+
       if (!types.isNonEmptyString(key)) return false;
 
       try {
@@ -453,46 +515,54 @@
         return true;
       } catch (error) {
         logger.warn("Storage removal failed", {
-          key,
-          type,
-          error
+          key: key,
+          type: type,
+          message: error.message
         });
 
         return false;
       }
     },
 
-    clear(type = STORAGE_TYPES.LOCAL) {
+    clear: function (type) {
+      type = type || STORAGE_TYPES.LOCAL;
+
       try {
-        const target = resolveStorage(type);
-        const keys = [];
+        var target = resolveStorage(type);
+        var keys = [];
 
-        for (let index = 0; index < target.length; index += 1) {
-          const key = target.key(index);
+        for (var index = 0; index < target.length; index += 1) {
+          var key = target.key(index);
 
-          if (key?.startsWith(config.storagePrefix)) {
+          if (key && key.indexOf(config.storagePrefix) === 0) {
             keys.push(key);
           }
         }
 
-        keys.forEach((key) => target.removeItem(key));
+        keys.forEach(function (key) {
+          target.removeItem(key);
+        });
 
         return true;
       } catch (error) {
-        logger.warn("Storage cleanup failed", { type, error });
+        logger.warn("Storage cleanup failed", {
+          type: type,
+          message: error.message
+        });
+
         return false;
       }
     }
   };
 
   // --------------------------------------------------
-  // Event bus
+  // Shared event bus
   // --------------------------------------------------
 
-  const eventListeners = new Map();
+  var eventListeners = new Map();
 
-  const events = {
-    on(name, callback) {
+  var events = {
+    on: function (name, callback) {
       if (!types.isNonEmptyString(name)) {
         throw new TypeError("Event name is required.");
       }
@@ -505,55 +575,73 @@
         eventListeners.set(name, new Set());
       }
 
-      const listeners = eventListeners.get(name);
-
+      var listeners = eventListeners.get(name);
       listeners.add(callback);
 
-      return () => {
+      var subscribed = true;
+
+      return function unsubscribe() {
+        if (!subscribed) return false;
+
+        subscribed = false;
         listeners.delete(callback);
 
         if (listeners.size === 0) {
           eventListeners.delete(name);
         }
+
+        return true;
       };
     },
 
-    once(name, callback) {
-      let unsubscribe;
+    once: function (name, callback) {
+      if (!types.isFunction(callback)) {
+        throw new TypeError("Event callback must be a function.");
+      }
 
-      unsubscribe = this.on(name, (detail) => {
-        unsubscribe();
+      var unsubscribe = null;
+
+      var wrapper = function (detail) {
+        if (unsubscribe) unsubscribe();
         callback(detail);
-      });
+      };
+
+      unsubscribe = this.on(name, wrapper);
 
       return unsubscribe;
     },
 
-    emit(name, detail = {}) {
-      const listeners = eventListeners.get(name);
+    emit: function (name, detail) {
+      if (!types.isNonEmptyString(name)) {
+        throw new TypeError("Event name is required.");
+      }
+
+      var listeners = eventListeners.get(name);
 
       if (!listeners) return 0;
 
-      let delivered = 0;
+      var delivered = 0;
 
-      for (const callback of Array.from(listeners)) {
+      Array.from(listeners).forEach(function (callback) {
         try {
-          callback(detail);
+          callback(detail === undefined ? {} : detail);
           delivered += 1;
         } catch (error) {
-          logger.error(`Listener failed for "${name}"`, error);
+          logger.error('Listener failed for "' + name + '"', {
+            message: error.message
+          });
         }
-      }
+      });
 
       return delivered;
     },
 
-    off(name, callback) {
-      const listeners = eventListeners.get(name);
+    off: function (name, callback) {
+      var listeners = eventListeners.get(name);
 
       if (!listeners) return false;
 
-      const removed = listeners.delete(callback);
+      var removed = listeners.delete(callback);
 
       if (listeners.size === 0) {
         eventListeners.delete(name);
@@ -562,7 +650,7 @@
       return removed;
     },
 
-    clear(name) {
+    clear: function (name) {
       if (name === undefined) {
         eventListeners.clear();
         return;
@@ -573,54 +661,74 @@
   };
 
   // --------------------------------------------------
-  // Timing helpers
+  // Debounce and throttle
   // --------------------------------------------------
 
-  const timing = {
-    debounce(callback, delay = config.debounceDelay) {
+  var timing = {
+    debounce: function (callback, delay) {
       if (!types.isFunction(callback)) {
         throw new TypeError("Debounce callback must be a function.");
       }
 
-      let timerId;
+      delay = delay === undefined ? config.debounceDelay : delay;
+      delay = Math.max(0, Number(delay) || 0);
 
-      function debounced(...args) {
+      var timerId = null;
+      var lastContext;
+      var lastArgs;
+
+      function debounced() {
+        lastContext = this;
+        lastArgs = Array.prototype.slice.call(arguments);
+
         window.clearTimeout(timerId);
 
-        timerId = window.setTimeout(() => {
-          callback.apply(this, args);
-        }, Math.max(0, Number(delay) || 0));
+        timerId = window.setTimeout(function () {
+          timerId = null;
+          callback.apply(lastContext, lastArgs);
+          lastContext = lastArgs = null;
+        }, delay);
       }
 
-      debounced.cancel = () => {
+      debounced.cancel = function () {
         window.clearTimeout(timerId);
+        timerId = null;
+        lastContext = lastArgs = null;
       };
 
-      debounced.flush = () => {
+      debounced.flush = function () {
+        if (timerId === null) return;
+
         window.clearTimeout(timerId);
-        callback();
+        timerId = null;
+
+        callback.apply(lastContext, lastArgs || []);
+
+        lastContext = lastArgs = null;
       };
 
       return debounced;
     },
 
-    throttle(callback, delay = config.throttleDelay) {
+    throttle: function (callback, delay) {
       if (!types.isFunction(callback)) {
         throw new TypeError("Throttle callback must be a function.");
       }
 
-      let lastRun = 0;
-      let timerId = null;
-      let lastArgs;
-      let lastThis;
+      delay = delay === undefined ? config.throttleDelay : delay;
+      delay = Math.max(0, Number(delay) || 0);
 
-      function throttled(...args) {
-        const now = Date.now();
-        const wait = Math.max(0, Number(delay) || 0);
-        const remaining = wait - (now - lastRun);
+      var lastRun = 0;
+      var timerId = null;
+      var lastArgs = null;
+      var lastContext = null;
 
-        lastArgs = args;
-        lastThis = this;
+      function throttled() {
+        var now = Date.now();
+        var remaining = delay - (now - lastRun);
+
+        lastArgs = Array.prototype.slice.call(arguments);
+        lastContext = this;
 
         if (remaining <= 0) {
           if (timerId !== null) {
@@ -629,34 +737,37 @@
           }
 
           lastRun = now;
-          callback.apply(lastThis, lastArgs);
-          lastArgs = lastThis = undefined;
+
+          callback.apply(lastContext, lastArgs);
+
+          lastArgs = lastContext = null;
         } else if (timerId === null) {
-          timerId = window.setTimeout(() => {
-            lastRun = Date.now();
+          timerId = window.setTimeout(function () {
             timerId = null;
+            lastRun = Date.now();
 
-            callback.apply(lastThis, lastArgs);
+            callback.apply(lastContext, lastArgs || []);
 
-            lastArgs = lastThis = undefined;
+            lastArgs = lastContext = null;
           }, remaining);
         }
       }
 
-      throttled.cancel = () => {
+      throttled.cancel = function () {
         window.clearTimeout(timerId);
+
         timerId = null;
-        lastArgs = lastThis = undefined;
         lastRun = 0;
+        lastArgs = lastContext = null;
       };
 
       return throttled;
     },
 
-    sleep(milliseconds = 0) {
-      const duration = Math.max(0, Number(milliseconds) || 0);
+    sleep: function (milliseconds) {
+      var duration = Math.max(0, Number(milliseconds) || 0);
 
-      return new Promise((resolve) => {
+      return new Promise(function (resolve) {
         window.setTimeout(resolve, duration);
       });
     }
@@ -666,22 +777,31 @@
   // ID generation
   // --------------------------------------------------
 
-  const ids = {
-    uuid() {
-      if (typeof crypto.randomUUID === "function") {
-        return crypto.randomUUID();
+  var ids = {
+    uuid: function () {
+      var cryptoObject = window.crypto;
+
+      if (
+        cryptoObject &&
+        typeof cryptoObject.randomUUID === "function"
+      ) {
+        return cryptoObject.randomUUID();
       }
 
-      if (typeof crypto.getRandomValues === "function") {
-        const bytes = new Uint8Array(16);
-        crypto.getRandomValues(bytes);
+      if (
+        cryptoObject &&
+        typeof cryptoObject.getRandomValues === "function"
+      ) {
+        var bytes = new Uint8Array(16);
+
+        cryptoObject.getRandomValues(bytes);
 
         bytes[6] = (bytes[6] & 0x0f) | 0x40;
         bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
-        const hex = Array.from(bytes, (byte) =>
-          byte.toString(16).padStart(2, "0")
-        );
+        var hex = Array.prototype.map.call(bytes, function (byte) {
+          return byte.toString(16).padStart(2, "0");
+        });
 
         return [
           hex.slice(0, 4).join(""),
@@ -695,80 +815,98 @@
       throw new Error("Secure random number generation is unavailable.");
     },
 
-    short(prefix = "mo") {
-      return `${prefix}-${this.uuid()}`;
+    short: function (prefix) {
+      return String(prefix || "mo") + "-" + this.uuid();
     }
   };
 
   // --------------------------------------------------
-  // Formatting utilities
+  // Formatting
   // --------------------------------------------------
 
-  const format = {
-    number(value, options = {}) {
-      const number = Number(value);
+  var format = {
+    number: function (value, options) {
+      options = options || {};
+
+      var number = Number(value);
 
       if (!Number.isFinite(number)) return "--";
 
       try {
-        return new Intl.NumberFormat(
-          options.locale || config.locale,
-          options
-        ).format(number);
-      } catch {
+        var locale = options.locale || config.locale;
+        var settings = Object.assign({}, options);
+
+        delete settings.locale;
+
+        return new Intl.NumberFormat(locale, settings).format(number);
+      } catch (error) {
         return String(number);
       }
     },
 
-    currency(value, options = {}) {
-      const number = Number(value);
+    currency: function (value, options) {
+      options = options || {};
+
+      var number = Number(value);
 
       if (!Number.isFinite(number)) return "--";
 
+      var locale = options.locale || config.locale;
+      var currency = options.currency || config.currency;
+      var settings = Object.assign(
+        {
+          style: "currency",
+          currency: currency,
+          maximumFractionDigits: 2
+        },
+        options
+      );
+
+      delete settings.locale;
+
       try {
-        return new Intl.NumberFormat(
-          options.locale || config.locale,
-          {
-            style: "currency",
-            currency: options.currency || config.currency,
-            maximumFractionDigits: options.maximumFractionDigits ?? 2,
-            ...options
-          }
-        ).format(number);
-      } catch {
-        return `${config.currencySymbol}${number.toFixed(2)}`;
+        return new Intl.NumberFormat(locale, settings).format(number);
+      } catch (error) {
+        return config.currencySymbol + number.toFixed(2);
       }
     },
 
-    date(value, options = {}) {
-      const date = value instanceof Date ? value : new Date(value);
+    date: function (value, options) {
+      options = options || {};
+
+      var date = value instanceof Date ? value : new Date(value);
 
       if (Number.isNaN(date.getTime())) return "--";
 
       try {
-        return new Intl.DateTimeFormat(
-          options.locale || config.locale,
+        var locale = options.locale || config.locale;
+        var settings = Object.assign(
           {
             day: "2-digit",
             month: "short",
             year: "numeric",
-            timeZone: options.timeZone || config.timeZone,
-            ...options
-          }
-        ).format(date);
-      } catch {
+            timeZone: config.timeZone
+          },
+          options
+        );
+
+        delete settings.locale;
+
+        return new Intl.DateTimeFormat(locale, settings).format(date);
+      } catch (error) {
         return date.toISOString().slice(0, 10);
       }
     },
 
-    relativeTime(value, options = {}) {
-      const date = value instanceof Date ? value : new Date(value);
+    relativeTime: function (value, options) {
+      options = options || {};
+
+      var date = value instanceof Date ? value : new Date(value);
 
       if (Number.isNaN(date.getTime())) return "--";
 
-      const seconds = Math.round((date.getTime() - Date.now()) / 1000);
-
-      const units = [
+      var seconds = Math.round((date.getTime() - Date.now()) / 1000);
+      var units = [
         ["year", 31536000],
         ["month", 2592000],
         ["week", 604800],
@@ -778,59 +916,69 @@
         ["second", 1]
       ];
 
-      const formatter = new Intl.RelativeTimeFormat(
-        options.locale || config.locale,
-        { numeric: "auto" }
-      );
+      try {
+        var formatter = new Intl.RelativeTimeFormat(
+          options.locale || config.locale,
+          { numeric: "auto" }
+        );
 
-      for (const [unit, size] of units) {
-        if (Math.abs(seconds) >= size || unit === "second") {
-          return formatter.format(Math.round(seconds / size), unit);
+        for (var i = 0; i < units.length; i += 1) {
+          var unit = units[i];
+
+          if (Math.abs(seconds) >= unit[1] || unit[0] === "second") {
+            return formatter.format(Math.round(seconds / unit[1]), unit[0]);
+          }
         }
+      } catch (error) {
+        // Fall through to a plain-text fallback.
       }
 
-      return formatter.format(0, "second");
+      return date.toISOString().slice(0, 10);
     },
 
-    truncate(value, maxLength = 100, suffix = "…") {
-      const text = String(value ?? "");
-      const limit = Math.max(0, Number(maxLength) || 0);
+    truncate: function (value, maxLength, suffix) {
+      var text = String(value == null ? "" : value);
+      var limit = maxLength === undefined ? 100 : Math.max(0, Number(maxLength) || 0);
+      var ending = suffix === undefined ? "…" : String(suffix);
 
       if (text.length <= limit) return text;
+      if (limit === 0) return "";
+      if (limit <= ending.length) return ending.slice(0, limit);
 
-      if (limit <= suffix.length) return suffix.slice(0, limit);
-
-      return text.slice(0, limit - suffix.length).trimEnd() + suffix;
+      return text.slice(0, limit - ending.length).trimEnd() + ending;
     },
 
-    capitalize(value) {
-      const text = String(value ?? "").trim();
+    capitalize: function (value) {
+      var text = String(value == null ? "" : value).trim();
 
       if (!text) return "";
 
-      return text.charAt(0).toLocaleUpperCase(config.locale) +
-        text.slice(1);
+      return text.charAt(0).toLocaleUpperCase(config.locale) + text.slice(1);
     },
 
-    initials(value, maxCharacters = 2) {
-      return String(value ?? "")
+    initials: function (value, maxCharacters) {
+      var limit = Math.max(1, Number(maxCharacters) || 2);
+
+      return String(value == null ? "" : value)
         .trim()
         .split(/\s+/)
         .filter(Boolean)
-        .slice(0, Math.max(1, maxCharacters))
-        .map((part) => Array.from(part)[0])
+        .slice(0, limit)
+        .map(function (part) {
+          return Array.from(part)[0] || "";
+        })
         .join("")
         .toLocaleUpperCase(config.locale);
     }
   };
 
   // --------------------------------------------------
-  // String utilities
+  // String helpers
   // --------------------------------------------------
 
-  const strings = {
-    slug(value) {
-      return String(value ?? "")
+  var strings = {
+    slug: function (value) {
+      return String(value == null ? "" : value)
         .normalize("NFKD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
@@ -839,149 +987,151 @@
         .replace(/^-+|-+$/g, "");
     },
 
-    escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, (character) => {
-        const entities = {
+    escapeHTML: function (value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
+        return {
           "&": "&amp;",
           "<": "&lt;",
           ">": "&gt;",
           '"': "&quot;",
           "'": "&#39;"
-        };
-
-        return entities[character];
+        }[character];
       });
     },
 
-    normalizeWhitespace(value) {
-      return String(value ?? "").replace(/\s+/g, " ").trim();
+    normalizeWhitespace: function (value) {
+      return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
     },
 
-    stripControlCharacters(value) {
-      return String(value ?? "").replace(/[\u0000-\u001F\u007F]/g, "");
+    stripControlCharacters: function (value) {
+      return String(value == null ? "" : value).replace(/[\u0000-\u001F\u007F]/g, "");
     }
   };
 
   // --------------------------------------------------
-  // Validation helpers
+  // Validation
   // --------------------------------------------------
 
-  const validators = {
-    email(value) {
-      if (!types.isString(value)) return false;
+  var validators = {
+    email: function (value) {
+      if (typeof value !== "string") return false;
 
-      const email = value.trim();
+      var email = value.trim();
 
-      if (email.length > 254 || /\s/.test(email)) return false;
-
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      return email.length <= 254 &&
+        !/\s/.test(email) &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     },
 
-    phone(value) {
-      if (!types.isString(value)) return false;
+    phone: function (value) {
+      if (typeof value !== "string") return false;
 
-      const normalized = value.replace(/[\s().-]/g, "");
+      var normalized = value.replace(/[\s().-]/g, "");
 
       return /^\+?[0-9]{7,15}$/.test(normalized);
     },
 
-    url(value, options = {}) {
+    url: function (value, options) {
+      options = options || {};
+
       if (!types.isNonEmptyString(value)) return false;
 
       try {
-        const parsed = new URL(value);
+        var parsed = new URL(value);
 
-        if (options.allowRelative) return true;
-
-        return ["http:", "https:"].includes(parsed.protocol);
-      } catch {
+        return (
+          parsed.protocol === "https:" ||
+          parsed.protocol === "http:"
+        );
+      } catch (error) {
         if (!options.allowRelative) return false;
 
         return (
-          value.startsWith("/") &&
-          !value.startsWith("//") &&
-          !value.includes("\\")
+          value.charAt(0) === "/" &&
+          value.indexOf("//") !== 0 &&
+          value.indexOf("\\") === -1 &&
+          !/[?#]/.test(value) &&
+          !/(^|\/)\.\.?($|\/)/.test(value)
         );
       }
     },
 
-    required(value) {
-      if (types.isNullish(value)) return false;
+    required: function (value) {
+      if (value === null || value === undefined) return false;
 
-      if (types.isString(value)) {
-        return value.trim().length > 0;
-      }
-
-      if (types.isArray(value)) {
-        return value.length > 0;
-      }
+      if (typeof value === "string") return value.trim().length > 0;
+      if (Array.isArray(value)) return value.length > 0;
 
       return true;
     },
 
-    length(value, options = {}) {
-      const text = String(value ?? "");
-      const min = options.min ?? 0;
-      const max = options.max ?? Infinity;
+    length: function (value, options) {
+      options = options || {};
+
+      var text = String(value == null ? "" : value);
+      var min = options.min === undefined ? 0 : options.min;
+      var max = options.max === undefined ? Infinity : options.max;
 
       return text.length >= min && text.length <= max;
     }
   };
 
   // --------------------------------------------------
-  // URL and query utilities
+  // URL and query helpers
   // --------------------------------------------------
 
-  const url = {
-    parse(value, base = window.location.href) {
+  var url = {
+    parse: function (value, base) {
       try {
-        return new URL(value, base);
-      } catch {
+        return new URL(value, base || window.location.href);
+      } catch (error) {
         return null;
       }
     },
 
-    getQuery(name) {
+    getQuery: function (name) {
       if (!types.isNonEmptyString(name)) return null;
 
       return new URLSearchParams(window.location.search).get(name);
     },
 
-    getAllQuery(name) {
+    getAllQuery: function (name) {
       if (!types.isNonEmptyString(name)) return [];
 
       return new URLSearchParams(window.location.search).getAll(name);
     },
 
-    build(path, parameters = {}) {
-      const parsed = this.parse(path);
+    build: function (path, parameters) {
+      parameters = parameters || {};
+
+      var parsed = this.parse(path);
 
       if (!parsed) return "";
-
       if (!types.isPlainObject(parameters)) return parsed.toString();
 
-      for (const [key, value] of Object.entries(parameters)) {
+      Object.keys(parameters).forEach(function (key) {
+        var value = parameters[key];
+
         if (value === null || value === undefined) {
           parsed.searchParams.delete(key);
         } else if (Array.isArray(value)) {
           parsed.searchParams.delete(key);
 
-          value.forEach((item) => {
+          value.forEach(function (item) {
             parsed.searchParams.append(key, String(item));
           });
         } else {
           parsed.searchParams.set(key, String(value));
         }
-      }
+      });
 
       return parsed.toString();
     },
 
-    isSameOrigin(value) {
-      const parsed = this.parse(value);
+    isSameOrigin: function (value) {
+      var parsed = this.parse(value);
 
-      return parsed !== null &&
-        parsed.origin === window.location.origin;
+      return parsed !== null && parsed.origin === window.location.origin;
     }
   };
 
@@ -989,122 +1139,152 @@
   // Object and JSON helpers
   // --------------------------------------------------
 
-  const objects = {
-    safeParseJSON(value, fallback = null) {
-      if (!types.isString(value)) return fallback;
+  var objects = {
+    safeParseJSON: function (value, fallback) {
+      fallback = fallback === undefined ? null : fallback;
+
+      if (typeof value !== "string") return fallback;
 
       try {
         return JSON.parse(value);
-      } catch {
+      } catch (error) {
         return fallback;
       }
     },
 
-    clone(value) {
-      if (typeof structuredClone === "function") {
-        return structuredClone(value);
+    clone: function (value) {
+      if (typeof window.structuredClone === "function") {
+        return window.structuredClone(value);
       }
 
-      return JSON.parse(JSON.stringify(value));
+      var serialized = JSON.stringify(value);
+
+      if (serialized === undefined) {
+        throw new TypeError("Value cannot be cloned as JSON.");
+      }
+
+      return JSON.parse(serialized);
     },
 
-    pick(source, keys = []) {
-      if (!types.isPlainObject(source) || !Array.isArray(keys)) {
-        return {};
-      }
+    pick: function (source, keys) {
+      keys = Array.isArray(keys) ? keys : [];
 
-      return Object.fromEntries(
-        keys
-          .filter((key) =>
-            Object.prototype.hasOwnProperty.call(source, key)
-          )
-          .map((key) => [key, source[key]])
-      );
+      if (!types.isPlainObject(source)) return {};
+
+      var result = {};
+
+      keys.forEach(function (key) {
+        if (
+          typeof key === "string" &&
+          Object.prototype.hasOwnProperty.call(source, key)
+        ) {
+          result[key] = source[key];
+        }
+      });
+
+      return result;
     },
 
-    omit(source, keys = []) {
-      if (!types.isPlainObject(source) || !Array.isArray(keys)) {
-        return {};
-      }
+    omit: function (source, keys) {
+      keys = Array.isArray(keys) ? keys : [];
 
-      const excluded = new Set(keys);
+      if (!types.isPlainObject(source)) return {};
 
-      return Object.fromEntries(
-        Object.entries(source).filter(([key]) => !excluded.has(key))
-      );
+      var excluded = new Set(keys);
+
+      return Object.keys(source).reduce(function (result, key) {
+        if (!excluded.has(key)) {
+          result[key] = source[key];
+        }
+
+        return result;
+      }, {});
     }
   };
 
   // --------------------------------------------------
-  // Device and browser utilities
+  // Browser utilities
   // --------------------------------------------------
 
-  const browser = {
+  var browser = {
     get online() {
-      return navigator.onLine;
+      return window.navigator.onLine;
     },
 
     get language() {
-      return navigator.language || config.locale;
+      return window.navigator.language || config.locale;
     },
 
     get reducedMotion() {
-      return window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches;
+      return window.matchMedia
+        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        : false;
     },
 
     get touchDevice() {
       return (
-        navigator.maxTouchPoints > 0 ||
+        window.navigator.maxTouchPoints > 0 ||
         "ontouchstart" in window
       );
     },
 
     get standalone() {
       return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        navigator.standalone === true
+        (window.matchMedia &&
+          window.matchMedia("(display-mode: standalone)").matches) ||
+        window.navigator.standalone === true
       );
     },
 
-    onOnline(callback) {
+    onOnline: function (callback) {
+      if (!types.isFunction(callback)) {
+        throw new TypeError("Online callback must be a function.");
+      }
+
       window.addEventListener("online", callback);
 
-      return () => window.removeEventListener("online", callback);
+      return function unsubscribe() {
+        window.removeEventListener("online", callback);
+      };
     },
 
-    onOffline(callback) {
+    onOffline: function (callback) {
+      if (!types.isFunction(callback)) {
+        throw new TypeError("Offline callback must be a function.");
+      }
+
       window.addEventListener("offline", callback);
 
-      return () => window.removeEventListener("offline", callback);
+      return function unsubscribe() {
+        window.removeEventListener("offline", callback);
+      };
     }
   };
 
   // --------------------------------------------------
-  // Public runtime API
+  // Public API
   // --------------------------------------------------
 
-  const core = Object.freeze({
-    config,
+  var core = Object.freeze({
+    config: config,
     environments: ENVIRONMENTS,
     storageTypes: STORAGE_TYPES,
     storageKeys: STORAGE_KEYS,
     httpStatus: HTTP_STATUS,
 
-    logger,
-    types,
-    dom,
-    storage,
-    events,
-    timing,
-    ids,
-    format,
-    strings,
-    validators,
-    url,
-    objects,
-    browser,
+    logger: logger,
+    types: types,
+    dom: dom,
+    storage: storage,
+    events: events,
+    timing: timing,
+    ids: ids,
+    format: format,
+    strings: strings,
+    validators: validators,
+    url: url,
+    objects: objects,
+    browser: browser,
 
     get ready() {
       return document.readyState !== "loading";
@@ -1120,6 +1300,6 @@
 
   logger.info("Core runtime loaded", {
     version: config.version,
-    environment
+    environment: environment
   });
-})();
+})(window, document);

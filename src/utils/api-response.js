@@ -5,18 +5,22 @@
  * MedOrbits -- Request Controller
  *
  * File: src/controllers/request.controller.js
+ * Runtime: Node.js >= 20
  *
  * Responsibilities:
- * - Validate request bodies, query parameters, and route IDs.
- * - Use the application's standardized API response contract.
- * - Delegate asynchronous errors to centralized error middleware.
- * - Fail closed until request-processing services are configured.
+ * - Validate request payloads, query parameters, and route identifiers.
+ * - Use the standardized API response contract.
+ * - Delegate persistence and business rules to request services.
+ * - Forward errors to centralized error middleware.
+ * - Fail closed when required services are unavailable.
  *
  * Security:
- * - Does not persist unvalidated input.
- * - Does not fabricate successful submissions.
- * - Does not expose internal errors or sensitive details.
- * - Does not return request records without authorization-aware services.
+ * - Never report successful persistence when no service has executed.
+ * - Reject unknown input fields.
+ * - Require authorization for request listing, retrieval, modification,
+ *   assignment, and deletion.
+ * - Keep internal notes restricted to authorized staff.
+ * - Avoid exposing personal information or internal exception details.
  */
 
 const asyncHandler = require('../utils/async-handler');
@@ -26,14 +30,8 @@ const requestValidator = require('../validators/request.validator');
 const SERVICE_UNAVAILABLE_CODE = 'REQUEST_SERVICE_NOT_CONFIGURED';
 
 const SERVICE_UNAVAILABLE_MESSAGE =
-  'Request submission is not available yet. Please try again later.';
+  'Request processing is temporarily unavailable. Please try again later.';
 
-/**
- * Allowlisted public request-submission fields.
- *
- * Align these fields with the actual request schema before enabling
- * persistence or connecting a request service.
- */
 const CREATE_FIELDS = Object.freeze([
   'name',
   'email',
@@ -44,9 +42,6 @@ const CREATE_FIELDS = Object.freeze([
   'source',
 ]);
 
-/**
- * Allowlisted request-list query parameters.
- */
 const QUERY_FIELDS = Object.freeze([
   'page',
   'limit',
@@ -54,44 +49,38 @@ const QUERY_FIELDS = Object.freeze([
   'category',
 ]);
 
-/**
- * Allowlisted update fields.
- *
- * Internal notes and assignment fields must only be exposed to
- * authorized staff after role and ownership checks are implemented.
- */
 const UPDATE_FIELDS = Object.freeze([
   'status',
   'assigned_to',
   'internal_notes',
 ]);
 
-/**
- * Send the application's standardized unavailable response.
- *
- * Compatible with apiResponse.error(res, options, req).
- */
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
 function sendUnavailable(res, req) {
   return apiResponse.error(
     res,
     {
-      statusCode: 501,
+      statusCode: 503,
       code: SERVICE_UNAVAILABLE_CODE,
       message: SERVICE_UNAVAILABLE_MESSAGE,
     },
-    req
+    req,
   );
 }
 
-/**
- * Validate an object using the request validator.
- * The validator is expected to throw a validation error on invalid input.
- */
 function validateObject(validator, value, allowedFields, label) {
-  if (!validator || typeof validator !== 'function') {
-    throw new Error(
-      `Request controller configuration error: ${label} validator is unavailable.`
+  if (typeof validator !== 'function') {
+    const error = new Error(
+      `Request controller configuration error: ${label} validator is unavailable.`,
     );
+
+    error.statusCode = 500;
+    error.code = 'REQUEST_VALIDATOR_NOT_CONFIGURED';
+
+    throw error;
   }
 
   return validator(value, {
@@ -100,194 +89,166 @@ function validateObject(validator, value, allowedFields, label) {
   });
 }
 
-/**
- * Validate request creation input.
- *
- * POST /requests
- */
-const createRequest = asyncHandler(async (req, res) => {
-  const body = validateObject(
+function validateRequiredString(value, field, minLength, maxLength) {
+  requestValidator.validateString(value, {
+    field,
+    minLength,
+    maxLength,
+  });
+}
+
+function validateCreateBody(body) {
+  const validated = validateObject(
     requestValidator.validateBody,
-    req.body,
+    body,
     CREATE_FIELDS,
-    'body'
+    'body',
   );
 
-  requestValidator.validateRequiredFields(body, [
+  requestValidator.validateRequiredFields(validated, [
     'name',
     'email',
     'message',
   ]);
 
-  requestValidator.validateString(body.name, {
-    field: 'name',
-    minLength: 1,
-    maxLength: 120,
-  });
+  validateRequiredString(validated.name, 'name', 1, 120);
+  validateRequiredString(validated.email, 'email', 3, 254);
+  validateRequiredString(validated.message, 'message', 1, 10000);
 
-  requestValidator.validateString(body.email, {
-    field: 'email',
-    minLength: 3,
-    maxLength: 254,
-  });
-
-  if (body.phone !== undefined) {
-    requestValidator.validateString(body.phone, {
-      field: 'phone',
-      minLength: 7,
-      maxLength: 30,
-    });
+  if (validated.phone !== undefined) {
+    validateRequiredString(validated.phone, 'phone', 7, 30);
   }
 
-  if (body.subject !== undefined) {
-    requestValidator.validateString(body.subject, {
-      field: 'subject',
-      minLength: 1,
-      maxLength: 200,
-    });
+  if (validated.subject !== undefined) {
+    validateRequiredString(validated.subject, 'subject', 1, 200);
   }
 
-  requestValidator.validateString(body.message, {
-    field: 'message',
-    minLength: 1,
-    maxLength: 10000,
-  });
-
-  if (body.category !== undefined) {
-    requestValidator.validateString(body.category, {
-      field: 'category',
-      minLength: 1,
-      maxLength: 100,
-    });
+  if (validated.category !== undefined) {
+    validateRequiredString(validated.category, 'category', 1, 100);
   }
 
-  if (body.source !== undefined) {
-    requestValidator.validateString(body.source, {
-      field: 'source',
-      minLength: 1,
-      maxLength: 100,
-    });
+  if (validated.source !== undefined) {
+    validateRequiredString(validated.source, 'source', 1, 100);
   }
 
-  // No configured service: do not claim that a request was submitted.
-  return sendUnavailable(res, req);
-});
+  return validated;
+}
 
-/**
- * List requests for an authenticated and authorized caller.
- *
- * GET /requests
- */
-const listRequests = asyncHandler(async (req, res) => {
-  const query = validateObject(
+function validateListQuery(query) {
+  const validated = validateObject(
     requestValidator.validateQuery,
-    req.query,
+    query,
     QUERY_FIELDS,
-    'query'
+    'query',
   );
 
-  requestValidator.validatePagination(query);
+  requestValidator.validatePagination(validated);
 
-  if (query.status !== undefined) {
-    requestValidator.validateString(query.status, {
-      field: 'status',
-      minLength: 1,
-      maxLength: 50,
-    });
+  if (validated.status !== undefined) {
+    validateRequiredString(validated.status, 'status', 1, 50);
   }
 
-  if (query.category !== undefined) {
-    requestValidator.validateString(query.category, {
-      field: 'category',
-      minLength: 1,
-      maxLength: 100,
-    });
+  if (validated.category !== undefined) {
+    validateRequiredString(validated.category, 'category', 1, 100);
   }
 
-  // Authorization-aware retrieval is not configured.
+  return validated;
+}
+
+function validateRequestId(params) {
+  requestValidator.validateParams(params, {
+    allowedFields: ['id'],
+    rejectUnknown: true,
+  });
+
+  requestValidator.validateRouteId(params.id);
+
+  return params.id;
+}
+
+function validateUpdateBody(body) {
+  const validated = validateObject(
+    requestValidator.validateBody,
+    body,
+    UPDATE_FIELDS,
+    'body',
+  );
+
+  if (Object.keys(validated).length === 0) {
+    const error = new Error('At least one supported update field is required.');
+    error.statusCode = 400;
+    error.code = 'REQUEST_UPDATE_EMPTY';
+    throw error;
+  }
+
+  if (validated.status !== undefined) {
+    validateRequiredString(validated.status, 'status', 1, 50);
+  }
+
+  if (validated.assigned_to !== undefined) {
+    requestValidator.validateRouteId(validated.assigned_to);
+  }
+
+  if (validated.internal_notes !== undefined) {
+    validateRequiredString(
+      validated.internal_notes,
+      'internal_notes',
+      0,
+      10000,
+    );
+  }
+
+  return validated;
+}
+
+/**
+ * POST /requests
+ *
+ * Validates a submission but does not claim that it was persisted.
+ */
+const createRequest = asyncHandler(async (req, res) => {
+  validateCreateBody(req.body);
   return sendUnavailable(res, req);
 });
 
 /**
- * Retrieve one request after verifying ownership or administrative access.
+ * GET /requests
  *
+ * Requires authentication and appropriate staff authorization at the
+ * route or application layer before exposing request records.
+ */
+const listRequests = asyncHandler(async (req, res) => {
+  validateListQuery(req.query);
+  return sendUnavailable(res, req);
+});
+
+/**
  * GET /requests/:id
  */
 const getRequestById = asyncHandler(async (req, res) => {
-  requestValidator.validateParams(req.params, {
-    allowedFields: ['id'],
-    rejectUnknown: true,
-  });
-
-  requestValidator.validateRouteId(req.params.id);
-
-  // Resource lookup and authorization are not configured.
+  validateRequestId(req.params);
   return sendUnavailable(res, req);
 });
 
 /**
- * Update a request using explicitly allowlisted fields.
- *
  * PATCH /requests/:id
+ *
+ * Authorization and allowed state transitions must be enforced by the
+ * request service before persistence is enabled.
  */
 const updateRequest = asyncHandler(async (req, res) => {
-  requestValidator.validateParams(req.params, {
-    allowedFields: ['id'],
-    rejectUnknown: true,
-  });
-
-  requestValidator.validateRouteId(req.params.id);
-
-  const body = validateObject(
-    requestValidator.validateBody,
-    req.body,
-    UPDATE_FIELDS,
-    'body'
-  );
-
-  if (Object.keys(body).length === 0) {
-    requestValidator.validateRequiredFields(body, UPDATE_FIELDS);
-  }
-
-  if (body.status !== undefined) {
-    requestValidator.validateString(body.status, {
-      field: 'status',
-      minLength: 1,
-      maxLength: 50,
-    });
-  }
-
-  if (body.assigned_to !== undefined) {
-    requestValidator.validateRouteId(body.assigned_to);
-  }
-
-  if (body.internal_notes !== undefined) {
-    requestValidator.validateString(body.internal_notes, {
-      field: 'internal_notes',
-      minLength: 0,
-      maxLength: 10000,
-    });
-  }
-
-  // State transitions, staff authorization, and persistence are not configured.
+  validateRequestId(req.params);
+  validateUpdateBody(req.body);
   return sendUnavailable(res, req);
 });
 
 /**
- * Delete or withdraw a request only when business rules and authorization
- * explicitly permit it.
- *
  * DELETE /requests/:id
+ *
+ * Deletion policy and resource-level authorization are not configured.
  */
 const deleteRequest = asyncHandler(async (req, res) => {
-  requestValidator.validateParams(req.params, {
-    allowedFields: ['id'],
-    rejectUnknown: true,
-  });
-
-  requestValidator.validateRouteId(req.params.id);
-
-  // Deletion and withdrawal policies are not configured.
+  validateRequestId(req.params);
   return sendUnavailable(res, req);
 });
 

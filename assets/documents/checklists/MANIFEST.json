@@ -2,7 +2,7 @@
 {
   "$schema": "./manifest.schema.json",
   "schemaVersion": "1.0.0",
-  "manifestVersion": "1.0.0",
+  "manifestVersion": "1.0.1",
   "metadata": {
     "name": "MedOrbits Checklists Library",
     "description": "Printable planning checklists for education, admissions, applications, examinations, career development, general organization, and international study.",
@@ -93,7 +93,10 @@
       "The PDF must pass content and file-quality review.",
       "Manifest and schema validation must pass.",
       "Public download links must be tested after deployment.",
-      "Verification claims must be supported by documented evidence."
+      "Verification claims must be supported by documented evidence.",
+      "Only resources with published status and passing publication checks may receive active public download links.",
+      "Featured status must never override publication status.",
+      "The generated application catalogue must remain synchronized with this manifest."
     ]
   },
   "resources": [
@@ -250,7 +253,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "application-document-checklist",
       "title": "Application Document Checklist",
@@ -353,7 +355,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "career-readiness-checklist",
       "title": "Career Readiness Checklist",
@@ -473,7 +474,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "college-comparison-checklist",
       "title": "College Comparison Checklist",
@@ -593,7 +593,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "admit-card-verification-checklist",
       "title": "Admit Card Verification Checklist",
@@ -713,7 +712,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "deadline-tracking-checklist",
       "title": "Deadline Tracking Checklist",
@@ -816,7 +814,6 @@
       "lastReviewedAt": null,
       "reviewDueAt": null
     },
-
     {
       "id": "accommodation-preparation-checklist",
       "title": "Accommodation Preparation Checklist",
@@ -961,11 +958,16 @@
       "format": "application/pdf",
       "description": "A general checklist for locating and checking notices on the issuing authority's own channels.",
       "intendedUse": "Reviewing an education or career notice before acting on it.",
-      "status": "published",
+      "status": "draft",
       "verificationStatus": "content_reviewed",
       "version": "1.0.0",
       "language": "en",
-      "keywords": ["notice", "verification", "official source", "checklist"],
+      "keywords": [
+        "notice",
+        "verification",
+        "official source",
+        "checklist"
+      ],
       "officialSources": [],
       "lastReviewedAt": "2026-10-17",
       "reviewDueAt": null

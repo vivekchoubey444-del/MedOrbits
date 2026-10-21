@@ -1,4 +1,3 @@
-
 'use strict';
 
 const DEFAULT_MAX_STRING_LENGTH = 10000;
@@ -36,19 +35,17 @@ function isPlainObject(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
-function requireObject(
-  value,
-  options = {}
-) {
+function requireObject(value, options = {}) {
   const {
     field = 'body',
     allowNullPrototype = true,
   } = options;
 
-  const isValid = isPlainObject(value) &&
+  const valid =
+    isPlainObject(value) &&
     (allowNullPrototype || Object.getPrototypeOf(value) === Object.prototype);
 
-  if (!isValid) {
+  if (!valid) {
     throw createValidationError(
       `${field} must be a plain JSON object.`,
       'INVALID_TYPE',
@@ -72,6 +69,15 @@ function requireArray(value, options = {}) {
       'INVALID_TYPE',
       field
     );
+  }
+
+  if (
+    !Number.isSafeInteger(minItems) ||
+    !Number.isSafeInteger(maxItems) ||
+    minItems < 0 ||
+    maxItems < minItems
+  ) {
+    throw new TypeError('Invalid array length constraints.');
   }
 
   if (value.length < minItems || value.length > maxItems) {
@@ -104,6 +110,15 @@ function requireString(value, options = {}) {
     );
   }
 
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
+  }
+
   const result = trim ? value.trim() : value;
 
   if (!allowEmpty && result.length === 0) {
@@ -122,19 +137,32 @@ function requireString(value, options = {}) {
     );
   }
 
-  if (pattern && !pattern.test(result)) {
-    throw createValidationError(
-      patternMessage || `${field} has an invalid format.`,
-      'INVALID_FORMAT',
-      field
-    );
+  if (pattern !== undefined) {
+    if (!(pattern instanceof RegExp)) {
+      throw new TypeError('pattern must be a RegExp.');
+    }
+
+    // Avoid stateful results from global or sticky regular expressions.
+    pattern.lastIndex = 0;
+    const matches = pattern.test(result);
+    pattern.lastIndex = 0;
+
+    if (!matches) {
+      throw createValidationError(
+        patternMessage || `${field} has an invalid format.`,
+        'INVALID_FORMAT',
+        field
+      );
+    }
   }
 
   return result;
 }
 
 function optionalString(value, options = {}) {
-  const { field = 'value', allowNull = false } = options;
+  const {
+    allowNull = false,
+  } = options;
 
   if (value === undefined) {
     return undefined;
@@ -170,12 +198,22 @@ function requireNumber(value, options = {}) {
     allowNumericString = false,
   } = options;
 
+  if (
+    typeof min !== 'number' ||
+    typeof max !== 'number' ||
+    Number.isNaN(min) ||
+    Number.isNaN(max) ||
+    min > max
+  ) {
+    throw new TypeError('Invalid numeric range constraints.');
+  }
+
   let number = value;
 
   if (allowNumericString && typeof number === 'string') {
     const trimmed = number.trim();
 
-    if (!trimmed || !Number.isFinite(Number(trimmed))) {
+    if (trimmed.length === 0 || !Number.isFinite(Number(trimmed))) {
       throw createValidationError(
         `${field} must be a valid number.`,
         'INVALID_TYPE',
@@ -214,7 +252,10 @@ function requireNumber(value, options = {}) {
 }
 
 function requirePositiveId(value, options = {}) {
-  const { field = 'id', allowNumericString = true } = options;
+  const {
+    field = 'id',
+    allowNumericString = true,
+  } = options;
 
   return requireNumber(value, {
     field,
@@ -233,7 +274,10 @@ function requireEnum(value, options = {}) {
     trim = true,
   } = options;
 
-  if (!Array.isArray(allowedValues) || allowedValues.length === 0) {
+  if (
+    !Array.isArray(allowedValues) ||
+    allowedValues.length === 0
+  ) {
     throw new TypeError('allowedValues must be a non-empty array.');
   }
 
@@ -271,11 +315,12 @@ function rejectUnknownFields(input, allowedFields, options = {}) {
 
   requireObject(input, { field });
 
-  if (!Array.isArray(allowedFields)) {
-    throw new TypeError('allowedFields must be an array.');
+  if (!Array.isArray(allowedFields) || !Array.isArray(allow)) {
+    throw new TypeError('allowedFields and allow must be arrays.');
   }
 
   const accepted = new Set([...allowedFields, ...allow]);
+
   const unknown = Object.keys(input).filter(
     (key) => !accepted.has(key)
   );
@@ -307,7 +352,7 @@ function pickAllowed(input, allowedFields, options = {}) {
     rejectUnknownFields(input, allowedFields, { field });
   }
 
-  const result = {};
+  const result = Object.create(null);
 
   for (const key of allowedFields) {
     if (Object.prototype.hasOwnProperty.call(input, key)) {
@@ -352,7 +397,7 @@ function requireDateOnly(value, options = {}) {
     );
   }
 
-  if (min && date < min) {
+  if (min !== undefined && date < min) {
     throw createValidationError(
       `${field} must be on or after ${min}.`,
       'OUT_OF_RANGE',
@@ -360,7 +405,7 @@ function requireDateOnly(value, options = {}) {
     );
   }
 
-  if (max && date > max) {
+  if (max !== undefined && date > max) {
     throw createValidationError(
       `${field} must be on or before ${max}.`,
       'OUT_OF_RANGE',
@@ -384,7 +429,7 @@ function requireTimestamp(value, options = {}) {
   } else if (typeof value === 'number') {
     timestamp = value;
   } else if (allowDateString && typeof value === 'string') {
-    // Require an explicit timezone for timestamps to avoid local-time ambiguity.
+    // Require an explicit timezone to avoid local-time ambiguity.
     const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
 
     if (!hasTimezone) {
@@ -404,7 +449,10 @@ function requireTimestamp(value, options = {}) {
     );
   }
 
-  if (!Number.isFinite(timestamp) || Number.isNaN(new Date(timestamp).getTime())) {
+  if (
+    !Number.isFinite(timestamp) ||
+    Number.isNaN(new Date(timestamp).getTime())
+  ) {
     throw createValidationError(
       `${field} must be a valid timestamp.`,
       'INVALID_DATE',
@@ -443,7 +491,9 @@ function requireTextArray(value, options = {}) {
     const seen = new Set();
 
     for (const item of result) {
-      const key = caseInsensitiveUnique ? item.toLowerCase() : item;
+      const key = caseInsensitiveUnique
+        ? item.toLowerCase()
+        : item;
 
       if (seen.has(key)) {
         throw createValidationError(
@@ -469,6 +519,15 @@ function validateJsonObject(value, options = {}) {
 
   requireObject(value, { field });
 
+  if (
+    !Number.isSafeInteger(maxDepth) ||
+    maxDepth < 0 ||
+    !Number.isSafeInteger(maxBytes) ||
+    maxBytes < 0
+  ) {
+    throw new TypeError('Invalid JSON object validation limits.');
+  }
+
   const visited = new WeakSet();
 
   function inspect(current, depth, path) {
@@ -480,9 +539,8 @@ function validateJsonObject(value, options = {}) {
       );
     }
 
-    if (current === null) return;
-
     if (
+      current === null ||
       typeof current === 'string' ||
       typeof current === 'boolean'
     ) {
@@ -520,7 +578,23 @@ function validateJsonObject(value, options = {}) {
     visited.add(current);
 
     if (Array.isArray(current)) {
+      if (current.length > DEFAULT_MAX_ARRAY_LENGTH) {
+        throw createValidationError(
+          `${path} contains too many array items.`,
+          'OUT_OF_RANGE',
+          path
+        );
+      }
+
       for (let index = 0; index < current.length; index += 1) {
+        if (!Object.prototype.hasOwnProperty.call(current, index)) {
+          throw createValidationError(
+            `${path} must not contain sparse arrays.`,
+            'INVALID_FORMAT',
+            path
+          );
+        }
+
         inspect(current[index], depth + 1, `${path}[${index}]`);
       }
     } else {
@@ -568,6 +642,10 @@ function validateJsonObject(value, options = {}) {
 function validateOptional(value, validator) {
   if (value === undefined) {
     return undefined;
+  }
+
+  if (typeof validator !== 'function') {
+    throw new TypeError('validator must be a function.');
   }
 
   return validator(value);

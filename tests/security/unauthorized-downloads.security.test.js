@@ -1,11 +1,8 @@
-
 'use strict';
-
 /**
  * MedOrbits -- Unauthorized Downloads Security Tests
  *
  * File: tests/security/unauthorized-downloads.security.test.js
- *
  * Runtime: Node.js >= 20
  * Dependencies: Node.js built-in modules only
  *
@@ -20,75 +17,59 @@
  *   DOWNLOAD_TEST_DOWNLOAD_PATH_TEMPLATE
  *   DOWNLOAD_TEST_DOCUMENTS_PATH
  *
- * Defaults:
- *   Private download path: /api/documents/:id/download
- *
  * Run:
  *   node --test tests/security/unauthorized-downloads.security.test.js
  *
  * IMPORTANT:
- * - Run against a dedicated test environment.
- * - Use synthetic documents, never real identity documents.
- * - User A and User B must be separate low-privilege test accounts.
- * - Configure paths to match the actual MedOrbits document API.
- * - Never use production tokens or production document IDs.
+ * - Use an isolated test environment and synthetic documents.
+ * - User A and User B must be separate low-privilege accounts.
+ * - Never use production tokens or private production documents.
+ * - Configure routes to match the actual API.
  */
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const BASE_URL = (
   process.env.DOWNLOAD_TEST_BASE_URL || ''
 ).replace(/\/+$/, '');
-
 const TIMEOUT_MS = Number(
   process.env.DOWNLOAD_TEST_TIMEOUT_MS || 15000
 );
-
 const PRIVATE_PATH =
+  process.env.DOWNLOAD_TEST_DOWNLOAD_PATH_TEMPLATE ||
   process.env.DOWNLOAD_TEST_PRIVATE_PATH ||
   '/api/documents/:id/download';
-
 const DOCUMENTS_PATH =
   process.env.DOWNLOAD_TEST_DOCUMENTS_PATH ||
   '/api/documents';
-
 const USER_A_TOKEN =
   process.env.DOWNLOAD_TEST_USER_A_TOKEN || '';
-
 const USER_B_TOKEN =
   process.env.DOWNLOAD_TEST_USER_B_TOKEN || '';
-
 const USER_A_DOCUMENT_ID =
   process.env.DOWNLOAD_TEST_USER_A_DOCUMENT_ID || '';
-
 const USER_B_DOCUMENT_ID =
   process.env.DOWNLOAD_TEST_USER_B_DOCUMENT_ID || '';
-
 const configured = Boolean(
   BASE_URL &&
   Number.isFinite(TIMEOUT_MS) &&
   TIMEOUT_MS > 0 &&
   PRIVATE_PATH.startsWith('/') &&
-  !PRIVATE_PATH.startsWith('//')
+  !PRIVATE_PATH.startsWith('//') &&
+  DOCUMENTS_PATH.startsWith('/') &&
+  !DOCUMENTS_PATH.startsWith('//')
 );
-
-const skipReason =
-  'Configure DOWNLOAD_TEST_BASE_URL to run download security tests.';
-
 function urlForDocument(documentId) {
-  const encodedId = encodeURIComponent(String(documentId));
-
-  if (PRIVATE_PATH.includes(':id')) {
-    return `${BASE_URL}${PRIVATE_PATH.replaceAll(':id', encodedId)}`;
-  }
-
-  return (
-    `${BASE_URL}${PRIVATE_PATH.replace(/\/+$/, '')}/${encodedId}`
+  assert.ok(
+    typeof documentId === 'string' && documentId.length > 0,
+    'Document ID must be a non-empty string'
   );
+  const encodedId = encodeURIComponent(documentId);
+  const path = PRIVATE_PATH.includes(':id')
+    ? PRIVATE_PATH.replaceAll(':id', encodedId)
+    : `${PRIVATE_PATH.replace(/\/+$/, '')}/${encodedId}`;
+  return `${BASE_URL}${path}`;
 }
-
-function headers(token) {
+function requestHeaders(token) {
   return {
     Accept: '*/*',
     ...(token
@@ -96,304 +77,267 @@ function headers(token) {
       : {}),
   };
 }
-
-async function request(url, {
-  token,
-  method = 'GET',
-  extraHeaders = {},
-} = {}) {
+async function request(url, options = {}) {
   const controller = new AbortController();
-
   const timeout = setTimeout(
     () => controller.abort(),
     TIMEOUT_MS
   );
-
   try {
     return await fetch(url, {
-      method,
-      headers: {
-        ...headers(token),
-        ...extraHeaders,
-      },
+      ...options,
       redirect: 'manual',
       signal: controller.signal,
+      headers: {
+        ...requestHeaders(options.token || ''),
+        ...options.extraHeaders,
+      },
     });
   } finally {
     clearTimeout(timeout);
   }
 }
-
+async function readBody(response) {
+  return Buffer.from(await response.arrayBuffer());
+}
 function assertAccessDenied(response, description) {
   assert.ok(
     [401, 403, 404].includes(response.status),
-    `${description}: expected 401, 403, or 404; ` +
-      `received HTTP ${response.status}`
+    `${description}: expected 401, 403, or 404; received HTTP ${response.status}`
   );
 }
-
-async function readBody(response) {
-  return response.arrayBuffer();
+function assertNotRedirect(response, description) {
+  assert.ok(
+    ![301, 302, 303, 307, 308].includes(response.status),
+    `${description}: unexpected redirect with HTTP ${response.status}`
+  );
+  assert.equal(
+    response.headers.get('location'),
+    null,
+    `${description}: response must not disclose a redirect destination`
+  );
 }
-
-function assertNotPrivateFileContents(response, body, description) {
+function assertNotFileDownload(response, body, description) {
   const contentType = (
     response.headers.get('content-type') || ''
   ).toLowerCase();
-
   const disposition = (
     response.headers.get('content-disposition') || ''
   ).toLowerCase();
-
-  const looksLikeDownload =
+  const looksLikeFile =
     disposition.includes('attachment') ||
     contentType.includes('application/pdf') ||
     contentType.includes('application/octet-stream') ||
-    contentType.startsWith('image/');
-
+    contentType.startsWith('image/') ||
+    contentType.includes('application/zip');
   assert.equal(
-    looksLikeDownload,
+    looksLikeFile,
     false,
-    `${description}: unauthorized response looks like a file download`
+    `${description}: unauthorized response resembles a file download`
   );
-
-  assert.equal(
-    body.byteLength,
-    0,
-    `${description}: unauthorized response returned a body`
+  // A JSON error body is allowed. This check only verifies that a
+  // response identified as a file download was not returned.
+  assert.ok(
+    body.byteLength === 0 || !looksLikeFile,
+    `${description}: unexpected file response`
   );
 }
-
 async function assertUnauthorizedDownload(url, description) {
-  const response = await request(url, {
-    token: '',
-  });
-
+  const response = await request(url);
   assertAccessDenied(response, description);
-
+  assertNotRedirect(response, description);
   const body = await readBody(response);
-
-  assertNotPrivateFileContents(
+  assertNotFileDownload(response, body, description);
+}
+function skipUnlessConfigured(t, requirements = []) {
+  if (!configured) {
+    t.skip(
+      'Configure DOWNLOAD_TEST_BASE_URL and valid test settings.'
+    );
+    return true;
+  }
+  for (const [name, value] of requirements) {
+    if (!value) {
+      t.skip(`Missing required configuration: ${name}`);
+      return true;
+    }
+  }
+  return false;
+}
+test('Unauthenticated users cannot download a private document', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_DOCUMENT_ID', USER_A_DOCUMENT_ID],
+  ])) {
+    return;
+  }
+  await assertUnauthorizedDownload(
+    urlForDocument(USER_A_DOCUMENT_ID),
+    'Unauthenticated private download'
+  );
+});
+test('User A cannot download User B document', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_TOKEN', USER_A_TOKEN],
+    ['DOWNLOAD_TEST_USER_B_DOCUMENT_ID', USER_B_DOCUMENT_ID],
+  ])) {
+    return;
+  }
+  const response = await request(
+    urlForDocument(USER_B_DOCUMENT_ID),
+    { token: USER_A_TOKEN }
+  );
+  assertAccessDenied(response, 'Cross-user document download');
+  assertNotRedirect(response, 'Cross-user document download');
+  const body = await readBody(response);
+  assertNotFileDownload(
     response,
     body,
-    description
+    'Cross-user document download'
   );
-}
-
-test(
-  'Unauthorized downloads security integration suite',
-  { skip: !configured ? skipReason : false },
-  async (t) => {
-    await t.test(
-      'Private document download requires authentication',
-      { skip: !USER_A_DOCUMENT_ID },
-      async () => {
-        await assertUnauthorizedDownload(
-          urlForDocument(USER_A_DOCUMENT_ID),
-          'Unauthenticated private document download'
-        );
-      }
+});
+test('User B can download their own document', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_B_TOKEN', USER_B_TOKEN],
+    ['DOWNLOAD_TEST_USER_B_DOCUMENT_ID', USER_B_DOCUMENT_ID],
+  ])) {
+    return;
+  }
+  const response = await request(
+    urlForDocument(USER_B_DOCUMENT_ID),
+    { token: USER_B_TOKEN }
+  );
+  assert.ok(
+    response.status >= 200 && response.status < 300,
+    `Document owner should be authorized; received HTTP ${response.status}`
+  );
+  assert.ok(
+    response.headers.get('content-type'),
+    'Authorized download must identify its content type'
+  );
+  const body = await readBody(response);
+  assert.ok(
+    body.byteLength > 0,
+    'Synthetic test document should have non-empty content'
+  );
+});
+test('Invalid document IDs do not return file contents', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_TOKEN', USER_A_TOKEN],
+  ])) {
+    return;
+  }
+  const invalidIds = [
+    'undefined',
+    'null',
+    '-1',
+    'nonexistent-security-test-document',
+    '../admin',
+    '..%2Fadmin',
+    '%00',
+  ];
+  for (const id of invalidIds) {
+    const response = await request(
+      urlForDocument(id),
+      { token: USER_A_TOKEN }
     );
-
-    await t.test(
-      'User A cannot download User B document',
-      { skip: !(USER_A_TOKEN && USER_B_DOCUMENT_ID) },
-      async () => {
-        const response = await request(
-          urlForDocument(USER_B_DOCUMENT_ID),
-          {
-            token: USER_A_TOKEN,
-          }
-        );
-
-        assertAccessDenied(
-          response,
-          'Cross-user document download'
-        );
-
-        const body = await readBody(response);
-
-        assertNotPrivateFileContents(
-          response,
-          body,
-          'Cross-user document download'
-        );
-      }
+    assert.ok(
+      response.status >= 400 && response.status < 500,
+      `Invalid ID "${id}" should return a client error; received HTTP ${response.status}`
     );
-
-    await t.test(
-      'User B can download their own document',
-      { skip: !(USER_B_TOKEN && USER_B_DOCUMENT_ID) },
-      async () => {
-        const response = await request(
-          urlForDocument(USER_B_DOCUMENT_ID),
-          {
-            token: USER_B_TOKEN,
-          }
-        );
-
-        assert.ok(
-          response.status >= 200 && response.status < 300,
-          `Document owner should be authorized; HTTP ${response.status}`
-        );
-
-        assert.ok(
-          response.headers.get('content-type'),
-          'Authorized download should identify its content type'
-        );
-      }
-    );
-
-    await t.test(
-      'Invalid document identifiers cannot expose files',
-      { skip: !USER_A_TOKEN },
-      async () => {
-        const invalidIds = [
-          'undefined',
-          'null',
-          '..',
-          '../admin',
-          '%2e%2e%2fadmin',
-          'nonexistent-security-test-document',
-        ];
-
-        for (const id of invalidIds) {
-          const response = await request(
-            urlForDocument(id),
-            {
-              token: USER_A_TOKEN,
-            }
-          );
-
-          assert.ok(
-            response.status >= 400 && response.status < 500,
-            `Invalid document ID should produce 4xx; ` +
-              `received HTTP ${response.status}`
-          );
-
-          const body = await readBody(response);
-
-          assertNotPrivateFileContents(
-            response,
-            body,
-            `Invalid document identifier "${id}"`
-          );
-        }
-      }
-    );
-
-    await t.test(
-      'Document download endpoint does not accept unsupported methods',
-      { skip: !USER_A_DOCUMENT_ID },
-      async () => {
-        const response = await request(
-          urlForDocument(USER_A_DOCUMENT_ID),
-          {
-            token: USER_A_TOKEN,
-            method: 'TRACE',
-          }
-        );
-
-        assert.ok(
-          [400, 404, 405, 501].includes(response.status),
-          `Unexpected TRACE response: HTTP ${response.status}`
-        );
-      }
-    );
-
-    await t.test(
-      'Document listing does not expose private file contents',
-      { skip: !USER_A_TOKEN },
-      async () => {
-        const response = await request(
-          `${BASE_URL}${DOCUMENTS_PATH}`,
-          {
-            token: USER_A_TOKEN,
-          }
-        );
-
-        assert.ok(
-          response.status < 500,
-          `Document listing returned HTTP ${response.status}`
-        );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const contentType = (
-          response.headers.get('content-type') || ''
-        ).toLowerCase();
-
-        assert.ok(
-          contentType.includes('json'),
-          'Document listing should return JSON metadata, not raw file content'
-        );
-
-        const body = await response.json();
-
-        assert.ok(
-          body !== null &&
-            (typeof body === 'object' || Array.isArray(body)),
-          'Document listing should return a JSON object or array'
-        );
-      }
-    );
-
-    await t.test(
-      'Download responses do not redirect to an untrusted destination',
-      { skip: !USER_A_DOCUMENT_ID },
-      async () => {
-        const response = await request(
-          urlForDocument(USER_A_DOCUMENT_ID),
-          {
-            token: '',
-          }
-        );
-
-        assert.ok(
-          response.status !== 301 &&
-            response.status !== 302 &&
-            response.status !== 303 &&
-            response.status !== 307 &&
-            response.status !== 308,
-          'Unauthorized download must not redirect to a file URL'
-        );
-
-        assertAccessDenied(
-          response,
-          'Unauthorized download redirect probe'
-        );
-
-        const location = response.headers.get('location');
-
-        assert.equal(
-          location,
-          null,
-          'Unauthorized response must not disclose a download redirect URL'
-        );
-      }
+    assertNotRedirect(response, `Invalid ID "${id}"`);
+    const body = await readBody(response);
+    assertNotFileDownload(
+      response,
+      body,
+      `Invalid ID "${id}"`
     );
   }
-);
-
-test(
-  'Unauthorized download test helper invariants',
-  () => {
+});
+test('Download endpoint rejects unsupported HTTP methods', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_DOCUMENT_ID', USER_A_DOCUMENT_ID],
+  ])) {
+    return;
+  }
+  const response = await request(
+    urlForDocument(USER_A_DOCUMENT_ID),
+    {
+      token: USER_A_TOKEN,
+      method: 'TRACE',
+    }
+  );
+  assert.ok(
+    [400, 404, 405, 501].includes(response.status),
+    `Unexpected TRACE response: HTTP ${response.status}`
+  );
+});
+test('Document listing returns metadata rather than raw file bytes', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_TOKEN', USER_A_TOKEN],
+  ])) {
+    return;
+  }
+  const response = await request(
+    `${BASE_URL}${DOCUMENTS_PATH}`,
+    { token: USER_A_TOKEN }
+  );
+  assert.ok(
+    response.status < 500,
+    `Document listing returned HTTP ${response.status}`
+  );
+  if (!response.ok) {
     assert.ok(
-      PRIVATE_PATH.startsWith('/') &&
-        !PRIVATE_PATH.startsWith('//'),
-      'Private download path must be a relative API path'
+      [400, 401, 403, 404, 405, 422].includes(response.status),
+      `Unexpected document-listing status: HTTP ${response.status}`
     );
-
-    assert.ok(
-      Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-      'Timeout must be positive'
-    );
-
-    assertAccessDenied(
-      { status: 403 },
-      'Helper verification'
+    return;
+  }
+  const contentType = (
+    response.headers.get('content-type') || ''
+  ).toLowerCase();
+  assert.ok(
+    contentType.includes('application/json'),
+    'Document listing must return JSON metadata'
+  );
+  const body = await response.json();
+  assert.ok(
+    body !== null &&
+      (typeof body === 'object'),
+    'Document listing must return a JSON object or array'
+  );
+});
+test('Unauthorized download requests never redirect to file URLs', async (t) => {
+  if (skipUnlessConfigured(t, [
+    ['DOWNLOAD_TEST_USER_A_DOCUMENT_ID', USER_A_DOCUMENT_ID],
+  ])) {
+    return;
+  }
+  const response = await request(
+    urlForDocument(USER_A_DOCUMENT_ID)
+  );
+  assertAccessDenied(response, 'Unauthorized redirect probe');
+  assertNotRedirect(response, 'Unauthorized redirect probe');
+  const body = await readBody(response);
+  assertNotFileDownload(
+    response,
+    body,
+    'Unauthorized redirect probe'
+  );
+});
+test('Fixture configuration uses distinct document ownership', () => {
+  if (USER_A_DOCUMENT_ID && USER_B_DOCUMENT_ID) {
+    assert.notEqual(
+      USER_A_DOCUMENT_ID,
+      USER_B_DOCUMENT_ID,
+      'Cross-user download testing requires distinct document IDs'
     );
   }
-);
+  assert.ok(
+    Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
+    'DOWNLOAD_TEST_TIMEOUT_MS must be positive'
+  );
+  assert.ok(
+    PRIVATE_PATH.startsWith('/') && !PRIVATE_PATH.startsWith('//'),
+    'Download path must be a relative API path'
+  );
+});

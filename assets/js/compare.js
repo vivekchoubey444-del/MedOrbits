@@ -1,123 +1,253 @@
 
 /**
  * MedOrbits -- Comparison Manager
- * File: assets/js/compare.js
+ * File: /assets/js/compare.js
+ * Version: 1.2.0
  *
  * Compares colleges, courses, universities, and jobs.
+ * Features: session persistence, category isolation, safe rendering,
+ * comparison limits, filtering differences, and UI integration.
  */
-
-(() => {
+(function (window, document) {
   "use strict";
 
-  const CONSTANTS = window.MedOrbitsConstants || {};
+  if (window.MedOrbitsCompare) {
+    return;
+  }
 
-  const STORAGE_KEY =
-    CONSTANTS.STORAGE_KEYS?.SAVED_FILTERS
-      ? "medorbits-comparison"
-      : "medorbits-comparison";
+  var MAX_ITEMS = 4;
+  var STORAGE_KEY = "medorbits-comparison";
+  var EVENT_UPDATED = "medorbits:comparison-updated";
 
-  const MAX_ITEMS = 4;
-
-  const state = {
+  var state = {
     items: [],
     category: null
   };
 
-  const listeners = new Set();
+  var listeners = new Set();
+  var initialized = false;
 
-  // --------------------------------------------------
-  // Utilities
-  // --------------------------------------------------
+  var utils = {
+    getId: function (item) {
+      if (!item || typeof item !== "object") return null;
 
-  const utils = {
-    getId(item) {
-      return item?.id ??
-        item?.college_id ??
-        item?.course_id ??
-        item?.university_id ??
-        item?.job_id ??
-        item?.slug ??
-        null;
+      var keys = [
+        "id",
+        "college_id",
+        "course_id",
+        "university_id",
+        "job_id",
+        "slug"
+      ];
+
+      for (var i = 0; i < keys.length; i++) {
+        var value = item[keys[i]];
+
+        if (
+          value !== undefined &&
+          value !== null &&
+          String(value).trim() !== ""
+        ) {
+          return value;
+        }
+      }
+
+      return null;
     },
 
-    getName(item) {
+    getName: function (item) {
       return String(
-        item?.name ||
-        item?.title ||
-        item?.college_name ||
-        item?.course_name ||
-        item?.university_name ||
-        item?.job_title ||
+        item.name ||
+        item.title ||
+        item.college_name ||
+        item.course_name ||
+        item.university_name ||
+        item.job_title ||
         "Unnamed item"
       );
     },
 
-    emit(reason) {
-      const detail = Object.freeze({
+    normalizeCategory: function (category) {
+      var value = String(category || "college").trim().toLowerCase();
+
+      if (!/^[a-z][a-z0-9_-]{0,39}$/.test(value)) {
+        throw new TypeError("A valid comparison category is required.");
+      }
+
+      return value;
+    },
+
+    cloneItem: function (item) {
+      // Accept plain JSON-compatible records only.
+      if (
+        !item ||
+        typeof item !== "object" ||
+        Array.isArray(item)
+      ) {
+        throw new TypeError("A valid comparison item is required.");
+      }
+
+      var serialized;
+
+      try {
+        serialized = JSON.stringify(item);
+      } catch (error) {
+        throw new TypeError("The comparison item must contain JSON-compatible data.");
+      }
+
+      if (typeof serialized !== "string") {
+        throw new TypeError("The comparison item could not be serialized.");
+      }
+
+      var clone = JSON.parse(serialized);
+
+      if (!clone || typeof clone !== "object" || Array.isArray(clone)) {
+        throw new TypeError("The comparison item must be a plain object.");
+      }
+
+      return deepFreeze(clone);
+    },
+
+    emit: function (reason) {
+      var detail = Object.freeze({
         category: state.category,
-        items: [...state.items],
-        reason
+        items: state.items.slice(),
+        count: state.items.length,
+        maxItems: MAX_ITEMS,
+        reason: reason
       });
 
-      document.dispatchEvent(
-        new CustomEvent("medorbits:comparison-updated", { detail })
-      );
+      try {
+        document.dispatchEvent(
+          new CustomEvent(EVENT_UPDATED, { detail: detail })
+        );
+      } catch (error) {
+        // State changes remain valid even if custom events are unavailable.
+      }
 
-      listeners.forEach((listener) => {
+      listeners.forEach(function (listener) {
         try {
           listener(detail);
         } catch (error) {
-          console.error("[MedOrbits Compare] Listener failed.", error);
+          if (window.console && typeof window.console.error === "function") {
+            window.console.error(
+              "[MedOrbits Compare] Change listener failed.",
+              error
+            );
+          }
         }
       });
+
+      updateCounters();
     },
 
-    save() {
+    save: function () {
       try {
-        sessionStorage.setItem(
+        window.sessionStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({
+            version: 1,
             category: state.category,
             items: state.items
           })
         );
-      } catch {
-        // Comparison remains available in memory.
+
+        return true;
+      } catch (error) {
+        // Comparison remains available in memory if storage is unavailable.
+        return false;
       }
     },
 
-    load() {
+    load: function () {
+      var raw;
+
       try {
-        const raw = sessionStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        raw = window.sessionStorage.getItem(STORAGE_KEY);
+      } catch (error) {
+        return;
+      }
 
-        const parsed = JSON.parse(raw);
+      if (!raw) return;
 
-        if (!Array.isArray(parsed.items)) return;
+      try {
+        var parsed = JSON.parse(raw);
 
-        state.category = parsed.category || null;
-        state.items = parsed.items
-          .filter((item) => item && typeof item === "object")
-          .slice(0, MAX_ITEMS);
-      } catch {
-        state.items = [];
+        if (
+          !parsed ||
+          typeof parsed !== "object" ||
+          !Array.isArray(parsed.items)
+        ) {
+          return;
+        }
+
+        var category = parsed.category
+          ? utils.normalizeCategory(parsed.category)
+          : null;
+
+        var restored = [];
+        var seen = new Set();
+
+        parsed.items.slice(0, MAX_ITEMS).forEach(function (item) {
+          if (!item || typeof item !== "object" || Array.isArray(item)) {
+            return;
+          }
+
+          var id = utils.getId(item);
+
+          if (id === null) return;
+
+          var key = String(id);
+
+          if (seen.has(key)) return;
+
+          seen.add(key);
+          restored.push(utils.cloneItem(item));
+        });
+
+        if (restored.length && !category) {
+          // Do not restore ambiguous records without their category.
+          return;
+        }
+
+        state.category = restored.length ? category : null;
+        state.items = restored;
+      } catch (error) {
         state.category = null;
+        state.items = [];
+
+        try {
+          window.sessionStorage.removeItem(STORAGE_KEY);
+        } catch (storageError) {
+          // Ignore storage restrictions.
+        }
       }
     }
   };
 
-  // --------------------------------------------------
-  // Comparison operations
-  // --------------------------------------------------
-
-  function add(item, category = "college") {
-    if (!item || typeof item !== "object") {
-      throw new TypeError("A valid item is required for comparison.");
+  function deepFreeze(value) {
+    if (
+      !value ||
+      typeof value !== "object" ||
+      Object.isFrozen(value)
+    ) {
+      return value;
     }
 
-    const id = utils.getId(item);
+    Object.keys(value).forEach(function (key) {
+      deepFreeze(value[key]);
+    });
 
-    if (id === null || id === undefined) {
+    return Object.freeze(value);
+  }
+
+  function add(item, category) {
+    category = utils.normalizeCategory(category || "college");
+
+    var snapshot = utils.cloneItem(item);
+    var id = utils.getId(snapshot);
+
+    if (id === null) {
       throw new Error("The item must have a unique identifier.");
     }
 
@@ -127,34 +257,43 @@
       );
     }
 
-    if (state.items.some(
-      (existing) => String(utils.getId(existing)) === String(id)
-    )) {
-      return [...state.items];
+    var idString = String(id);
+
+    if (
+      state.items.some(function (existing) {
+        return String(utils.getId(existing)) === idString;
+      })
+    ) {
+      return state.items.slice();
     }
 
     if (state.items.length >= MAX_ITEMS) {
-      throw new Error(`You can compare up to ${MAX_ITEMS} items.`);
+      throw new Error("You can compare up to " + MAX_ITEMS + " items.");
     }
 
     state.category = category;
-    state.items.push(Object.freeze({ ...item }));
+    state.items.push(snapshot);
 
     utils.save();
     utils.emit("added");
 
-    return [...state.items];
+    return state.items.slice();
   }
 
   function remove(id) {
-    const previousLength = state.items.length;
+    if (id === null || id === undefined) {
+      return state.items.slice();
+    }
 
-    state.items = state.items.filter(
-      (item) => String(utils.getId(item)) !== String(id)
-    );
+    var idString = String(id);
+    var previousLength = state.items.length;
+
+    state.items = state.items.filter(function (item) {
+      return String(utils.getId(item)) !== idString;
+    });
 
     if (state.items.length === previousLength) {
-      return [...state.items];
+      return state.items.slice();
     }
 
     if (!state.items.length) {
@@ -164,7 +303,7 @@
     utils.save();
     utils.emit("removed");
 
-    return [...state.items];
+    return state.items.slice();
   }
 
   function clear() {
@@ -172,83 +311,187 @@
     state.category = null;
 
     try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Ignore storage restrictions.
+      window.sessionStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      // Clearing in-memory state still succeeds.
     }
 
     utils.emit("cleared");
+    return [];
   }
 
   function getItems() {
-    return [...state.items];
+    return state.items.slice();
   }
 
   function contains(id) {
-    return state.items.some(
-      (item) => String(utils.getId(item)) === String(id)
-    );
-  }
+    if (id === null || id === undefined) return false;
 
-  function getDifferences(fields = []) {
-    if (!state.items.length) return [];
-
-    return fields.map((field) => {
-      const values = state.items.map((item) => ({
-        id: utils.getId(item),
-        name: utils.getName(item),
-        value: field.split(".").reduce(
-          (value, key) => value?.[key],
-          item
-        )
-      }));
-
-      const distinctValues = new Set(
-        values.map((entry) => JSON.stringify(entry.value))
-      );
-
-      return {
-        field,
-        values,
-        differs: distinctValues.size > 1
-      };
+    return state.items.some(function (item) {
+      return String(utils.getId(item)) === String(id);
     });
   }
 
-  // --------------------------------------------------
-  // Comparison table
-  // --------------------------------------------------
+  function getDifferences(fields) {
+    fields = Array.isArray(fields) ? fields : [];
 
-  function render(container, fields = []) {
-    if (typeof container === "string") {
-      container = document.querySelector(container);
+    return fields.map(function (field) {
+      var key = typeof field === "string" ? field : field.key;
+
+      if (typeof key !== "string" || !key.trim()) {
+        return null;
+      }
+
+      var values = state.items.map(function (item) {
+        return {
+          id: utils.getId(item),
+          name: utils.getName(item),
+          value: getPathValue(item, key)
+        };
+      });
+
+      var distinctValues = new Set(
+        values.map(function (entry) {
+          return stableValue(entry.value);
+        })
+      );
+
+      return {
+        field: key,
+        label: typeof field === "object" && field.label
+          ? String(field.label)
+          : key,
+        values: values,
+        differs: distinctValues.size > 1
+      };
+    }).filter(Boolean);
+  }
+
+  function getPathValue(object, path) {
+    if (typeof path !== "string" || !path.trim()) {
+      return undefined;
     }
 
-    if (!(container instanceof Element)) {
+    var parts = path.split(".");
+
+    // Avoid inherited properties and prototype-related paths.
+    var blocked = ["__proto__", "prototype", "constructor"];
+
+    for (var i = 0; i < parts.length; i++) {
+      if (blocked.indexOf(parts[i]) !== -1) {
+        return undefined;
+      }
+    }
+
+    var value = object;
+
+    for (var j = 0; j < parts.length; j++) {
+      if (value === null || value === undefined) {
+        return undefined;
+      }
+
+      value = value[parts[j]];
+    }
+
+    if (
+      value !== null &&
+      typeof value === "object"
+    ) {
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return "[Complex value]";
+      }
+    }
+
+    return value;
+  }
+
+  function stableValue(value) {
+    if (value === undefined) return "__undefined__";
+
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return String(value);
+    }
+  }
+
+  function formatValue(value) {
+    if (value === null || value === undefined || value === "") {
+      return "Not available";
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(function (entry) {
+        if (entry === null || entry === undefined) return "";
+        return typeof entry === "object"
+          ? JSON.stringify(entry)
+          : String(entry);
+      }).filter(Boolean).join(", ") || "Not available";
+    }
+
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+
+    if (typeof value === "object") {
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return "Not available";
+      }
+    }
+
+    return String(value);
+  }
+
+  function resolveContainer(container) {
+    if (typeof container === "string") {
+      return document.querySelector(container);
+    }
+
+    return container;
+  }
+
+  function render(container, fields) {
+    container = resolveContainer(container);
+    fields = Array.isArray(fields) ? fields : [];
+
+    if (
+      !container ||
+      container.nodeType !== 1 ||
+      typeof container.replaceChildren !== "function"
+    ) {
       throw new TypeError("A valid comparison container is required.");
     }
 
     if (!state.items.length) {
-      const empty = document.createElement("p");
+      var empty = document.createElement("p");
       empty.className = "comparison-empty";
       empty.textContent = "Add items to compare them side by side.";
       container.replaceChildren(empty);
-      return;
+      return container;
     }
 
-    const table = document.createElement("table");
+    var table = document.createElement("table");
     table.className = "comparison-table";
 
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
+    var caption = document.createElement("caption");
+    caption.className = "visually-hidden";
+    caption.textContent = "Comparison of " + state.items.length + " items";
+    table.appendChild(caption);
 
-    const labelHeader = document.createElement("th");
+    var thead = document.createElement("thead");
+    var headerRow = document.createElement("tr");
+
+    var labelHeader = document.createElement("th");
     labelHeader.scope = "col";
     labelHeader.textContent = "Feature";
     headerRow.appendChild(labelHeader);
 
-    state.items.forEach((item) => {
-      const th = document.createElement("th");
+    state.items.forEach(function (item) {
+      var th = document.createElement("th");
       th.scope = "col";
       th.textContent = utils.getName(item);
       headerRow.appendChild(th);
@@ -257,31 +500,33 @@
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
-    const tbody = document.createElement("tbody");
+    var tbody = document.createElement("tbody");
 
-    fields.forEach((field) => {
-      const row = document.createElement("tr");
-      const label = document.createElement("th");
+    fields.forEach(function (field) {
+      if (!field || typeof field.key !== "string" || !field.key.trim()) {
+        return;
+      }
+
+      var row = document.createElement("tr");
+      var label = document.createElement("th");
 
       label.scope = "row";
       label.textContent = field.label || field.key;
-
       row.appendChild(label);
 
-      state.items.forEach((item) => {
-        const cell = document.createElement("td");
+      var rawValues = state.items.map(function (item) {
+        return getPathValue(item, field.key);
+      });
 
-        const value = field.key.split(".").reduce(
-          (current, key) => current?.[key],
-          item
-        );
+      var differs = new Set(rawValues.map(stableValue)).size > 1;
 
-        cell.textContent =
-          value === null || value === undefined || value === ""
-            ? "Not available"
-            : Array.isArray(value)
-              ? value.join(", ")
-              : String(value);
+      state.items.forEach(function (item, index) {
+        var cell = document.createElement("td");
+        cell.textContent = formatValue(rawValues[index]);
+
+        if (differs) {
+          cell.classList.add("comparison-different");
+        }
 
         row.appendChild(cell);
       });
@@ -291,11 +536,9 @@
 
     table.appendChild(tbody);
     container.replaceChildren(table);
-  }
 
-  // --------------------------------------------------
-  // Change subscriptions
-  // --------------------------------------------------
+    return table;
+  }
 
   function onChange(callback) {
     if (typeof callback !== "function") {
@@ -303,67 +546,134 @@
     }
 
     listeners.add(callback);
-    return () => listeners.delete(callback);
+
+    return function unsubscribe() {
+      return listeners.delete(callback);
+    };
   }
 
-  // --------------------------------------------------
-  // UI integration
-  // --------------------------------------------------
-
-  function init() {
-    utils.load();
-
-    document.querySelectorAll("[data-compare-clear]").forEach((button) => {
-      button.addEventListener("click", clear);
-    });
-
-    document.querySelectorAll("[data-compare-remove]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.compareRemove;
-
-        if (id) remove(id);
-      });
-    });
-
-    document.querySelectorAll("[data-compare-count]").forEach((element) => {
+  function updateCounters() {
+    document.querySelectorAll("[data-compare-count]").forEach(function (element) {
       element.textContent = String(state.items.length);
     });
 
+    document.querySelectorAll("[data-compare-clear]").forEach(function (button) {
+      button.disabled = state.items.length === 0;
+    });
+
+    document.querySelectorAll("[data-compare-add]").forEach(function (button) {
+      var id = button.getAttribute("data-compare-add");
+      var alreadyAdded = id !== null && contains(id);
+
+      button.disabled = alreadyAdded || state.items.length >= MAX_ITEMS;
+
+      button.setAttribute(
+        "aria-pressed",
+        alreadyAdded ? "true" : "false"
+      );
+    });
+
+    document.querySelectorAll("[data-compare-remove]").forEach(function (button) {
+      button.disabled = !contains(button.getAttribute("data-compare-remove"));
+    });
+  }
+
+  function handleDocumentClick(event) {
+    var target = event.target;
+
+    if (!target || typeof target.closest !== "function") return;
+
+    var clearButton = target.closest("[data-compare-clear]");
+
+    if (clearButton) {
+      event.preventDefault();
+      clear();
+      return;
+    }
+
+    var removeButton = target.closest("[data-compare-remove]");
+
+    if (removeButton) {
+      event.preventDefault();
+
+      var removeId = removeButton.getAttribute("data-compare-remove");
+
+      if (removeId) remove(removeId);
+      return;
+    }
+
+    var addButton = target.closest("[data-compare-add]");
+
+    if (addButton) {
+      event.preventDefault();
+
+      var rawItem = addButton.getAttribute("data-compare-item");
+      var category = addButton.getAttribute("data-compare-category") || "college";
+
+      if (!rawItem) {
+        // An item object must be supplied by application code.
+        return;
+      }
+
+      try {
+        var item = JSON.parse(rawItem);
+        add(item, category);
+      } catch (error) {
+        if (window.console && typeof window.console.warn === "function") {
+          window.console.warn(
+            "[MedOrbits Compare] Could not add item.",
+            error.message
+          );
+        }
+
+        document.dispatchEvent(
+          new CustomEvent("medorbits:comparison-error", {
+            detail: {
+              message: error.message || "Unable to add this item."
+            }
+          })
+        );
+      }
+    }
+  }
+
+  function init() {
+    if (initialized) {
+      updateCounters();
+      return;
+    }
+
+    initialized = true;
+    utils.load();
+
+    document.addEventListener("click", handleDocumentClick);
+
+    updateCounters();
     utils.emit("initialized");
   }
 
-  // --------------------------------------------------
-  // Public interface
-  // --------------------------------------------------
-
-  const MedOrbitsCompare = Object.freeze({
-    MAX_ITEMS,
-
-    add,
-    remove,
-    clear,
-    contains,
-    getItems,
-    getDifferences,
-    render,
-    onChange,
-    init,
+  var api = {
+    MAX_ITEMS: MAX_ITEMS,
+    add: add,
+    remove: remove,
+    clear: clear,
+    contains: contains,
+    getItems: getItems,
+    getDifferences: getDifferences,
+    render: render,
+    onChange: onChange,
+    init: init,
 
     get state() {
       return Object.freeze({
         category: state.category,
-        items: [...state.items]
+        items: state.items.slice()
       });
     }
-  });
-
-  if (window.MedOrbitsCompare) {
-    console.warn("[MedOrbits] Comparison module already loaded.");
-    return;
-  }
+  };
 
   Object.defineProperty(window, "MedOrbitsCompare", {
-    value: MedOrbitsCompare,
+    value: Object.freeze(api),
     writable: false,
     configurable: false,
     enumerable: true
@@ -374,4 +684,4 @@
   } else {
     init();
   }
-})();
+})(window, document);

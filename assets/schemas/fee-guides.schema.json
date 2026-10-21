@@ -3,7 +3,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://medorbits.in/schemas/fee-guides.schema.json",
   "title": "MedOrbits Fee Guides Manifest Schema",
-  "description": "Production validation schema for the MedOrbits Fee Guides package, covering document metadata, publication workflows, official-source verification, file integrity, discovery, security and maintenance.",
+  "description": "Production validation schema for the MedOrbits Fee Guides package, including document metadata, publication workflows, official-source verification, file integrity, discovery, security, privacy and maintenance.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -165,11 +165,13 @@
         },
         "designDirection": {
           "type": "string",
-          "minLength": 3
+          "minLength": 3,
+          "maxLength": 300
         },
         "documentStyle": {
           "type": "string",
-          "minLength": 3
+          "minLength": 3,
+          "maxLength": 300
         }
       }
     },
@@ -218,7 +220,8 @@
         },
         "maintainedBy": {
           "type": "string",
-          "minLength": 2
+          "minLength": 2,
+          "maxLength": 200
         },
         "readme": {
           "$ref": "#/$defs/safeRelativePath"
@@ -325,12 +328,18 @@
           "uniqueItems": true,
           "items": {
             "const": "published"
+          },
+          "contains": {
+            "const": "published"
           }
         },
         "downloadableStatuses": {
           "type": "array",
           "uniqueItems": true,
           "items": {
+            "const": "published"
+          },
+          "contains": {
             "const": "published"
           }
         },
@@ -364,7 +373,27 @@
         "requireApprovalBeforeRepublishing": {
           "type": "boolean"
         }
-      }
+      },
+      "allOf": [
+        {
+          "properties": {
+            "initialStatus": {
+              "not": {
+                "const": "published"
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "allowedStatuses": {
+              "contains": {
+                "const": "published"
+              }
+            }
+          }
+        }
+      ]
     },
     "filePolicy": {
       "type": "object",
@@ -432,10 +461,7 @@
         },
         "pathBase": {
           "type": "string",
-          "enum": [
-            "site-root",
-            "package-directory"
-          ]
+          "const": "site-root"
         }
       }
     },
@@ -516,7 +542,8 @@
           "type": "boolean"
         },
         "showDownloadButtonForPublishedOnly": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
         },
         "showPublicationStatusToPublic": {
           "type": "boolean"
@@ -526,30 +553,15 @@
         },
         "emptyStateMessage": {
           "type": "string",
-          "minLength": 3
+          "minLength": 3,
+          "maxLength": 500
         },
         "unavailableMessage": {
           "type": "string",
-          "minLength": 3
+          "minLength": 3,
+          "maxLength": 500
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "supportedSortOptions": {
-                "contains": {
-                  "const": "recently-reviewed"
-                }
-              }
-            },
-            "required": [
-              "supportedSortOptions"
-            ]
-          },
-          "then": {}
-        }
-      ]
+      }
     },
     "category": {
       "type": "object",
@@ -579,7 +591,8 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 500,
-      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//).+$"
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//)(?!.*\\s$).+$",
+      "description": "Repository-relative POSIX path. Must not contain absolute paths, drive prefixes, backslashes, traversal segments, empty path segments or trailing whitespace."
     },
     "source": {
       "type": "object",
@@ -774,7 +787,8 @@
         "path": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^assets/documents/fee-guides/[a-z0-9]+(?:-[a-z0-9]+)*\\.pdf$"
+          "maxLength": 500,
+          "pattern": "^assets/documents/fee-guides/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*[a-z0-9]+(?:-[a-z0-9]+)*\\.pdf$"
         },
         "mimeType": {
           "type": "string",
@@ -864,6 +878,36 @@
                   "publishedAt": {
                     "type": "string",
                     "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "published"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verification": {
+                "properties": {
+                  "status": {
+                    "const": "verified"
+                  },
+                  "lastVerified": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "officialSources": {
+                    "minItems": 1
                   }
                 }
               }
@@ -1035,7 +1079,8 @@
       "properties": {
         "maintainedBy": {
           "type": "string",
-          "minLength": 2
+          "minLength": 2,
+          "maxLength": 200
         },
         "keepManifestSynchronizedWithDirectory": {
           "type": "boolean"

@@ -1,308 +1,383 @@
-MedOrbits Email Integration
 
-Directory: src/integrations/email/
+# MedOrbits Email Integration
 
-Purpose: Provide a reusable server-side email service for MedOrbits authentication, admissions enquiries, application updates, career services, employer communications, notifications, and transactional messages.
+**Directory:** `src/integrations/email/`  
+**Runtime:** Node.js 20+  
+**Transport:** Nodemailer SMTP
 
-⸻
+## 1. Purpose
 
-1. Overview
+The MedOrbits email integration provides reusable server-side email delivery for authentication, admissions enquiries, application updates, career services, employer communications, notifications, and transactional messages.
 
-The email integration separates application-level email delivery from the underlying SMTP transport.
-
-Application services should use createEmailClient() and send validated messages through the shared email client. SMTP connection management, authentication, and delivery are handled by the configured provider.
+Application services use `createEmailClient()` to send validated messages through a configured provider. SMTP connection management, authentication, and transport operations remain inside the provider adapter.
 
 The integration supports:
 
-* Transactional and notification emails.
-* Plain-text and HTML messages.
-* Multiple recipients, CC, and BCC where authorized.
-* Configured sender and reply-to addresses.
-* Pooled SMTP connections.
-* Graceful provider shutdown.
+- Plain-text and HTML email.
+- Multiple recipients, CC, and BCC.
+- Configured sender identity and reply-to addresses.
+- Pooled SMTP connections.
+- Message and recipient validation.
+- Provider injection for testing.
+- Controlled provider shutdown.
 
-The integration does not automatically provide email templates, a durable delivery queue, retry persistence, bounce processing, delivery analytics, or email verification workflows. Implement these separately when required.
+It does not automatically implement email templates, durable queues, persistent retries, bounce processing, delivery analytics, or email verification workflows.
 
-2. Directory structure
+## 2. Directory Structure
 
+```text
 src/integrations/email/
 ├── README.md
 ├── index.js
 ├── email.client.js
 ├── email.provider.js
 └── smtp.provider.js
+```
 
-File	Responsibility
-index.js	Exports the email client, provider contract, SMTP adapter, and factory.
-email.client.js	Validates messages and delegates sending to the provider.
-email.provider.js	Defines the abstract email provider interface.
-smtp.provider.js	Configures Nodemailer and sends messages through SMTP.
+| File | Responsibility |
+|—|—|
+| `README.md` | Setup, usage, security, testing, and operations |
+| `index.js` | Exports the integration and creates email clients |
+| `email.client.js` | Validates messages and delegates delivery |
+| `email.provider.js` | Defines the abstract provider contract |
+| `smtp.provider.js` | Configures Nodemailer and sends SMTP messages |
 
-Keep transport-specific configuration inside the SMTP adapter. Controllers and business services should not create Nodemailer transports directly.
+Controllers and business services must not construct Nodemailer transports directly.
 
-3. Requirements
+## 3. Requirements
 
-* Node.js 20 or later.
-* npm.
-* An SMTP account or authorized SMTP relay.
-* Environment-variable configuration for SMTP credentials.
-* A verified sender address or domain where required by the provider.
+- Node.js 20 or later.
+- npm.
+- An authorized SMTP account or relay.
+- Server-side SMTP credentials.
+- An approved sender address or domain.
 
 Install Nodemailer:
 
+```bash
 npm install nodemailer
+```
 
-Confirm that nodemailer is recorded in package.json and included in the production deployment.
+Confirm that `nodemailer` is recorded in `package.json` and included in production deployments.
 
-4. Environment configuration
+## 4. Environment Configuration
 
-Configure the following variables in your local environment or deployment secret manager.
+Configure these values in the server environment or deployment secret manager:
 
+```dotenv
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
 SMTP_SECURE=false
+
+SMTP_CONNECTION_TIMEOUT_MS=10000
+SMTP_GREETING_TIMEOUT_MS=10000
+SMTP_SOCKET_TIMEOUT_MS=20000
+
 EMAIL_FROM=notifications@example.com
+```
 
-Replace the example host and sender with values supplied by your email provider.
+Replace the example values with credentials and settings supplied by your email provider.
 
-Configuration reference
+| Variable | Required | Purpose |
+|—|—|—|
+| `SMTP_HOST` | Yes | SMTP server hostname |
+| `SMTP_PORT` | Yes | SMTP port, commonly 587 or 465 |
+| `SMTP_USER` | Yes | Authentication username |
+| `SMTP_PASS` | Yes | Password or application-specific credential |
+| `SMTP_SECURE` | No | Whether TLS is used immediately |
+| `SMTP_CONNECTION_TIMEOUT_MS` | No | Connection timeout |
+| `SMTP_GREETING_TIMEOUT_MS` | No | SMTP greeting timeout |
+| `SMTP_SOCKET_TIMEOUT_MS` | No | Socket inactivity timeout |
+| `EMAIL_FROM` | Yes | Configured sender address |
 
-Variable	Required	Description
-SMTP_HOST	Yes	SMTP server hostname.
-SMTP_PORT	Yes	SMTP port, commonly 587 or 465 depending on the provider.
-SMTP_USER	Yes	SMTP authentication username.
-SMTP_PASS	Yes	SMTP authentication password or application-specific credential.
-SMTP_SECURE	No	Whether to use TLS immediately when connecting. Defaults depend on the provider implementation.
-EMAIL_FROM	Yes	Trusted sender email address.
+For port 465, SMTP commonly uses implicit TLS with `SMTP_SECURE=true`. For port 587, STARTTLS is commonly used with `SMTP_SECURE=false`. Follow your provider’s requirements.
 
-For port 465, SMTP commonly uses implicit TLS with SMTP_SECURE=true. For port 587, STARTTLS is commonly used with SMTP_SECURE=false. Follow your SMTP provider’s instructions and ensure encryption is required where appropriate.
+Never commit SMTP credentials to Git. Rotate any exposed credentials immediately.
 
-Never commit real SMTP credentials to Git. Rotate exposed credentials immediately.
+**Configuration alignment:** The current adapter reads `SMTP_PASS` and `EMAIL_FROM`. Standardize these names with `src/config/env.js` and `src/config/email.js` before deployment. Do not maintain competing configuration sources with different defaults.
 
-Implementation alignment: The SMTP adapter currently reads SMTP_PASS and EMAIL_FROM. If src/config/env.js or src/config/email.js uses different names, standardize those files before deployment.
+## 5. Creating an Email Client
 
-5. Creating an email client
+Create a shared client in the server-side composition layer:
 
-Use the exported factory:
-
+```javascript
 ‘use strict’;
+
 const {
   createEmailClient,
 } = require(‘./src/integrations/email’);
+
 const emailClient = createEmailClient();
+```
 
-Create a shared application-level client when the SMTP provider uses connection pooling. Avoid constructing a new transport for every request.
+The factory creates an SMTP provider from the environment by default. For testing, inject a mock provider implementing `send(message)`.
 
-For testing, inject a provider that implements send(message) instead of connecting to a real SMTP server.
+```javascript
+const emailClient = createEmailClient({
+  provider: mockEmailProvider,
+});
+```
 
-6. Sending an email
+Injected providers are externally managed by default. Use `ownsProvider: true` when the client should manage their lifecycle.
 
-The supported basic message format is:
+Reuse the shared client when connection pooling is enabled. Avoid creating a new SMTP transport for every HTTP request.
 
+## 6. Sending Email
+
+```javascript
 await emailClient.send({
   to: ‘student@example.com’,
   subject: ‘Your MedOrbits enquiry’,
   text: ‘We have received your enquiry.’,
   html: ‘<p>We have received your enquiry.</p>’,
 });
+```
 
-Use text, html, or both.
+Supported message fields include:
 
-Prefer both formats for transactional messages so recipients can read the plain-text alternative when HTML rendering is unavailable.
+- `to` — required recipient or recipient list.
+- `subject` — required subject.
+- `text` — optional plain-text body.
+- `html` — optional HTML body.
+- `cc` — optional carbon-copy recipients.
+- `bcc` — optional blind carbon-copy recipients.
+- `replyTo` — optional reply-to addresses.
+- `headers` — optional validated custom headers.
+- `priority` — optional `high`, `normal`, or `low` priority.
 
-The client returns a delivery-submission result containing the provider message ID and accepted or rejected recipient information, depending on the SMTP response.
+At least one body format is required. Prefer both text and HTML for transactional messages.
 
-A successful SMTP submission is not proof that the message reached the inbox. Delivery can still fail later because of filtering, bounces, recipient-server policies, or other delivery issues.
+The SMTP provider returns a normalized result:
 
-7. HTML templates and rendering security
+```javascript
+{
+  messageId: ‘provider-message-id’,
+  accepted: [],
+  rejected: []
+}
+```
 
-Render HTML email using trusted templates and an autoescaping template engine.
+Actual values depend on the SMTP response.
 
-Recommended rules:
+A successful SMTP submission does not prove inbox delivery. Messages can subsequently bounce, be filtered, or be rejected by recipient servers.
 
-* Escape user-provided values before inserting them into HTML.
-* Never insert user-supplied HTML directly into a template.
-* Do not allow arbitrary template source or template filenames to be supplied by users.
-* Validate URLs before placing them in links.
-* Restrict links to approved schemes, normally HTTPS, and approved domains where appropriate.
-* Reject javascript:, unexpected data: URLs, and other unsafe schemes.
-* Avoid interpolating untrusted values into CSS, HTML attributes, or raw template blocks.
-* Keep email templates separate from controllers and business logic.
-* Provide a meaningful plain-text alternative.
-* Test templates with HTML injection payloads and malformed input.
+## 7. HTML Templates and Rendering Security
 
-Example of safe conceptual template rendering:
+Use trusted templates and a template engine with automatic escaping.
 
+- Escape user-provided values before inserting them into HTML.
+- Never insert untrusted HTML directly into templates.
+- Do not allow users to choose arbitrary template files or template source.
+- Validate URLs before adding them to links.
+- Restrict link schemes to approved schemes, normally HTTPS.
+- Reject `javascript:`, unexpected `data:`, and other unsafe URL schemes.
+- Avoid interpolating untrusted values into CSS, HTML attributes, or raw template blocks.
+- Maintain templates separately from controllers and business logic.
+- Provide meaningful plain-text alternatives.
+- Test templates against HTML injection and malformed input.
+
+Example:
+
+```javascript
 const html = renderTrustedTemplate(‘enquiry-received’, {
   studentName: validatedStudentName,
   enquiryReference: validatedReference,
 });
+
 await emailClient.send({
   to: validatedRecipient,
   subject: ‘We received your MedOrbits enquiry’,
   text: plainTextMessage,
   html,
 });
+```
 
-renderTrustedTemplate() represents your application’s template-rendering service; it is not provided by this email integration unless implemented separately.
+`renderTrustedTemplate()` is an application-level function; it is not provided by this integration unless implemented separately.
 
-HTML escaping alone is not sufficient for validating URLs or preventing unsafe link destinations.
+HTML escaping alone does not validate URL destinations or prevent unsafe links.
 
-8. Authentication and account-enumeration protection
+## 8. Authentication and Account Enumeration
 
-Authentication-related email workflows must not reveal whether an account exists.
+Authentication-related email workflows must not disclose whether an account exists.
 
-Use generic responses for:
+Apply generic responses to:
 
-* Password-reset requests.
-* Login and account-recovery assistance.
-* Email-verification resend requests.
-* Registration attempts where account existence could otherwise be disclosed.
+- Password-reset requests.
+- Account-recovery assistance.
+- Email-verification resend requests.
+- Registration attempts where account existence could otherwise be disclosed.
 
-For example, a password-reset endpoint can return a message such as:
+For example:
 
-If an account matches the supplied details, instructions will be sent to the registered email address.
+> If an account matches the supplied details, instructions will be sent to the registered email address.
 
-Apply rate limiting and abuse detection to email-triggering endpoints. Use cryptographically secure, short-lived tokens for verification and password resets, store only token hashes when appropriate, and invalidate tokens after successful use or expiration.
+Use rate limiting and abuse detection for endpoints that trigger email delivery.
 
-Do not include passwords, session tokens, unrestricted account data, or sensitive documents in email messages or URLs.
+Verification and password-reset tokens must be cryptographically secure, short-lived, purpose-specific, and single-use. Store token hashes where appropriate and invalidate tokens after successful use or expiry.
 
-9. Message validation
+Never include passwords, session tokens, unrestricted account data, or sensitive documents in emails or URLs.
 
-The email client should validate message structure before delegating to the SMTP provider.
+## 9. Message Validation
 
-At minimum, validate:
+The email client and SMTP adapter validate messages before delivery.
 
-* Recipient addresses and recipient counts.
-* Subject presence and header-injection characters.
-* HTML or plain-text body presence.
-* Optional CC, BCC, and reply-to addresses.
-* Custom header names and values.
-* Body size and other operational limits.
+Controls include:
 
-Use a trusted configured sender address rather than allowing arbitrary callers to override the sender.
+- Recipient address validation and recipient-count limits.
+- Subject validation and header-injection protection.
+- Required body validation.
+- CC, BCC, and reply-to validation.
+- Custom header validation.
+- Message-size limits.
+- A configured sender identity.
 
-Address syntax validation does not prove that an email address exists or belongs to the intended user.
+The SMTP provider must use the trusted configured sender rather than allowing arbitrary callers to override it.
 
-10. Application integration
+Address syntax validation does not prove that an address exists or belongs to the intended recipient.
 
-Use the email service from the appropriate application layer.
+Attachments are not supported by the current generic client/provider contract unless attachment validation is explicitly implemented. Do not assume that arbitrary attachment paths, streams, filenames, or MIME types are safe.
 
-Examples include:
+## 10. Application Integration
 
-* Authentication service — verification and password-reset messages.
-* Admissions service — enquiry acknowledgements and application updates.
-* Career service — relevant application and recruitment notifications.
-* Employer service — approved recruitment-related notifications.
-* Support service — case acknowledgements and status updates.
-* Notification service — approved transactional and account messages.
+Use the email client through authorized application services.
 
-Controllers should validate the request, authorize the operation, and delegate email work to the appropriate service.
+| Service | Example use |
+|—|—|
+| Authentication | Verification and password-reset messages |
+| Admissions | Enquiry acknowledgements and application updates |
+| Career services | Career and recruitment notifications |
+| Employer services | Approved recruitment communications |
+| Support | Case acknowledgements and status updates |
+| Notifications | Account and transactional messages |
 
-Do not let public clients submit arbitrary email content, choose privileged sender identities, or use the SMTP integration as an unrestricted email relay.
+Controllers should validate requests, authorize operations, and delegate delivery to the relevant service.
 
-11. Error handling and reliability
+Public clients must not be allowed to use this integration as an unrestricted email relay, choose privileged sender identities, or submit arbitrary privileged message headers.
 
-Handle email errors according to their type.
+## 11. Error Handling and Reliability
 
-* Validation failures: Reject invalid messages before calling the provider.
-* Configuration failures: Fail startup or disable the affected capability safely when required credentials are missing.
-* Authentication failures: Alert operators and correct the SMTP credentials.
-* Transient failures: Retry only under a bounded retry policy.
-* Permanent recipient failures: Record the rejection and avoid endless retries.
-* Ambiguous network failures: Account for the possibility that the SMTP server accepted the message before the connection failed.
+Handle failures according to their category:
 
-For important messages, use a durable queue or transactional outbox. Record a unique application message ID and processing status so retries do not cause unnecessary duplicate sends.
+- **Validation failure:** Reject the message before transport.
+- **Configuration failure:** Fail startup or disable the affected capability safely.
+- **Authentication failure:** Alert operators and correct SMTP credentials.
+- **Transient failure:** Retry under a bounded retry policy.
+- **Permanent recipient failure:** Record the rejection and avoid endless retries.
+- **Ambiguous network failure:** Account for the possibility that SMTP accepted the message before the connection failed.
 
-Email delivery is not inherently exactly-once. Design for at-least-once attempts with duplicate-resistant business workflows where appropriate.
+For important messages, use a durable queue or transactional outbox. Record an application message ID and processing status to control duplicate attempts.
 
-Do not block a database transaction while waiting for an external SMTP request.
+Email delivery is not inherently exactly-once. Design for at-least-once attempts and duplicate-resistant business workflows.
 
-12. Logging and privacy
+Do not hold a database transaction open while waiting for SMTP delivery.
 
-Log operational metadata such as:
+The current SMTP adapter does not itself provide durable retries, a queue, bounce processing, or persistent delivery tracking.
 
-* Application message ID.
-* Message category or template name.
-* Processing outcome.
-* Provider message ID, when available.
-* Error category and retry count.
-* Timestamps and correlation IDs.
+## 12. Logging and Privacy
 
-Avoid logging:
+Capture operational metadata such as:
 
-* SMTP passwords or credentials.
-* Password-reset and verification tokens.
-* Full authentication URLs containing secrets.
-* Unnecessary message bodies.
-* Sensitive personal or application information.
+- Application message ID.
+- Message category or template name.
+- Processing outcome.
+- Provider message ID when available.
+- Error category and retry count.
+- Timestamps and correlation IDs.
 
-Protect email logs with access controls and a defined retention policy.
+Avoid logging SMTP credentials, reset tokens, verification URLs containing secrets, unnecessary message bodies, or sensitive student and application information.
 
-13. Graceful shutdown
+Protect logs with access controls, redaction, and defined retention policies.
 
-Close the shared email client during application shutdown:
+## 13. Graceful Shutdown
 
+Close the shared client during application shutdown:
+
+```javascript
 await emailClient.close();
+```
 
-Use graceful shutdown hooks to stop accepting new work, allow in-flight work to finish within a bounded deadline, and then close the email provider.
+A production shutdown sequence should:
 
-The SMTP adapter’s close() method releases the Nodemailer transport. If shutdown fails, record a sanitized operational error and ensure the process still follows the application’s shutdown policy.
+1. Stop accepting new work.
+2. Stop accepting new email jobs.
+3. Allow in-flight operations to finish within a bounded deadline.
+4. Close the email client and owned transport.
+5. Record sanitized shutdown errors and exit according to application policy.
 
-14. Testing checklist
+The SMTP provider’s `close()` method releases the Nodemailer transport. A closed client or provider must not accept new sends.
 
-Configuration
+If the application shares a provider between components, only its designated owner should close it.
 
-* [ ]	Missing SMTP variables are detected.
-* [ ]	Invalid ports and TLS settings are rejected.
-* [ ]	Credentials are not exposed in logs or responses.
-* [ ]	Production uses the approved SMTP endpoint.
+## 14. Testing Checklist
 
-Message validation
+### Configuration
 
-* [ ]	Invalid recipient addresses are rejected.
-* [ ]	Empty subjects and bodies are rejected.
-* [ ]	Header-injection attempts are rejected.
-* [ ]	CC, BCC, and reply-to values are validated.
-* [ ]	Oversized messages are rejected.
-* [ ]	Sender identity remains controlled by configuration.
+- [ ] Missing SMTP variables are detected.
+- [ ] Invalid ports and timeout values are rejected.
+- [ ] TLS settings match the selected provider.
+- [ ] Credentials are never exposed in logs or public responses.
+- [ ] Production uses the approved SMTP endpoint.
 
-Security
+### Message validation
 
-* [ ]	HTML templates autoescape untrusted values.
-* [ ]	Unsafe URLs are rejected.
-* [ ]	Authentication responses remain generic.
-* [ ]	Email-triggering endpoints are rate-limited.
-* [ ]	Verification and reset tokens expire and cannot be reused.
+- [ ] Invalid recipient addresses are rejected.
+- [ ] Empty subjects and bodies are rejected.
+- [ ] Header-injection attempts are rejected.
+- [ ] CC, BCC, and reply-to values are validated.
+- [ ] Oversized messages are rejected.
+- [ ] Sender identity remains controlled by configuration.
+- [ ] Unsupported attachment fields are rejected.
 
-Reliability
+### Security
 
-* [ ]	SMTP failures are handled without exposing secrets.
-* [ ]	Retry behavior is bounded.
-* [ ]	Duplicate processing is controlled for queued messages.
-* [ ]	Provider resources close during shutdown.
-* [ ]	Important messages can be recovered after a process restart.
+- [ ] Templates escape untrusted values.
+- [ ] Unsafe URLs are rejected.
+- [ ] Authentication responses remain generic.
+- [ ] Email-triggering endpoints are rate-limited.
+- [ ] Verification and reset tokens expire and cannot be reused.
 
-15. Operational boundaries
+### Reliability
 
-This integration provides an email client and SMTP transport adapter. It does not automatically implement:
+- [ ] SMTP failures are handled without exposing secrets.
+- [ ] Retry behavior is bounded.
+- [ ] Duplicate processing is controlled for queued messages.
+- [ ] Provider resources close during shutdown.
+- [ ] Important messages can be recovered after a process restart.
 
-* A template engine or template directory.
-* A durable email queue.
-* Scheduled reminders.
-* Bounce, complaint, or delivery-event processing.
-* Email verification or password-reset workflows.
-* Exactly-once delivery.
-* A provider-independent delivery analytics system.
+## 15. Operational Boundaries
+
+The current integration provides an email client, an abstract provider contract, and an SMTP transport adapter.
+
+It does not automatically implement:
+
+- A template engine or template directory.
+- A durable email queue.
+- Scheduled reminders.
+- Bounce, complaint, or delivery-event processing.
+- Email verification or password-reset workflows.
+- Exactly-once delivery.
+- Provider-independent delivery analytics.
+- Persistent retries or application-level idempotency.
 
 Implement these capabilities in dedicated modules and document their actual behavior.
 
-16. Maintenance
+## 16. Maintenance and Production Readiness
 
-Review SMTP credentials, TLS configuration, sender-domain authentication, message templates, rate limits, delivery failures, and log retention periodically.
+Periodically review:
 
-For production email delivery, configure the appropriate domain authentication records, such as SPF, DKIM, and DMARC, according to the sending provider’s instructions.
+- SMTP credentials and access permissions.
+- TLS configuration.
+- Sender-domain authentication.
+- Message templates and link destinations.
+- Rate limits and delivery failures.
+- Retry policies and queue health.
+- Logging, privacy, and retention settings.
+- Provider and application shutdown behavior.
 
-Implementation status: This document describes the integration contract and recommended safeguards. Verify each feature against the actual source code and deployment configuration before treating it as implemented or production-ready.
+Configure SPF, DKIM, and DMARC according to the sending provider’s instructions.
+
+### Implementation status
+
+This document describes the integration contract and recommended safeguards. Verify each feature against the actual source code, automated tests, central environment configuration, and deployment settings before considering it implemented or production-ready.

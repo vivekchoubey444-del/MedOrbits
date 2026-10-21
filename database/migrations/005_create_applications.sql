@@ -1,3 +1,4 @@
+
 -- =============================================================================
 -- Migration: 005_create_applications.sql
 -- Project: MedOrbits
@@ -12,50 +13,53 @@
 --   003_create_courses.sql
 --   004_create_colleges_universities.sql
 --
--- PURPOSE:
---   Store student applications, course and college preferences, applicant
---   contact details, submission timestamps, and review information.
---
 -- IMPORTANT:
 -- - Generate public_id using crypto.randomUUID() in the application.
 -- - Generate a unique application_number in trusted backend code.
 -- - Store timestamps according to the application's UTC convention.
 -- - Enforce ownership and reviewer authorization in backend services.
 -- - Do not trust applicant IDs, status changes, or review fields from clients.
--- - This migration is intended for a fresh installation.
+-- - Intended for a fresh installation.
 -- - CREATE TABLE IF NOT EXISTS does not modify existing table definitions.
--- - MySQL DDL may implicitly commit; use the migration runner.
+-- - MySQL DDL may implicitly commit.
 -- =============================================================================
+
 CREATE TABLE IF NOT EXISTS applications (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
     -- Public and human-readable application identifiers.
     public_id CHAR(36) NOT NULL,
     application_number VARCHAR(60) NOT NULL,
+
     -- Application ownership and education preferences.
     user_id BIGINT UNSIGNED NOT NULL,
     course_id BIGINT UNSIGNED NULL,
     college_id BIGINT UNSIGNED NULL,
+
     -- Applicant details captured at application time.
-    -- These are snapshots and may differ from the user's current profile.
     applicant_name VARCHAR(200) NOT NULL,
     applicant_email VARCHAR(254) NOT NULL,
     applicant_phone VARCHAR(30) NULL,
+
     -- Application lifecycle.
     status VARCHAR(30) NOT NULL DEFAULT 'draft',
     notes TEXT NULL,
+
     -- Submission and review metadata.
     submitted_at DATETIME(3) NULL,
     reviewed_at DATETIME(3) NULL,
     reviewed_by BIGINT UNSIGNED NULL,
+
     -- Lifecycle timestamps.
     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
         ON UPDATE CURRENT_TIMESTAMP(3),
+
     PRIMARY KEY (id),
-    -- Uniqueness.
+
     UNIQUE KEY uq_applications_public_id (public_id),
     UNIQUE KEY uq_applications_number (application_number),
-    -- Applicant dashboard and operational queries.
+
     KEY idx_applications_user_status_created
         (user_id, status, created_at),
     KEY idx_applications_course_id (course_id),
@@ -63,7 +67,8 @@ CREATE TABLE IF NOT EXISTS applications (
     KEY idx_applications_status_created (status, created_at),
     KEY idx_applications_reviewer_status (reviewed_by, status),
     KEY idx_applications_submitted_at (submitted_at),
-    -- Status must match the supported application lifecycle.
+
+    -- Supported application lifecycle.
     CONSTRAINT chk_applications_status
         CHECK (
             status IN (
@@ -77,34 +82,35 @@ CREATE TABLE IF NOT EXISTS applications (
                 'closed'
             )
         ),
+
     -- Required applicant details must not be blank.
     CONSTRAINT chk_applications_applicant_name
-        CHECK (
-            CHAR_LENGTH(TRIM(applicant_name)) > 0
-        ),
+        CHECK (CHAR_LENGTH(TRIM(applicant_name)) > 0),
+
     CONSTRAINT chk_applications_applicant_email
-        CHECK (
-            CHAR_LENGTH(TRIM(applicant_email)) > 0
-        ),
+        CHECK (CHAR_LENGTH(TRIM(applicant_email)) > 0),
+
     CONSTRAINT chk_applications_application_number
+        CHECK (CHAR_LENGTH(TRIM(application_number)) > 0),
+
+    CONSTRAINT chk_applications_public_id_not_blank
+        CHECK (CHAR_LENGTH(TRIM(public_id)) > 0),
+
+    CONSTRAINT chk_applications_applicant_phone_not_blank
         CHECK (
-            CHAR_LENGTH(TRIM(application_number)) > 0
+            applicant_phone IS NULL
+            OR CHAR_LENGTH(TRIM(applicant_phone)) > 0
         ),
-    -- Review metadata must be internally consistent.
+
+    -- Review timestamp and reviewer must be supplied together.
     CONSTRAINT chk_applications_review_consistency
         CHECK (
-            (
-                reviewed_at IS NULL
-                AND reviewed_by IS NULL
-            )
+            (reviewed_at IS NULL AND reviewed_by IS NULL)
             OR
-            (
-                reviewed_at IS NOT NULL
-                AND reviewed_by IS NOT NULL
-            )
+            (reviewed_at IS NOT NULL AND reviewed_by IS NOT NULL)
         ),
-    -- Submitted applications must have a submission timestamp.
-    -- Draft applications may legitimately have no submission timestamp.
+
+    -- Submitted and later workflow states require a submission timestamp.
     CONSTRAINT chk_applications_submission_consistency
         CHECK (
             status NOT IN (
@@ -117,37 +123,43 @@ CREATE TABLE IF NOT EXISTS applications (
             )
             OR submitted_at IS NOT NULL
         ),
+
     -- Preserve ownership and referenced records.
     CONSTRAINT fk_applications_user
         FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE RESTRICT,
+
     CONSTRAINT fk_applications_course
         FOREIGN KEY (course_id)
         REFERENCES courses (id)
         ON DELETE SET NULL,
+
     CONSTRAINT fk_applications_college
         FOREIGN KEY (college_id)
         REFERENCES colleges (id)
         ON DELETE SET NULL,
+
     CONSTRAINT fk_applications_reviewer
         FOREIGN KEY (reviewed_by)
         REFERENCES users (id)
         ON DELETE SET NULL
+
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
+
 -- =============================================================================
 -- VERIFICATION QUERY
 -- =============================================================================
--- Displays application status counts after the migration and subsequent seeding.
--- This query does not create application records.
+
 SELECT
     status,
     COUNT(*) AS application_count
 FROM applications
 GROUP BY status
 ORDER BY status;
+
 -- =============================================================================
 -- END OF MIGRATION
 -- =============================================================================

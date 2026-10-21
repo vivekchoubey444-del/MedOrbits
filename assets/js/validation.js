@@ -1,31 +1,57 @@
+
 /* =========================================================
-   MedOrbits -- Utility Helpers
-   File: /assets/js/utils.js
-========================================================= */
+   MedOrbits -- Form Validation
+   File: /assets/js/validation.js
+
+   Client-side validation for forms, fields, files, and inputs.
+   Server-side validation is still required for all submissions.
+   ========================================================= */
 
 (function (window, document) {
   "use strict";
 
-  const CONFIG = window.MedOrbitsConfig || {};
+  var CONFIG = window.MedOrbitsConfig || {};
+  var CONSTANTS = window.MedOrbitsConstants || {};
 
-  const DEFAULTS = Object.freeze({
-    currency: CONFIG.CURRENCY || "INR",
-    locale: CONFIG.LOCALE || "en-IN",
-    dateFormat: CONFIG.DATE_FORMAT || "medium"
+  var DEFAULTS = Object.freeze({
+    validateOnInput: true,
+    validateOnBlur: true,
+    validateOnSubmit: true,
+    showErrors: true,
+    focusFirstError: true,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedFileTypes: [
+      "application/pdf",
+      "image/jpeg",
+      "image/png"
+    ],
+    allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png"]
   });
 
-  const EVENTS = Object.freeze({
-    READY: "medorbits:utils:ready",
-    ERROR: "medorbits:utils:error"
+  var RULES = Object.freeze({
+    required: "This field is required.",
+    email: "Enter a valid email address.",
+    phone: "Enter a valid phone number.",
+    url: "Enter a valid website URL.",
+    number: "Enter a valid number.",
+    integer: "Enter a whole number.",
+    min: "The value is below the minimum allowed.",
+    max: "The value exceeds the maximum allowed.",
+    minlength: "The value is too short.",
+    maxlength: "The value is too long.",
+    pattern: "The value format is invalid.",
+    match: "The values do not match.",
+    password: "The password does not meet the requirements.",
+    file: "Choose a valid file.",
+    fileSize: "The file exceeds the allowed size.",
+    fileType: "This file type is not allowed.",
+    date: "Enter a valid date.",
+    checkbox: "Please confirm this field.",
+    select: "Choose a valid option."
   });
 
-  function emit(name, detail) {
-    try {
-      document.dispatchEvent(
-        new CustomEvent(name, { detail: detail || {} })
-      );
-    } catch (_) {}
-  }
+  var initializedForms = [];
+  var listeners = [];
 
   function isObject(value) {
     return value !== null &&
@@ -33,21 +59,31 @@
       !Array.isArray(value);
   }
 
-  function isPlainObject(value) {
-    if (!isObject(value)) return false;
+  function getElement(value, root) {
+    if (!value) return null;
 
-    const prototype = Object.getPrototypeOf(value);
+    if (
+      typeof window.Element === "function" &&
+      value instanceof window.Element
+    ) {
+      return value;
+    }
 
-    return prototype === Object.prototype || prototype === null;
+    try {
+      return (root || document).querySelector(value);
+    } catch (error) {
+      return null;
+    }
   }
 
-  function isEmpty(value) {
-    if (value == null) return true;
-    if (typeof value === "string") return value.trim().length === 0;
-    if (Array.isArray(value)) return value.length === 0;
-    if (isPlainObject(value)) return Object.keys(value).length === 0;
-
-    return false;
+  function getElements(selector, root) {
+    try {
+      return Array.prototype.slice.call(
+        (root || document).querySelectorAll(selector)
+      );
+    } catch (error) {
+      return [];
+    }
   }
 
   function escapeHTML(value) {
@@ -62,854 +98,1066 @@
     });
   }
 
-  function stripHTML(value) {
-    const template = document.createElement("template");
-    template.innerHTML = String(value == null ? "" : value);
-
-    return (template.content.textContent || "")
-      .replace(/\s+/g, " ")
-      .trim();
+  function normalize(value) {
+    return String(value == null ? "" : value).trim();
   }
 
-  function capitalize(value) {
-    const text = String(value == null ? "" : value).trim();
-
-    return text
-      ? text.charAt(0).toUpperCase() + text.slice(1)
-      : "";
-  }
-
-  function titleCase(value) {
-    return String(value == null ? "" : value)
-      .toLowerCase()
-      .replace(/\b([a-z])/g, function (match) {
-        return match.toUpperCase();
-      });
-  }
-
-  function toSlug(value) {
-    return String(value == null ? "" : value)
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  }
-
-  function truncate(value, limit, suffix) {
-    const text = String(value == null ? "" : value);
-    const max = Math.max(0, Number(limit) || 0);
-    const ending = suffix === undefined ? "…" : String(suffix);
-
-    if (text.length <= max) return text;
-    if (max <= ending.length) return ending.slice(0, max);
-
-    return text.slice(0, max - ending.length).trimEnd() + ending;
-  }
-
-  function clamp(value, min, max) {
-    const number = Number(value);
-    const lower = Number(min);
-    const upper = Number(max);
-
-    if (
-      !Number.isFinite(number) ||
-      !Number.isFinite(lower) ||
-      !Number.isFinite(upper) ||
-      lower > upper
-    ) {
-      return null;
-    }
-
-    return Math.min(upper, Math.max(lower, number));
-  }
-
-  function randomId(prefix) {
-    const name = String(prefix || "mo");
-    let id;
-
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-      id = window.crypto.randomUUID();
-    } else if (
-      window.crypto &&
-      typeof window.crypto.getRandomValues === "function"
-    ) {
-      const bytes = new Uint8Array(16);
-      window.crypto.getRandomValues(bytes);
-
-      id = Array.from(bytes).map(function (byte) {
-        return byte.toString(16).padStart(2, "0");
-      }).join("");
-    } else {
-      id = Date.now().toString(36) +
-        Math.random().toString(36).slice(2);
-    }
-
-    return name + "-" + id;
-  }
-
-  function formatCurrency(amount, currency, locale) {
-    const value = Number(amount);
-
-    if (!Number.isFinite(value)) return "--";
-
-    try {
-      return new Intl.NumberFormat(locale || DEFAULTS.locale, {
-        style: "currency",
-        currency: currency || DEFAULTS.currency,
-        maximumFractionDigits: 2
-      }).format(value);
-    } catch (_) {
-      return value.toFixed(2) + " " + (currency || DEFAULTS.currency);
-    }
-  }
-
-  function formatNumber(value, options) {
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) return "--";
-
-    try {
-      return new Intl.NumberFormat(
-        (options && options.locale) || DEFAULTS.locale,
-        options || {}
-      ).format(number);
-    } catch (_) {
-      return String(number);
-    }
-  }
-
-  function formatCompactNumber(value, locale) {
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) return "--";
-
-    try {
-      return new Intl.NumberFormat(locale || DEFAULTS.locale, {
-        notation: "compact",
-        maximumFractionDigits: 1
-      }).format(number);
-    } catch (_) {
-      return String(number);
-    }
-  }
-
-  function formatDate(value, options) {
-    if (!value) return "--";
-
-    const date = value instanceof Date ? value : new Date(value);
-
-    if (Number.isNaN(date.getTime())) return "--";
-
-    const settings = Object.assign(
-      { dateStyle: DEFAULTS.dateFormat },
-      options || {}
-    );
-
-    try {
-      return new Intl.DateTimeFormat(
-        settings.locale || DEFAULTS.locale,
-        settings
-      ).format(date);
-    } catch (_) {
-      return date.toLocaleDateString();
-    }
-  }
-
-  function formatDateTime(value, locale) {
-    return formatDate(value, {
-      locale: locale || DEFAULTS.locale,
-      dateStyle: "medium",
-      timeStyle: "short"
-    });
-  }
-
-  function formatRelativeTime(value, locale) {
-    const date = value instanceof Date ? value : new Date(value);
-
-    if (Number.isNaN(date.getTime())) return "--";
-
-    const difference = date.getTime() - Date.now();
-    const seconds = Math.round(difference / 1000);
-    const minutes = Math.round(seconds / 60);
-    const hours = Math.round(minutes / 60);
-    const days = Math.round(hours / 24);
-
-    let amount = seconds;
-    let unit = "second";
-
-    if (Math.abs(days) >= 1) {
-      amount = days;
-      unit = "day";
-    } else if (Math.abs(hours) >= 1) {
-      amount = hours;
-      unit = "hour";
-    } else if (Math.abs(minutes) >= 1) {
-      amount = minutes;
-      unit = "minute";
-    }
-
-    try {
-      return new Intl.RelativeTimeFormat(locale || DEFAULTS.locale, {
-        numeric: "auto"
-      }).format(amount, unit);
-    } catch (_) {
-      return formatDate(date);
-    }
-  }
-
-  function formatBytes(bytes, decimals) {
-    const value = Number(bytes);
-    const precision = Math.max(0, Number(decimals) || 2);
-
-    if (!Number.isFinite(value) || value < 0) return "--";
-    if (value === 0) return "0 Bytes";
-
-    const units = ["Bytes", "KB", "MB", "GB", "TB"];
-    const index = Math.min(
-      Math.floor(Math.log(value) / Math.log(1024)),
-      units.length - 1
-    );
-
-    return (
-      (value / Math.pow(1024, index)).toFixed(
-        index === 0 ? 0 : precision
-      ) +
-      " " +
-      units[index]
-    );
+  function normalizeEmail(value) {
+    return normalize(value).toLowerCase();
   }
 
   function normalizePhone(value) {
-    return String(value == null ? "" : value)
-      .trim()
-      .replace(/[^\d+]/g, "")
-      .replace(/(?!^)\+/g, "");
+    return normalize(value).replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "");
+  }
+
+  function getValue(field) {
+    if (!field) return "";
+
+    if (field.type === "checkbox") {
+      return field.checked;
+    }
+
+    if (field.type === "radio") {
+      var form = field.form || document;
+      var checked = form.querySelector(
+        'input[type="radio"][name="' + escapeSelector(field.name) + '"]:checked'
+      );
+
+      return checked ? checked.value : "";
+    }
+
+    if (field.type === "file") {
+      return field.files || null;
+    }
+
+    if (field.tagName === "SELECT" && field.multiple) {
+      return Array.prototype.filter.call(
+        field.options,
+        function (option) {
+          return option.selected;
+        }
+      ).map(function (option) {
+        return option.value;
+      });
+    }
+
+    return normalize(field.value);
+  }
+
+  function escapeSelector(value) {
+    return String(value == null ? "" : value).replace(
+      /([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g,
+      "\\$1"
+    );
+  }
+
+  function getFieldLabel(field) {
+    if (!field) return "This field";
+
+    var label = "";
+
+    if (field.labels && field.labels.length) {
+      label = normalize(field.labels[0].textContent);
+    }
+
+    if (!label && field.getAttribute("aria-label")) {
+      label = normalize(field.getAttribute("aria-label"));
+    }
+
+    if (!label && field.placeholder) {
+      label = normalize(field.placeholder);
+    }
+
+    if (!label && field.name) {
+      label = field.name
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+    }
+
+    return label || "This field";
+  }
+
+  function isEmptyValue(value) {
+    if (value === null || value === undefined) return true;
+    if (typeof value === "string") return value.trim() === "";
+    if (typeof value === "boolean") return value === false;
+    if (Array.isArray(value)) return value.length === 0;
+
+    return false;
   }
 
   function isValidEmail(value) {
-    const email = String(value == null ? "" : value).trim();
+    var email = normalizeEmail(value);
 
     if (!email || email.length > 254) return false;
 
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   }
 
-  function isValidPhone(value, minLength, maxLength) {
-    const phone = normalizePhone(value).replace(/\D/g, "");
+  function isValidPhone(value, options) {
+    options = options || {};
 
-    return phone.length >= (minLength || 7) &&
-      phone.length <= (maxLength || 15);
+    var digits = normalizePhone(value).replace(/\D/g, "");
+    var min = options.minDigits == null ? 7 : Number(options.minDigits);
+    var max = options.maxDigits == null ? 15 : Number(options.maxDigits);
+
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min < 1 || max < min) {
+      return false;
+    }
+
+    return digits.length >= min && digits.length <= max;
   }
 
   function isValidURL(value, options) {
     options = options || {};
 
+    var raw = normalize(value);
+    if (!raw) return false;
+
     try {
-      const url = new URL(String(value), window.location.origin);
+      var url = new URL(raw);
+
+      if (url.protocol !== "https:" &&
+          !(options.allowHttp && url.protocol === "http:")) {
+        return false;
+      }
 
       if (options.sameOrigin && url.origin !== window.location.origin) {
         return false;
       }
 
-      if (options.allowRelative && !/^[a-z][a-z\d+.-]*:/i.test(String(value))) {
-        return true;
-      }
-
-      return url.protocol === "https:" ||
-        (options.allowHttp && url.protocol === "http:");
-    } catch (_) {
+      return true;
+    } catch (error) {
       return false;
     }
   }
 
-  function safeURL(value, options) {
+  function isValidDate(value) {
+    if (!value) return false;
+
+    var date = new Date(value);
+    return Number.isFinite(date.getTime());
+  }
+
+  function parseRuleValue(field, ruleName) {
+    var datasetKey = "validate" + ruleName.charAt(0).toUpperCase() +
+      ruleName.slice(1);
+
+    if (field.dataset && field.dataset[datasetKey] !== undefined) {
+      return field.dataset[datasetKey];
+    }
+
+    return field.getAttribute("data-" + datasetKey.replace(
+      /[A-Z]/g,
+      function (letter) {
+        return "-" + letter.toLowerCase();
+      }
+    ));
+  }
+
+  function getCustomMessage(field, ruleName) {
+    var custom = field.getAttribute("data-error-" + ruleName);
+
+    if (custom) return custom;
+
+    var general = field.getAttribute("data-error-message");
+
+    if (general) return general;
+
+    return null;
+  }
+
+  function messageFor(field, ruleName, fallback) {
+    var custom = getCustomMessage(field, ruleName);
+
+    if (custom) return custom;
+
+    var label = getFieldLabel(field);
+
+    switch (ruleName) {
+      case "required":
+        return label + " is required.";
+
+      case "email":
+        return "Enter a valid email address.";
+
+      case "phone":
+        return "Enter a valid phone number.";
+
+      case "url":
+        return "Enter a valid website URL.";
+
+      case "minlength":
+        return label + " must contain at least " + fallback + " characters.";
+
+      case "maxlength":
+        return label + " must contain no more than " + fallback + " characters.";
+
+      case "min":
+        return label + " must be at least " + fallback + ".";
+
+      case "max":
+        return label + " must be no greater than " + fallback + ".";
+
+      case "match":
+        return label + " does not match the required value.";
+
+      case "pattern":
+        return label + " has an invalid format.";
+
+      default:
+        return RULES[ruleName] || label + " is invalid.";
+    }
+  }
+
+  function validateField(field, options) {
     options = options || {};
 
-    try {
-      const raw = String(value == null ? "" : value).trim();
-      if (!raw) return "";
+    if (!field || field.disabled) {
+      return { valid: true, message: "", field: field };
+    }
 
-      const url = new URL(raw, window.location.origin);
+    var type = String(field.type || "").toLowerCase();
+    var tag = String(field.tagName || "").toLowerCase();
+    var value = getValue(field);
+    var textValue = typeof value === "string" ? value : "";
+    var required = field.required ||
+      field.getAttribute("aria-required") === "true" ||
+      field.hasAttribute("data-required");
 
-      const allowedProtocols = options.allowMailto
-        ? ["https:", "http:", "mailto:"]
-        : options.allowTel
-          ? ["https:", "http:", "tel:"]
-          : ["https:", "http:"];
+    var rules = [
+      "required",
+      "email",
+      "phone",
+      "url",
+      "number",
+      "integer",
+      "min",
+      "max",
+      "minlength",
+      "maxlength",
+      "pattern",
+      "match",
+      "password",
+      "date",
+      "file"
+    ];
 
-      if (!allowedProtocols.includes(url.protocol)) return "";
+    if (required && isEmptyValue(value)) {
+      return invalid("required", messageFor(field, "required"));
+    }
 
-      if (options.sameOrigin && url.origin !== window.location.origin) {
-        return "";
+    if (isEmptyValue(value)) {
+      return { valid: true, message: "", field: field };
+    }
+
+    if (type === "checkbox" && required && !field.checked) {
+      return invalid("required", messageFor(field, "required"));
+    }
+
+    if (type === "email" || field.hasAttribute("data-validate-email")) {
+      if (!isValidEmail(textValue)) {
+        return invalid("email", messageFor(field, "email"));
+      }
+    }
+
+    if (type === "tel" || field.hasAttribute("data-validate-phone")) {
+      var phoneOptions = {
+        minDigits: parseRuleValue(field, "minDigits"),
+        maxDigits: parseRuleValue(field, "maxDigits")
+      };
+
+      if (!isValidPhone(textValue, phoneOptions)) {
+        return invalid("phone", messageFor(field, "phone"));
+      }
+    }
+
+    if (type === "url" || field.hasAttribute("data-validate-url")) {
+      if (!isValidURL(textValue, {
+        allowHttp: field.getAttribute("data-allow-http") === "true",
+        sameOrigin: field.getAttribute("data-same-origin") === "true"
+      })) {
+        return invalid("url", messageFor(field, "url"));
+      }
+    }
+
+    if (type === "number" || field.hasAttribute("data-validate-number")) {
+      var number = Number(textValue);
+
+      if (!Number.isFinite(number)) {
+        return invalid("number", messageFor(field, "number"));
       }
 
-      return url.href;
-    } catch (_) {
-      return "";
-    }
-  }
-
-  function debounce(callback, wait) {
-    if (typeof callback !== "function") {
-      throw new TypeError("Debounce requires a function.");
-    }
-
-    let timer = null;
-
-    function debounced() {
-      const context = this;
-      const args = arguments;
-
-      window.clearTimeout(timer);
-
-      timer = window.setTimeout(function () {
-        callback.apply(context, args);
-      }, Math.max(0, Number(wait) || 0));
-    }
-
-    debounced.cancel = function () {
-      window.clearTimeout(timer);
-      timer = null;
-    };
-
-    debounced.flush = function () {
-      if (timer !== null) {
-        window.clearTimeout(timer);
-        timer = null;
-        callback.apply(this, arguments);
+      if (field.min !== "" && Number.isFinite(Number(field.min)) &&
+          number < Number(field.min)) {
+        return invalid("min", messageFor(field, "min", field.min));
       }
-    };
 
-    return debounced;
-  }
-
-  function throttle(callback, wait) {
-    if (typeof callback !== "function") {
-      throw new TypeError("Throttle requires a function.");
-    }
-
-    let lastRun = 0;
-    let timer = null;
-
-    return function () {
-      const context = this;
-      const args = arguments;
-      const now = Date.now();
-      const delay = Math.max(0, Number(wait) || 0);
-      const remaining = delay - (now - lastRun);
-
-      if (remaining <= 0) {
-        window.clearTimeout(timer);
-        timer = null;
-        lastRun = now;
-        callback.apply(context, args);
-      } else if (timer === null) {
-        timer = window.setTimeout(function () {
-          lastRun = Date.now();
-          timer = null;
-          callback.apply(context, args);
-        }, remaining);
+      if (field.max !== "" && Number.isFinite(Number(field.max)) &&
+          number > Number(field.max)) {
+        return invalid("max", messageFor(field, "max", field.max));
       }
-    };
-  }
 
-  function deepClone(value) {
-    if (typeof window.structuredClone === "function") {
-      try {
-        return window.structuredClone(value);
-      } catch (_) {}
-    }
+      if (field.step && field.step !== "any" && Number.isFinite(Number(field.step))) {
+        var step = Number(field.step);
+        var base = field.min !== "" && Number.isFinite(Number(field.min))
+          ? Number(field.min)
+          : 0;
 
-    return JSON.parse(JSON.stringify(value));
-  }
-
-  function deepMerge(target) {
-    const output = isPlainObject(target) ? Object.assign({}, target) : {};
-
-    Array.prototype.slice.call(arguments, 1).forEach(function (source) {
-      if (!isPlainObject(source)) return;
-
-      Object.keys(source).forEach(function (key) {
-        const value = source[key];
-
-        if (isPlainObject(value)) {
-          output[key] = deepMerge(
-            isPlainObject(output[key]) ? output[key] : {},
-            value
-          );
-        } else if (
-          key !== "__proto__" &&
-          key !== "constructor" &&
-          key !== "prototype"
-        ) {
-          output[key] = value;
+        if (step > 0 && Math.abs((number - base) / step -
+            Math.round((number - base) / step)) > 1e-8) {
+          return invalid("number", "Enter a value using valid increments.");
         }
-      });
-    });
+      }
+    }
 
-    return output;
-  }
+    if (field.hasAttribute("data-validate-integer")) {
+      if (!/^-?\d+$/.test(textValue)) {
+        return invalid("integer", messageFor(field, "integer"));
+      }
+    }
 
-  function getNestedValue(object, path, fallback) {
-    if (!object || !path) return fallback;
+    var minLength = field.minLength >= 0 && field.minLength !== -1
+      ? field.minLength
+      : parseRuleValue(field, "minlength");
 
-    const keys = Array.isArray(path)
-      ? path
-      : String(path).split(".").filter(Boolean);
+    var maxLength = field.maxLength >= 0 && field.maxLength !== -1
+      ? field.maxLength
+      : parseRuleValue(field, "maxlength");
 
-    let current = object;
+    if (minLength !== null && minLength !== undefined && minLength !== "") {
+      var minimumLength = Number(minLength);
 
-    for (let index = 0; index < keys.length; index += 1) {
-      const key = keys[index];
+      if (Number.isFinite(minimumLength) &&
+          textValue.length < minimumLength) {
+        return invalid(
+          "minlength",
+          messageFor(field, "minlength", minimumLength)
+        );
+      }
+    }
 
-      if (
-        key === "__proto__" ||
-        key === "constructor" ||
-        key === "prototype" ||
-        current == null ||
-        !Object.prototype.hasOwnProperty.call(current, key)
-      ) {
-        return fallback;
+    if (maxLength !== null && maxLength !== undefined && maxLength !== "") {
+      var maximumLength = Number(maxLength);
+
+      if (Number.isFinite(maximumLength) &&
+          textValue.length > maximumLength) {
+        return invalid(
+          "maxlength",
+          messageFor(field, "maxlength", maximumLength)
+        );
+      }
+    }
+
+    var minValue = parseRuleValue(field, "min");
+    var maxValue = parseRuleValue(field, "max");
+
+    if (minValue !== null && minValue !== undefined && minValue !== "") {
+      if (type === "number" && Number(textValue) < Number(minValue)) {
+        return invalid("min", messageFor(field, "min", minValue));
       }
 
-      current = current[key];
+      if (type !== "number" && textValue.length < Number(minValue)) {
+        return invalid("min", messageFor(field, "min", minValue));
+      }
     }
 
-    return current === undefined ? fallback : current;
-  }
-
-  function setNestedValue(object, path, value) {
-    if (!isObject(object) || !path) return false;
-
-    const keys = Array.isArray(path)
-      ? path
-      : String(path).split(".").filter(Boolean);
-
-    if (!keys.length) return false;
-
-    let current = object;
-
-    for (let index = 0; index < keys.length - 1; index += 1) {
-      const key = keys[index];
-
-      if (
-        key === "__proto__" ||
-        key === "constructor" ||
-        key === "prototype"
-      ) {
-        return false;
+    if (maxValue !== null && maxValue !== undefined && maxValue !== "") {
+      if (type === "number" && Number(textValue) > Number(maxValue)) {
+        return invalid("max", messageFor(field, "max", maxValue));
       }
 
-      if (!isObject(current[key])) {
-        current[key] = {};
+      if (type !== "number" && textValue.length > Number(maxValue)) {
+        return invalid("max", messageFor(field, "max", maxValue));
       }
-
-      current = current[key];
     }
 
-    const lastKey = keys[keys.length - 1];
+    var pattern = field.getAttribute("pattern") ||
+      parseRuleValue(field, "pattern");
 
-    if (
-      lastKey === "__proto__" ||
-      lastKey === "constructor" ||
-      lastKey === "prototype"
-    ) {
-      return false;
-    }
-
-    current[lastKey] = value;
-    return true;
-  }
-
-  function getQueryParam(name, url) {
-    try {
-      const target = new URL(url || window.location.href);
-      return target.searchParams.get(String(name));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function buildQuery(params) {
-    const query = new URLSearchParams();
-
-    if (!isObject(params)) return "";
-
-    Object.keys(params).forEach(function (key) {
-      const value = params[key];
-
-      if (value === undefined || value === null) return;
-
-      if (Array.isArray(value)) {
-        value.forEach(function (item) {
-          if (item !== undefined && item !== null) {
-            query.append(key, String(item));
-          }
+    if (pattern) {
+      try {
+        if (!(new RegExp("^(?:" + pattern + ")$")).test(textValue)) {
+          return invalid("pattern", messageFor(field, "pattern"));
+        }
+      } catch (error) {
+        emit("medorbits:validation-config-error", {
+          field: field.name || field.id || "",
+          rule: "pattern"
         });
-      } else if (typeof value === "object") {
-        query.set(key, JSON.stringify(value));
-      } else {
-        query.set(key, String(value));
       }
-    });
-
-    return query.toString();
-  }
-
-  function copyToClipboard(value) {
-    const text = String(value == null ? "" : value);
-
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
     }
 
-    return new Promise(function (resolve, reject) {
-      const textarea = document.createElement("textarea");
+    var matchSelector = field.getAttribute("data-match");
 
-      textarea.value = text;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      textarea.style.pointerEvents = "none";
+    if (matchSelector) {
+      var matchField = getElement(matchSelector, field.form || document);
 
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      let copied = false;
-
-      try {
-        copied = document.execCommand("copy");
-      } catch (_) {
-        copied = false;
+      if (!matchField || String(field.value) !== String(matchField.value)) {
+        return invalid("match", messageFor(field, "match"));
       }
-
-      textarea.remove();
-
-      if (copied) {
-        resolve(true);
-      } else {
-        reject(new Error("Clipboard access is unavailable."));
-      }
-    });
-  }
-
-  function downloadBlob(blob, filename) {
-    if (!(blob instanceof Blob)) {
-      throw new TypeError("A Blob is required.");
     }
 
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
+    if (type === "password" ||
+        field.hasAttribute("data-validate-password")) {
+      var passwordOptions = {
+        minLength: parseRuleValue(field, "minlength") || 8,
+        requireUppercase: field.getAttribute("data-require-uppercase") === "true",
+        requireLowercase: field.getAttribute("data-require-lowercase") === "true",
+        requireNumber: field.getAttribute("data-require-number") === "true",
+        requireSymbol: field.getAttribute("data-require-symbol") === "true"
+      };
 
-    anchor.href = url;
-    anchor.download = String(filename || "download");
-    anchor.hidden = true;
+      if (!validatePassword(textValue, passwordOptions).valid) {
+        return invalid("password", messageFor(field, "password"));
+      }
+    }
 
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
+    if (type === "date" || field.hasAttribute("data-validate-date")) {
+      if (!isValidDate(textValue)) {
+        return invalid("date", messageFor(field, "date"));
+      }
+    }
 
-    window.setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 1000);
+    if (type === "file") {
+      var fileResult = validateFiles(field, options);
+
+      if (!fileResult.valid) {
+        return fileResult;
+      }
+    }
+
+    if (tag === "select" && required && !textValue) {
+      return invalid("required", messageFor(field, "select"));
+    }
+
+    if (typeof field.checkValidity === "function" &&
+        !field.checkValidity()) {
+      return invalid("native", field.validationMessage || "Check this field.");
+    }
+
+    return { valid: true, message: "", field: field };
+
+    function invalid(rule, message) {
+      return {
+        valid: false,
+        rule: rule,
+        message: message,
+        field: field
+      };
+    }
   }
 
-  function downloadText(text, filename, mimeType) {
-    const blob = new Blob([String(text == null ? "" : text)], {
-      type: mimeType || "text/plain;charset=utf-8"
-    });
-
-    downloadBlob(blob, filename || "download.txt");
-  }
-
-  function wait(milliseconds, signal) {
-    return new Promise(function (resolve, reject) {
-      const delay = Math.max(0, Number(milliseconds) || 0);
-
-      if (signal && signal.aborted) {
-        reject(new DOMException("Operation aborted.", "AbortError"));
-        return;
-      }
-
-      const timer = window.setTimeout(function () {
-        cleanup();
-        resolve();
-      }, delay);
-
-      function onAbort() {
-        window.clearTimeout(timer);
-        cleanup();
-        reject(new DOMException("Operation aborted.", "AbortError"));
-      }
-
-      function cleanup() {
-        if (signal) {
-          signal.removeEventListener("abort", onAbort);
-        }
-      }
-
-      if (signal) {
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-    });
-  }
-
-  function once(callback) {
-    let called = false;
-    let result;
-
-    return function () {
-      if (called) return result;
-
-      called = true;
-      result = callback.apply(this, arguments);
-
-      return result;
-    };
-  }
-
-  function retry(callback, options) {
+  function validatePassword(password, options) {
     options = options || {};
 
-    const attempts = Math.max(1, Number(options.attempts) || 3);
-    const delay = Math.max(0, Number(options.delay) || 300);
-    const backoff = Math.max(1, Number(options.backoff) || 2);
-    const shouldRetry = typeof options.shouldRetry === "function"
-      ? options.shouldRetry
-      : function () {
-          return true;
-        };
+    var value = String(password == null ? "" : password);
+    var minimum = Number(options.minLength || 8);
+    var errors = [];
 
-    if (typeof callback !== "function") {
-      return Promise.reject(new TypeError("Retry requires a function."));
+    if (value.length < minimum) {
+      errors.push("Use at least " + minimum + " characters.");
     }
 
-    return (async function () {
-      let lastError;
-
-      for (let attempt = 0; attempt < attempts; attempt += 1) {
-        try {
-          return await callback(attempt + 1);
-        } catch (error) {
-          lastError = error;
-
-          if (
-            attempt === attempts - 1 ||
-            !shouldRetry(error, attempt + 1)
-          ) {
-            throw error;
-          }
-
-          await wait(delay * Math.pow(backoff, attempt), options.signal);
-        }
-      }
-
-      throw lastError;
-    })();
-  }
-
-  function getElement(selector, root) {
-    if (!selector) return null;
-
-    if (selector instanceof Element) {
-      return selector;
+    if (options.requireUppercase && !/[A-Z]/.test(value)) {
+      errors.push("Include an uppercase letter.");
     }
 
-    try {
-      return (root || document).querySelector(selector);
-    } catch (_) {
-      return null;
+    if (options.requireLowercase && !/[a-z]/.test(value)) {
+      errors.push("Include a lowercase letter.");
     }
-  }
 
-  function getElements(selector, root) {
-    if (!selector) return [];
-
-    try {
-      return Array.from((root || document).querySelectorAll(selector));
-    } catch (_) {
-      return [];
+    if (options.requireNumber && !/\d/.test(value)) {
+      errors.push("Include a number.");
     }
-  }
 
-  function setText(selector, value, root) {
-    const element = getElement(selector, root);
-
-    if (!element) return false;
-
-    element.textContent = value == null ? "" : String(value);
-    return true;
-  }
-
-  function setHTML(selector, value, root) {
-    const element = getElement(selector, root);
-
-    if (!element) return false;
-
-    element.innerHTML = escapeHTML(value);
-    return true;
-  }
-
-  function toggleClass(elementOrSelector, className, force) {
-    const element = getElement(elementOrSelector);
-
-    if (!element || !className) return false;
-
-    return element.classList.toggle(className, force);
-  }
-
-  function getCookie(name) {
-    const key = String(name || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const match = document.cookie.match(
-      new RegExp("(?:^|;\\s*)" + key + "=([^;]*)")
-    );
-
-    return match ? decodeURIComponent(match[1]) : null;
-  }
-
-  function getDeviceInfo() {
-    const userAgent = navigator.userAgent || "";
+    if (options.requireSymbol && !/[^A-Za-z0-9]/.test(value)) {
+      errors.push("Include a symbol.");
+    }
 
     return {
-      mobile: /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent),
-      language: navigator.language || DEFAULTS.locale,
-      online: navigator.onLine,
-      cookieEnabled: navigator.cookieEnabled,
-      screen: {
-        width: window.screen ? window.screen.width : 0,
-        height: window.screen ? window.screen.height : 0
-      },
-      viewport: {
-        width: window.innerWidth,
-        height: window.innerHeight
-      }
+      valid: errors.length === 0,
+      errors: errors
     };
   }
 
-  function isOnline() {
-    return navigator.onLine !== false;
-  }
-
-  function scrollToElement(selector, options) {
-    const element = getElement(selector);
-
-    if (!element) return false;
-
+  function getFileRules(field, options) {
     options = options || {};
 
-    element.scrollIntoView({
-      behavior: options.behavior || "smooth",
-      block: options.block || "start",
-      inline: options.inline || "nearest"
+    var maxSize = Number(
+      field.getAttribute("data-max-file-size") ||
+      options.maxFileSize ||
+      DEFAULTS.maxFileSize
+    );
+
+    var extensionText = field.getAttribute("data-allowed-extensions");
+    var extensions = extensionText
+      ? extensionText.split(",").map(function (item) {
+          return item.trim().toLowerCase();
+        }).filter(Boolean)
+      : (options.allowedExtensions || DEFAULTS.allowedExtensions).slice();
+
+    var accept = field.getAttribute("accept");
+    var acceptedMimeTypes = options.allowedFileTypes ||
+      DEFAULTS.allowedFileTypes;
+
+    if (accept) {
+      var accepted = accept.split(",").map(function (item) {
+        return item.trim().toLowerCase();
+      }).filter(Boolean);
+
+      if (accepted.length) {
+        extensions = extensions.filter(function (extension) {
+          return accepted.some(function (item) {
+            return item === extension ||
+              item === "." + extension.replace(/^\./, "");
+          });
+        });
+
+        acceptedMimeTypes = acceptedMimeTypes.filter(function (mime) {
+          return accepted.some(function (item) {
+            return item === mime.toLowerCase() ||
+              item === mime.split("/")[0] + "/*";
+          });
+        });
+      }
+    }
+
+    return {
+      maxSize: Number.isFinite(maxSize) && maxSize > 0
+        ? maxSize
+        : DEFAULTS.maxFileSize,
+      extensions: extensions,
+      mimeTypes: acceptedMimeTypes
+    };
+  }
+
+  function validateFiles(field, options) {
+    options = options || {};
+
+    var files = field.files;
+    var required = field.required ||
+      field.getAttribute("aria-required") === "true" ||
+      field.hasAttribute("data-required");
+
+    if (!files || !files.length) {
+      return required
+        ? {
+            valid: false,
+            rule: "required",
+            message: messageFor(field, "required"),
+            field: field
+          }
+        : { valid: true, message: "", field: field };
+    }
+
+    var rules = getFileRules(field, options);
+
+    for (var i = 0; i < files.length; i += 1) {
+      var file = files[i];
+      var fileName = String(file.name || "").toLowerCase();
+      var extensionMatch = fileName.match(/\.[^.]+$/);
+      var extension = extensionMatch ? extensionMatch[0] : "";
+
+      if (file.size > rules.maxSize) {
+        return {
+          valid: false,
+          rule: "fileSize",
+          message: "Each file must be no larger than " +
+            formatBytes(rules.maxSize) + ".",
+          field: field
+        };
+      }
+
+      if (
+        rules.extensions.length &&
+        rules.extensions.indexOf(extension) === -1
+      ) {
+        return {
+          valid: false,
+          rule: "fileType",
+          message: "Allowed file extensions: " +
+            rules.extensions.join(", ") + ".",
+          field: field
+        };
+      }
+
+      if (
+        file.type &&
+        rules.mimeTypes.length &&
+        rules.mimeTypes.indexOf(file.type.toLowerCase()) === -1 &&
+        rules.extensions.indexOf(extension) === -1
+      ) {
+        return {
+          valid: false,
+          rule: "fileType",
+          message: "This file type is not allowed.",
+          field: field
+        };
+      }
+    }
+
+    return { valid: true, message: "", field: field };
+  }
+
+  function formatBytes(bytes) {
+    var value = Number(bytes);
+
+    if (!Number.isFinite(value) || value < 0) return "an unknown size";
+    if (value < 1024) return value + " bytes";
+    if (value < 1024 * 1024) return (value / 1024).toFixed(1) + " KB";
+
+    return (value / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function getErrorContainer(field) {
+    var explicitId = field.getAttribute("data-error-target");
+
+    if (explicitId) {
+      var explicit = getElement(explicitId, field.form || document);
+      if (explicit) return explicit;
+    }
+
+    var id = field.id;
+
+    if (id) {
+      var associated = getElement(
+        '[data-error-for="' + escapeSelector(id) + '"]',
+        field.form || document
+      );
+
+      if (associated) return associated;
+    }
+
+    var parent = field.parentElement;
+
+    if (parent) {
+      var sibling = parent.querySelector("[data-field-error]");
+
+      if (sibling) return sibling;
+    }
+
+    return null;
+  }
+
+  function showFieldError(field, message) {
+    if (!field) return;
+
+    field.classList.add("is-invalid");
+    field.setAttribute("aria-invalid", "true");
+
+    var container = getErrorContainer(field);
+
+    if (container) {
+      container.textContent = message || "";
+      container.hidden = !message;
+      container.setAttribute("role", "alert");
+      return;
+    }
+
+    if (!message || !field.parentNode) return;
+
+    var errorNode = document.createElement("span");
+    errorNode.className = "field-error";
+    errorNode.setAttribute("data-generated-field-error", "");
+    errorNode.setAttribute("role", "alert");
+    errorNode.textContent = message;
+
+    if (field.id) {
+      errorNode.id = field.id + "-validation-error";
+
+      var describedBy = (field.getAttribute("aria-describedby") || "")
+        .split(/\s+/)
+        .filter(Boolean);
+
+      if (describedBy.indexOf(errorNode.id) === -1) {
+        describedBy.push(errorNode.id);
+      }
+
+      field.setAttribute("aria-describedby", describedBy.join(" "));
+    }
+
+    field.parentNode.insertBefore(errorNode, field.nextSibling);
+  }
+
+  function clearFieldError(field) {
+    if (!field) return;
+
+    field.classList.remove("is-invalid");
+    field.removeAttribute("aria-invalid");
+
+    var generated = field.parentNode
+      ? field.parentNode.querySelectorAll("[data-generated-field-error]")
+      : [];
+
+    Array.prototype.forEach.call(generated, function (node) {
+      if (
+        field.id &&
+        node.id === field.id + "-validation-error"
+      ) {
+        node.remove();
+      }
     });
+
+    var container = getErrorContainer(field);
+
+    if (container) {
+      container.textContent = "";
+      container.hidden = true;
+    }
+
+    if (field.id) {
+      var errorId = field.id + "-validation-error";
+      var describedBy = (field.getAttribute("aria-describedby") || "")
+        .split(/\s+/)
+        .filter(function (id) {
+          return id && id !== errorId;
+        });
+
+      if (describedBy.length) {
+        field.setAttribute("aria-describedby", describedBy.join(" "));
+      } else {
+        field.removeAttribute("aria-describedby");
+      }
+    }
+  }
+
+  function validateForm(form, options) {
+    options = options || {};
+
+    if (!form || !form.elements) {
+      return {
+        valid: false,
+        errors: [],
+        fields: []
+      };
+    }
+
+    var fields = Array.prototype.filter.call(
+      form.elements,
+      function (field) {
+        if (!field || !field.tagName) return false;
+
+        var tag = field.tagName.toLowerCase();
+
+        if (tag !== "input" && tag !== "textarea" && tag !== "select") {
+          return false;
+        }
+
+        if (field.disabled || field.type === "hidden" ||
+            field.hasAttribute("data-validation-ignore")) {
+          return false;
+        }
+
+        return true;
+      }
+    );
+
+    var errors = [];
+    var results = [];
+
+    fields.forEach(function (field) {
+      var result = validateField(field, options);
+      results.push(result);
+
+      if (!result.valid) {
+        errors.push(result);
+
+        if (options.showErrors !== false && DEFAULTS.showErrors) {
+          showFieldError(field, result.message);
+        }
+      } else {
+        clearFieldError(field);
+      }
+    });
+
+    var valid = errors.length === 0;
+
+    if (!valid && options.focusFirstError !== false) {
+      var first = errors[0].field;
+
+      if (first && typeof first.focus === "function") {
+        try {
+          first.focus({ preventScroll: false });
+        } catch (error) {
+          first.focus();
+        }
+      }
+    }
+
+    return {
+      valid: valid,
+      errors: errors,
+      fields: results
+    };
+  }
+
+  function handleInput(event) {
+    var field = event.target;
+
+    if (!field || !field.form || !field.form.hasAttribute("data-validate")) {
+      return;
+    }
+
+    if (!DEFAULTS.validateOnInput) return;
+
+    var result = validateField(field);
+
+    if (result.valid) {
+      clearFieldError(field);
+    } else {
+      showFieldError(field, result.message);
+    }
+
+    emit("medorbits:field-validated", {
+      field: field,
+      valid: result.valid,
+      rule: result.rule || null
+    });
+  }
+
+  function handleBlur(event) {
+    var field = event.target;
+
+    if (!field || !field.form || !field.form.hasAttribute("data-validate")) {
+      return;
+    }
+
+    if (!DEFAULTS.validateOnBlur) return;
+
+    var result = validateField(field);
+
+    if (result.valid) {
+      clearFieldError(field);
+    } else {
+      showFieldError(field, result.message);
+    }
+  }
+
+  function handleSubmit(event) {
+    var form = event.target;
+
+    if (!form || !form.matches || !form.matches("form[data-validate]")) {
+      return;
+    }
+
+    if (!DEFAULTS.validateOnSubmit) return;
+
+    var result = validateForm(form);
+
+    emit("medorbits:form-validated", {
+      form: form,
+      valid: result.valid,
+      errors: result.errors
+    });
+
+    if (!result.valid) {
+      event.preventDefault();
+      showFormSummary(form, result.errors);
+    } else {
+      clearFormSummary(form);
+    }
+  }
+
+  function showFormSummary(form, errors) {
+    var summary = form.querySelector("[data-validation-summary]");
+
+    if (!summary) {
+      summary = document.createElement("div");
+      summary.setAttribute("data-validation-summary", "");
+      summary.className = "validation-summary";
+      summary.setAttribute("role", "alert");
+      summary.setAttribute("tabindex", "-1");
+      form.insertBefore(summary, form.firstChild);
+    }
+
+    summary.textContent = "";
+
+    var heading = document.createElement("p");
+    heading.textContent = "Please correct the following errors:";
+    summary.appendChild(heading);
+
+    var list = document.createElement("ul");
+
+    errors.forEach(function (error) {
+      var item = document.createElement("li");
+      item.textContent = error.message;
+
+      if (error.field && error.field.id) {
+        var link = document.createElement("a");
+        link.href = "#" + encodeURIComponent(error.field.id);
+        link.textContent = error.message;
+
+        item.textContent = "";
+        item.appendChild(link);
+      }
+
+      list.appendChild(item);
+    });
+
+    summary.appendChild(list);
+
+    try {
+      summary.focus({ preventScroll: false });
+    } catch (error) {
+      summary.focus();
+    }
+  }
+
+  function clearFormSummary(form) {
+    if (!form) return;
+
+    var summary = form.querySelector("[data-validation-summary]");
+
+    if (summary) {
+      summary.textContent = "";
+      summary.hidden = true;
+    }
+  }
+
+  function initForm(form, options) {
+    if (!form || !form.matches || !form.matches("form")) return false;
+
+    if (initializedForms.indexOf(form) !== -1) return true;
+
+    initializedForms.push(form);
+    form.setAttribute("data-validation-initialized", "true");
+
+    if (options && options.validateOnInput === false) {
+      form.setAttribute("data-validation-input", "false");
+    }
 
     return true;
   }
 
-  function focusElement(selector, options) {
-    const element = getElement(selector);
+  function init(root, options) {
+    root = root || document;
+    options = options || {};
 
-    if (!element || typeof element.focus !== "function") return false;
+    var forms = [];
 
-    try {
-      element.focus(options || { preventScroll: false });
-      return true;
-    } catch (_) {
-      element.focus();
-      return true;
+    if (
+      typeof window.HTMLFormElement === "function" &&
+      root instanceof window.HTMLFormElement
+    ) {
+      forms.push(root);
+    } else {
+      forms = getElements("form[data-validate]", root);
     }
+
+    forms.forEach(function (form) {
+      initForm(form, options);
+    });
+
+    return forms.length;
   }
 
-  function dispatch(name, detail, target) {
-    if (!name) return false;
-
-    const element = target || document;
-
-    try {
-      return element.dispatchEvent(
-        new CustomEvent(name, {
-          detail: detail || {},
-          bubbles: true,
-          cancelable: true
-        })
-      );
-    } catch (error) {
-      emit(EVENTS.ERROR, {
-        message: error.message,
-        eventName: name
-      });
-
-      return false;
+  function subscribe(callback) {
+    if (typeof callback !== "function") {
+      return function () {};
     }
+
+    if (listeners.indexOf(callback) === -1) {
+      listeners.push(callback);
+    }
+
+    return function () {
+      var index = listeners.indexOf(callback);
+
+      if (index !== -1) listeners.splice(index, 1);
+    };
   }
 
-  const api = Object.freeze({
-    isObject: isObject,
-    isPlainObject: isPlainObject,
-    isEmpty: isEmpty,
-    escapeHTML: escapeHTML,
-    stripHTML: stripHTML,
-    capitalize: capitalize,
-    titleCase: titleCase,
-    toSlug: toSlug,
-    truncate: truncate,
-    clamp: clamp,
-    randomId: randomId,
+  function emitValidationEvent(name, detail) {
+    emit(name, detail);
 
-    formatCurrency: formatCurrency,
-    formatNumber: formatNumber,
-    formatCompactNumber: formatCompactNumber,
-    formatDate: formatDate,
-    formatDateTime: formatDateTime,
-    formatRelativeTime: formatRelativeTime,
-    formatBytes: formatBytes,
+    listeners.slice().forEach(function (callback) {
+      try {
+        callback({
+          event: name,
+          detail: detail || {}
+        });
+      } catch (error) {
+        if (window.console && typeof window.console.error === "function") {
+          window.console.error("[MedOrbits Validation] Listener error:", error);
+        }
+      }
+    });
+  }
 
-    normalizePhone: normalizePhone,
+  function validateFormPublic(form, options) {
+    var result = validateForm(form, options);
+
+    emitValidationEvent("medorbits:form-validated", {
+      form: form,
+      valid: result.valid,
+      errors: result.errors
+    });
+
+    return result;
+  }
+
+  function destroy() {
+    document.removeEventListener("input", handleInput, true);
+    document.removeEventListener("change", handleInput, true);
+    document.removeEventListener("focusout", handleBlur, true);
+    document.removeEventListener("submit", handleSubmit, true);
+
+    initializedForms.forEach(function (form) {
+      form.removeAttribute("data-validation-initialized");
+    });
+
+    initializedForms.length = 0;
+    listeners.length = 0;
+  }
+
+  document.addEventListener("input", handleInput, true);
+  document.addEventListener("change", handleInput, true);
+  document.addEventListener("focusout", handleBlur, true);
+  document.addEventListener("submit", handleSubmit, true);
+
+  var api = {
+    DEFAULTS: DEFAULTS,
+    RULES: RULES,
+
+    isEmptyValue: isEmptyValue,
     isValidEmail: isValidEmail,
     isValidPhone: isValidPhone,
     isValidURL: isValidURL,
-    safeURL: safeURL,
+    isValidDate: isValidDate,
+    validatePassword: validatePassword,
+    validateFiles: validateFiles,
+    validateField: validateField,
+    validateForm: validateFormPublic,
 
-    debounce: debounce,
-    throttle: throttle,
-    deepClone: deepClone,
-    deepMerge: deepMerge,
-    getNestedValue: getNestedValue,
-    setNestedValue: setNestedValue,
+    showFieldError: showFieldError,
+    clearFieldError: clearFieldError,
+    showFormSummary: showFormSummary,
+    clearFormSummary: clearFormSummary,
 
-    getQueryParam: getQueryParam,
-    buildQuery: buildQuery,
-    copyToClipboard: copyToClipboard,
-    downloadBlob: downloadBlob,
-    downloadText: downloadText,
-    wait: wait,
-    once: once,
-    retry: retry,
+    initForm: initForm,
+    init: init,
+    subscribe: subscribe,
+    destroy: destroy
+  };
 
-    getElement: getElement,
-    getElements: getElements,
-    setText: setText,
-    setHTML: setHTML,
-    toggleClass: toggleClass,
-    getCookie: getCookie,
-    getDeviceInfo: getDeviceInfo,
-    isOnline: isOnline,
-    scrollToElement: scrollToElement,
-    focusElement: focusElement,
-    dispatch: dispatch,
+  if (typeof Object.freeze === "function") {
+    Object.freeze(api);
+  }
 
-    events: EVENTS
-  });
-
-  window.MedOrbitsUtils = api;
+  window.MedOrbitsValidation = api;
 
   window.MedOrbits = window.MedOrbits || {};
-  window.MedOrbits.Utils = api;
+  window.MedOrbits.Validation = api;
 
-  emit(EVENTS.READY, {
-    version: CONFIG.VERSION || "1.0.0"
-  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      init(document);
+    }, { once: true });
+  } else {
+    init(document);
+  }
 
 })(window, document);

@@ -15,44 +15,46 @@ The assets/icons/career/ directory contains reusable vector icons for career dev
 
 These icons provide a consistent visual language for career-related pages, cards, navigation elements, forms, checklists, dashboards, and educational resources.
 
-The icon library should prioritize visual consistency, accessibility, lightweight assets, and reuse across the platform.
+The icon library prioritizes visual consistency, accessibility, lightweight assets, and reuse across the platform.
 
 2. Directory Structure
 
-assets/icons/career/
-├── README.md
-├── career.svg
-├── career-guidance.svg
-├── career-planning.svg
-├── resume.svg
-├── cover-letter.svg
-├── interview.svg
-├── job-search.svg
-├── job-opening.svg
-├── saved-job.svg
-├── job-application.svg
-├── internship.svg
-├── recruitment.svg
-├── employer.svg
-├── professional-skills.svg
-├── soft-skills.svg
-├── technical-skills.svg
-├── portfolio.svg
-├── networking.svg
-├── career-assessment.svg
-├── career-counselling.svg
-├── career-transition.svg
-├── promotion.svg
-├── salary.svg
-├── remote-work.svg
-├── work-experience.svg
-├── certification.svg
-├── training.svg
-├── career-resources.svg
-├── employment-support.svg
-└── career-success.svg
+assets/
+└── icons/
+    └── career/
+        ├── README.md
+        ├── career.svg
+        ├── career-guidance.svg
+        ├── career-planning.svg
+        ├── resume.svg
+        ├── cover-letter.svg
+        ├── interview.svg
+        ├── job-search.svg
+        ├── job-opening.svg
+        ├── saved-job.svg
+        ├── job-application.svg
+        ├── internship.svg
+        ├── recruitment.svg
+        ├── employer.svg
+        ├── professional-skills.svg
+        ├── soft-skills.svg
+        ├── technical-skills.svg
+        ├── portfolio.svg
+        ├── networking.svg
+        ├── career-assessment.svg
+        ├── career-counselling.svg
+        ├── career-transition.svg
+        ├── promotion.svg
+        ├── salary.svg
+        ├── remote-work.svg
+        ├── work-experience.svg
+        ├── certification.svg
+        ├── training.svg
+        ├── career-resources.svg
+        ├── employment-support.svg
+        └── career-success.svg
 
-Inventory note: This is the intended icon inventory. A filename in this README does not confirm that the corresponding SVG file has already been created.
+Inventory note: This is the intended icon inventory. A filename in this README does not confirm that the corresponding SVG file has been created or reviewed.
 
 3. Icon Catalogue
 
@@ -94,7 +96,7 @@ All icons should follow the MedOrbits Royal Burgundy and Champagne Gold visual i
 
 Recommended visual standards
 
-* Primary colour: Royal Burgundy, coordinated with the existing MedOrbits design tokens.
+* Primary colour: Royal Burgundy, coordinated with existing MedOrbits design tokens.
 * Accent colour: Champagne Gold, used for emphasis and selected details.
 * Supporting colours: Complementary dark neutrals and accessible foreground colours.
 * Background: Transparent by default.
@@ -119,7 +121,7 @@ Each icon should:
 7. Avoid scripts, embedded event handlers, and unsafe external references.
 8. Be checked for rendering problems at the sizes used by the website.
 
-Example of a minimal SVG structure:
+Minimal SVG structure
 
 <svg
   xmlns=“http://www.w3.org/2000/svg”
@@ -131,12 +133,14 @@ Example of a minimal SVG structure:
   stroke-linejoin=“round”
   aria-hidden=“true”
 >
-  <!— Insert the approved icon paths here. —>
+  <!— Insert approved icon paths here. —>
 </svg>
 
 This is a structural example, not a complete career icon. Replace the comment with valid SVG geometry before publishing the asset.
 
-Using currentColor allows the icon colour to follow the surrounding CSS when the SVG is rendered inline or through a compatible icon system. An SVG loaded through an HTML img element does not automatically inherit the parent element’s text colour.
+Using currentColor allows an inline SVG or a compatible icon system to follow the surrounding CSS colour. An SVG loaded through an HTML <img> element does not automatically inherit the parent element’s text colour.
+
+The existing career icon designs may use a larger viewBox and explicit burgundy, gold, and supporting colours. Keep the collection consistent when creating new icons; do not resize or rewrite existing assets solely to match the example above.
 
 6. Usage in HTML
 
@@ -150,11 +154,11 @@ For an informative icon used inside a page located one directory below the proje
   loading=“lazy”
 />
 
-Use a relative path that matches the actual HTML file location. If the page is nested more deeply, adjust the path accordingly.
+Use a relative path that matches the actual HTML file location. For pages served from the site root, root-relative paths such as /assets/icons/career/resume.svg may be more appropriate.
 
 Decorative icons
 
-When an icon adds visual decoration but conveys no additional information, use an empty alternative text:
+When an icon adds decoration but conveys no additional information, use an empty alternative text:
 
 <img
   src=“../assets/icons/career/career-success.svg”
@@ -173,7 +177,7 @@ Provide an accessible name for the button or link itself. Do not rely solely on 
 
 <button type=“button” aria-label=“Save job”>
   <img
-    src=“../assets/icons/career/saved-job.svg”
+    src=“/assets/icons/career/saved-job.svg”
     alt=“”
     width=“20”
     height=“20”
@@ -181,7 +185,7 @@ Provide an accessible name for the button or link itself. Do not rely solely on 
   />
 </button>
 
-The example illustrates accessible labelling only. Implement the actual save action and its state handling through the appropriate application module.
+This example illustrates accessible labelling only. Implement the actual save action and its state handling through the appropriate application module.
 
 7. Integration with MedOrbits
 

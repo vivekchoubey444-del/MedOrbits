@@ -39,11 +39,12 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 500,
-      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//).+$",
-      "description": "Repository-relative POSIX path. Must not contain absolute paths, backslashes, empty path segments, or dot-directory traversal."
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//)(?!.*\\s$).+$",
+      "description": "Repository-relative POSIX path. Rejects absolute paths, drive-prefixed paths, backslashes, dot-directory traversal, empty path segments, and trailing whitespace."
     },
     "documentDirectory": {
       "type": "string",
+      "minLength": 16,
       "maxLength": 300,
       "pattern": "^assets/documents/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*$",
       "description": "MedOrbits document directory. Must begin with assets/documents/ and end with a slash."
@@ -95,7 +96,9 @@
         },
         {
           "type": "object",
-          "required": ["name"],
+          "required": [
+            "name"
+          ],
           "properties": {
             "name": {
               "type": "string",
@@ -234,7 +237,9 @@
     },
     "officialSource": {
       "type": "object",
-      "required": ["url"],
+      "required": [
+        "url"
+      ],
       "properties": {
         "title": {
           "type": "string",
@@ -250,7 +255,8 @@
         },
         "url": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "pattern": "^https://"
         },
         "checkedAt": {
           "$ref": "#/$defs/date"
@@ -262,14 +268,18 @@
       "additionalProperties": true
     },
     "checksum": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^(sha256:[a-fA-F0-9]{64})?$"
     },
     "filename": {
       "type": "string",
       "minLength": 1,
       "maxLength": 255,
-      "pattern": "^[^/\\\\.][^/\\\\]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._ -]*$",
+      "description": "A plain filename without directory separators. Must begin with an alphanumeric character."
     },
     "documentFields": {
       "type": "object",
@@ -279,11 +289,13 @@
         },
         "title": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 300
         },
         "name": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 300
         },
         "category": {
           "$ref": "#/$defs/slug"
@@ -296,19 +308,23 @@
         },
         "format": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 50
         },
         "mimeType": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 150
         },
         "description": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 2000
         },
         "intendedUse": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 2000
         },
         "status": {
           "$ref": "#/$defs/publicationStatus"
@@ -325,15 +341,20 @@
           "maxLength": 20
         },
         "academicYear": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 30
         },
         "keywords": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true
+            "minLength": 1,
+            "maxLength": 100
+          }
         },
         "officialSources": {
           "type": "array",
@@ -360,11 +381,17 @@
           "$ref": "#/$defs/dateTime"
         },
         "sizeBytes": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 0
         },
         "size": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 0
         },
         "checksum": {
@@ -372,32 +399,33 @@
         },
         "relatedResources": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/slug"
-          },
-          "uniqueItems": true
+          }
         },
         "relatedDocuments": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/slug"
-          },
-          "uniqueItems": true
+          }
         },
         "audiences": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true
+            "minLength": 1,
+            "maxLength": 100
+          }
         },
         "destinationCountries": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/countryCode"
-          },
-          "uniqueItems": true
+          }
         }
       },
       "additionalProperties": true
@@ -438,24 +466,24 @@
       "properties": {
         "allowedStatuses": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/publicationStatus"
-          },
-          "uniqueItems": true
+          }
         },
         "allowedVerificationStatuses": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/verificationStatus"
-          },
-          "uniqueItems": true
+          }
         },
         "publicDownloadStatuses": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "const": "published"
-          },
-          "uniqueItems": true
+          }
         },
         "requirements": {
           "type": "array",
@@ -479,10 +507,10 @@
       "properties": {
         "allowedStatuses": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/verificationStatus"
-          },
-          "uniqueItems": true
+          }
         },
         "requirements": {
           "type": "array",
@@ -511,8 +539,7 @@
       ],
       "properties": {
         "$schema": {
-          "type": "string",
-          "minLength": 1
+          "const": "https://medorbits.in/schemas/documents-manifest.schema.json"
         },
         "schemaVersion": {
           "$ref": "#/$defs/version"
@@ -543,7 +570,10 @@
         }
       },
       "not": {
-        "required": ["package", "documents"]
+        "required": [
+          "package",
+          "documents"
+        ]
       },
       "additionalProperties": true
     },
@@ -560,8 +590,7 @@
       ],
       "properties": {
         "$schema": {
-          "type": "string",
-          "minLength": 1
+          "const": "https://medorbits.in/schemas/documents-manifest.schema.json"
         },
         "schemaVersion": {
           "$ref": "#/$defs/version"
@@ -571,23 +600,28 @@
         },
         "package": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 150
         },
         "title": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 300
         },
         "name": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 300
         },
         "description": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 2000
         },
         "purpose": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 2000
         },
         "directory": {
           "$ref": "#/$defs/documentDirectory"
@@ -600,7 +634,8 @@
         },
         "designSystem": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 150
         },
         "access": {
           "$ref": "#/$defs/access"
@@ -610,7 +645,8 @@
         },
         "maintainedBy": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 200
         },
         "language": {
           "type": "string",
@@ -619,10 +655,15 @@
         },
         "defaultFormat": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 50
         },
         "academicYear": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 30
         },
         "updatedAt": {
           "$ref": "#/$defs/dateTime"
@@ -635,7 +676,8 @@
         },
         "disclaimer": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 3000
         },
         "categories": {
           "type": "array",
@@ -657,7 +699,10 @@
         }
       },
       "not": {
-        "required": ["metadata", "resources"]
+        "required": [
+          "metadata",
+          "resources"
+        ]
       },
       "additionalProperties": true
     }

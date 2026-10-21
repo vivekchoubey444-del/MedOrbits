@@ -4,7 +4,7 @@ MedOrbits Security Test Suite
 
 This directory contains automated security regression tests for the MedOrbits application. The tests are intended to detect authentication failures, authorization bypasses, insecure direct object references (IDOR), input-validation weaknesses, mass assignment, payment webhook vulnerabilities, privilege escalation, rate-limit failures, sensitive-data exposure, and unauthorized document downloads.
 
-Important: A test passing does not independently establish that the application is secure. Tests must be executed against the actual application and reviewed alongside the implementation, configuration, and deployment environment.
+> **Important:** A test passing does not independently establish that the application is secure. Tests must be executed against the actual application and reviewed alongside the implementation, configuration, and deployment environment.
 
 2. Directory Structure
 
@@ -26,35 +26,36 @@ The canonical payment webhook test filename is payment-webhook.security.test.js.
 
 3. Test Coverage
 
-Test file	Security objective
-authentication.security.test.js	Verify login, session or token handling, invalid credentials, and protected-route authentication.
-authorization.security.test.js	Verify role-based and resource-level access restrictions.
-idor.security.test.js	Verify users cannot access another user’s records by changing resource identifiers.
-input-validation.security.test.js	Verify malformed, unexpected, oversized, and invalid inputs are rejected safely.
-mass-assignment.security.test.js	Verify clients cannot modify protected properties such as roles, ownership, or account status.
-payment-webhook.security.test.js	Verify webhook authenticity, signature validation, and replay protection where applicable.
-privilege-escalation.security.test.js	Verify ordinary users cannot obtain administrator or other elevated privileges.
-rate-limit.security.test.js	Verify configured rate limits protect sensitive endpoints against excessive requests.
-sensitive-data.security.test.js	Verify responses and errors do not expose passwords, tokens, private documents, or unnecessary personal information.
-unauthorized-downloads.security.test.js	Verify private documents and downloads require authentication and appropriate resource permissions.
+|Test file                                |Security objective                                                                                                  |
+|——————————————|———————————————————————————————————————|
+|`authentication.security.test.js`        |Verify login, session or token handling, invalid credentials, and protected-route authentication.                   |
+|`authorization.security.test.js`         |Verify role-based and resource-level access restrictions.                                                           |
+|`idor.security.test.js`                  |Verify users cannot access another user’s records by changing resource identifiers.                                 |
+|`input-validation.security.test.js`      |Verify malformed, unexpected, oversized, and invalid inputs are rejected safely.                                    |
+|`mass-assignment.security.test.js`       |Verify clients cannot modify protected properties such as roles, ownership, or account status.                      |
+|`payment-webhook.security.test.js`       |Verify webhook authenticity, signature validation, and replay protection where applicable.                          |
+|`privilege-escalation.security.test.js`  |Verify ordinary users cannot obtain administrator or other elevated privileges.                                     |
+|`rate-limit.security.test.js`            |Verify configured rate limits protect sensitive endpoints against excessive requests.                               |
+|`sensitive-data.security.test.js`        |Verify responses and errors do not expose passwords, tokens, private documents, or unnecessary personal information.|
+|`unauthorized-downloads.security.test.js`|Verify private documents and downloads require authentication and appropriate resource permissions.                 |
 
 Actual coverage depends on the implemented tests, configured endpoints, and available test fixtures.
 
 4. Prerequisites
 
-* Node.js 20 or later.
-* Dependencies installed using the project’s package manager.
-* A running test instance of the MedOrbits API.
-* Test accounts with distinct user identities and roles.
-* Test documents and other resources owned by the appropriate test accounts.
-* Valid test tokens or sessions where required.
-* A dedicated test database and test payment-webhook configuration, where applicable.
+• Node.js 20 or later.
+• Dependencies installed using the project’s package manager.
+• A running test instance of the MedOrbits API.
+• Test accounts with distinct user identities and roles.
+• Test documents and other resources owned by the appropriate test accounts.
+• Valid test tokens or sessions where required.
+• A dedicated test database and test payment-webhook configuration, where applicable.
 
 Never run destructive security tests against production data or live payment systems.
 
 5. Configuration
 
-Review each test file for its supported environment variables. Common configuration values may include:
+Review each test file for its supported environment variables. A common configuration value may be:
 
 SECURITY_TEST_BASE_URL=http://127.0.0.1:3000
 
@@ -64,7 +65,7 @@ Provide credentials and test resource identifiers through environment variables 
 
 6. Running the Tests
 
-From the project root, run the security test directory with Node’s built-in test runner:
+Run the complete security test suite from the project root using Node.js’s built-in test runner:
 
 node —test tests/security/*.security.test.js
 
@@ -72,20 +73,20 @@ Run an individual test file:
 
 node —test tests/security/authentication.security.test.js
 
-For example, to run the download authorization tests:
+Run the download authorization tests:
 
 node —test tests/security/unauthorized-downloads.security.test.js
 
-If the project defines a dedicated security-test script in package.json, use that script after confirming its command and environment configuration.
+Use two ASCII hyphens in —test; do not use an em dash. If the project defines a dedicated security-test script in package.json, confirm its command and environment configuration before using it.
 
 7. Test Data and Isolation
 
 Use dedicated test identities and resources:
 
-* User A: owns a private test resource.
-* User B: owns a different private test resource.
-* Administrator: used only for explicitly authorized administrative tests.
-* Unauthenticated client: sends requests without credentials.
+• User A: owns a private test resource.
+• User B: owns a different private test resource.
+• Administrator: used only for explicitly authorized administrative tests.
+• Unauthenticated client: sends requests without credentials.
 
 Tests should verify both allowed and denied access. For example, User A should be able to access their own authorized resource but must not be able to access User B’s private resource.
 
@@ -114,12 +115,12 @@ A successful test run means only that the tested assertions passed under the tes
 
 Investigate failures by checking:
 
-* Whether the API server is running and reachable.
-* Whether route paths match the actual route registrations.
-* Whether authentication credentials and resource IDs are valid.
-* Whether the test expects the correct response status and content type.
-* Whether the database contains the expected isolated fixtures.
-* Whether the application uses a different documented authorization policy.
+• Whether the API server is running and reachable.
+• Whether route paths match the actual route registrations.
+• Whether authentication credentials and resource IDs are valid.
+• Whether the test expects the correct response status and content type.
+• Whether the database contains the expected isolated fixtures.
+• Whether the application uses a different documented authorization policy.
 
 Do not weaken a security assertion merely to make a test pass. Confirm the intended security policy and correct either the implementation or the test expectation.
 
@@ -127,13 +128,13 @@ Do not weaken a security assertion merely to make a test pass. Confirm the inten
 
 These tests are not a substitute for:
 
-* Dependency and vulnerability scanning.
-* Static analysis and code review.
-* Database permission and deployment configuration reviews.
-* CSRF, CORS, session-cookie, and transport-security verification where applicable.
-* Payment-provider sandbox testing.
-* File-upload content validation and malware scanning.
-* Independent penetration testing.
+• Dependency and vulnerability scanning.
+• Static analysis and code review.
+• Database permission and deployment configuration reviews.
+• CSRF, CORS, session-cookie, and transport-security verification where applicable.
+• Payment-provider sandbox testing.
+• File-upload content validation and malware scanning.
+• Independent penetration testing.
 
 Endpoint names, environment variables, test fixtures, and response expectations must match the actual MedOrbits implementation. Do not assume a route is implemented simply because a test references it.
 

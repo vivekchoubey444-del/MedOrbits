@@ -3,7 +3,7 @@ MedOrbits Support Guide
 Project: MedOrbits
 Platform: Education · Admissions · Careers · Recruitment
 
-This document explains how to request assistance with MedOrbits, report website problems, and seek help with education, applications, career services, payments, subscriptions, and documents.
+This guide explains how to request assistance with MedOrbits, report website problems, and seek help with education, applications, career services, recruitment, payments, subscriptions, and documents.
 
 Official contact details, operating hours, escalation procedures, and service commitments must be verified before publication. This guide does not establish a guaranteed response time or service-level agreement.
 
@@ -36,8 +36,6 @@ Technical support	Broken pages, loading errors, and website functionality
 Privacy and data requests	Personal-data access, correction, or deletion requests through the applicable official process
 
 Use the channel designated for the relevant request type where one is available.
-
-⸻
 
 2. What to Include in a Support Request
 
@@ -81,8 +79,6 @@ Reference number: Include one if available.
 
 Attach only sanitized evidence that does not expose private information.
 
-⸻
-
 3. Protect Your Information
 
 MedOrbits support requests should contain only the information necessary to resolve the issue.
@@ -108,8 +104,6 @@ If you suspect unauthorized account access
 
 Do not send your current password or verification codes to anyone claiming to provide support.
 
-⸻
-
 4. Security Vulnerabilities
 
 Suspected security vulnerabilities must not be reported through ordinary public support requests, public GitHub issues, discussions, or social media.
@@ -126,8 +120,6 @@ For your own safety and the safety of other users:
 * Stop testing if you encounter information outside your authorization.
 
 Support and security reporting are separate processes. A routine support request does not automatically constitute a formal vulnerability report.
-
-⸻
 
 5. Bug Reports and Feature Requests
 
@@ -157,8 +149,6 @@ Describe:
 
 A submitted suggestion does not guarantee that a feature will be implemented or that a particular delivery date will be assigned.
 
-⸻
-
 6. Applications and Admissions
 
 When requesting assistance with an education or admission-related workflow:
@@ -175,8 +165,6 @@ Submitting a support request does not itself change an application’s status, g
 
 Users remain responsible for confirming applicable eligibility requirements, deadlines, and submission instructions with the relevant institution or authority.
 
-⸻
-
 7. Careers and Recruitment
 
 For job listings, internships, employer services, recruitment, or candidate-related workflows:
@@ -190,8 +178,6 @@ For job listings, internships, employer services, recruitment, or candidate-rela
 A support request does not guarantee employment, an interview, candidate selection, recruitment, or a response from an employer.
 
 Any service-specific eligibility conditions and commitments should be determined by the applicable published terms.
-
-⸻
 
 8. Payments, Subscriptions, and Refunds
 
@@ -213,8 +199,6 @@ Applicable service terms, payment-provider rules, and published refund policies 
 
 This guide does not promise a refund, a particular payment outcome, or a processing timeframe.
 
-⸻
-
 9. Uploaded Documents and Data Requests
 
 For an issue involving an uploaded document or personal information:
@@ -228,8 +212,6 @@ For an issue involving an uploaded document or personal information:
 Requests concerning personal data are handled according to applicable privacy requirements and the published MedOrbits privacy policy.
 
 A support message alone does not guarantee that a document will be deleted, a record will be corrected, or a request will be completed. Await confirmation through an official channel.
-
-⸻
 
 10. Response Expectations and Escalation
 
@@ -252,8 +234,6 @@ If your issue remains unresolved:
 
 For urgent security concerns, follow SECURITY.md rather than relying solely on the ordinary support process.
 
-⸻
-
 11. Accessibility and Communication
 
 When requesting help with an accessibility issue, identify the affected page, control, or interaction and explain the barrier encountered.
@@ -270,8 +250,6 @@ Do not include unnecessary health information or other sensitive personal detail
 
 MedOrbits should publish any dedicated accessibility contact or alternative communication method only after verifying that the channel is available and monitored.
 
-⸻
-
 12. Official Policies and Related Documentation
 
 Consult the applicable published policy for the service involved.
@@ -287,8 +265,6 @@ Employer terms	legal/employer-terms.html, if present
 Help centre	Official MedOrbits help-centre page, if published
 
 Verify that each linked file or page exists and contains the current applicable policy before publishing these references.
-
-⸻
 
 13. Maintainer Publishing Checklist
 

@@ -1,4 +1,3 @@
-
 'use strict';
 
 const ALLOWED_CREATE_FIELDS = Object.freeze([
@@ -53,65 +52,82 @@ const USER_STATUSES = Object.freeze([
 ]);
 
 const SUPPORTED_LANGUAGES = Object.freeze([
-  'en',
-  'hi',
-  'bn',
-  'as',
-  'ne',
-  'mr',
-  'gu',
-  'pa',
-  'ur',
-  'or',
-  'ps',
-  'fa',
-  'fr',
-  'de',
-  'es',
-  'zh',
-  'ar',
-  'ru',
-  'ka',
-  'kk',
-  'uz',
-  'ky',
+  'en', 'hi', 'bn', 'as', 'ne', 'mr', 'gu', 'pa', 'ur', 'or',
+  'ps', 'fa', 'fr', 'de', 'es', 'zh', 'ar', 'ru', 'ka', 'kk',
+  'uz', 'ky',
 ]);
 
 const MAX_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 128;
+const MAX_PHONE_LENGTH = 30;
+const MAX_SEARCH_LENGTH = 200;
+const MAX_PROFILE_IMAGE_URL_LENGTH = 2048;
 
-function validationError(message, field, code = 'VALIDATION_ERROR') {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[+0-9().\-\s]+$/;
+const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const CONTROL_CHARACTERS_REGEX = /[\u0000-\u001F\u007F]/;
+
+function validationError(
+  message,
+  field,
+  code = 'VALIDATION_ERROR'
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
   error.statusCode = 400;
   error.code = code;
+  error.publicMessage = message;
 
-  if (field) error.field = field;
+  if (field) {
+    error.field = field;
+  }
 
   return error;
 }
 
+function isPlainObject(input) {
+  if (input === null || typeof input !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(input);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 function requireObject(input, label = 'Request body') {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
-    throw validationError(`${label} must be a JSON object.`);
+  if (!isPlainObject(input)) {
+    throw validationError(
+      `${label} must be a plain JSON object.`,
+      label === 'Query parameters' ? 'query' : 'body',
+      'INVALID_TYPE'
+    );
   }
 
   return input;
 }
 
 function rejectUnknownFields(input, allowedFields) {
+  requireObject(input);
+
+  if (!Array.isArray(allowedFields)) {
+    throw new TypeError('allowedFields must be an array.');
+  }
+
+  const allowed = new Set(allowedFields);
   const unknownFields = Object.keys(input).filter(
-    (field) => !allowedFields.includes(field)
+    (field) => !allowed.has(field)
   );
 
   if (unknownFields.length > 0) {
     throw validationError(
-      `Unsupported field(s): ${unknownFields.join(', ')}.`
+      `Unsupported field(s): ${unknownFields.join(', ')}.`,
+      undefined,
+      'UNKNOWN_FIELD'
     );
   }
 }
@@ -121,18 +137,41 @@ function requireString(value, field, options = {}) {
     minLength = 1,
     maxLength = 255,
     trim = true,
+    allowEmpty = false,
   } = options;
 
   if (typeof value !== 'string') {
-    throw validationError(`${field} must be a string.`, field);
+    throw validationError(
+      `${field} must be a string.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
   }
 
   const result = trim ? value.trim() : value;
 
+  if (!allowEmpty && result.length === 0) {
+    throw validationError(
+      `${field} is required.`,
+      field,
+      'REQUIRED_FIELD'
+    );
+  }
+
   if (result.length < minLength || result.length > maxLength) {
     throw validationError(
-      `${field} must contain ${minLength} to ${maxLength} characters.`,
-      field
+      `${field} must contain between ${minLength} and ${maxLength} characters.`,
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -145,10 +184,11 @@ function validateName(value, field = 'name') {
     maxLength: MAX_NAME_LENGTH,
   });
 
-  if (/[\u0000-\u001F\u007F]/.test(name)) {
+  if (CONTROL_CHARACTERS_REGEX.test(name)) {
     throw validationError(
       `${field} contains unsupported control characters.`,
-      field
+      field,
+      'INVALID_FORMAT'
     );
   }
 
@@ -161,25 +201,30 @@ function validateEmail(value) {
     maxLength: MAX_EMAIL_LENGTH,
   }).toLowerCase();
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw validationError('Enter a valid email address.', 'email');
+  if (!EMAIL_REGEX.test(email)) {
+    throw validationError(
+      'Enter a valid email address.',
+      'email',
+      'INVALID_FORMAT'
+    );
   }
 
   return email;
 }
 
 function validatePassword(value) {
-  // Never trim or normalize passwords.
+  // Do not trim, lowercase, or otherwise normalize passwords.
   const password = requireString(value, 'password', {
     minLength: 12,
     maxLength: MAX_PASSWORD_LENGTH,
     trim: false,
   });
 
-  if (/\u0000/.test(password)) {
+  if (CONTROL_CHARACTERS_REGEX.test(password)) {
     throw validationError(
-      'Password must not contain null characters.',
-      'password'
+      'Password must not contain control characters.',
+      'password',
+      'INVALID_FORMAT'
     );
   }
 
@@ -189,13 +234,14 @@ function validatePassword(value) {
 function validatePhone(value) {
   const phone = requireString(value, 'phone', {
     minLength: 5,
-    maxLength: 30,
+    maxLength: MAX_PHONE_LENGTH,
   });
 
-  if (!/^[+0-9().\-\s]+$/.test(phone)) {
+  if (!PHONE_REGEX.test(phone)) {
     throw validationError(
       'phone contains unsupported characters.',
-      'phone'
+      'phone',
+      'INVALID_FORMAT'
     );
   }
 
@@ -204,7 +250,8 @@ function validatePhone(value) {
   if (digits.length < 5 || digits.length > 15) {
     throw validationError(
       'phone must contain between 5 and 15 digits.',
-      'phone'
+      'phone',
+      'OUT_OF_RANGE'
     );
   }
 
@@ -217,10 +264,11 @@ function validateCountryCode(value) {
     maxLength: 2,
   }).toUpperCase();
 
-  if (!/^[A-Z]{2}$/.test(code)) {
+  if (!COUNTRY_CODE_REGEX.test(code)) {
     throw validationError(
       'country_code must be a two-letter ISO country code.',
-      'country_code'
+      'country_code',
+      'INVALID_FORMAT'
     );
   }
 
@@ -236,7 +284,8 @@ function validateLanguage(value) {
   if (!SUPPORTED_LANGUAGES.includes(language)) {
     throw validationError(
       `preferred_language must be one of: ${SUPPORTED_LANGUAGES.join(', ')}.`,
-      'preferred_language'
+      'preferred_language',
+      'INVALID_ENUM'
     );
   }
 
@@ -252,7 +301,8 @@ function validateEnum(value, field, allowedValues) {
   if (!allowedValues.includes(normalized)) {
     throw validationError(
       `${field} must be one of: ${allowedValues.join(', ')}.`,
-      field
+      field,
+      'INVALID_ENUM'
     );
   }
 
@@ -262,7 +312,7 @@ function validateEnum(value, field, allowedValues) {
 function validateProfileImageUrl(value) {
   const raw = requireString(value, 'profile_image_url', {
     minLength: 1,
-    maxLength: 2048,
+    maxLength: MAX_PROFILE_IMAGE_URL_LENGTH,
   });
 
   let url;
@@ -272,21 +322,24 @@ function validateProfileImageUrl(value) {
   } catch {
     throw validationError(
       'profile_image_url must be a valid URL.',
-      'profile_image_url'
+      'profile_image_url',
+      'INVALID_FORMAT'
     );
   }
 
   if (url.protocol !== 'https:') {
     throw validationError(
       'profile_image_url must use HTTPS.',
-      'profile_image_url'
+      'profile_image_url',
+      'INVALID_FORMAT'
     );
   }
 
-  if (url.username || url.password) {
+  if (!url.hostname || url.username || url.password) {
     throw validationError(
-      'profile_image_url must not contain embedded credentials.',
-      'profile_image_url'
+      'profile_image_url must have a hostname and must not contain embedded credentials.',
+      'profile_image_url',
+      'INVALID_FORMAT'
     );
   }
 
@@ -298,11 +351,19 @@ function validateCreate(input) {
   rejectUnknownFields(body, ALLOWED_CREATE_FIELDS);
 
   if (body.email === undefined) {
-    throw validationError('email is required.', 'email');
+    throw validationError(
+      'email is required.',
+      'email',
+      'REQUIRED_FIELD'
+    );
   }
 
   if (body.password === undefined) {
-    throw validationError('password is required.', 'password');
+    throw validationError(
+      'password is required.',
+      'password',
+      'REQUIRED_FIELD'
+    );
   }
 
   const result = {
@@ -326,7 +387,8 @@ function validateCreate(input) {
     if (!result.first_name || !result.last_name) {
       throw validationError(
         'Provide name or both first_name and last_name.',
-        'name'
+        'name',
+        'REQUIRED_FIELD'
       );
     }
   }
@@ -335,8 +397,8 @@ function validateCreate(input) {
     result.phone = validatePhone(body.phone);
   }
 
-  // Public registration must not allow privilege escalation.
-  // Assign roles and statuses using trusted server-side logic.
+  // Roles and statuses are assigned by trusted server-side logic.
+  // Do not let public registration assign privileges or account state.
   if (body.role !== undefined) {
     throw validationError(
       'role cannot be assigned through public user creation.',
@@ -372,7 +434,9 @@ function validateUpdate(input) {
 
   if (Object.keys(body).length === 0) {
     throw validationError(
-      'Provide at least one supported field to update.'
+      'Provide at least one supported field to update.',
+      undefined,
+      'EMPTY_UPDATE'
     );
   }
 
@@ -418,18 +482,48 @@ function validateUpdate(input) {
 }
 
 function parseBoundedInteger(value, field, min, max) {
-  const text = String(value);
+  let text;
 
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      throw validationError(
+        `${field} must be a safe integer.`,
+        field,
+        'INVALID_TYPE'
+      );
+    }
+
+    text = String(value);
+  } else if (typeof value === 'string') {
+    text = value;
+  } else {
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  // Reject whitespace, signs, decimals, exponents and empty values.
   if (!/^\d+$/.test(text)) {
-    throw validationError(`${field} must be an integer.`, field);
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_FORMAT'
+    );
   }
 
   const number = Number(text);
 
-  if (!Number.isSafeInteger(number) || number < min || number > max) {
+  if (
+    !Number.isSafeInteger(number) ||
+    number < min ||
+    number > max
+  ) {
     throw validationError(
       `${field} must be between ${min} and ${max}.`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -463,7 +557,7 @@ function validateQuery(input) {
   if (query.search !== undefined) {
     result.search = requireString(query.search, 'search', {
       minLength: 1,
-      maxLength: 200,
+      maxLength: MAX_SEARCH_LENGTH,
     });
   }
 
@@ -517,6 +611,7 @@ module.exports = {
   validatePhone,
   validateCountryCode,
   validateLanguage,
+  validateProfileImageUrl,
   USER_ROLES,
   USER_STATUSES,
   SUPPORTED_LANGUAGES,

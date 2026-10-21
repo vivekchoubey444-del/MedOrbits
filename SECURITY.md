@@ -1,7 +1,7 @@
 Security Policy — MedOrbits
 
 Project: MedOrbits
-Scope: Application security, repository security, dependencies, integrations, and deployed services
+Scope: Application Security, Repository Security, Dependencies, Integrations, and Deployed Services
 Purpose: Provide a responsible, private, and coordinated process for reporting security vulnerabilities.
 
 MedOrbits takes security reports seriously. We encourage responsible disclosure of suspected vulnerabilities affecting the platform, its source code, APIs, integrations, and supporting infrastructure.
@@ -26,21 +26,21 @@ Important: Do not assume that a version is supported merely because it remains a
 
 Do not disclose suspected vulnerabilities through public GitHub issues, discussions, pull requests, or other public channels.
 
-Preferred reporting method
+Preferred Reporting Method
 
 If GitHub private vulnerability reporting is enabled for the repository, submit a report through:
 
-https://github.com/vivekchoubey444-del/MedOrbits/security/advisories/new
+Report a vulnerability — MedOrbits
 
-This feature’s availability and access requirements must be confirmed in the repository settings.
+The availability of this feature and its access requirements must be confirmed in the repository settings.
 
 If private vulnerability reporting is unavailable, contact a repository maintainer through an established private communication channel. Confirm that the channel is private before sharing technical details.
 
 Do not send credentials, confidential records, or sensitive exploit details through an unverified channel.
 
-Information to include
+Information to Include
 
-Where possible, provide:
+Where possible, provide the following information:
 
 * Summary: A concise description of the suspected vulnerability.
 * Impact: The security property affected and the potential consequences.
@@ -53,7 +53,7 @@ Where possible, provide:
 
 A complete exploit is not required to report a credible security concern. Do not perform additional testing that could harm users or production systems merely to strengthen a report.
 
-Protect sensitive information
+Protect Sensitive Information
 
 Never include:
 
@@ -88,7 +88,7 @@ Reports concerning the following areas are welcome when they affect MedOrbits or
 
 A report should identify the affected MedOrbits component and explain how the issue could affect confidentiality, integrity, or availability.
 
-Out-of-scope considerations
+Out-of-Scope Considerations
 
 Unless they demonstrate a concrete security impact, the following are generally lower priority:
 
@@ -107,18 +107,20 @@ An apparently out-of-scope finding may still be relevant if it demonstrates a me
 
 Security research must not unnecessarily expose users, data, or production services to risk.
 
-* Test only systems and accounts you own or are explicitly authorized to assess.
+Researchers must:
+
+* Test only systems and accounts they own or are explicitly authorized to assess.
 * Prefer local development environments, staging deployments, and synthetic data.
-* Do not access, modify, download, or disclose another user’s private information.
-* Do not perform destructive testing, sustained denial-of-service testing, or actions that disrupt production.
-* Do not install persistent access mechanisms, deploy malware, or establish unauthorized access.
-* Do not use stolen credentials or continue testing after encountering data outside your authorization.
-* Do not make changes to production data or payment transactions without explicit authorization.
-* Stop testing when you have enough evidence to demonstrate the issue safely.
+* Avoid accessing, modifying, downloading, or disclosing another user’s private information.
+* Avoid destructive testing, sustained denial-of-service testing, or actions that disrupt production.
+* Never install persistent access mechanisms, deploy malware, or establish unauthorized access.
+* Avoid stolen credentials and stop testing after encountering data outside their authorization.
+* Avoid changes to production data or payment transactions without explicit authorization.
+* Stop testing when sufficient evidence has been collected to demonstrate the issue safely.
 
 If testing unexpectedly exposes private information or affects a live service, stop, preserve only the minimum necessary evidence, and report the incident privately.
 
-Researcher conduct
+Researcher Conduct
 
 MedOrbits asks researchers to act in good faith, minimize harm, protect confidential information, and cooperate with reasonable requests needed to verify and remediate a report.
 
@@ -139,7 +141,7 @@ Upon receiving a report, maintainers should follow a coordinated process.
 7. Release and verification: Deploy or publish the fix through the appropriate release process and validate the remediation.
 8. Closure: Document the outcome, any remaining risk, and relevant follow-up actions.
 
-Response expectations
+Response Expectations
 
 Response times depend on severity, reproducibility, staffing, and available resources. Maintainers should acknowledge and triage reports as promptly as reasonably possible, prioritizing credible reports involving active exploitation, exposed credentials, unauthorized access, or sensitive-data disclosure.
 
@@ -153,7 +155,7 @@ If a report is not immediately actionable, maintainers may request additional sa
 
 Severity should reflect the actual risk to MedOrbits and its users, not merely the presence of a scanner finding.
 
-Priority	General description	Typical response
+Priority	General Description	Typical Response
 Critical	Credible risk of widespread compromise, major unauthorized access, or severe sensitive-data exposure	Immediate assessment and containment where necessary
 High	Significant privilege escalation, sensitive-data exposure, or compromise of an important application function	Prioritized investigation and remediation
 Medium	Meaningful security weakness requiring particular conditions or limited privileges	Planned remediation with risk-based prioritization
@@ -196,7 +198,7 @@ Never commit the following to source control:
 
 Use environment variables and approved secret-management services. Keep .env.example sanitized and free of real credentials.
 
-If a credential is exposed:
+If a Credential Is Exposed
 
 1. Revoke or rotate it immediately.
 2. Identify the systems and permissions associated with it.
@@ -256,5 +258,9 @@ Ensure the private reporting URL remains correct and that the selected reporting
 Security Statement
 
 This policy establishes a reporting and coordination process. It does not guarantee that MedOrbits is free from vulnerabilities, that all reports will result in a fix, or that a specific response time can be met.
+
+Project: MedOrbits
+Scope: Application security, repository security, dependencies, integrations, and deployed services
+Reporting: Private vulnerability reporting, where enabled
 
 MedOrbits — Education · Admissions · Careers · Recruitment

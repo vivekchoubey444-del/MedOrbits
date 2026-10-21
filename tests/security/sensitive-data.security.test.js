@@ -1,11 +1,8 @@
-
 'use strict';
-
 /**
  * MedOrbits -- Sensitive Data Exposure Security Tests
  *
  * File: tests/security/sensitive-data.security.test.js
- *
  * Runtime: Node.js >= 20
  * Dependencies: Node.js built-in modules only
  *
@@ -22,73 +19,60 @@
  * Run:
  *   node --test tests/security/sensitive-data.security.test.js
  *
- * IMPORTANT:
- * - Use a dedicated test environment and test accounts.
- * - Route paths are configurable and must match the application.
- * - The test does not print response bodies or token values.
- * - Some personal data is legitimately returned to its authorized owner.
- *   Configure endpoint-specific allowlists instead of globally banning it.
+ * Run only against an isolated test environment.
+ * Configure paths to match the actual MedOrbits API.
  */
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const BASE_URL = (
   process.env.SENSITIVE_DATA_TEST_BASE_URL || ''
 ).replace(/\/+$/, '');
-
 const TOKEN =
   process.env.SENSITIVE_DATA_TEST_TOKEN || '';
-
 const TIMEOUT_MS = Number(
   process.env.SENSITIVE_DATA_TEST_TIMEOUT_MS || 15000
 );
-
 const PROFILE_PATH =
   process.env.SENSITIVE_DATA_TEST_PROFILE_PATH || '';
-
 const USERS_PATH =
   process.env.SENSITIVE_DATA_TEST_USERS_PATH || '/api/users';
-
 const APPLICATIONS_PATH =
   process.env.SENSITIVE_DATA_TEST_APPLICATIONS_PATH ||
   '/api/applications';
-
 const ADMIN_PATH =
   process.env.SENSITIVE_DATA_TEST_ADMIN_PATH || '/api/admin';
-
 const INVALID_PATH =
   process.env.SENSITIVE_DATA_TEST_INVALID_PATH ||
   '/api/__security_test_invalid_route__';
-
 const configured = Boolean(
   BASE_URL &&
+  TOKEN &&
   Number.isFinite(TIMEOUT_MS) &&
   TIMEOUT_MS > 0
 );
-
-const skipReason =
-  'Configure SENSITIVE_DATA_TEST_BASE_URL to run HTTP integration tests.';
-
 const JSON_ACCEPT = {
   Accept: 'application/json',
 };
-
 const FORBIDDEN_RESPONSE_KEYS = new Set([
+  'password',
   'passwordhash',
   'hashedpassword',
   'passworddigest',
+  'passwordsalt',
   'refreshtoken',
   'accesstoken',
+  'authorizationtoken',
   'secretkey',
   'privatekey',
   'clientsecret',
   'webhooksecret',
   'apikey',
-  'authorizationtoken',
+  'apisecret',
   'sessionsecret',
   'otpsecret',
-  'mfas ecret',
+  'mfasecret',
+  'totpsecret',
+  'recoverycodes',
   'cardnumber',
   'cvv',
   'cvc',
@@ -97,49 +81,83 @@ const FORBIDDEN_RESPONSE_KEYS = new Set([
   'databaseurl',
   'connectionstring',
 ]);
-
 const SENSITIVE_HEADERS = new Set([
   'x-powered-by',
   'x-debug-token',
   'x-internal-error',
   'x-stack-trace',
 ]);
-
 function normalizeKey(key) {
   return String(key)
     .replace(/[-_\s]/g, '')
     .toLowerCase();
 }
-
-function authHeaders(extra = {}) {
+function validPath(path) {
+  return (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !/[\r\n]/.test(path)
+  );
+}
+function validateBaseUrl() {
+  let parsed;
+  try {
+    parsed = new URL(BASE_URL);
+  } catch {
+    throw new Error(
+      'SENSITIVE_DATA_TEST_BASE_URL must be an absolute URL.'
+    );
+  }
+  assert.ok(
+    ['http:', 'https:'].includes(parsed.protocol),
+    'Base URL must use HTTP or HTTPS.'
+  );
+  assert.equal(
+    parsed.username + parsed.password,
+    '',
+    'Do not place credentials in the base URL.'
+  );
+  const localHosts = new Set([
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    '[::1]',
+  ]);
+  assert.ok(
+    localHosts.has(parsed.hostname) ||
+      process.env.SENSITIVE_DATA_TEST_ALLOW_REMOTE === 'true',
+    'Remote targets require SENSITIVE_DATA_TEST_ALLOW_REMOTE=true.'
+  );
+}
+function authHeaders(token, extra = {}, hasBody = false) {
   return {
     ...JSON_ACCEPT,
-    ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extra,
   };
 }
-
 async function request(path, {
+  token = TOKEN,
   method = 'GET',
   body,
   headers = {},
 } = {}) {
+  assert.ok(validPath(path), 'Invalid configured request path.');
   const controller = new AbortController();
-
   const timeout = setTimeout(
     () => controller.abort(),
     TIMEOUT_MS
   );
-
   try {
     return await fetch(`${BASE_URL}${path}`, {
       method,
-      headers: authHeaders({
-        ...headers,
-        ...(body !== undefined
-          ? { 'Content-Type': 'application/json' }
-          : {}),
-      }),
+      headers: authHeaders(
+        token,
+        headers,
+        body !== undefined
+      ),
       ...(body !== undefined
         ? { body: JSON.stringify(body) }
         : {}),
@@ -150,57 +168,47 @@ async function request(path, {
     clearTimeout(timeout);
   }
 }
-
+async function requestUnauthenticated(path, options = {}) {
+  return request(path, {
+    ...options,
+    token: '',
+    headers: {
+      ...(options.headers || {}),
+      Authorization: '',
+    },
+  });
+}
 async function responseBody(response) {
   const raw = await response.text();
-
-  if (!raw) {
-    return null;
-  }
-
+  if (!raw) return null;
   try {
     return JSON.parse(raw);
   } catch {
     return raw;
   }
 }
-
 function inspectObject(value, path = '$', findings = []) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => {
       inspectObject(item, `${path}[${index}]`, findings);
     });
-
     return findings;
   }
-
   if (!value || typeof value !== 'object') {
     return findings;
   }
-
   for (const [key, child] of Object.entries(value)) {
-    const normalized = normalizeKey(key);
-
-    if (FORBIDDEN_RESPONSE_KEYS.has(normalized)) {
-      findings.push({
-        type: 'forbidden-key',
-        path: `${path}.${key}`,
-      });
+    if (FORBIDDEN_RESPONSE_KEYS.has(normalizeKey(key))) {
+      findings.push(`${path}.${key}`);
     }
-
     inspectObject(child, `${path}.${key}`, findings);
   }
-
   return findings;
 }
-
 function inspectText(value) {
   const textValue = typeof value === 'string'
     ? value
     : JSON.stringify(value ?? '');
-
-  const findings = [];
-
   const patterns = [
     {
       name: 'private-key material',
@@ -212,7 +220,7 @@ function inspectText(value) {
     },
     {
       name: 'internal source path',
-      regex: /(?:\/app\/|\/srv\/|[A-Z]:\\[^ ]+)node_modules[\\/]/i,
+      regex: /(?:\/app\/|\/srv\/|[A-Z]:\\)[^\s"'<>]*node_modules[\\/]/i,
     },
     {
       name: 'database connection URL',
@@ -223,335 +231,255 @@ function inspectText(value) {
       regex: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/,
     },
     {
-      name: 'common secret assignment',
-      regex: /\b(?:client_secret|webhook_secret|private_key|session_secret)\s*[:=]\s*["']?[^"'\s,}]{8,}/i,
+      name: 'secret assignment',
+      regex: /\b(?:client_secret|webhook_secret|private_key|session_secret|api_secret)\s*[:=]\s*["']?[^"'\s,}]{8,}/i,
     },
   ];
-
-  for (const pattern of patterns) {
-    if (pattern.regex.test(textValue)) {
-      findings.push(pattern.name);
-    }
-  }
-
-  return findings;
+  return patterns
+    .filter((pattern) => pattern.regex.test(textValue))
+    .map((pattern) => pattern.name);
 }
-
 function assertNoForbiddenKeys(body, description) {
   const findings = inspectObject(body);
-
   assert.equal(
     findings.length,
     0,
-    `${description}: response contains forbidden sensitive fields`
+    `${description}: forbidden sensitive response fields detected: ` +
+      findings.join(', ')
   );
 }
-
 function assertNoSensitiveErrorDetails(body, description) {
   const findings = inspectText(body);
-
   assert.equal(
     findings.length,
     0,
-    `${description}: response may expose internal diagnostic details`
+    `${description}: possible internal diagnostic disclosure: ` +
+      findings.join(', ')
   );
 }
-
 function assertNoSensitiveHeaders(response, description) {
   const exposed = [];
-
   for (const [name] of response.headers.entries()) {
     if (SENSITIVE_HEADERS.has(name.toLowerCase())) {
       exposed.push(name);
     }
   }
-
   assert.deepEqual(
     exposed,
     [],
-    `${description}: response contains diagnostic headers`
+    `${description}: diagnostic headers detected: ${exposed.join(', ')}`
   );
 }
-
 function assertClientError(response, description) {
   assert.ok(
     response.status >= 400 && response.status < 500,
     `${description}: expected a 4xx response; received HTTP ${response.status}`
   );
 }
-
+function assertNoServerError(response, description) {
+  assert.ok(
+    response.status < 500,
+    `${description}: received HTTP ${response.status}`
+  );
+}
 test(
   'Sensitive data exposure security integration suite',
-  { skip: !configured ? skipReason : false },
+  { skip: !configured },
   async (t) => {
+    validateBaseUrl();
+    for (const [name, path] of [
+      ['Users path', USERS_PATH],
+      ['Applications path', APPLICATIONS_PATH],
+      ['Admin path', ADMIN_PATH],
+      ['Invalid path', INVALID_PATH],
+    ]) {
+      assert.ok(validPath(path), `${name} is invalid.`);
+    }
+    if (PROFILE_PATH) {
+      assert.ok(validPath(PROFILE_PATH), 'Profile path is invalid.');
+    }
     await t.test(
-      'Unauthenticated API responses do not expose sensitive fields',
+      'Unauthenticated users endpoint denies access without leaking secrets',
       async () => {
-        const response = await request(USERS_PATH, {
-          headers: {
-            Authorization: '',
-          },
-        });
-
-        assert.ok(
-          response.status < 500,
-          `Users endpoint returned HTTP ${response.status}`
-        );
-
+        const response = await requestUnauthenticated(USERS_PATH);
+        assertClientError(response, 'Unauthenticated users endpoint');
         const body = await responseBody(response);
-
-        assertNoForbiddenKeys(
-          body,
-          'Unauthenticated users endpoint'
-        );
-
-        assertNoSensitiveHeaders(
-          response,
-          'Unauthenticated users endpoint'
-        );
+        assertNoForbiddenKeys(body, 'Unauthenticated users endpoint');
+        assertNoSensitiveErrorDetails(body, 'Unauthenticated users endpoint');
+        assertNoSensitiveHeaders(response, 'Unauthenticated users endpoint');
       }
     );
-
     await t.test(
       'Authenticated user listing does not expose credential fields',
       async () => {
         const response = await request(USERS_PATH);
-
-        assert.ok(
-          response.status < 500,
-          `Users endpoint returned HTTP ${response.status}`
-        );
-
-        const body = await responseBody(response);
-
-        assertNoForbiddenKeys(
-          body,
-          'User listing endpoint'
-        );
+        assertNoServerError(response, 'Authenticated users endpoint');
+        if (response.ok) {
+          const body = await responseBody(response);
+          assertNoForbiddenKeys(body, 'Authenticated users endpoint');
+        } else {
+          const body = await responseBody(response);
+          assertNoSensitiveErrorDetails(
+            body,
+            'Authenticated users endpoint error'
+          );
+        }
+        assertNoSensitiveHeaders(response, 'Authenticated users endpoint');
       }
     );
-
     await t.test(
-      'Application responses do not expose payment credentials or secrets',
+      'Application responses do not expose credential fields',
       async () => {
         const response = await request(APPLICATIONS_PATH);
-
-        assert.ok(
-          response.status < 500,
-          `Applications endpoint returned HTTP ${response.status}`
-        );
-
+        assertNoServerError(response, 'Applications endpoint');
         const body = await responseBody(response);
-
-        assertNoForbiddenKeys(
-          body,
-          'Applications endpoint'
-        );
+        assertNoForbiddenKeys(body, 'Applications endpoint');
+        if (!response.ok) {
+          assertNoSensitiveErrorDetails(
+            body,
+            'Applications endpoint error'
+          );
+        }
+        assertNoSensitiveHeaders(response, 'Applications endpoint');
       }
     );
-
     await t.test(
-      'Profile responses do not expose credential hashes or tokens',
+      'Profile responses do not expose credential fields',
       { skip: !PROFILE_PATH },
       async () => {
         const response = await request(PROFILE_PATH);
-
-        assert.ok(
-          response.status < 500,
-          `Profile endpoint returned HTTP ${response.status}`
-        );
-
+        assertNoServerError(response, 'Profile endpoint');
         const body = await responseBody(response);
-
-        assertNoForbiddenKeys(
-          body,
-          'Profile endpoint'
-        );
+        if (response.ok) {
+          assertNoForbiddenKeys(body, 'Profile endpoint');
+        } else {
+          assertNoSensitiveErrorDetails(body, 'Profile endpoint error');
+        }
+        assertNoSensitiveHeaders(response, 'Profile endpoint');
       }
     );
-
     await t.test(
-      'Administrative endpoints do not expose internal errors to unauthorized callers',
+      'Unauthenticated administrative access is denied safely',
       async () => {
-        const response = await request(ADMIN_PATH, {
-          headers: {
-            Authorization: '',
-          },
-        });
-
-        assertClientError(
-          response,
-          'Unauthorized admin endpoint'
-        );
-
+        const response = await requestUnauthenticated(ADMIN_PATH);
+        assertClientError(response, 'Unauthenticated admin endpoint');
         const body = await responseBody(response);
-
-        assertNoSensitiveErrorDetails(
-          body,
-          'Unauthorized admin endpoint'
-        );
-
-        assertNoSensitiveHeaders(
-          response,
-          'Unauthorized admin endpoint'
-        );
+        assertNoForbiddenKeys(body, 'Unauthenticated admin endpoint');
+        assertNoSensitiveErrorDetails(body, 'Unauthenticated admin endpoint');
+        assertNoSensitiveHeaders(response, 'Unauthenticated admin endpoint');
       }
     );
-
     await t.test(
-      'Invalid route responses do not expose stack traces',
+      'Invalid route response does not expose implementation details',
       async () => {
-        const response = await request(INVALID_PATH, {
-          headers: {
-            Authorization: '',
-          },
-        });
-
-        assert.ok(
-          [400, 404, 405].includes(response.status),
-          `Expected a client error for an invalid route; ` +
-            `received HTTP ${response.status}`
+        const response = await requestUnauthenticated(INVALID_PATH);
+        assert.equal(
+          response.status,
+          404,
+          `Expected HTTP 404 for the configured invalid route; received ${response.status}`
         );
-
         const body = await responseBody(response);
-
-        assertNoSensitiveErrorDetails(
-          body,
-          'Invalid route response'
-        );
-
-        assertNoSensitiveHeaders(
-          response,
-          'Invalid route response'
-        );
+        assertNoForbiddenKeys(body, 'Invalid route response');
+        assertNoSensitiveErrorDetails(body, 'Invalid route response');
+        assertNoSensitiveHeaders(response, 'Invalid route response');
       }
     );
-
     await t.test(
       'Malformed JSON errors do not reveal implementation details',
       async () => {
         const controller = new AbortController();
-
         const timeout = setTimeout(
           () => controller.abort(),
           TIMEOUT_MS
         );
-
         let response;
-
         try {
-          response = await fetch(`${BASE_URL}${APPLICATIONS_PATH}`, {
-            method: 'POST',
-            headers: authHeaders({
-              'Content-Type': 'application/json',
-            }),
-            body: '{"application":',
-            redirect: 'manual',
-            signal: controller.signal,
-          });
+          response = await fetch(
+            `${BASE_URL}${APPLICATIONS_PATH}`,
+            {
+              method: 'POST',
+              headers: authHeaders(TOKEN, {}, true),
+              body: '{"application":',
+              redirect: 'manual',
+              signal: controller.signal,
+            }
+          );
         } finally {
           clearTimeout(timeout);
         }
-
-        assertClientError(
-          response,
-          'Malformed JSON request'
-        );
-
+        assertClientError(response, 'Malformed JSON request');
         const body = await responseBody(response);
-
-        assertNoSensitiveErrorDetails(
-          body,
-          'Malformed JSON response'
-        );
-
-        assertNoSensitiveHeaders(
-          response,
-          'Malformed JSON response'
-        );
+        assertNoForbiddenKeys(body, 'Malformed JSON response');
+        assertNoSensitiveErrorDetails(body, 'Malformed JSON response');
+        assertNoSensitiveHeaders(response, 'Malformed JSON response');
       }
     );
-
     await t.test(
-      'Server errors do not disclose stack traces or database credentials',
+      'Invalid application identifier errors do not disclose internals',
       async () => {
-        // This malformed identifier probes error handling without
-        // intentionally causing an application-wide server failure.
-        const response = await request(
-          `${APPLICATIONS_PATH}/__invalid_security_test_id__`
-        );
-
-        assert.ok(
-          response.status < 500,
-          `Invalid identifier returned HTTP ${response.status}`
-        );
-
+        const path =
+          `${APPLICATIONS_PATH}/__invalid_security_test_id__`;
+        const response = await request(path);
+        assertNoServerError(response, 'Invalid application identifier');
         const body = await responseBody(response);
-
-        assertNoSensitiveErrorDetails(
-          body,
-          'Invalid identifier response'
-        );
+        assertNoForbiddenKeys(body, 'Invalid application identifier');
+        assertNoSensitiveErrorDetails(body, 'Invalid application identifier');
+        assertNoSensitiveHeaders(response, 'Invalid application identifier');
       }
     );
-
     await t.test(
-      'Responses do not include internal diagnostic headers',
+      'Users endpoint does not include diagnostic response headers',
       async () => {
         const response = await request(USERS_PATH);
-
-        assert.ok(
-          response.status < 500,
-          `Users endpoint returned HTTP ${response.status}`
-        );
-
+        assertNoServerError(response, 'Users diagnostic header probe');
         assertNoSensitiveHeaders(
           response,
-          'Users endpoint'
+          'Users diagnostic header probe'
         );
       }
     );
   }
 );
-
-test(
-  'Sensitive data inspection helpers',
-  () => {
-    const safePayload = {
-      id: 'user-test-1',
-      displayName: 'Security Test User',
-      role: 'user',
-    };
-
-    const unsafePayload = {
-      user: {
-        passwordHash: 'not-a-real-hash',
-      },
-    };
-
-    assert.equal(
-      inspectObject(safePayload).length,
-      0,
-      'Safe sample should have no forbidden fields'
-    );
-
-    assert.ok(
-      inspectObject(unsafePayload).length > 0,
-      'Credential-bearing sample should be detected'
-    );
-
-    assert.ok(
-      inspectText(
-        'Error: failure at handler (/app/node_modules/example.js:10:2)'
-      ).length > 0,
-      'Stack trace sample should be detected'
-    );
-
-    assert.ok(
-      inspectText(
-        'postgres://test-user:test-password@localhost:5432/testdb'
-      ).length > 0,
-      'Database URL sample should be detected'
-    );
-  }
-);
+test('Sensitive data inspection helper invariants', () => {
+  const safePayload = {
+    id: 'security-test-user',
+    displayName: 'Security Test User',
+    role: 'user',
+  };
+  const unsafePayload = {
+    user: {
+      passwordHash: 'example-only',
+    },
+  };
+  assert.deepEqual(
+    inspectObject(safePayload),
+    [],
+    'Safe sample should not contain forbidden fields'
+  );
+  assert.ok(
+    inspectObject(unsafePayload).length > 0,
+    'Password hash field should be detected'
+  );
+  assert.ok(
+    inspectObject({ mfa_secret: 'example-only' }).length > 0,
+    'MFA secret field should be detected'
+  );
+  assert.ok(
+    inspectText(
+      'Error at handler (/app/node_modules/example.js:10:2)'
+    ).length > 0,
+    'Stack trace sample should be detected'
+  );
+  assert.ok(
+    inspectText(
+      'postgres://test-user:test-password@localhost:5432/testdb'
+    ).length > 0,
+    'Database connection URL sample should be detected'
+  );
+  assert.ok(
+    inspectText(
+      'client_secret=example-secret-value'
+    ).length > 0,
+    'Secret assignment sample should be detected'
+  );
+});

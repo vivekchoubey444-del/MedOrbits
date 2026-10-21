@@ -1,31 +1,28 @@
+
 openapi: 3.1.0
 
 info:
   title: MedOrbits API
-  version: 1.0.0
+  version: 1.2.0
   summary: API contract for the MedOrbits education and career platform.
   description: |
-    Initial API contract for MedOrbits.
+    MedOrbits API specification for education discovery, applications,
+    careers, authentication, and payment-provider integrations.
 
-    This specification documents intended API behavior and must be verified
-    against the implemented server, middleware, database schema, and
-    payment-provider integration before being treated as authoritative.
-
-    The server URL is a placeholder. Replace it with the deployed API base URL.
+    IMPORTANT:
+    This specification describes the intended contract. Verify every
+    endpoint, schema, status code, middleware, and response envelope against
+    the deployed implementation before releasing generated clients.
 
     Security requirements:
-      - Authenticate and authorize protected operations on the server.
-      - Validate and normalize all user-controlled input.
-      - Avoid disclosing account existence in authentication recovery flows.
-      - Never trust client-submitted payment status or role assignments.
-      - Verify payment-provider webhook signatures before processing events.
-      - Return consistent errors without exposing stack traces or secrets.
-
-    Contract conventions:
-      - JSON is used for request and response bodies unless stated otherwise.
-      - Identifiers are represented as strings in this initial public contract.
-      - Pagination is one-based.
-      - Unimplemented or unverified operations must not be treated as available.
+      - Enforce authentication and authorization server-side.
+      - Validate all input and reject unsupported fields.
+      - Derive resource ownership from authenticated identity.
+      - Never trust client-supplied roles, payment status, or payable amounts.
+      - Do not expose secrets, password hashes, private records, or stack traces.
+      - Verify payment-provider webhook signatures against the exact raw body.
+      - Use idempotency and transactional protections for financial operations.
+      - Apply rate limits to authentication, recovery, search, and public forms.
 
   contact:
     name: MedOrbits API Team
@@ -37,36 +34,38 @@ servers:
   - url: https://example.invalid/api
     description: PLACEHOLDER -- replace with the deployed API base URL.
 
+externalDocs:
+  description: Replace with the published MedOrbits API documentation URL.
+  url: https://example.invalid/docs/api
+
 tags:
   - name: Health
-    description: Service availability and readiness.
+    description: Health and readiness checks.
   - name: Authentication
-    description: User authentication and session management.
+    description: Authentication and session management.
   - name: Courses
     description: Public course discovery.
   - name: Applications
     description: Authenticated application management.
   - name: Jobs
-    description: Published job discovery.
+    description: Public job discovery.
   - name: Payments
-    description: Payment-provider webhook integration.
+    description: Payment-provider event processing.
+
+security:
+  - sessionAuth: []
 
 paths:
   /health:
     get:
-      tags:
-        - Health
-      summary: Check service health
-      description: |
-        Returns the service health state. Confirm whether this endpoint
-        represents liveness, readiness, or both in the deployed server.
-        Do not expose secrets, environment variables, or sensitive
-        infrastructure details.
+      tags: [Health]
       operationId: getHealth
+      summary: Check service health
+      x-implementation-status: verify
       security: []
       responses:
         '200':
-          description: Service is healthy.
+          description: Service health check succeeded.
           content:
             application/json:
               schema:
@@ -80,39 +79,25 @@ paths:
 
   /auth/login:
     post:
-      tags:
-        - Authentication
-      summary: Authenticate a user
-      description: |
-        Authenticates a user with the supplied credentials.
-
-        If the implementation uses cookie-based sessions, establish the
-        session using an appropriately configured Set-Cookie response.
-        Do not return passwords, password hashes, or session secrets in
-        the response body.
-
-        Apply rate limiting and return a generic authentication failure
-        that does not unnecessarily disclose account existence.
+      tags: [Authentication]
       operationId: login
+      summary: Authenticate a user
+      x-implementation-status: verify
       security: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
       requestBody:
         required: true
-        description: User credentials.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
-            example:
-              email: user@example.com
-              password: example-password
       responses:
         '200':
           description: Authentication succeeded.
           headers:
             Set-Cookie:
-              description: |
-                Session cookie when cookie-based authentication is used.
-                Actual cookie attributes are configured by the server.
+              description: Session cookie if cookie authentication is implemented.
               schema:
                 type: string
           content:
@@ -122,15 +107,11 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          description: Authentication failed.
+          description: Credentials were rejected.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: AUTHENTICATION_FAILED
-                  message: Unable to authenticate with the supplied credentials.
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
         '422':
@@ -144,51 +125,34 @@ paths:
 
   /auth/logout:
     post:
-      tags:
-        - Authentication
-      summary: End the current session
-      description: |
-        Ends the authenticated user's current session.
-
-        The server must invalidate the session where applicable and clear
-        the session cookie using compatible cookie attributes.
-
-        This operation is an addition to the initial scaffold. Confirm
-        the actual route and logout behavior before enabling it.
+      tags: [Authentication]
       operationId: logout
-      security:
-        - sessionAuth: []
+      summary: End the current session
+      x-implementation-status: verify
       responses:
         '204':
-          description: Session ended successfully.
+          description: Session invalidated successfully; no response body.
           headers:
             Set-Cookie:
-              description: Expired session cookie when cookie authentication is used.
+              description: Expired session cookie, if applicable.
               schema:
                 type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /auth/me:
     get:
-      tags:
-        - Authentication
-      summary: Get the current authenticated user
-      description: |
-        Returns the identity and permitted account information associated
-        with the current session. Never return password hashes, session
-        secrets, or other authentication credentials.
-
-        This operation is a proposed addition. Confirm that the backend
-        exposes an equivalent endpoint before using it.
+      tags: [Authentication]
       operationId: getCurrentUser
-      security:
-        - sessionAuth: []
+      summary: Get the authenticated user
+      x-implementation-status: verify
       responses:
         '200':
-          description: Current user information.
+          description: Current user's permitted account information.
           content:
             application/json:
               schema:
@@ -200,31 +164,23 @@ paths:
 
   /courses:
     get:
-      tags:
-        - Courses
-      summary: List available courses
-      description: |
-        Returns published or otherwise publicly available courses according
-        to the platform's visibility rules.
-
-        Pagination parameters are one-based. The actual response structure
-        must be aligned with the existing course service.
+      tags: [Courses]
       operationId: listCourses
+      summary: List publicly available courses
+      x-implementation-status: verify
       security: []
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - name: search
           in: query
-          required: false
-          description: Optional text search across supported course fields.
+          description: Search supported public course fields.
           schema:
             type: string
             minLength: 1
             maxLength: 150
         - name: category
           in: query
-          required: false
           description: Filter by a supported course category.
           schema:
             type: string
@@ -248,31 +204,21 @@ paths:
 
   /applications:
     get:
-      tags:
-        - Applications
-      summary: List the authenticated user's applications
-      description: |
-        Returns applications owned by the authenticated user, subject to
-        server-side authorization and data-access policies.
-
-        Never allow a client to retrieve another user's applications by
-        changing a query parameter or identifier.
+      tags: [Applications]
       operationId: listApplications
-      security:
-        - sessionAuth: []
+      summary: List the current user's applications
+      x-implementation-status: verify
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - name: status
           in: query
-          required: false
-          description: Filter by a status supported by the application service.
           schema:
             type: string
             maxLength: 50
       responses:
         '200':
-          description: Paginated applications belonging to the current user.
+          description: Applications accessible to the authenticated user.
           content:
             application/json:
               schema:
@@ -289,37 +235,25 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     post:
-      tags:
-        - Applications
-      summary: Create an application
-      description: |
-        Creates an application for the authenticated user.
-
-        The server must validate that the requested course and optional
-        institution exist and are eligible for application submission.
-        The server determines ownership from the authenticated session,
-        not from a client-supplied user ID.
-
-        Confirm whether the implementation creates a draft or immediately
-        submits an application before defining its final business semantics.
+      tags: [Applications]
       operationId: createApplication
-      security:
-        - sessionAuth: []
+      summary: Create an application
+      x-implementation-status: verify
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ApplicationCreateRequest'
-            example:
-              courseId: course_123
-              institutionId: institution_456
       responses:
         '201':
-          description: Application created.
+          description: Application created and persisted.
           headers:
             Location:
-              description: Relative or absolute URI identifying the created resource.
+              description: URI identifying the created resource.
               schema:
                 type: string
                 format: uri-reference
@@ -334,13 +268,13 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: The requested course or institution was not found or is unavailable.
+          description: Related course or institution is unavailable.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: The request conflicts with application business rules.
+          description: Application conflicts with business rules.
           content:
             application/json:
               schema:
@@ -351,49 +285,39 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /jobs:
     get:
-      tags:
-        - Jobs
-      summary: Search published jobs
-      description: |
-        Returns published jobs visible to the requesting user.
-
-        Only expose public listing fields. Do not return private employer
-        details, applicant records, or internal moderation information
-        unless separately authorized.
+      tags: [Jobs]
       operationId: listJobs
+      summary: Search published jobs
+      x-implementation-status: verify
       security: []
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - name: search
           in: query
-          required: false
-          description: Optional text search over supported job fields.
           schema:
             type: string
             minLength: 1
             maxLength: 150
         - name: location
           in: query
-          required: false
-          description: Optional location filter.
           schema:
             type: string
             minLength: 1
             maxLength: 150
         - name: employmentType
           in: query
-          required: false
-          description: Filter by a supported employment type.
           schema:
             type: string
             maxLength: 50
       responses:
         '200':
-          description: Paginated published job results.
+          description: Paginated public job results.
           content:
             application/json:
               schema:
@@ -409,61 +333,65 @@ paths:
 
   /payments/webhook:
     post:
-      tags:
-        - Payments
-      summary: Receive a payment-provider webhook
-      description: |
-        Receives an event from the configured payment provider.
-
-        This endpoint must verify the provider's signature using the exact
-        raw request body and the provider's documented verification method
-        before trusting or processing the event.
-
-        Validate event identifiers, event types, and relevant payment
-        references. Process events idempotently to prevent duplicate
-        payment updates. Do not trust browser-submitted payment status.
-
-        The signature header, content type, payload, and response semantics
-        are provider-specific and must be documented after a provider is
-        selected.
-
-        The JSON schema below is intentionally not specified because the
-        provider's actual event format is not yet established.
+      tags: [Payments]
       operationId: receivePaymentWebhook
-      security: []
+      summary: Receive a payment-provider event
+      x-implementation-status: verify
+      description: |
+        This contract is provider-neutral. Configure the exact signature
+        header, event schema, content type, and response behavior for the
+        selected payment provider before enabling this endpoint.
+
+        Verify the signature against the exact raw body. Validate the event
+        and merchant identity. Process events idempotently and prevent
+        duplicate fulfilment or subscription entitlement changes.
+
+        This endpoint uses provider signature authentication, not the normal
+        user session cookie.
+      security:
+        - paymentProviderSignature: []
       parameters:
         - name: X-Provider-Signature
           in: header
           required: true
-          description: |
-            Illustrative signature-header name only. Replace it with the
-            exact header required by the selected payment provider.
+          description: Placeholder header; replace with the provider's actual header.
           schema:
             type: string
             minLength: 1
+        - $ref: '#/components/parameters/RequestId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              description: Provider-specific event payload; schema not yet defined.
+              description: Provider-specific event schema must be defined before release.
               additionalProperties: true
       responses:
         '200':
           description: Event accepted or already processed.
         '400':
-          description: Invalid or malformed event.
+          description: Event is malformed or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Signature verification failed.
+          description: Provider signature verification failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '413':
-          description: Request body exceeds the configured size limit.
+          description: Request body exceeds the configured limit.
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
         '429':
           $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 components:
   securitySchemes:
@@ -472,14 +400,18 @@ components:
       in: cookie
       name: session
       description: |
-        Cookie-based session authentication.
+        Placeholder cookie name. Replace with the actual configured cookie.
+        If the application uses bearer tokens, replace this scheme with the
+        implemented authentication scheme.
 
-        Replace the cookie name with the actual configured session-cookie
-        name. The server must validate the session and enforce authorization
-        on every protected operation.
-
-        If the backend uses bearer tokens instead, define the corresponding
-        HTTP bearer scheme and document its actual behavior.
+    paymentProviderSignature:
+      type: apiKey
+      in: header
+      name: X-Provider-Signature
+      description: |
+        Illustrative provider signature header only. OpenAPI describes the
+        header location, but server-side code must perform cryptographic
+        signature verification using the provider's documented algorithm.
 
   parameters:
     Page:
@@ -496,24 +428,41 @@ components:
       name: limit
       in: query
       required: false
-      description: Maximum number of items per page.
+      description: Maximum number of results per page.
       schema:
         type: integer
         minimum: 1
         maximum: 100
         default: 20
 
+    RequestId:
+      name: X-Request-ID
+      in: header
+      required: false
+      description: Optional client correlation identifier. Validate and limit its length.
+      schema:
+        type: string
+        maxLength: 128
+
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Optional idempotency key for safe retry handling. This header only
+        has an effect if the server implements durable idempotency handling.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+
   responses:
     BadRequest:
-      description: The request is malformed or contains invalid parameters.
+      description: Malformed request or invalid parameters.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: BAD_REQUEST
-              message: The request could not be processed.
 
     Unauthorized:
       description: Authentication is missing, invalid, or expired.
@@ -521,48 +470,33 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: UNAUTHORIZED
-              message: Authentication is required.
 
     Forbidden:
-      description: The authenticated user is not authorized to perform the operation.
+      description: The caller lacks permission.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: FORBIDDEN
-              message: You are not permitted to perform this operation.
 
     ValidationError:
-      description: The request failed input or business validation.
+      description: Input validation failed.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: VALIDATION_ERROR
-              message: One or more fields are invalid.
-              details:
-                - field: courseId
-                  message: A valid course identifier is required.
 
     UnsupportedMediaType:
-      description: The request content type is not supported.
+      description: Unsupported request content type.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     RateLimitExceeded:
-      description: The request rate limit has been exceeded.
+      description: Request rate limit exceeded.
       headers:
         Retry-After:
-          description: Number of seconds to wait before retrying, when provided.
+          description: Seconds to wait before retrying, when provided.
           schema:
             type: integer
             minimum: 0
@@ -570,71 +504,51 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: RATE_LIMIT_EXCEEDED
-              message: Too many requests. Please try again later.
 
     InternalServerError:
-      description: An unexpected server error occurred.
+      description: Unexpected server error.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: INTERNAL_SERVER_ERROR
-              message: An unexpected error occurred.
 
     ServiceUnavailable:
-      description: The service is temporarily unavailable.
+      description: Service or required dependency is temporarily unavailable.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: SERVICE_UNAVAILABLE
-              message: The service is temporarily unavailable.
 
   schemas:
     HealthResponse:
       type: object
       additionalProperties: false
-      required:
-        - status
+      required: [status]
       properties:
         status:
           type: string
-          enum:
-            - ok
-          description: Indicates that the service reports itself as healthy.
+          enum: [ok]
 
     LoginRequest:
       type: object
       additionalProperties: false
-      required:
-        - email
-        - password
+      required: [email, password]
       properties:
         email:
           type: string
           format: email
           maxLength: 254
-          description: Registered email address.
         password:
           type: string
           format: password
           minLength: 1
           maxLength: 1024
           writeOnly: true
-          description: Account password. Never log or return this value.
 
     LoginResponse:
       type: object
       additionalProperties: false
-      required:
-        - user
+      required: [user]
       properties:
         user:
           $ref: '#/components/schemas/CurrentUser'
@@ -642,8 +556,7 @@ components:
     CurrentUserResponse:
       type: object
       additionalProperties: false
-      required:
-        - user
+      required: [user]
       properties:
         user:
           $ref: '#/components/schemas/CurrentUser'
@@ -651,39 +564,27 @@ components:
     CurrentUser:
       type: object
       additionalProperties: false
-      required:
-        - id
-        - email
+      required: [id, email]
       properties:
         id:
           type: string
           minLength: 1
-          description: Public or API-facing user identifier.
         name:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
           maxLength: 200
         email:
           type: string
           format: email
         emailVerified:
           type: boolean
-          description: Include only if supported by the account model.
         role:
           type: string
-          description: |
-            Include only the role information permitted by the application's
-            authorization and disclosure policy.
+          description: Only expose role information permitted by the access policy.
 
     Pagination:
       type: object
       additionalProperties: false
-      required:
-        - page
-        - limit
-        - total
-        - totalPages
+      required: [page, limit, total, totalPages]
       properties:
         page:
           type: integer
@@ -695,18 +596,14 @@ components:
         total:
           type: integer
           minimum: 0
-          description: Total matching records, if the service provides an exact count.
         totalPages:
           type: integer
           minimum: 0
-          description: Total pages based on the selected page size.
 
     Course:
       type: object
       additionalProperties: true
-      required:
-        - id
-        - name
+      required: [id, name]
       properties:
         id:
           type: string
@@ -722,21 +619,15 @@ components:
           type: string
           maxLength: 100
         description:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
         durationMonths:
-          type:
-            - integer
-            - 'null'
+          type: [integer, 'null']
           minimum: 1
 
     CourseListResponse:
       type: object
       additionalProperties: false
-      required:
-        - data
-        - pagination
+      required: [data, pagination]
       properties:
         data:
           type: array
@@ -748,31 +639,24 @@ components:
     ApplicationCreateRequest:
       type: object
       additionalProperties: false
-      required:
-        - courseId
+      required: [courseId]
       properties:
         courseId:
           type: string
           minLength: 1
           maxLength: 100
         institutionId:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
           minLength: 1
           maxLength: 100
-          description: Optional institution identifier, if supported.
       description: |
-        Do not accept a userId as an ownership authority from the client.
-        Derive application ownership from the authenticated user.
+        The client must not submit userId as an ownership authority.
+        The server derives the applicant identity from authentication.
 
     Application:
       type: object
       additionalProperties: true
-      required:
-        - id
-        - courseId
-        - status
+      required: [id, courseId, status]
       properties:
         id:
           type: string
@@ -781,14 +665,10 @@ components:
           type: string
           minLength: 1
         institutionId:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
         status:
           type: string
-          description: |
-            Application status defined by the implemented application
-            service. Confirm the exact permitted status values.
+          description: Must match the implemented application state model.
         createdAt:
           type: string
           format: date-time
@@ -796,8 +676,7 @@ components:
     ApplicationResponse:
       type: object
       additionalProperties: false
-      required:
-        - data
+      required: [data]
       properties:
         data:
           $ref: '#/components/schemas/Application'
@@ -805,9 +684,7 @@ components:
     ApplicationListResponse:
       type: object
       additionalProperties: false
-      required:
-        - data
-        - pagination
+      required: [data, pagination]
       properties:
         data:
           type: array
@@ -819,9 +696,7 @@ components:
     Job:
       type: object
       additionalProperties: true
-      required:
-        - id
-        - title
+      required: [id, title]
       properties:
         id:
           type: string
@@ -840,22 +715,16 @@ components:
           type: string
           maxLength: 50
         location:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
           maxLength: 200
         publishedAt:
-          type:
-            - string
-            - 'null'
+          type: [string, 'null']
           format: date-time
 
     JobListResponse:
       type: object
       additionalProperties: false
-      required:
-        - data
-        - pagination
+      required: [data, pagination]
       properties:
         data:
           type: array
@@ -867,38 +736,30 @@ components:
     ErrorResponse:
       type: object
       additionalProperties: false
-      required:
-        - error
+      required: [error]
       properties:
         error:
           type: object
           additionalProperties: false
-          required:
-            - code
-            - message
+          required: [code, message]
           properties:
             code:
               type: string
               minLength: 1
               maxLength: 100
-              description: Stable machine-readable error code.
             message:
               type: string
               minLength: 1
               maxLength: 500
-              description: Safe human-readable error message.
             requestId:
               type: string
-              maxLength: 200
-              description: Optional request identifier for troubleshooting.
+              maxLength: 128
             details:
               type: array
-              description: Optional field-level validation details.
               items:
                 type: object
                 additionalProperties: false
-                required:
-                  - message
+                required: [message]
                 properties:
                   field:
                     type: string

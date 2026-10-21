@@ -1,38 +1,41 @@
+MedOrbits — Utilities
 
-# MedOrbits — Utilities
+Directory: src/utils/
+Runtime: Node.js >= 20
+Module system: CommonJS
+Status: Architecture and implementation reference
 
-**Directory:** `src/utils/`
+1. Purpose
 
-## 1. Purpose
-
-The `src/utils/` directory contains reusable, framework-aware and framework-independent helper modules used throughout the MedOrbits application.
-
-Utilities provide common technical functionality so that controllers, services, middleware, routes, and other modules can follow consistent implementation patterns.
+The src/utils/ directory contains reusable technical helpers shared across the MedOrbits application.
 
 Utilities should be focused, predictable, independently testable, and free from unnecessary business logic.
 
-Core responsibilities include:
+Responsibilities include:
 
-- Application error construction.
-- Asynchronous Express handler wrapping.
-- Standardized HTTP response helpers.
-- Pagination calculations and metadata.
-- Cryptographic token generation and password hashing.
-- Input validation helpers.
-- Input normalization and context-specific output escaping.
+* Application error construction.
+* Asynchronous Express handler wrapping.
+* Standardized HTTP responses.
+* Pagination calculations and metadata.
+* Cryptographic token generation and password hashing.
+* Input validation and normalization.
+* Recursive input sanitization and context-specific output escaping.
 
-This document defines the intended architecture. The files listed below must be verified against the actual repository before they are considered implemented.
+Implementation status: This document describes the intended architecture and the utility implementations discussed during development. It does not establish that every file exists, every export is compatible, or that tests have passed. Verify the current repository before treating any component as production-ready.
 
-## 2. Architecture
+2. Architecture
 
-```text
 HTTP Request
     |
     v
-Routes and Middleware
+Express Middleware
+    |
+    +—> Request parsing and request ID
+    +—> Authentication and authorization
+    +—> Rate limiting
     |
     v
-Validators
+Routes and Endpoint Validators
     |
     v
 Controllers
@@ -44,27 +47,25 @@ Services
 Repositories
     |
     v
-Database
-```
+Database / External Providers
 
-Shared utilities support these layers without replacing their responsibilities.
+Errors flow through centralized Express error middleware.
 
-| Layer | Responsibility |
-|—|—|
-| Utilities | Reusable technical helpers and shared primitives. |
-| Validators | Validate request structure, types, and field constraints. |
-| Middleware | Authentication, authorization, rate limiting, and request processing. |
-| Controllers | Coordinate HTTP requests and responses. |
-| Services | Business rules and application workflows. |
-| Repositories | Data access and persistence. |
+Layer	Responsibility
+Utilities	Shared technical helpers and primitives
+Validators	Request schemas, types, field constraints and allowlists
+Middleware	Authentication, authorization, rate limiting and request processing
+Controllers	HTTP request and response coordination
+Services	Business rules and application workflows
+Repositories	Database access and persistence
+Error middleware	Error classification, logging and safe HTTP error responses
 
-Utilities must not become a substitute for services, repositories, or authorization middleware.
+Utilities must not replace authorization, business rules, endpoint validation, or repository responsibilities.
 
-## 3. Directory Structure
+3. Directory structure
 
-Recommended structure:
+Recommended inventory:
 
-```text
 src/
 └── utils/
     ├── README.md
@@ -76,102 +77,101 @@ src/
     ├── pagination.js
     ├── sanitize.js
     └── validation.js
-```
 
-This is a reference inventory based on the utility modules discussed during development. Confirm filenames and exports against the current source code before importing them.
+Do not create duplicate modules simply to match this list. Inspect the actual files, their exports, and their consumers first.
 
-Do not create duplicate modules merely because they appear in this document.
+4. Utility contracts
 
-## 4. Utility Responsibilities
+4.1 app-error.js
 
-### 4.1 `app-error.js`
+Purpose: Represent application errors consistently.
 
-**Purpose:** Construct standardized application errors.
+Expected default export:
 
-The discussed implementation exports an `AppError` class.
+const AppError = require(‘../utils/app-error’);
 
 Expected capabilities include:
 
-- HTTP status codes.
-- Machine-readable error codes.
-- Operational error classification.
-- Optional error details.
-- Common factory methods for standard HTTP errors.
+* statusCode: HTTP status.
+* code: machine-readable error code.
+* isOperational: classification for expected application failures.
+* Optional details.
+* Optional underlying error cause.
+* Factory methods for common HTTP errors.
 
 Example:
-
-```js
-const AppError = require(‘./app-error’);
 
 throw AppError.notFound(‘Resource not found.’);
-```
 
-For an unimplemented operation:
+For a temporary service outage:
 
-```js
-throw AppError.notImplemented(
-  ‘This operation is not implemented.’,
+throw AppError.serviceUnavailable(
+  ‘Service temporarily unavailable.’,
   {
-    code: ‘NOT_IMPLEMENTED’,
+    code: ‘SERVICE_UNAVAILABLE’,
   }
 );
-```
 
-Errors are not HTTP responses. Centralized Express error middleware must convert them into safe client responses.
+The error object is not an HTTP response. Centralized error middleware must determine which message and details are safe to return.
 
-Never expose stack traces, database errors, secrets, tokens, or internal configuration details to clients.
+Compatibility requirements
 
-### 4.2 `async-handler.js`
+* Keep statusCode and code consistent with the centralized error middleware.
+* Treat unexpected 5xx failures as non-operational by default.
+* Do not expose stack traces, database errors, secrets, tokens, or internal configuration.
+* Preserve the underlying error for internal diagnostics without exposing it to clients.
 
-**Purpose:** Forward asynchronous and synchronous route-handler errors to Express error middleware.
+4.2 async-handler.js
 
-Expected import:
+Purpose: Forward synchronous exceptions and rejected promises to Express error middleware.
 
-```js
+Expected default export:
+
 const asyncHandler = require(‘../utils/async-handler’);
-```
 
 Example:
 
-```js
+const asyncHandler = require(‘../utils/async-handler’);
 router.get(
   ‘/example’,
   asyncHandler(async (req, res) => {
     const result = await someOperation();
-
-    return res.json({
+    return res.status(200).json({
       success: true,
       data: result,
     });
   })
 );
-```
 
-The wrapper must forward rejected promises and synchronous exceptions through `next(error)`.
+The wrapper must:
 
-It must not silently swallow errors or create successful responses after failures.
+* Reject non-function handler arguments.
+* Forward synchronous exceptions to next(error).
+* Forward rejected promises to next(error).
+* Preserve the handler’s execution context.
+* Avoid swallowing errors or generating success responses after failures.
 
-### 4.3 `http.js`
+The wrapper is especially useful for Express 4 compatibility. Express 5 also forwards rejected promises from returned route-handler promises automatically. Avoid accidentally forwarding the same failure more than once. See the Express error-handling guide.
 
-**Purpose:** Provide shared HTTP-related helpers.
+4.3 http.js
 
-The discussed version exports:
+Purpose: Provide shared HTTP-related helpers.
 
-```js
-asyncHandler
-sendSuccess
-httpError
-getPagination
-```
+The discussed implementation exports:
+
+const {
+  asyncHandler,
+  sendSuccess,
+  httpError,
+  getPagination,
+} = require(‘../utils/http’);
 
 Example:
 
-```js
 const {
   sendSuccess,
   httpError,
 } = require(‘../utils/http’);
-
 if (!resource) {
   throw httpError(
     404,
@@ -179,41 +179,43 @@ if (!resource) {
     ‘Resource not found.’
   );
 }
-
 return sendSuccess(res, resource);
-```
 
-`httpError()` should remain compatible with the centralized error middleware and the application’s error class.
+Expected responsibilities:
 
-**Compatibility requirement:** Keep the `http.js` and `app-error.js` contracts synchronized. If `httpError()` returns an `AppError`, middleware must read `statusCode`; if another error format is used, support it explicitly rather than relying on accidental property compatibility.
+* asyncHandler: delegate to the shared async wrapper.
+* sendSuccess: produce a standardized success response.
+* httpError: create an application error.
+* getPagination: parse bounded pagination query values.
 
-### 4.4 `api-response.js`
+Important contract difference: http.getPagination() and pagination.getPagination() are separate implementations. They must be tested for consistent defaults, maximum limits, page bounds, and offset behavior.
 
-**Purpose:** Standardize JSON response structures.
+Do not assume the two helpers are interchangeable without checking their signatures and output.
 
-The discussed response utility exports:
+4.4 api-response.js
 
-```js
+Purpose: Standardize API response formatting.
+
+The previously discussed interface includes:
+
 success
 created
 noContent
 paginated
 error
-```
 
-Successful response example:
+These exports must be confirmed against the actual src/utils/api-response.js implementation before use.
 
-```json
+Expected success response:
+
 {
   “success”: true,
   “message”: “Records retrieved successfully.”,
   “data”: []
 }
-```
 
-Error response example:
+Expected error response:
 
-```json
 {
   “success”: false,
   “error”: {
@@ -221,370 +223,385 @@ Error response example:
     “message”: “Resource not found.”
   }
 }
-```
 
-A request identifier may be included when available.
+A request identifier may be included when available. Pagination metadata should follow the agreed meta.pagination contract.
 
-Pagination responses should include metadata under the agreed `meta.pagination` contract.
+Do not mix response-helper signatures. The http.js and api-response.js utilities may use different argument orders and response structures. Verify each function’s implementation before adapting callers.
 
-**Important:** `api-response.js` and `http.js` may have different response signatures and payload shapes. Do not interchange their functions without adapting the caller.
+Ensure that:
 
-### 4.5 `crypto.js`
+* Reserved response fields cannot be overwritten by arbitrary metadata.
+* Error responses do not expose internal exceptions.
+* 204 No Content responses do not include a JSON body.
+* Response metadata follows one documented API contract.
+* Error middleware does not send a second response after the response has ended.
 
-**Purpose:** Provide cryptographic primitives using Node.js built-in modules.
+4.5 crypto.js
 
-The discussed implementation exports:
+Purpose: Provide cryptographic primitives using Node.js built-in modules.
 
-```js
-randomToken
-sha256
-hmacSha256
-safeEqual
-hashPassword
-verifyPassword
-```
+The discussed interface exports:
 
-Example:
-
-```js
 const {
   randomToken,
+  sha256,
+  hmacSha256,
+  safeEqual,
   hashPassword,
   verifyPassword,
 } = require(‘../utils/crypto’);
 
-const token = randomToken();
-const passwordHash = await hashPassword(password);
-
-const valid = await verifyPassword(
-  password,
-  passwordHash
-);
-```
-
 Security requirements:
 
-- Use cryptographically secure randomness.
-- Never store plaintext passwords.
-- Never log passwords or sensitive tokens.
-- Use password hashing rather than a fast general-purpose hash for password storage.
-- Keep HMAC secrets outside source control.
-- Use constant-time comparisons for equal-length secret-derived values.
-- Apply rate limiting to authentication and password verification.
-- Version password-hash formats if parameters may change.
+* Generate tokens using cryptographically secure randomness.
+* Store hashes rather than plaintext passwords.
+* Store password-reset token digests instead of raw reset tokens.
+* Use independent, purpose-specific HMAC secrets.
+* Keep secrets in validated environment configuration or a secret manager.
+* Apply rate limiting to login, password reset and verification endpoints.
+* Never derive unrestricted scrypt resource parameters from untrusted hash contents.
 
-The current discussed password-hashing implementation uses scrypt. Verification must only accept explicitly supported parameters and must not blindly allocate resources based on untrusted hash contents.
+Password-hash migration warning
 
-### 4.6 `pagination.js`
+The discussed implementation changed the serialized password-hash format from:
 
-**Purpose:** Calculate pagination values and metadata.
+scrypt$16384$8$1$salt$derivedKey
 
-The discussed implementation exports:
+to a versioned format:
 
-```js
-DEFAULT_PAGE
-DEFAULT_LIMIT
-MAX_LIMIT
-getPagination
-getPaginationMeta
-```
+scrypt$1$16384$8$1$salt$derivedKey
 
-Example:
+Existing hashes in the older format will not verify using a verifier that accepts only the new format.
 
-```js
+Before deployment, choose one of these approaches:
+
+1. Retain a strictly validated legacy verifier alongside the new format.
+2. Rehash successfully verified legacy passwords into the new format.
+3. Require a password reset if backward-compatible verification is not available.
+
+Do not deploy a format change that unexpectedly locks out existing users.
+
+Test compatibility with the current user database before migration.
+
+4.6 pagination.js
+
+Purpose: Calculate bounded pagination parameters and metadata.
+
+The discussed interface exports:
+
 const {
+  DEFAULT_PAGE,
+  DEFAULT_LIMIT,
+  MAX_LIMIT,
   getPagination,
   getPaginationMeta,
 } = require(‘../utils/pagination’);
 
-const pagination = getPagination(req.query);
+Example:
 
+const {
+  getPagination,
+  getPaginationMeta,
+} = require(‘../utils/pagination’);
+const pagination = getPagination(req.query);
 const rows = await repository.findMany({
   limit: pagination.limit,
   offset: pagination.offset,
 });
-
 const totalItems = await repository.count();
-
-const metadata = getPaginationMeta(
+const meta = getPaginationMeta(
   totalItems,
   pagination
 );
-```
 
-Expected pagination values:
+Pagination parameters:
 
-- `page`
-- `limit`
-- `offset`
-- `totalItems`
-- `totalPages`
-- `hasPreviousPage`
-- `hasNextPage`
-- `previousPage`
-- `nextPage`
+* page
+* limit
+* offset
 
-Apply the maximum page size consistently across endpoints.
+Pagination metadata:
 
-Validate query parameters strictly when malformed input must return HTTP 400. Do not let fallback defaults conceal invalid input where strict rejection is required.
+* page
+* limit
+* totalItems
+* totalPages
+* hasPreviousPage
+* hasNextPage
+* previousPage
+* nextPage
 
-### 4.7 `sanitize.js`
+Requirements:
 
-**Purpose:** Normalize selected input and perform context-specific escaping.
+* Apply maximum page-size limits consistently.
+* Check that offsets remain within the safe integer range.
+* Use parameterized SQL queries.
+* Count records using the same relevant filters as the paginated query.
+* Define whether malformed query parameters fall back to defaults or return HTTP 400.
+* Do not silently normalize invalid inputs when strict validation is required.
 
-The discussed implementation exports:
+A very large but valid offset can still cause expensive database queries. Consider database-specific pagination strategies for large datasets.
 
-```js
-DANGEROUS_KEYS
-sanitizeString
-sanitizeObject
-sanitizeSearchTerm
-escapeHtml
-```
+4.7 sanitize.js
 
-Example:
+Purpose: Normalize selected inputs and provide context-specific output escaping.
 
-```js
+The discussed interface exports:
+
 const {
+  DANGEROUS_KEYS,
+  sanitizeString,
+  sanitizeObject,
   sanitizeSearchTerm,
+  escapeHtml,
 } = require(‘../utils/sanitize’);
 
-const term = sanitizeSearchTerm(
-  req.query.search
-);
-```
+Responsibilities:
+
+* Bound string lengths.
+* Bound array lengths and object-property counts.
+* Limit nesting depth.
+* Detect circular references.
+* Reject unsupported object types where appropriate.
+* Filter dangerous object keys.
+* Normalize search terms.
+* Escape text for HTML text-node contexts.
 
 Security requirements:
 
-- Reject circular objects and unsupported object types where appropriate.
-- Apply maximum depth, string length, array length, and object-key limits.
-- Avoid unsafe object-key handling.
-- Do not silently truncate meaningful values unless the field’s contract explicitly permits it.
+* Avoid invoking arbitrary object getters during recursive processing.
+* Avoid unsafe object mutation and prototype-related hazards.
+* Do not assume sanitized data is authorized or semantically valid.
+* Do not treat HTML escaping as a universal sanitizer.
+* Do not use input sanitization as a substitute for parameterized SQL.
 
-`escapeHtml()` is intended for HTML text contexts. It is not a universal sanitizer for SQL, JavaScript, CSS, URLs, or rich HTML.
+escapeHtml() is intended for HTML text contexts. URLs, CSS, JavaScript, HTML attributes, and rich HTML require their own context-appropriate handling.
 
-Use parameterized database queries, proper URL validation, and framework output encoding as appropriate.
+Behavior to verify: The discussed implementation may truncate strings and arrays. Truncation should only occur where the API contract explicitly allows it. For required identifiers, emails, financial amounts, and other structured values, validate the original value rather than silently truncating it.
 
-### 4.8 `validation.js`
+4.8 validation.js
 
-**Purpose:** Provide basic reusable input-validation helpers.
+Purpose: Provide basic reusable field-validation helpers.
 
-The discussed implementation exports:
+The discussed interface exports:
 
-```js
-objectBody
-requiredString
-optionalString
-email
-positiveId
-```
+const {
+  objectBody,
+  requiredString,
+  optionalString,
+  email,
+  positiveId,
+} = require(‘../utils/validation’);
 
 Example:
 
-```js
 const {
   objectBody,
   requiredString,
   email,
 } = require(‘../utils/validation’);
-
 const body = objectBody(req.body);
-
 const name = requiredString(
   body.name,
   ‘name’,
   120
 );
-
 const normalizedEmail = email(body.email);
-```
 
-These helpers do not replace domain-specific validators.
+Responsibilities:
 
-Use `src/validators/` for endpoint schemas, field allowlists, nested structures, enums, and domain-specific constraints.
+* Validate object request bodies.
+* Validate required and optional strings.
+* Normalize email input and validate its format.
+* Validate positive integer resource identifiers.
 
-Validation should reject unsupported values rather than silently changing them to make them pass.
+These helpers do not replace endpoint schemas or domain-specific validators.
 
-## 5. Error-Handling Contract
+Use src/validators/ for:
 
-All application layers should follow a consistent error-handling strategy.
+* Field allowlists.
+* Nested request structures.
+* Enum constraints.
+* Cross-field validation.
+* Domain-specific rules.
+* File and upload constraints.
+* Payment and application workflows.
 
-1. Validators reject invalid request input.
-2. Controllers and services throw application errors for expected failures.
-3. `async-handler.js` forwards asynchronous and synchronous exceptions.
-4. Centralized Express error middleware determines the HTTP response.
-5. Response utilities format the response consistently.
+Validation should reject invalid input rather than silently modifying it into a valid-looking value.
 
-Recommended mapping:
+A positive integer validator is not appropriate for UUIDs or other string identifiers. Create separate validators for those identifier types.
 
-| Condition | HTTP status |
-|—|—:|
-| Invalid request | 400 |
-| Missing authentication | 401 |
-| Insufficient permissions | 403 |
-| Resource not found | 404 |
-| Duplicate or conflicting operation | 409 |
-| Invalid entity according to the chosen validation contract | 400 or 422 |
-| Rate limit exceeded | 429 |
-| Unimplemented operation | 501 |
-| Temporary service outage | 503 |
-| Unexpected internal failure | 500 |
+5. Error-handling contract
 
-Use one documented validation-error convention throughout the API.
+Application errors should follow one consistent path:
 
-Do not return HTTP 200 for failed operations or expose internal errors to clients.
+1. Request validators reject invalid input.
+2. Controllers and services throw appropriate application errors.
+3. Async wrappers forward uncaught handler failures.
+4. Centralized Express error middleware classifies the error.
+5. Safe response helpers format the response.
 
-## 6. Import and Export Conventions
+Recommended status conventions:
+
+Condition	HTTP status
+Malformed or invalid request	400
+Authentication required or invalid	401
+Insufficient permissions	403
+Resource not found	404
+Duplicate or conflicting operation	409
+Validly structured request with invalid entity data	422
+Rate limit exceeded	429
+Operation not implemented	501
+Temporary service outage	503
+Unexpected internal failure	500
+
+Choose one validation-error convention and use it consistently across the API.
+
+The centralized error handler must:
+
+* Recognize the application’s AppError contract.
+* Normalize untrusted error values safely.
+* Avoid exposing stack traces or internal error messages.
+* Log useful diagnostics without logging credentials or tokens.
+* Include a request identifier when available.
+* Respect res.headersSent and delegate appropriately when a response has already started.
+* Avoid sending multiple responses for a single request.
+
+6. Import and export conventions
 
 MedOrbits uses CommonJS.
 
-Use direct imports for default exports:
+For default exports:
 
-```js
 const AppError = require(‘../utils/app-error’);
 const asyncHandler = require(‘../utils/async-handler’);
-```
 
-Use destructured imports for named exports:
+For named exports:
 
-```js
 const {
   sendSuccess,
   httpError,
 } = require(‘../utils/http’);
-```
 
-Ensure that the import style matches the module’s actual `module.exports` contract.
-
-Do not destructure a class exported directly as `module.exports = AppError`.
+Do not destructure a class that is exported directly through module.exports = AppError.
 
 When changing utility exports:
 
-1. Search for all existing imports.
-2. Check route, controller, service, middleware, and test dependencies.
-3. Preserve existing public exports where possible.
-4. Update dependent code in a coordinated change.
-5. Run the relevant automated tests.
+1. Search the repository for all consumers.
+2. Check routes, controllers, services, middleware and tests.
+3. Preserve public interfaces where practical.
+4. Coordinate intentional breaking changes.
+5. Run relevant automated tests.
+6. Update this README to match the resulting implementation.
 
-## 7. Security Requirements
+7. Security and reliability requirements
 
-Every utility must follow these principles:
+Every utility should follow these principles:
 
-- Use Node.js built-in cryptographic functions for security-sensitive randomness.
-- Never hard-code secrets or credentials.
-- Avoid logging sensitive user information.
-- Validate configuration and resource limits.
-- Do not trust client-supplied role, price, payment status, or ownership information.
-- Keep authorization decisions outside generic sanitization and validation helpers.
-- Avoid unsafe object mutation and prototype-related hazards.
-- Use parameterized SQL queries.
-- Return safe, consistent error messages.
-- Avoid unnecessary global mutable state.
-- Document security-sensitive assumptions and limitations.
+* Never hard-code secrets or credentials.
+* Avoid logging sensitive user data.
+* Validate configuration and resource limits.
+* Keep authorization decisions in middleware and service-level policies.
+* Never trust client-supplied ownership, role, payment status or price values.
+* Use parameterized database queries.
+* Use cryptographic randomness and password-specific hashing.
+* Apply bounded recursion, input sizes and expensive operations.
+* Avoid swallowing errors or producing misleading fallback values.
+* Avoid unnecessary global mutable state.
+* Document assumptions and compatibility constraints.
 
-Utilities should not automatically grant permissions, mark payments as successful, approve applications, or bypass service-level policies.
+Utilities must never independently approve applications, grant permissions, mark payments successful, bypass subscription checks, or override service-level policies.
 
-## 8. Performance and Reliability
+8. Testing requirements
 
-Utilities should be small, deterministic, and easy to test.
+Each utility should have unit tests for its documented behavior.
 
-- Avoid unnecessary dependencies.
-- Avoid expensive work for malformed input.
-- Bound recursion, array lengths, string lengths, and request sizes.
-- Avoid unbounded cryptographic operations driven by user-controlled parameters.
-- Avoid swallowing errors and returning misleading fallback values.
-- Keep asynchronous behavior explicit.
-- Preserve existing contracts unless a migration is planned.
+app-error.js
 
-Password verification and cryptographic operations can consume significant CPU and memory. Apply appropriate concurrency controls and rate limits at the application layer.
+* Factory methods and default codes.
+* Valid and invalid status codes.
+* Operational classification.
+* Optional details and causes.
+* Centralized middleware compatibility.
 
-## 9. Testing Requirements
+async-handler.js
 
-Each utility should have unit tests covering its documented behavior.
+* Synchronous success.
+* Asynchronous success.
+* Synchronous exceptions.
+* Rejected promises.
+* Invalid handler arguments.
+* Correct error forwarding.
 
-### Error utilities
+http.js and api-response.js
 
-- Correct status codes and error codes.
-- Default values.
-- Optional details.
-- Malformed arguments.
-- Centralized middleware compatibility.
+* Response shape and status.
+* Metadata handling.
+* Invalid arguments.
+* Request identifiers.
+* Error formatting.
+* Empty-body responses.
+* Compatibility between utility contracts.
 
-### Async handler
+crypto.js
 
-- Successful synchronous handlers.
-- Successful asynchronous handlers.
-- Synchronous exceptions.
-- Rejected promises.
-- Invalid handler arguments.
+* Token size and encoding.
+* SHA-256 and HMAC results.
+* Equal and unequal comparisons.
+* Password hash and verification round trips.
+* Wrong-password rejection.
+* Malformed-hash rejection.
+* Legacy hash compatibility where required.
 
-### HTTP responses
+pagination.js
 
-- Correct status codes.
-- Expected response shape.
-- Optional metadata.
-- Request identifier handling.
-- Invalid response arguments.
+* Default values.
+* Minimum and maximum limits.
+* Invalid query handling.
+* Safe offset calculations.
+* Empty result sets.
+* Correct previous/next metadata.
+* Configurable options.
 
-### Cryptographic utilities
+sanitize.js and validation.js
 
-- Random token length and uniqueness checks.
-- Stable SHA-256 output.
-- HMAC behavior.
-- Equal and unequal comparison results.
-- Password hash and verification round trips.
-- Wrong-password rejection.
-- Malformed hash rejection.
-
-### Pagination
-
-- Default values.
-- Minimum and maximum limits.
-- Invalid input handling.
-- Safe offsets.
-- Empty result sets.
-- Correct next and previous page metadata.
-
-### Sanitization and validation
-
-- Plain strings and objects.
-- Unknown and dangerous keys.
-- Excessive nesting.
-- Circular references.
-- Invalid types.
-- Maximum lengths.
-- Malformed email addresses.
-- Invalid identifiers.
+* Valid and invalid inputs.
+* Length boundaries.
+* Unsupported types.
+* Dangerous object keys.
+* Circular objects.
+* Excessive nesting.
+* Malformed emails and identifiers.
+* Prototype-related edge cases.
 
 Do not claim a utility is tested until the relevant tests have actually run.
 
-## 10. Definition of Done
+9. Production-readiness checklist
 
-A utility is ready for production integration when:
+* [ ]	Actual utility files and exports match the documented inventory.
+* [ ]	CommonJS import paths resolve correctly.
+* [ ]	http.js and api-response.js have documented, non-conflicting contracts.
+* [ ]	Centralized error middleware recognizes AppError.
+* [ ]	Error responses do not disclose internal information.
+* [ ]	Password-hash migration compatibility is addressed.
+* [ ]	Pagination limits are consistent across endpoints.
+* [ ]	Input limits are appropriate for each field and endpoint.
+* [ ]	Authentication and authorization are enforced separately.
+* [ ]	Unit tests cover success, failure and boundary cases.
+* [ ]	Integration tests verify controller and middleware behavior.
+* [ ]	Tests have actually been executed.
+* [ ]	Documentation matches the current source code.
 
-- Its responsibility is clearly defined.
-- Its exports and import paths are stable.
-- Input and output contracts are documented.
-- Invalid input is handled predictably.
-- Security-sensitive behavior has been reviewed.
-- Unit tests cover expected and failure cases.
-- Existing consumers remain compatible.
-- Errors integrate with centralized middleware.
-- No unsupported business capability is implied.
-- Documentation matches the implementation.
+10. Maintenance policy
 
-## 11. Maintenance Policy
+Before modifying a utility:
 
-This README documents the intended utility architecture, not a verified inventory of the current repository.
-
-When adding or modifying a utility:
-
-1. Inspect the actual implementation and its consumers.
-2. Preserve established contracts unless a migration is intentional.
-3. Update affected imports, tests, and documentation.
-4. Avoid duplicate helpers with conflicting behavior.
-5. Verify response and error conventions across modules.
+1. Inspect the implementation and all consumers.
+2. Identify whether the change breaks an existing public contract.
+3. Update dependent imports, tests and documentation.
+4. Avoid introducing duplicate helpers with conflicting behavior.
+5. Verify error and response conventions.
 6. Review security and resource limits.
-7. Test compatibility before enabling dependent endpoints.
+7. Run the relevant tests before deployment.
 
-**Core rule:** Utilities provide shared technical building blocks. Validators validate input, middleware enforces cross-cutting controls, services implement business rules, repositories handle persistence, and centralized error middleware determines safe HTTP error responses.
+Core rule: Utilities provide shared technical building blocks. Validators validate input, middleware enforces cross-cutting controls, controllers coordinate HTTP requests, services implement business rules, repositories handle persistence, and centralized error middleware determines safe error responses.

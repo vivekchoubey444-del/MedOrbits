@@ -1,6 +1,6 @@
 MedOrbits Education Icons
 
-Directory: assets/icons/education/
+Directory: /assets/icons/education/
 Category: Education, Admissions and Student Services
 Brand: MedOrbits
 Design System: Royal Burgundy and Champagne Gold
@@ -13,13 +13,13 @@ Access: Public frontend assets
 
 The assets/icons/education/ directory contains reusable vector icons for education discovery, academic programmes, college and university information, admissions, entrance examinations, scholarships, student support, and study-abroad services.
 
-These icons provide a consistent visual language across the MedOrbits website, including course catalogues, institution profiles, admissions guidance, application forms, educational resources, dashboards, and comparison interfaces.
+These icons provide a consistent visual language across MedOrbits, including course catalogues, institution profiles, admissions guidance, application forms, educational resources, dashboards, and comparison interfaces.
 
-The collection should prioritize clarity, accessibility, visual consistency, lightweight assets, and reuse across the platform.
+The collection prioritizes clarity, accessibility, visual consistency, lightweight assets, and reuse across the platform.
 
 2. Directory Structure
 
-The following is the proposed icon inventory. Create each SVG only when it is required by the application and has been reviewed.
+The following is the proposed icon inventory. Create each SVG when required by the application and reviewed for quality.
 
 assets/icons/education/
 ├── README.md
@@ -71,25 +71,25 @@ assets/icons/education/
 ├── education-resources.svg
 └── academic-success.svg
 
-Inventory note: The filenames above define the proposed collection, not confirmation that all SVG files exist in the repository.
+Inventory note: These filenames define the proposed collection; they do not confirm that every SVG file exists in the repository.
 
 3. Icon Catalogue
 
 Category	Representative icons	Intended use
-General education	education.svg, academic-programme.svg, course.svg	Education landing pages, course discovery, and academic categories.
-Institutions	college.svg, university.svg, institution.svg, campus.svg	College listings, university profiles, and campus information.
-Learning	classroom.svg, online-learning.svg, distance-learning.svg, library.svg	Learning methods, academic resources, and library services.
-Admissions	admission.svg, admission-process.svg, application.svg, eligibility.svg	Admission guidance, application workflows, and eligibility information.
-Examinations	entrance-exam.svg, examination.svg, admit-card.svg, result.svg, merit-list.svg	Entrance examinations, examination resources, and published results.
-Counselling	counselling.svg, seat-allocation.svg	Counselling workflows and allocation-related information.
-Documents	required-documents.svg, document-verification.svg, certificate.svg, transcript.svg	Document checklists, verification, and academic records.
-Financial assistance	scholarship.svg, financial-aid.svg, education-loan.svg	Scholarships, financial support, and education financing.
-Fees	tuition-fees.svg, fee-payment.svg, fee-refund.svg	Fee guidance, payments, and refund information.
-Student services	hostel.svg, student-support.svg, student-profile.svg	Accommodation, student accounts, and support services.
-Academic progression	graduation.svg, research.svg, academic-success.svg	Graduation, research, and academic milestones.
-International education	study-abroad.svg, international-admission.svg, student-visa.svg, language-test.svg	International admissions and study-abroad guidance.
-Career preparation	career-pathway.svg	Connections between academic programmes and career options.
-General resources	academic-calendar.svg, education-resources.svg	Academic schedules, downloadable guides, and learning resources.
+General education	education.svg, academic-programme.svg, course.svg	Education landing pages, course discovery, academic categories
+Institutions	college.svg, university.svg, institution.svg, campus.svg	College listings, university profiles, campus information
+Learning	classroom.svg, online-learning.svg, distance-learning.svg, library.svg	Learning methods and academic resources
+Admissions	admission.svg, admission-process.svg, application.svg, eligibility.svg	Admission guidance, application workflows, eligibility
+Examinations	entrance-exam.svg, examination.svg, admit-card.svg, result.svg, merit-list.svg	Entrance examinations, examination resources, results
+Counselling	counselling.svg, seat-allocation.svg	Counselling workflows and allocation-related information
+Documents	required-documents.svg, document-verification.svg, certificate.svg, transcript.svg	Document checklists, verification, academic records
+Financial assistance	scholarship.svg, financial-aid.svg, education-loan.svg	Scholarships, financial support, education financing
+Fees	tuition-fees.svg, fee-payment.svg, fee-refund.svg	Fee guidance, payments, refund information
+Student services	hostel.svg, student-support.svg, student-profile.svg	Accommodation, student accounts, support services
+Academic progression	graduation.svg, research.svg, academic-success.svg	Graduation, research, academic milestones
+International education	study-abroad.svg, international-admission.svg, student-visa.svg, language-test.svg	International admissions and study-abroad guidance
+Career preparation	career-pathway.svg	Connections between academic programmes and career options
+General resources	academic-calendar.svg, education-resources.svg	Academic schedules, guides, educational resources
 
 4. Brand and Visual Design
 
@@ -97,17 +97,17 @@ All icons should follow the MedOrbits Royal Burgundy and Champagne Gold design s
 
 Recommended standards
 
-* Primary colour: Royal Burgundy, using the existing MedOrbits design tokens.
+* Primary colour: Royal Burgundy, aligned with existing MedOrbits design tokens.
 * Accent colour: Champagne Gold for emphasis and selected details.
 * Supporting colours: Complementary dark neutrals and accessible foreground colours.
 * Background: Transparent by default.
 * Style: Consistent outline or filled-vector treatment.
-* Geometry: Balanced proportions, clear silhouettes, and consistent visual weight.
+* Geometry: Balanced proportions, clear silhouettes, consistent visual weight.
 * Complexity: Simple enough to remain recognizable at small sizes.
 
 Use the same visual language across education, career, account, and other icon collections. Avoid creating a separate visual style for each directory.
 
-Prefer shared CSS variables or design tokens over hardcoded colours in individual SVG files where practical.
+Prefer shared CSS variables or design tokens over hardcoded colours in individual SVG files where practical. Where an SVG is loaded as an external image, ensure its colours render correctly without relying on CSS inheritance from the parent HTML element.
 
 5. SVG Technical Standards
 
@@ -122,10 +122,12 @@ Every published icon should:
 7. Contain no scripts, embedded event handlers, or unsafe external references.
 8. Render correctly at its intended display sizes.
 
-Example SVG structure:
+Example SVG structure
 
 <svg
   xmlns=“http://www.w3.org/2000/svg”
+  width=“24”
+  height=“24”
   viewBox=“0 0 24 24”
   fill=“none”
   stroke=“currentColor”
@@ -139,11 +141,13 @@ Example SVG structure:
 
 This is a structural example, not a complete icon. Replace the comment with valid SVG geometry before publishing the asset.
 
-When an SVG is loaded using an HTML img element, its internal currentColor does not automatically inherit the parent element’s CSS colour. Use a compatible rendering method or explicit SVG colours where necessary.
+Important: When an SVG is loaded using an HTML img element, its internal currentColor does not automatically inherit the parent element’s CSS colour. Use a compatible rendering method or explicit SVG colours where necessary.
 
 6. Usage in HTML
 
-For an HTML page located one directory below the project root:
+Adjust relative paths according to the actual location of the HTML page. Confirm that the referenced file exists before using it.
+
+Informative icon
 
 <img
   src=“../assets/icons/education/university.svg”
@@ -153,11 +157,9 @@ For an HTML page located one directory below the project root:
   loading=“lazy”
 />
 
-Adjust the relative path according to the actual location of the HTML page. Confirm that the referenced file exists before using it.
+Decorative icon
 
-Decorative icons
-
-For icons that provide decoration without additional meaning:
+For icons that add no information beyond nearby text:
 
 <img
   src=“../assets/icons/education/graduation.svg”
@@ -168,7 +170,7 @@ For icons that provide decoration without additional meaning:
   loading=“lazy”
 />
 
-Use an empty alt value only when the icon is decorative or its meaning is already conveyed adequately by the surrounding content.
+Use an empty alt value only when the icon is decorative or its meaning is already adequately conveyed by surrounding content.
 
 Icons in interactive controls
 
@@ -202,16 +204,16 @@ Use education icons where they improve comprehension and navigation across:
 * Academic documents and verification workflows.
 * Study-abroad and international-admission resources.
 * Student dashboards and education-support services.
-* Career pathway and professional-development pages.
+* Career-pathway and professional-development pages.
 
 Integration principles
 
 * Reuse one icon consistently for the same concept.
-* Prefer existing shared icons when a suitable equivalent is already available.
+* Prefer existing shared icons when a suitable equivalent already exists.
 * Avoid duplicate assets that differ only by size or colour.
 * Keep filenames stable so page references remain predictable.
 * Use CSS to control layout and display size.
-* Do not use an icon as a substitute for explanatory text where users need detailed guidance.
+* Do not use an icon as a substitute for explanatory text when users need detailed guidance.
 
 Icons are visual interface assets. Store downloadable guides, checklists, brochures, and other documents in their designated directories under assets/documents/.
 

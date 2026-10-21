@@ -1,282 +1,452 @@
-MedOrbits Middleware
 
-Directory: src/middleware/
+# MedOrbits — Middleware Architecture and Security Contract
 
-1. Purpose
+**Directory:** `src/middleware/`  
+**Runtime:** Node.js ≥ 20  
+**Framework:** Express.js  
+**Purpose:** Centralized request processing, authentication, authorization, validation, security controls, and error handling.
 
-The middleware layer provides reusable request-processing, authentication, authorization, validation, security, and error-handling components for the MedOrbits Express backend.
+## 1. Purpose and Scope
 
-Middleware is mounted explicitly in server.js, src/app.js, or individual route modules, depending on the existing application bootstrap.
+The MedOrbits middleware layer provides reusable security and operational controls for the Express application.
 
-These modules are security building blocks. Their presence does not prove that a route is protected or that a security control is correctly configured.
+Middleware is mounted explicitly through `server.js`, `src/app.js`, or individual route modules. Each component must have a documented contract, validated configuration, predictable error behavior, and tests.
 
-2. Middleware Modules
+**Security principle:** a middleware file existing in the repository does not prove that it is configured, mounted, or protecting a route.
 
-File	Responsibility
-authenticate.js	Verifies bearer JWTs and establishes a trusted request identity.
-authorize.js	Enforces role, permission, and supported ownership requirements.
-validate.js	Validates request bodies, route parameters, query parameters, or complete requests.
-rate-limit.js	Provides configurable rate-limit middleware factories.
-csrf.js	Implements signed double-submit CSRF protection for applicable cookie-authenticated requests.
-error-handler.js	Produces normalized JSON errors, safe production messages, and request IDs.
-not-found.js	Handles unmatched routes with API-friendly 404 responses.
-request-id.js	Validates or creates request correlation IDs.
-request-logger.js	Produces structured request logs without secrets or query strings.
-security-headers.js	Configures HTTP security headers using Helmet and conservative defaults.
-upload-limits.js	Applies Multer upload limits and normalizes upload errors.
-verify-webhook.js	Provides raw-body HMAC verification support where compatible with the provider’s specification.
-maintenance.js	Restricts application access during maintenance while allowing configured health routes.
+This document defines the intended architecture. Actual filenames, exports, configuration options, and behavior must match the implementation.
 
-Actual exports, configuration options, and supported behavior must be verified against each implementation.
+## 2. Middleware Inventory
 
-3. Required Packages
+| Module | Responsibility |
+|—|—|
+| `authenticate.js` | Verify bearer JWTs and establish a trusted request identity. |
+| `authorize.js` | Enforce role, permission, and custom ownership requirements. |
+| `validate.js` | Validate request bodies, parameters, queries, or multiple request targets. |
+| `rate-limit.js` | Provide configurable rate-limit factories for sensitive endpoints. |
+| `csrf.js` | Protect applicable cookie-authenticated requests against CSRF. |
+| `error-handler.js` | Normalize errors and return safe client responses. |
+| `not-found.js` | Handle unmatched routes consistently. |
+| `request-id.js` | Generate or accept approved request correlation IDs. |
+| `request-logger.js` | Record structured request metadata without sensitive payloads. |
+| `security-headers.js` | Configure HTTP security headers through Helmet. |
+| `upload.js` | Apply Multer limits and normalize upload errors. |
+| `verify-webhook.js` | Verify raw-body HMAC signatures when compatible with the provider specification. |
+| `maintenance.js` | Restrict normal traffic during maintenance while preserving configured health endpoints. |
 
-Install the packages used by the middleware modules you enable:
+Do not document `upload-limits.js` as the active filename unless that file actually exists or the module is renamed.
 
+## 3. Dependencies and Configuration
+
+Install only dependencies used by the enabled middleware:
+
+```bash
 npm install jsonwebtoken express-rate-limit helmet cookie-parser multer
+```
 
-Additional packages may be needed for custom validation, CSRF signing, request logging, or other implementation choices. For example, install Zod only if the application actually uses Zod schemas.
+Install schema-validation packages only when required by the application:
 
-For multi-instance deployments, configure a shared persistent rate-limit store, such as Redis, rather than relying on independent in-memory counters.
+```bash
+npm install zod joi
+```
 
-Keep dependencies compatible with the project’s supported Node.js version and review dependency advisories before deployment.
+Configuration must be validated at startup wherever practical.
 
-4. Authentication and Authorization
+| Configuration | Purpose |
+|—|—|
+| `JWT_SECRET` | JWT signing/verification secret when using symmetric signing. |
+| `CSRF_SECRET` | Secret for signed CSRF tokens. |
+| `SESSION_SECRET` | Session-related secret; use as a CSRF fallback only when the configuration is intentionally shared. |
+| `PAYMENT_WEBHOOK_SECRET` | Provider webhook secret for a compatible HMAC scheme. |
+| `NODE_ENV` | Environment-dependent behavior. |
+| `MAINTENANCE_MODE` | Enables maintenance mode when set to `true`. |
 
-Authentication
+Keep secrets in the deployment environment or an approved secret manager. Never commit secrets to source control, expose them through frontend configuration, or include them in logs.
 
-authenticate.js is intended to verify bearer JWTs using jsonwebtoken and a trusted signing secret, normally process.env.JWT_SECRET.
+For multi-instance deployments, use a shared rate-limit store, such as Redis. An in-memory store does not coordinate limits across instances.
+
+## 4. Authentication and Authorization
+
+### 4.1 Authentication
+
+`authenticate.js` verifies bearer tokens using `jsonwebtoken` and establishes the trusted `req.user` identity.
+
+Required controls:
+
+- Reject missing, malformed, expired, or invalid tokens.
+- Restrict accepted signing algorithms.
+- Validate issuer, audience, expiration, and relevant claims.
+- Load the current user from a trusted data source when required.
+- Reject disabled, suspended, deleted, or otherwise ineligible accounts.
+- Never trust identity, roles, or permissions supplied in request bodies or arbitrary headers.
+- Avoid logging tokens, authorization headers, or complete JWT claims.
+
+For immediate logout, account revocation, or role-change propagation, implement session/version checks, token revocation, or an equivalent application control.
+
+Opaque session authentication requires a session-aware implementation; it must not be treated as JWT authentication.
+
+### 4.2 Authorization
+
+`authorize.js` provides route-level checks. The resource-specific `src/policies/` modules determine whether an actor may perform an operation on a particular resource.
+
+Use the layers together:
+
+1. Authenticate the request.
+2. Enforce general route permissions.
+3. Load the resource from a trusted data source.
+4. Evaluate the applicable resource policy.
+5. Validate permitted field changes and state transitions.
+6. Perform the operation through the service layer.
+7. Record security-relevant audit events.
+
+Do not rely on roles alone for ownership-sensitive operations involving applications, documents, candidates, employers, payments, subscriptions, or other private records.
+
+**Important:** authorization must fail closed. A missing resource, malformed identity, policy error, or unresolved ownership relationship must not grant access.
+
+## 5. Request Validation and Mass Assignment
+
+`validate.js` supports the validation interfaces implemented for Zod, Joi, and custom validators.
+
+Validate:
+
+- Request bodies and nested objects.
+- Route identifiers and parameters.
+- Query filters, pagination, and sorting.
+- Dates, numeric ranges, enumerations, and arrays.
+- Fields that control resource status or ownership.
+- Upload-related parameters and metadata.
+
+Use strict schemas and explicit writable-field allowlists for create and update operations.
+
+Never blindly spread untrusted request objects into database updates:
+
+```javascript
+// Avoid
+await repository.update(id, req.body);
+
+// Prefer an explicit, validated field allowlist
+const changes = {
+  title: validated.title,
+  description: validated.description,
+};
+
+await repository.update(id, changes);
+```
+
+The example is illustrative; use the actual repository and validated schema interfaces in MedOrbits.
+
+Validation does not replace authorization, business-rule enforcement, SQL parameterization, or output encoding.
+
+## 6. Rate Limiting and Abuse Prevention
+
+`rate-limit.js` provides configurable limiter factories, including authentication, upload, password-reset, and general API limits.
+
+Apply endpoint-specific limits to:
+
+- Login, registration, and account recovery.
+- OTP issuance and verification.
+- Public search, enquiries, and contact forms.
+- Uploads and resource-intensive processing.
+- Payment initiation and other abuse-sensitive actions.
 
 Requirements:
 
-* Reject missing, malformed, expired, or invalid tokens.
-* Restrict accepted algorithms explicitly.
-* Validate relevant issuer, audience, and token claims where configured.
-* Attach a normalized, trusted identity to req.user.
-* Never trust identity or role values copied from request headers or request bodies.
-* Avoid logging bearer tokens or complete authentication headers.
+- Configure trusted proxy handling correctly.
+- Use a shared store for multi-instance deployments.
+- Avoid client-controlled identity values as rate-limit keys.
+- Monitor store failures and define a deliberate failure policy.
+- Combine rate limits with account-level quotas and abuse detection where appropriate.
 
-If MedOrbits uses opaque sessions, verify session identifiers against the appropriate session store instead of treating them as JWTs.
+Rate limiting is not a replacement for authentication or authorization.
 
-Token verification does not automatically implement logout, account revocation, session invalidation, or role-change propagation. These require additional application controls.
+## 7. CSRF Protection and Cookie Security
 
-Authorization
+`csrf.js` implements a signed double-submit cookie/token design for applicable cookie-authenticated requests.
 
-authorize.js provides route-level authorization helpers. The src/policies/ modules provide resource-specific decisions for applications, documents, candidates, employers, payments, and subscriptions.
+Required controls:
 
-Use both layers where appropriate:
+- Parse cookies before token verification.
+- Issue tokens through a trusted application route or page.
+- Require the corresponding token in the configured request header.
+- Verify both token equality and the server-side signature.
+- Protect relevant state-changing methods.
+- Configure `Secure`, `SameSite`, cookie scope, and token delivery deliberately.
+- Apply origin validation where appropriate.
 
-* Middleware can enforce general role or permission requirements.
-* Policy modules can evaluate access to a particular resource using trusted database records.
+A double-submit design must be implemented correctly. Merely comparing two client-provided strings is insufficient.
 
-Do not rely on role checks alone when the operation requires resource ownership or state validation.
+Bearer-token-only APIs generally do not need CSRF protection when credentials are not automatically attached by the browser. They still require authentication, authorization, and appropriate CORS controls.
 
-5. Request Validation
+Never exempt a route simply because it is called an API. Verified webhooks and other non-cookie-authenticated routes require explicit, documented handling.
 
-validate.js supports request validation through Zod-compatible schemas or custom validators, according to the implemented contract.
+## 8. Error Handling and HTTP Responses
 
-Validate relevant inputs before business operations, including:
+`error-handler.js` must be mounted last, after application routes and the 404 middleware.
 
-* Request body fields.
-* Route identifiers and parameters.
-* Query filters, pagination, and sorting.
-* Nested objects, arrays, dates, and numeric ranges.
-* File metadata and upload-related parameters.
+Expected behavior:
 
-Use explicit field allowlists to prevent mass assignment. Validation does not replace authentication, authorization, or business-rule enforcement.
+- Return valid HTTP status codes.
+- Use stable application error codes.
+- Avoid exposing internal 5xx messages, stack traces, SQL details, secrets, or provider responses.
+- Include a validated request ID when available.
+- Log operational errors without recording sensitive request content.
+- Handle parser, validation, authentication, authorization, upload, and database errors consistently.
+- Delegate to Express when response headers have already been sent.
 
-Do not pass unvalidated user input into SQL identifiers, shell commands, file paths, HTML templates, or arbitrary network destinations.
+Only trusted application errors should supply client-facing details. Never expose arbitrary `error.message`, `error.details`, or `error.publicMessage` without an explicit trust contract.
 
-6. Rate Limiting
+Ensure the response helper used by the application follows the same security contract.
 
-rate-limit.js provides configurable rate-limit factories.
+### HTTP status conventions
 
-Apply limits according to endpoint risk, including:
+| Status | Meaning |
+|—|—|
+| `400` | Malformed request or invalid syntax. |
+| `401` | Authentication is missing or invalid. |
+| `403` | The actor is authenticated but not permitted. |
+| `404` | Resource or route not found, including concealed resources where appropriate. |
+| `409` | State or uniqueness conflict. |
+| `413` | Payload or file exceeds allowed limits. |
+| `415` | Unsupported media or file type. |
+| `422` | Semantically invalid input, if adopted consistently. |
+| `429` | Rate limit exceeded. |
+| `503` | Maintenance or temporary service unavailability. |
+| `500` | Unexpected internal failure. |
 
-* Login and account registration.
-* Password reset and verification flows.
-* OTP or other verification challenges.
-* Public search and enquiry endpoints.
-* Document uploads and downloads where appropriate.
-* Payment initiation and other abuse-sensitive operations.
+Use one consistent convention for validation errors; do not alternate arbitrarily between `400` and `422`.
 
-Configure trusted proxy handling correctly before relying on client IP addresses. Use a shared store across application instances and define appropriate handling for store failures.
+## 9. Request IDs and Structured Logging
 
-Rate limiting complements, but does not replace, authentication, abuse detection, account protections, or application-level quotas.
+### Request IDs
 
-7. CSRF Protection
+`request-id.js` establishes a correlation ID for each request.
 
-csrf.js is intended for cookie-authenticated state-changing requests using a signed double-submit cookie/token pattern.
+- Generate a cryptographically random identifier when no trusted upstream ID is available.
+- Validate incoming IDs against a documented format and length limit.
+- Trust incoming IDs only when the proxy or gateway overwrites client-supplied values.
+- Use the resolved ID consistently in logs and error responses.
 
-Requirements:
+A request ID is not an authentication credential, authorization token, or proof of identity.
 
-* Parse cookies before the CSRF middleware.
-* Use a strong secret supplied through secure configuration.
-* Validate the submitted token against the expected cookie and signature.
-* Apply protection to relevant state-changing methods.
-* Configure cookie attributes, SameSite, Secure, and HttpOnly according to the token-delivery design.
-* Validate origins where appropriate.
+### Request logging
 
-A double-submit design must be implemented correctly; simply checking that two client-provided token values match is not sufficient protection.
+`request-logger.js` should record only operational metadata necessary for diagnostics:
 
-Bearer-token-only APIs generally do not require CSRF protection when credentials are not automatically attached by the browser. They still require authentication, authorization, and appropriate origin and CORS configuration.
+- Request ID.
+- HTTP method and path.
+- Response status.
+- Request duration.
+- Approved user identifier, where needed.
+- Event type and error classification, where applicable.
 
-8. Error Handling and Request IDs
+Do not log query strings, passwords, authorization headers, cookies, session identifiers, raw webhook bodies, payment credentials, or private document contents.
 
-Error handling
+Redact user-controlled values and ensure logging failures do not break normal request processing.
 
-error-handler.js should provide consistent JSON error responses without exposing stack traces, SQL details, credentials, or internal implementation information in production.
+Use a centralized logging service and define retention, access control, and alerting policies for production.
 
-Expected behavior includes:
+## 10. Security Headers
 
-* Appropriate HTTP status codes.
-* Stable application error codes.
-* Safe client-facing messages.
-* Request correlation IDs.
-* Detailed internal logging through approved logging infrastructure.
-* Consistent handling of validation, authentication, authorization, upload, and database errors.
+`security-headers.js` uses Helmet to configure HTTP security headers.
 
-Do not expose sensitive details merely because an error originated in a trusted internal module.
+Review and test:
 
-Request IDs
+- Content Security Policy.
+- Cross-origin resource policies.
+- Framing restrictions.
+- MIME-sniffing protection.
+- Referrer policy.
+- HTTPS transport security.
 
-request-id.js should validate incoming request IDs against a documented format and length limit or generate a new ID.
+CSP must reflect the actual frontend, assets, APIs, and integrations. Avoid broad wildcard origins and unsafe directives unless there is a reviewed requirement.
 
-Treat client-provided IDs as untrusted correlation values. Do not use them as authentication credentials, authorization evidence, or trusted database identifiers.
+Enable HSTS only when HTTPS and hostname coverage are correctly configured. Do not weaken a security header merely to bypass an integration issue.
 
-Ensure the same resolved request ID is used consistently in request logs and error responses.
+## 11. File Upload Security
 
-9. Request Logging and Security Headers
+`upload.js` uses Multer and applies upload limits.
 
-Request logging
+Before accepting files into persistent storage:
 
-request-logger.js should log useful operational metadata, such as:
+1. Enforce file-size, file-count, field-count, and request-size limits.
+2. Validate the permitted file type.
+3. Inspect file signatures and content instead of trusting client MIME types.
+4. Scan for malware where required.
+5. Generate server-controlled storage keys and filenames.
+6. Store private documents outside the public web root or in approved private object storage.
+7. Enforce authorization for upload, preview, download, replacement, and deletion.
+8. Define retention, deletion, and audit requirements.
 
-* Request ID.
-* HTTP method and route path.
-* Response status.
-* Duration.
-* Relevant error classification.
+Memory storage can exhaust process memory under concurrency. Use conservative limits and concurrency controls; consider streaming to private storage for larger files.
 
-Avoid logging query strings, request bodies, cookies, authorization headers, tokens, passwords, document contents, payment details, and raw webhook bodies.
+A successful Multer upload does not establish that a file is safe.
 
-Redact sensitive fields from structured logs and ensure any user-controlled values are safely encoded.
+## 12. Payment Webhook Verification
 
-Security headers
-
-security-headers.js should use Helmet with a configuration appropriate for the actual application.
-
-Review Content Security Policy, cross-origin policies, framing restrictions, MIME-sniffing protection, and transport security settings against the deployment architecture. Avoid weakening security headers merely to make an integration work.
-
-10. File Upload Limits
-
-upload-limits.js uses Multer to limit uploads and normalize upload errors.
-
-Multer memory storage can consume substantial process memory. Enforce file-size limits, file-count limits, request limits, and concurrency controls.
-
-Before making a document available:
-
-1. Validate the upload size and permitted file types.
-2. Inspect actual file content rather than trusting the supplied MIME type or filename.
-3. Perform malware scanning where required.
-4. Generate a safe storage key.
-5. Store private documents in approved private storage.
-6. Apply authorization before download or access.
-7. Define retention and deletion policies.
-
-Do not treat an accepted multipart upload as a validated or safe document. Avoid serving uploads directly from a public directory.
-
-11. Payment Webhook Verification
-
-verify-webhook.js provides HMAC verification support only when its implementation matches the payment provider’s official requirements.
+`verify-webhook.js` supports HMAC-SHA256 verification only when the provider’s official specification matches the implemented scheme.
 
 For each provider:
 
-* Use the exact signature header and signing algorithm.
-* Preserve the exact raw request bytes used in signature calculation.
-* Follow the provider’s timestamp and replay-protection requirements.
-* Compare signatures securely.
-* Reject invalid or missing signatures.
-* Apply event-level idempotency.
-* Validate event types and relevant resource identifiers.
-* Update payment state through trusted, transaction-safe service logic.
+- Follow the exact signing algorithm, header format, and canonicalization rules.
+- Preserve the original raw request bytes used for signature verification.
+- Implement timestamp validation and replay protection where required.
+- Compare signatures securely.
+- Reject invalid signatures before parsing or processing the event.
+- Validate event type and resource identifiers.
+- Enforce event-ID idempotency.
+- Update payment state through trusted, transaction-safe services.
+- Record audit events without logging secrets or raw payloads.
 
-Register the provider-specific raw-body handling in the correct order, before any middleware that consumes or transforms the body.
+Register the raw-body capture and provider-specific verification path before middleware consumes or transforms the body.
 
-A generic HMAC helper is not automatically compatible with every provider. Never process a payment event merely because it reaches a webhook route.
+**Never assume the generic HMAC verifier is compatible with Stripe, Razorpay, or another provider without checking that provider’s current specification.**
 
-12. Maintenance Mode and Health Checks
+Signature verification alone does not prevent duplicate event processing or establish that a payment state transition is valid.
 
-maintenance.js should deny or restrict normal application traffic while allowing explicitly configured health routes where required.
+## 13. Maintenance and Health Endpoints
 
-Health endpoints should distinguish:
+`maintenance.js` restricts normal application traffic while allowing explicitly configured exemptions.
 
-* Liveness: Whether the process is running and able to respond.
-* Readiness: Whether the instance can safely accept application traffic, including required dependency checks.
-* Maintenance status: Whether normal service is intentionally restricted.
+Separate health behavior into:
 
-Do not expose database credentials, internal infrastructure details, or sensitive dependency diagnostics through public health endpoints.
+- **Liveness:** the process can respond.
+- **Readiness:** the instance is ready to accept traffic and required dependencies are available.
+- **Maintenance:** normal application operations are intentionally restricted.
 
-13. Recommended Middleware Order
+Keep only the required health endpoints exempt. Avoid exposing credentials, detailed infrastructure information, or sensitive dependency diagnostics in public responses.
 
-A typical Express application may use the following order, adapted to the actual routes and dependencies:
+Ensure the deployment platform’s health checks agree with the application’s readiness and maintenance behavior.
 
-1. Trust-proxy configuration, when required by the deployment.
-2. Request ID middleware.
-3. Request logging.
-4. Security headers.
-5. CORS configuration.
-6. Cookie parsing, if cookie-based features are enabled.
-7. General request parsers with appropriate size limits.
-8. Maintenance and rate-limit middleware, as appropriate.
-9. Authentication and authorization on protected routes.
-10. Request validation.
-11. Route handlers and services.
-12. Not-found middleware.
-13. Centralized error handler.
+## 14. Recommended Express Middleware Order
 
-Webhook exception: Register the required raw-body capture and provider-specific verification path before general body parsing consumes the webhook payload. Keep webhook routing and middleware ordering explicit.
+The actual order must be verified against the application bootstrap and route requirements.
 
-The exact order depends on whether a middleware must inspect raw bytes, parsed bodies, cookies, authenticated identity, or route-specific context.
+A typical arrangement is:
 
-14. Example Usage
+1. Configure `trust proxy` for the actual deployment topology, if required.
+2. Install request ID middleware.
+3. Install request logging.
+4. Install security headers.
+5. Configure CORS.
+6. Install cookie parsing when needed.
+7. Install bounded request-body parsers.
+8. Mount maintenance and appropriate rate limiters.
+9. Mount route-specific authentication and authorization.
+10. Validate route inputs.
+11. Execute routes and service operations.
+12. Mount `not-found.js`.
+13. Mount `error-handler.js`.
 
-The following illustrates the intended route-level pattern. Confirm the actual factory signatures and exported functions before using it.
+### Webhook exception
+
+Webhook routes must preserve the exact raw request body. Configure raw-body capture and provider-specific signature verification before a general parser consumes the payload, according to the provider’s requirements.
+
+Keep webhook middleware and routing explicit rather than relying on a broad, undocumented global exception.
+
+## 15. Example Route Integration
+
+Confirm the actual export signatures before applying this example.
+
+```javascript
+‘use strict’;
+
+const express = require(‘express’);
 
 const authenticate = require(‘./middleware/authenticate’);
 const authorize = require(‘./middleware/authorize’);
-const { validate } = require(‘./middleware/validate’);
-router.get(‘/me’, authenticate(), (req, res) => {
-  return res.json({
-    success: true,
-    data: req.user,
-    requestId: req.id,
-  });
-});
+
+const router = express.Router();
+
+router.get(
+  ‘/me’,
+  authenticate(),
+  (req, res) => {
+    // Return an approved response DTO, not the complete user object.
+    return res.json({
+      success: true,
+      data: {
+        id: req.user.id,
+        role: req.user.role,
+      },
+      requestId: req.id || null,
+    });
+  }
+);
+
 router.post(
   ‘/admin-task’,
   authenticate(),
   authorize({ roles: [‘admin’] }),
-  handler
+  async (req, res, next) => {
+    try {
+      // Invoke the actual authorized service operation here.
+      return res.json({ success: true });
+    } catch (error) {
+      return next(error);
+    }
+  }
 );
 
-Do not return the entire req.user object unless its contents are intentionally designed for public exposure. Prefer a response DTO containing only approved fields.
+module.exports = router;
+```
 
-15. Production Readiness Checklist
+Role checks alone are insufficient for resource-specific access. Use the corresponding policy and service checks for sensitive operations.
 
-* [ ]	Authentication verifies the configured token or session mechanism.
-* [ ]	Authorization is enforced on every protected route.
-* [ ]	Resource policies are applied to sensitive operations.
-* [ ]	Request schemas and field allowlists are enforced.
-* [ ]	Rate limits use appropriate shared storage in multi-instance deployments.
-* [ ]	CSRF protection is configured correctly for cookie-authenticated requests.
-* [ ]	Error responses do not disclose internal details.
-* [ ]	Request IDs and logs avoid sensitive data.
-* [ ]	Uploads are size-limited, validated, scanned where required, and stored privately.
-* [ ]	Payment webhooks use provider-specific signature verification and replay protection.
-* [ ]	Maintenance, liveness, and readiness behavior is clearly defined.
-* [ ]	Middleware ordering is verified against the actual bootstrap.
-* [ ]	Tests cover denied access, invalid input, rate limits, malformed uploads, and invalid webhook signatures.
-* [ ]	Dependency configuration and secrets are managed securely.
+## 16. Automated Test Requirements
 
-Important: Middleware files are not a substitute for integration. Verify their exports, mount order, route coverage, configuration, and tests against the actual MedOrbits application before processing real user data or payments.
+Each middleware should have unit tests for its own contract and integration tests for its actual placement in Express.
+
+Minimum coverage:
+
+- Missing, malformed, expired, and invalid authentication credentials.
+- Disabled users and invalid identity records.
+- Role and permission denials.
+- Ownership and protected-field enforcement.
+- Invalid body, parameter, and query input.
+- Malformed and oversized requests.
+- Rate-limit threshold behavior and shared-store configuration.
+- Missing, mismatched, and invalid CSRF tokens.
+- Safe error responses and request ID consistency.
+- Logging redaction and client disconnects.
+- Security header configuration.
+- Oversized, disallowed, and malformed uploads.
+- Invalid webhook signatures and duplicate event IDs.
+- Maintenance behavior and health endpoint availability.
+- Unknown routes and centralized error handling.
+
+Tests must use isolated test configuration and mocked or dedicated test dependencies. They must not trigger real payments, send production OTPs, or access production data.
+
+## 17. Production Release Checklist
+
+- [ ] Actual middleware filenames and exports match this contract.
+- [ ] All protected routes are mounted behind authentication.
+- [ ] Resource-specific policies are applied where required.
+- [ ] Write operations use validated schemas and field allowlists.
+- [ ] Secrets are securely configured and never logged.
+- [ ] JWT/session revocation behavior is documented.
+- [ ] Rate limits are appropriate and shared across instances where necessary.
+- [ ] CSRF is correctly configured for cookie-authenticated flows.
+- [ ] CORS, proxy trust, and security headers match the deployment.
+- [ ] Error responses do not disclose internal implementation details.
+- [ ] Request IDs and logs are consistent and sanitized.
+- [ ] Uploads are inspected and stored privately.
+- [ ] Webhooks use provider-compatible verification and idempotency.
+- [ ] Health checks and maintenance exemptions are tested.
+- [ ] Middleware ordering is verified in the actual bootstrap.
+- [ ] Unit and integration tests pass in CI.
+- [ ] Dependency advisories and deployment configuration are reviewed.
+
+## 18. Maintenance Contract
+
+Update this document whenever a middleware export, configuration option, security assumption, or mounting requirement changes.
+
+For each module, maintain:
+
+- A clear export contract.
+- Validated configuration.
+- Explicit failure behavior.
+- Unit tests.
+- Integration coverage.
+- A documented security boundary.
+
+**Final requirement:** verify the implementation and actual route coverage before claiming MedOrbits is production-ready. Documentation describes the intended controls; only tested, correctly configured middleware provides them.

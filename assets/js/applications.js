@@ -1,31 +1,35 @@
 
 /**
  * MedOrbits -- Applications Manager
- * File: assets/js/applications.js
+ * File: /assets/js/applications.js
+ * Version: 1.1.0
  *
- * Handles education admissions, job applications,
- * application tracking, filtering, and status updates.
+ * Handles education admissions, job applications, application tracking,
+ * filtering, status updates, and accessible application rendering.
+ *
+ * Authentication, authorization, ownership checks, and status-transition
+ * rules must be enforced by the backend.
  */
 
 (() => {
   "use strict";
 
+  if (window.MedOrbitsApplications) return;
+
   const CONSTANTS = window.MedOrbitsConstants || {};
-
-  const API = CONSTANTS.API || {
-    PREFIX: "/api",
-    ENDPOINTS: {
-      APPLICATIONS: "/applications"
-    }
-  };
-
+  const API = CONSTANTS.API || {};
   const CONFIG = window.MedOrbitsConfig || {};
 
   const API_BASE_URL = String(
     CONFIG.API_BASE_URL || API.PREFIX || "/api"
   ).replace(/\/+$/, "");
 
-  const ENDPOINT = API.ENDPOINTS?.APPLICATIONS || "/applications";
+  const ENDPOINT = String(
+    API.ENDPOINTS?.APPLICATIONS || "/applications"
+  ).replace(/^\/+|\/+$/g, "");
+
+  const DEFAULT_TIMEOUT = 15000;
+  const MAX_PAGE_SIZE = 100;
 
   const STATUS = Object.freeze({
     DRAFT: "draft",
@@ -41,6 +45,8 @@
     COMPLETED: "completed"
   });
 
+  const VALID_STATUSES = new Set(Object.values(STATUS));
+
   const state = {
     applications: [],
     currentApplication: null,
@@ -54,14 +60,16 @@
   };
 
   const listeners = new Set();
+  const formBindings = new WeakMap();
+  const refreshBindings = new WeakSet();
 
   class ApplicationError extends Error {
     constructor(message, options = {}) {
       super(message);
       this.name = "ApplicationError";
       this.code = options.code || "APPLICATION_ERROR";
-      this.status = options.status || 0;
-      this.details = options.details || null;
+      this.status = Number(options.status) || 0;
+      this.details = options.details ?? null;
     }
   }
 
@@ -71,14 +79,17 @@
 
   const utils = {
     normalizeId(id) {
-      if (id === null || id === undefined || id === "") {
-        throw new ApplicationError(
-          "A valid application ID is required.",
-          { code: "INVALID_APPLICATION_ID" }
-        );
+      if (
+        id === null ||
+        id === undefined ||
+        String(id).trim() === ""
+      ) {
+        throw new ApplicationError("A valid application ID is required.", {
+          code: "INVALID_APPLICATION_ID"
+        });
       }
 
-      return encodeURIComponent(String(id));
+      return encodeURIComponent(String(id).trim());
     },
 
     getCsrfToken() {
@@ -94,7 +105,11 @@
     },
 
     normalizeApplication(application) {
-      if (!application || typeof application !== "object") {
+      if (
+        !application ||
+        typeof application !== "object" ||
+        Array.isArray(application)
+      ) {
         return null;
       }
 
@@ -103,9 +118,7 @@
 
     extractList(payload) {
       if (Array.isArray(payload)) return payload;
-      if (Array.isArray(payload?.applications)) {
-        return payload.applications;
-      }
+      if (Array.isArray(payload?.applications)) return payload.applications;
       if (Array.isArray(payload?.data?.applications)) {
         return payload.data.applications;
       }
@@ -115,12 +128,34 @@
     },
 
     extractItem(payload) {
+      if (!payload || typeof payload !== "object") return null;
+
+      const item =
+        payload.application ??
+        payload.data?.application ??
+        payload.data ??
+        payload;
+
       return (
-        payload?.application ||
-        payload?.data?.application ||
-        payload?.data ||
-        payload
-      );
+        item &&
+        typeof item === "object" &&
+        !Array.isArray(item)
+      ) ? item : null;
+    },
+
+    getId(application) {
+      return application?.id ?? application?.application_id ?? null;
+    },
+
+    normalizeStatus(value) {
+      return String(value ?? "").trim().toLowerCase();
+    },
+
+    validFilterValue(value, allowedValues) {
+      const normalized = String(value ?? "all").trim().toLowerCase();
+      return normalized === "all" || allowedValues.has(normalized)
+        ? normalized
+        : "all";
     }
   };
 
@@ -129,79 +164,127 @@
   // --------------------------------------------------
 
   async function request(path = "", options = {}) {
-    const {
-      method = "GET",
-      body,
-      signal
-    } = options;
+    const method = String(options.method || "GET").toUpperCase();
+
+    if (!/^(GET|POST|PUT|PATCH|DELETE|HEAD)$/.test(method)) {
+      throw new ApplicationError("Unsupported request method.", {
+        code: "INVALID_METHOD"
+      });
+    }
 
     const controller = new AbortController();
+    const timeoutMs = Number(API.DEFAULT_TIMEOUT_MS || DEFAULT_TIMEOUT);
     const timeout = window.setTimeout(
-      () => controller.abort(),
-      Number(API.DEFAULT_TIMEOUT_MS || 15000)
+      () => controller.abort("timeout"),
+      Math.max(1000, Math.min(timeoutMs, 120000))
     );
 
     let abortHandler;
 
-    if (signal) {
-      if (signal.aborted) {
-        controller.abort();
+    if (options.signal) {
+      if (options.signal.aborted) {
+        controller.abort(options.signal.reason);
       } else {
-        abortHandler = () => controller.abort();
-        signal.addEventListener("abort", abortHandler, {
+        abortHandler = () => controller.abort(options.signal.reason);
+        options.signal.addEventListener("abort", abortHandler, {
           once: true
         });
       }
     }
 
-    const headers = {
-      Accept: "application/json"
-    };
-
-    if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
-    }
-
-    const csrfToken = utils.getCsrfToken();
-
-    if (csrfToken && method !== "GET" && method !== "HEAD") {
-      headers["X-CSRF-Token"] = csrfToken;
-    }
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}${ENDPOINT}${path}`,
-        {
-          method,
-          headers,
-          credentials: "same-origin",
-          cache: "no-store",
-          redirect: "error",
-          body: body === undefined ? undefined : JSON.stringify(body),
-          signal: controller.signal
-        }
+      if (controller.signal.aborted) {
+        throw new ApplicationError("The request was cancelled.", {
+          code: "REQUEST_ABORTED"
+        });
+      }
+
+      const basePath = `${API_BASE_URL}/${ENDPOINT}`;
+      const relativePath = String(path || "");
+
+      if (
+        /^[a-z][a-z\d+.-]*:/i.test(relativePath) ||
+        relativePath.startsWith("//") ||
+        relativePath.includes("\\")
+      ) {
+        throw new ApplicationError("Invalid API request path.", {
+          code: "INVALID_REQUEST_PATH"
+        });
+      }
+
+      const url = new URL(
+        `${basePath}${relativePath}`,
+        window.location.origin
       );
+
+      const configuredBase = new URL(API_BASE_URL, window.location.origin);
+
+      if (
+        url.origin !== configuredBase.origin ||
+        url.origin !== window.location.origin
+      ) {
+        throw new ApplicationError("API URL origin is not permitted.", {
+          code: "INVALID_API_ORIGIN"
+        });
+      }
+
+      const headers = new Headers(options.headers || {});
+      headers.set("Accept", "application/json");
+
+      let body;
+
+      if (options.body !== undefined) {
+        if (
+          options.body instanceof FormData ||
+          options.body instanceof Blob ||
+          typeof options.body === "string"
+        ) {
+          body = options.body;
+        } else {
+          body = JSON.stringify(options.body);
+          headers.set("Content-Type", "application/json");
+        }
+      }
+
+      if (
+        !["GET", "HEAD"].includes(method) &&
+        !headers.has("X-CSRF-Token")
+      ) {
+        const csrfToken = utils.getCsrfToken();
+        if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
+      }
+
+      const response = await fetch(url.href, {
+        method,
+        headers,
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
+        body: ["GET", "HEAD"].includes(method) ? undefined : body,
+        signal: controller.signal
+      });
 
       const contentType = response.headers.get("content-type") || "";
       let payload = null;
 
-      if (response.status !== 204) {
+      if (response.status !== 204 && response.status !== 205) {
         if (contentType.includes("application/json")) {
           payload = await response.json().catch(() => null);
         } else {
-          await response.text().catch(() => "");
+          const text = await response.text().catch(() => "");
+          payload = text ? { message: text.slice(0, 1000) } : null;
         }
       }
 
       if (!response.ok) {
         throw new ApplicationError(
           payload?.message ||
-          payload?.error?.message ||
-          "Unable to process the application request.",
+            payload?.error?.message ||
+            "Unable to process the application request.",
           {
-            code: payload?.code || "REQUEST_FAILED",
+            code: payload?.code || payload?.error?.code || "REQUEST_FAILED",
             status: response.status,
-            details: payload?.details || null
+            details: payload?.details ?? payload?.error?.details ?? null
           }
         );
       }
@@ -210,21 +293,33 @@
     } catch (error) {
       if (error instanceof ApplicationError) throw error;
 
+      if (controller.signal.aborted || error?.name === "AbortError") {
+        throw new ApplicationError(
+          options.signal?.aborted
+            ? "The request was cancelled."
+            : "The application request timed out or was interrupted.",
+          {
+            code: options.signal?.aborted
+              ? "REQUEST_ABORTED"
+              : "REQUEST_TIMEOUT"
+          }
+        );
+      }
+
       throw new ApplicationError(
-        error?.name === "AbortError"
-          ? "The application request timed out."
-          : "Unable to connect to the application service.",
+        "Unable to connect to the application service.",
         {
-          code: error?.name === "AbortError"
-            ? "REQUEST_TIMEOUT"
-            : "NETWORK_ERROR"
+          code: "NETWORK_ERROR",
+          details: window.MEDORBITS_DEBUG === true
+            ? { message: String(error?.message || error) }
+            : null
         }
       );
     } finally {
       window.clearTimeout(timeout);
 
-      if (signal && abortHandler) {
-        signal.removeEventListener("abort", abortHandler);
+      if (options.signal && abortHandler) {
+        options.signal.removeEventListener("abort", abortHandler);
       }
     }
   }
@@ -239,7 +334,8 @@
       applications: [...state.applications],
       currentApplication: state.currentApplication,
       loading: state.loading,
-      error: state.error
+      error: state.error,
+      filters: Object.freeze({ ...state.filters })
     });
 
     utils.emit("applications-updated", detail);
@@ -264,6 +360,56 @@
     return [...state.applications];
   }
 
+  function upsertApplication(application) {
+    const normalized = utils.normalizeApplication(application);
+    if (!normalized) return null;
+
+    const id = utils.getId(normalized);
+
+    if (id !== null) {
+      const index = state.applications.findIndex(
+        (item) => String(utils.getId(item)) === String(id)
+      );
+
+      if (index >= 0) {
+        state.applications[index] = normalized;
+      } else {
+        state.applications.unshift(normalized);
+      }
+    }
+
+    state.currentApplication = normalized;
+    return normalized;
+  }
+
+  function replaceApplication(id, application) {
+    const normalized = utils.normalizeApplication(application);
+    if (!normalized) return null;
+
+    const targetId = String(id);
+    const returnedId = utils.getId(normalized);
+    const effectiveId = String(returnedId ?? targetId);
+
+    const index = state.applications.findIndex(
+      (item) => String(utils.getId(item)) === targetId
+    );
+
+    if (index >= 0) {
+      state.applications[index] = normalized;
+    } else if (returnedId !== null) {
+      state.applications.unshift(normalized);
+    }
+
+    if (
+      state.currentApplication &&
+      String(utils.getId(state.currentApplication)) === targetId
+    ) {
+      state.currentApplication = normalized;
+    }
+
+    return { application: normalized, id: effectiveId };
+  }
+
   // --------------------------------------------------
   // List applications
   // --------------------------------------------------
@@ -271,30 +417,30 @@
   async function getAll(options = {}) {
     const params = new URLSearchParams();
 
-    const page = Number(options.page || 1);
-    const limit = Number(options.limit || 20);
+    const page = Number(options.page ?? 1);
+    const limit = Number(options.limit ?? 20);
 
-    params.set("page", String(
-      Number.isInteger(page) && page > 0 ? page : 1
-    ));
+    params.set(
+      "page",
+      String(Number.isInteger(page) && page > 0 ? page : 1)
+    );
 
-    params.set("limit", String(
-      Number.isInteger(limit) && limit > 0
-        ? Math.min(limit, 100)
-        : 20
-    ));
+    params.set(
+      "limit",
+      String(
+        Number.isInteger(limit) && limit > 0
+          ? Math.min(limit, MAX_PAGE_SIZE)
+          : 20
+      )
+    );
 
-    if (options.type && options.type !== "all") {
-      params.set("type", options.type);
-    }
+    const type = String(options.type ?? "all").trim();
+    const status = String(options.status ?? "all").trim();
+    const search = String(options.search ?? "").trim();
 
-    if (options.status && options.status !== "all") {
-      params.set("status", options.status);
-    }
-
-    if (options.search) {
-      params.set("search", String(options.search).trim());
-    }
+    if (type && type !== "all") params.set("type", type);
+    if (status && status !== "all") params.set("status", status);
+    if (search) params.set("search", search);
 
     state.loading = true;
     state.error = null;
@@ -305,10 +451,7 @@
         signal: options.signal
       });
 
-      return setApplications(
-        utils.extractList(payload),
-        "loaded"
-      );
+      return setApplications(utils.extractList(payload), "loaded");
     } catch (error) {
       state.error = error;
       notify("error");
@@ -324,24 +467,22 @@
   }
 
   // --------------------------------------------------
-  // Get application details
+  // Application details
   // --------------------------------------------------
 
   async function getById(id, options = {}) {
-    const payload = await request(
-      `/${utils.normalizeId(id)}`,
-      { signal: options.signal }
-    );
+    const payload = await request(`/${utils.normalizeId(id)}`, {
+      signal: options.signal
+    });
 
     const application = utils.normalizeApplication(
       utils.extractItem(payload)
     );
 
     if (!application) {
-      throw new ApplicationError(
-        "Application details were not returned.",
-        { code: "INVALID_RESPONSE" }
-      );
+      throw new ApplicationError("Application details were not returned.", {
+        code: "INVALID_RESPONSE"
+      });
     }
 
     state.currentApplication = application;
@@ -351,44 +492,39 @@
   }
 
   // --------------------------------------------------
-  // Submit an application
+  // Submit application
   // --------------------------------------------------
 
-  async function submit(details = {}) {
-    if (!details || typeof details !== "object") {
-      throw new ApplicationError(
-        "Valid application details are required."
-      );
+  async function submit(details = {}, options = {}) {
+    if (
+      !details ||
+      typeof details !== "object" ||
+      Array.isArray(details)
+    ) {
+      throw new ApplicationError("Valid application details are required.", {
+        code: "INVALID_APPLICATION_DETAILS"
+      });
     }
 
     const payload = await request("", {
       method: "POST",
-      body: { ...details }
+      body: { ...details },
+      signal: options.signal
     });
 
     const application = utils.normalizeApplication(
       utils.extractItem(payload)
     );
 
-    if (application) {
-      state.currentApplication = application;
-
-      const id = application.id ?? application.application_id;
-
-      if (id !== undefined && id !== null) {
-        const existing = state.applications.findIndex(
-          (item) => String(item.id ?? item.application_id) === String(id)
-        );
-
-        if (existing >= 0) {
-          state.applications[existing] = application;
-        } else {
-          state.applications.unshift(application);
-        }
-      }
-
-      notify("submitted");
+    if (!application) {
+      throw new ApplicationError("The server did not return the submitted application.", {
+        code: "INVALID_RESPONSE"
+      });
     }
+
+    upsertApplication(application);
+    state.error = null;
+    notify("submitted");
 
     utils.emit("application-submitted", { application });
 
@@ -400,60 +536,57 @@
   }
 
   // --------------------------------------------------
-  // Update an application
+  // Update application
   // --------------------------------------------------
 
-  async function update(id, changes = {}) {
-    if (!changes || typeof changes !== "object") {
-      throw new ApplicationError(
-        "Valid application updates are required."
-      );
+  async function update(id, changes = {}, options = {}) {
+    if (
+      !changes ||
+      typeof changes !== "object" ||
+      Array.isArray(changes)
+    ) {
+      throw new ApplicationError("Valid application updates are required.", {
+        code: "INVALID_APPLICATION_CHANGES"
+      });
     }
 
-    const payload = await request(
-      `/${utils.normalizeId(id)}`,
-      {
-        method: "PATCH",
-        body: { ...changes }
-      }
-    );
+    const encodedId = utils.normalizeId(id);
+    const payload = await request(`/${encodedId}`, {
+      method: "PATCH",
+      body: { ...changes },
+      signal: options.signal
+    });
 
     const application = utils.normalizeApplication(
       utils.extractItem(payload)
     );
 
-    if (application) {
-      state.currentApplication = application;
-
-      const updatedId = String(
-        application.id ?? application.application_id ?? id
-      );
-
-      const index = state.applications.findIndex(
-        (item) =>
-          String(item.id ?? item.application_id) === updatedId
-      );
-
-      if (index >= 0) {
-        state.applications[index] = application;
-      }
-
-      notify("updated");
+    if (!application) {
+      throw new ApplicationError("The server did not return the updated application.", {
+        code: "INVALID_RESPONSE"
+      });
     }
+
+    replaceApplication(id, application);
+    state.error = null;
+    notify("updated");
+
+    utils.emit("application-updated", { application });
 
     return application;
   }
 
   // --------------------------------------------------
-  // Withdraw an application
+  // Withdraw application
   // --------------------------------------------------
 
-  async function withdraw(id, reason = "") {
+  async function withdraw(id, reason = "", options = {}) {
     const payload = await request(
       `/${utils.normalizeId(id)}/withdraw`,
       {
         method: "POST",
-        body: { reason: String(reason).trim() }
+        body: { reason: String(reason ?? "").trim() },
+        signal: options.signal
       }
     );
 
@@ -462,29 +595,31 @@
     );
 
     if (application) {
-      const withdrawnId = String(
-        application.id ?? application.application_id ?? id
-      );
-
+      replaceApplication(id, application);
+    } else {
       const index = state.applications.findIndex(
-        (item) =>
-          String(item.id ?? item.application_id) === withdrawnId
+        (item) => String(utils.getId(item)) === String(id)
       );
 
       if (index >= 0) {
-        state.applications[index] = application;
+        state.applications[index] = Object.freeze({
+          ...state.applications[index],
+          status: STATUS.WITHDRAWN
+        });
       }
 
       if (
-        String(
-          state.currentApplication?.id ??
-          state.currentApplication?.application_id
-        ) === withdrawnId
+        state.currentApplication &&
+        String(utils.getId(state.currentApplication)) === String(id)
       ) {
-        state.currentApplication = application;
+        state.currentApplication = Object.freeze({
+          ...state.currentApplication,
+          status: STATUS.WITHDRAWN
+        });
       }
     }
 
+    state.error = null;
     notify("withdrawn");
 
     return {
@@ -495,29 +630,29 @@
   }
 
   // --------------------------------------------------
-  // Delete a draft application
+  // Delete draft application
   // --------------------------------------------------
 
-  async function deleteDraft(id) {
-    const payload = await request(
-      `/${utils.normalizeId(id)}`,
-      { method: "DELETE" }
-    );
+  async function deleteDraft(id, options = {}) {
+    const encodedId = utils.normalizeId(id);
+
+    const payload = await request(`/${encodedId}`, {
+      method: "DELETE",
+      signal: options.signal
+    });
 
     state.applications = state.applications.filter(
-      (item) =>
-        String(item.id ?? item.application_id) !== String(id)
+      (item) => String(utils.getId(item)) !== String(id)
     );
 
     if (
-      String(
-        state.currentApplication?.id ??
-        state.currentApplication?.application_id
-      ) === String(id)
+      state.currentApplication &&
+      String(utils.getId(state.currentApplication)) === String(id)
     ) {
       state.currentApplication = null;
     }
 
+    state.error = null;
     notify("deleted");
 
     return {
@@ -531,30 +666,41 @@
   // --------------------------------------------------
 
   function setFilters(filters = {}) {
+    if (!filters || typeof filters !== "object" || Array.isArray(filters)) {
+      throw new TypeError("Filters must be an object.");
+    }
+
+    const allowedTypes = new Set([
+      "education",
+      "admission",
+      "job",
+      "employment",
+      "internship",
+      "scholarship"
+    ]);
+
+    const next = { ...state.filters, ...filters };
+
     state.filters = {
-      ...state.filters,
-      ...filters
+      type: utils.validFilterValue(next.type, allowedTypes),
+      status: utils.validFilterValue(next.status, VALID_STATUSES),
+      search: String(next.search ?? "").trim().slice(0, 200)
     };
 
     notify("filters-changed");
-
     return getFiltered();
   }
 
   function getFiltered() {
     const { type, status, search } = state.filters;
-    const query = String(search || "").trim().toLowerCase();
+    const query = search.toLowerCase();
 
     return state.applications.filter((application) => {
       const applicationType = String(
-        application.type ||
-        application.application_type ||
-        "education"
+        application.type || application.application_type || "education"
       ).toLowerCase();
 
-      const applicationStatus = String(
-        application.status || ""
-      ).toLowerCase();
+      const applicationStatus = utils.normalizeStatus(application.status);
 
       const searchable = [
         application.id,
@@ -567,13 +713,13 @@
         application.company,
         application.status
       ]
-        .filter(Boolean)
+        .filter((value) => value !== null && value !== undefined)
         .join(" ")
         .toLowerCase();
 
       return (
-        (type === "all" || applicationType === type.toLowerCase()) &&
-        (status === "all" || applicationStatus === status.toLowerCase()) &&
+        (type === "all" || applicationType === type) &&
+        (status === "all" || applicationStatus === status) &&
         (!query || searchable.includes(query))
       );
     });
@@ -592,9 +738,13 @@
       throw new TypeError("A valid application list container is required.");
     }
 
+    if (!Array.isArray(applications)) {
+      throw new TypeError("Applications must be an array.");
+    }
+
     const fragment = document.createDocumentFragment();
 
-    if (!applications.length) {
+    if (applications.length === 0) {
       const empty = document.createElement("p");
       empty.className = "applications-empty";
       empty.textContent = "No applications found.";
@@ -603,6 +753,8 @@
     }
 
     applications.forEach((application) => {
+      if (!application || typeof application !== "object") return;
+
       const card = document.createElement("article");
       card.className = "application-card";
 
@@ -616,13 +768,14 @@
       const reference = document.createElement("p");
       reference.className = "application-card__reference";
       reference.textContent =
-        `Reference: ${application.application_id ?? application.id ?? "Pending"}`;
+        `Reference: ${utils.getId(application) ?? "Pending"}`;
+
+      const statusValue = utils.normalizeStatus(application.status) || "pending";
 
       const status = document.createElement("span");
       status.className = "application-card__status";
-      status.dataset.status = String(application.status || "pending");
-      status.textContent = String(application.status || "Pending")
-        .replace(/[_-]/g, " ");
+      status.dataset.status = statusValue;
+      status.textContent = statusValue.replace(/[_-]/g, " ");
 
       const view = document.createElement("button");
       view.type = "button";
@@ -630,12 +783,10 @@
       view.textContent = "View details";
 
       view.addEventListener("click", () => {
-        const id = application.id ?? application.application_id;
+        const id = utils.getId(application);
 
-        if (id !== undefined && id !== null) {
-          utils.emit("application-view-requested", {
-            id: String(id)
-          });
+        if (id !== null) {
+          utils.emit("application-view-requested", { id: String(id) });
         }
       });
 
@@ -659,13 +810,16 @@
       throw new TypeError("A valid application form is required.");
     }
 
-    form.addEventListener("submit", async (event) => {
+    if (formBindings.has(form)) {
+      return formBindings.get(form);
+    }
+
+    const handler = async (event) => {
       event.preventDefault();
 
       if (!form.reportValidity()) return;
 
       const submitButton = form.querySelector('[type="submit"]');
-
       if (submitButton?.disabled) return;
 
       const originalText = submitButton?.textContent;
@@ -678,7 +832,9 @@
 
       try {
         const details = Object.fromEntries(new FormData(form).entries());
-        const result = await submit(details);
+        const result = await submit(details, {
+          signal: options.signal
+        });
 
         if (typeof options.onSuccess === "function") {
           await options.onSuccess(result);
@@ -707,7 +863,17 @@
           }
         }
       }
-    });
+    };
+
+    form.addEventListener("submit", handler);
+
+    const unbind = () => {
+      form.removeEventListener("submit", handler);
+      formBindings.delete(form);
+    };
+
+    formBindings.set(form, unbind);
+    return unbind;
   }
 
   // --------------------------------------------------
@@ -720,7 +886,6 @@
     }
 
     listeners.add(callback);
-
     return () => listeners.delete(callback);
   }
 
@@ -730,28 +895,46 @@
 
   function init() {
     document.querySelectorAll("[data-application-form]").forEach((form) => {
-      bindForm(form);
+      try {
+        bindForm(form);
+      } catch (error) {
+        console.error("[MedOrbits Applications] Form initialization failed.", error);
+      }
     });
 
     document.querySelectorAll("[data-application-list]").forEach((container) => {
-      renderList(container);
+      try {
+        renderList(container);
+      } catch (error) {
+        console.error("[MedOrbits Applications] List initialization failed.", error);
+      }
     });
 
     document.querySelectorAll("[data-application-refresh]").forEach((button) => {
+      if (refreshBindings.has(button)) return;
+      refreshBindings.add(button);
+
       button.addEventListener("click", async () => {
+        if (button.disabled) return;
+
         button.disabled = true;
+        button.setAttribute("aria-busy", "true");
 
         try {
           await getMine();
-          const container = document.querySelector("[data-application-list]");
 
-          if (container) renderList(container);
+          document.querySelectorAll("[data-application-list]").forEach(
+            (container) => renderList(container)
+          );
         } catch (error) {
           if (window.MedOrbits?.toast) {
             window.MedOrbits.toast.error(error.message);
+          } else {
+            console.error("[MedOrbits Applications]", error);
           }
         } finally {
           button.disabled = false;
+          button.removeAttribute("aria-busy");
         }
       });
     });
@@ -761,7 +944,7 @@
   // Public API
   // --------------------------------------------------
 
-  const MedOrbitsApplications = Object.freeze({
+  const publicAPI = Object.freeze({
     STATUS,
     ApplicationError,
 
@@ -792,13 +975,8 @@
     init
   });
 
-  if (window.MedOrbitsApplications) {
-    console.warn("[MedOrbits] Applications module already loaded.");
-    return;
-  }
-
   Object.defineProperty(window, "MedOrbitsApplications", {
-    value: MedOrbitsApplications,
+    value: publicAPI,
     writable: false,
     configurable: false,
     enumerable: true

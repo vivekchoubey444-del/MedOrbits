@@ -1,50 +1,58 @@
+
 -- =============================================================================
 -- MedOrbits: Seed Illustrative Education Courses
--- File: database/seeds/seed-courses.sql
+-- File: /database/seeds/seed-courses.sql
 -- Database: MySQL 8.0.16+
+-- Engine: InnoDB
 --
 -- Requires:
 --   003_create_courses.sql
 --
--- Purpose:
---   Insert baseline education course catalogue records for development,
---   testing, local demonstrations, and automated test environments.
---
--- SAFETY AND DATA QUALITY:
---   - Records are illustrative, not official admission guidance.
---   - Verify eligibility, duration, entrance examinations, and regulations
---     with the relevant official authorities before publishing.
---   - Do not use this seed as a substitute for production catalogue management.
---   - Existing course records are not overwritten by this script.
+-- SAFETY:
+--   Fictional/illustrative catalogue records for development and testing.
+--   Not official admission guidance or confirmation of regulatory approval.
 --
 -- IDEMPOTENCY:
---   Re-running this script must not create duplicate course slugs.
---   The courses.slug column should have a UNIQUE constraint.
---
--- IMPORTANT:
---   This script does not create or modify the courses table.
---   Run the required migration before executing this seed.
+--   Requires UNIQUE constraints on courses.slug.
+--   Existing records are not overwritten.
 -- =============================================================================
-START TRANSACTION;
--- ---------------------------------------------------------------------------
--- 1. Insert baseline education courses
--- ---------------------------------------------------------------------------
-INSERT INTO courses (
-    public_id,
-    name,
-    slug,
-    code,
-    category,
-    qualification_level,
-    description,
-    duration_months,
-    eligibility,
-    entrance_exam,
-    is_active
-)
-VALUES
+
+DROP PROCEDURE IF EXISTS seed_medorbits_courses;
+
+DELIMITER $$
+
+CREATE PROCEDURE seed_medorbits_courses()
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- -------------------------------------------------------------------------
+    -- 1. Insert baseline courses
+    -- -------------------------------------------------------------------------
+
+    INSERT INTO courses (
+        public_id,
+        name,
+        slug,
+        code,
+        category,
+        qualification_level,
+        description,
+        duration_months,
+        eligibility,
+        entrance_exam,
+        is_active
+    )
+    VALUES
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000001',
         'Bachelor of Medicine and Bachelor of Surgery',
         'mbbs',
         'MBBS',
@@ -57,7 +65,7 @@ VALUES
         TRUE
     ),
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000002',
         'Bachelor of Dental Surgery',
         'bds',
         'BDS',
@@ -70,7 +78,7 @@ VALUES
         TRUE
     ),
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000003',
         'Bachelor of Ayurvedic Medicine and Surgery',
         'bams',
         'BAMS',
@@ -83,7 +91,7 @@ VALUES
         TRUE
     ),
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000004',
         'Bachelor of Pharmacy',
         'b-pharm',
         'BPHARM',
@@ -96,7 +104,7 @@ VALUES
         TRUE
     ),
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000005',
         'Bachelor of Science in Nursing',
         'bsc-nursing',
         'BSCN',
@@ -109,7 +117,7 @@ VALUES
         TRUE
     ),
     (
-        UUID(),
+        'a7300000-0000-4000-8000-000000000006',
         'Bachelor of Technology in Computer Science',
         'btech-computer-science',
         'BTECH-CSE',
@@ -121,40 +129,73 @@ VALUES
         NULL,
         TRUE
     )
-ON DUPLICATE KEY UPDATE
-    id = id;
--- ---------------------------------------------------------------------------
--- 2. Verify baseline course records
--- ---------------------------------------------------------------------------
--- This query displays the seeded course slugs and their current status.
--- It does not automatically abort the transaction if a record is missing.
-SELECT
-    id,
-    public_id,
-    name,
-    slug,
-    code,
-    category,
-    qualification_level,
-    duration_months,
-    entrance_exam,
-    is_active
-FROM courses
-WHERE slug IN (
-    'mbbs',
-    'bds',
-    'bams',
-    'b-pharm',
-    'bsc-nursing',
-    'btech-computer-science'
-)
-ORDER BY FIELD(
-    slug,
-    'mbbs',
-    'bds',
-    'bams',
-    'b-pharm',
-    'bsc-nursing',
-    'btech-computer-science'
-);
-COMMIT;
+    ON DUPLICATE KEY UPDATE
+        id = id;
+
+    -- -------------------------------------------------------------------------
+    -- 2. Verify that all expected slugs exist
+    -- -------------------------------------------------------------------------
+
+    SELECT COUNT(DISTINCT slug)
+      INTO v_count
+      FROM courses
+     WHERE slug IN (
+        'mbbs',
+        'bds',
+        'bams',
+        'b-pharm',
+        'bsc-nursing',
+        'btech-computer-science'
+     );
+
+    IF v_count <> 6 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Course seed verification failed: expected six course slugs';
+    END IF;
+
+    COMMIT;
+
+    -- -------------------------------------------------------------------------
+    -- 3. Display verification results
+    -- -------------------------------------------------------------------------
+
+    SELECT
+        id,
+        public_id,
+        name,
+        slug,
+        code,
+        category,
+        qualification_level,
+        duration_months,
+        entrance_exam,
+        is_active
+    FROM courses
+    WHERE slug IN (
+        'mbbs',
+        'bds',
+        'bams',
+        'b-pharm',
+        'bsc-nursing',
+        'btech-computer-science'
+    )
+    ORDER BY FIELD(
+        slug,
+        'mbbs',
+        'bds',
+        'bams',
+        'b-pharm',
+        'bsc-nursing',
+        'btech-computer-science'
+    );
+END$$
+
+DELIMITER ;
+
+CALL seed_medorbits_courses();
+
+DROP PROCEDURE IF EXISTS seed_medorbits_courses;
+
+-- =============================================================================
+-- END OF SEED
+-- =============================================================================

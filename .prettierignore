@@ -1,7 +1,21 @@
-node_modules
-coverage
-dist
-package-lock.json
-assets/data
+
+# Dependencies
+node_modules/
+
+# Test and coverage output
+coverage/
+
+# Build output
+dist/
+build/
+
+# Generated dependency lockfile
+# NOTE: Keep package-lock.json tracked when using npm ci in CI/CD.
+# package-lock.json
+
+# Generated or externally maintained data
+assets/data/
+
+# Test files
 tests/**/*.js
 tests/**/*.mjs

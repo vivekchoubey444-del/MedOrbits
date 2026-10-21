@@ -7,14 +7,42 @@ const {
   httpError,
 } = require('../utils/http');
 
+const MAX_ID_LENGTH = 15;
+
+const SAFE_HTTP_METHODS = new Set([
+  'GET',
+  'HEAD',
+  'OPTIONS',
+]);
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 /**
  * Parse a positive integer route ID.
  */
-function idFrom(req) {
-  const value = req.params?.id;
+function idFrom(req, paramName = 'id') {
+  if (
+    !req ||
+    !req.params ||
+    typeof paramName !== 'string' ||
+    !/^[A-Za-z][A-Za-z0-9_]*$/.test(paramName)
+  ) {
+    throw httpError(400, 'INVALID_ID', 'A valid record ID is required.');
+  }
+
+  const value = req.params[paramName];
 
   if (
     typeof value !== 'string' ||
+    value.length > MAX_ID_LENGTH ||
     !/^[1-9]\d*$/.test(value)
   ) {
     throw httpError(
@@ -38,15 +66,20 @@ function idFrom(req) {
 }
 
 /**
- * Require an authenticated user.
- * Authentication middleware must populate req.user.
+ * Require an authenticated, active user.
+ *
+ * Authentication middleware must populate req.user from a trusted source.
  */
 function requireUser(req) {
+  const user = req && req.user;
+  const userId = user && (user.id ?? user.userId);
+
   if (
-    !req.user ||
-    (typeof req.user.id !== 'string' &&
-      typeof req.user.id !== 'number') ||
-    String(req.user.id).trim() === ''
+    !user ||
+    (typeof userId !== 'string' && typeof userId !== 'number') ||
+    String(userId).trim() === '' ||
+    (typeof userId === 'number' && !Number.isSafeInteger(userId)) ||
+    (typeof userId === 'string' && userId.length > 128)
   ) {
     throw httpError(
       401,
@@ -55,11 +88,42 @@ function requireUser(req) {
     );
   }
 
-  return req.user;
+  const status = String(user.status || '').toLowerCase();
+
+  if (
+    user.isActive === false ||
+    user.active === false ||
+    user.disabled === true ||
+    user.suspended === true ||
+    user.deletedAt != null ||
+    ['disabled', 'suspended', 'deleted', 'blocked'].includes(status)
+  ) {
+    throw httpError(
+      403,
+      'ACCOUNT_UNAVAILABLE',
+      'This account is not permitted to perform this operation.'
+    );
+  }
+
+  return user;
 }
 
 /**
- * Return a consistent not-configured error.
+ * Require an available function.
+ */
+function requireFunction(target, methodName, featureName = methodName) {
+  if (
+    !target ||
+    typeof target[methodName] !== 'function'
+  ) {
+    unavailable(featureName);
+  }
+
+  return target[methodName].bind(target);
+}
+
+/**
+ * Throw a consistent feature-not-configured error.
  */
 function unavailable(feature) {
   const name =
@@ -76,13 +140,22 @@ function unavailable(feature) {
 
 /**
  * Validate request data.
- * Validators must expose validate(body).
+ *
+ * Supported validator contract:
+ *   validator.validate(body, { partial })
+ *
+ * The validator must return a validated plain object.
  */
-function validateBody(validator, body) {
-  if (
-    !validator ||
-    typeof validator.validate !== 'function'
-  ) {
+function validateBody(validator, body, options = {}) {
+  if (!isPlainObject(body)) {
+    throw httpError(
+      400,
+      'INVALID_BODY',
+      'A valid JSON object is required.'
+    );
+  }
+
+  if (!validator || typeof validator.validate !== 'function') {
     throw httpError(
       503,
       'VALIDATOR_UNAVAILABLE',
@@ -90,71 +163,270 @@ function validateBody(validator, body) {
     );
   }
 
-  return validator.validate(body);
+  if (!isPlainObject(options)) {
+    throw new TypeError('Validation options must be a plain object.');
+  }
+
+  const result = validator.validate(body, {
+    partial: options.partial === true,
+  });
+
+  if (!isPlainObject(result) || Object.keys(result).length === 0) {
+    throw httpError(
+      400,
+      'INVALID_REQUEST_DATA',
+      'Request data is invalid or empty.'
+    );
+  }
+
+  return result;
 }
 
 /**
- * Create standard CRUD handlers.
+ * Reject properties not explicitly allowed.
+ */
+function allowFields(data, allowedFields) {
+  if (!isPlainObject(data)) {
+    throw httpError(
+      400,
+      'INVALID_REQUEST_DATA',
+      'Request data must be a valid object.'
+    );
+  }
+
+  if (
+    !Array.isArray(allowedFields) ||
+    !allowedFields.every(
+      (field) => typeof field === 'string' && field.length > 0
+    )
+  ) {
+    throw new TypeError('allowedFields must be an array of field names.');
+  }
+
+  const allowed = new Set(allowedFields);
+  const unsupported = Object.keys(data).filter(
+    (field) => !allowed.has(field)
+  );
+
+  if (unsupported.length > 0) {
+    throw httpError(
+      400,
+      'UNSUPPORTED_FIELDS',
+      `Unsupported fields: ${unsupported.join(', ')}.`
+    );
+  }
+
+  return data;
+}
+
+/**
+ * Normalize an allowlisted query object.
+ */
+function normalizeFilters(query, allowedFields, options = {}) {
+  if (!isPlainObject(query)) {
+    throw httpError(
+      400,
+      'INVALID_FILTERS',
+      'Filters must be a valid object.'
+    );
+  }
+
+  if (!Array.isArray(allowedFields)) {
+    throw new TypeError('allowedFields must be an array.');
+  }
+
+  const allowed = new Set(allowedFields);
+  const maxValueLength = Number.isSafeInteger(options.maxValueLength)
+    ? Math.max(1, options.maxValueLength)
+    : 200;
+
+  const filters = Object.create(null);
+
+  for (const [key, value] of Object.entries(query)) {
+    if (!allowed.has(key)) {
+      throw httpError(
+        400,
+        'INVALID_FILTER',
+        `Unsupported filter: ${key}.`
+      );
+    }
+
+    if (
+      typeof value !== 'string' ||
+      value.length > maxValueLength
+    ) {
+      throw httpError(
+        400,
+        'INVALID_FILTER_VALUE',
+        `Invalid value for filter: ${key}.`
+      );
+    }
+
+    const normalized = value.trim();
+
+    if (normalized !== '') {
+      filters[key] = normalized;
+    }
+  }
+
+  return filters;
+}
+
+/**
+ * Apply a response sanitizer when provided.
+ * Sensitive resources should always use an explicit sanitizer.
+ */
+function safeResponse(value, sanitizer) {
+  if (typeof sanitizer !== 'function') {
+    return value;
+  }
+
+  const result = sanitizer(value);
+
+  if (!isPlainObject(result)) {
+    throw httpError(
+      500,
+      'INVALID_SANITIZER_RESPONSE',
+      'The response sanitizer returned an invalid record.'
+    );
+  }
+
+  return result;
+}
+
+/**
+ * Check record ownership using a caller-supplied policy.
+ * Only a strict true result grants access.
+ */
+async function requireOwnership(req, record, ownershipCheck) {
+  if (typeof ownershipCheck !== 'function') {
+    throw httpError(
+      403,
+      'OWNERSHIP_POLICY_REQUIRED',
+      'An ownership policy is required for this operation.'
+    );
+  }
+
+  const allowed = await ownershipCheck(req, record);
+
+  if (allowed !== true) {
+    throw httpError(
+      403,
+      'FORBIDDEN',
+      'You are not permitted to access this record.'
+    );
+  }
+
+  return record;
+}
+
+/**
+ * Create reusable CRUD handlers.
  *
  * Repository contract:
- *   list(query) -> { items: [], pagination?: object }
+ *   list(filters)
  *   findById(id)
  *   create(data)
  *   update(id, data)
  *   remove(id)
  *
  * Options:
- *   writable: false       disables create and update
- *   removeAllowed: false  disables delete
- *   validate: false       permits raw request bodies
+ *   writable: false
+ *   removeAllowed: false
+ *   validate: false
+ *   allowFields: []
+ *   normalizeFilters(query)
+ *   sanitize(record)
+ *   authorizeOwner(req, record)
  *
- * Validation is enabled by default when a validator is supplied.
+ * Authentication and role-based authorization must also be configured
+ * on the Express router.
  */
 function crudController(repository, validator, options = {}) {
-  if (
-    !repository ||
-    typeof repository !== 'object'
-  ) {
-    throw new TypeError(
-      'crudController requires a repository object.'
-    );
+  if (!isPlainObject(repository)) {
+    throw new TypeError('crudController requires a repository object.');
   }
 
   if (typeof repository.list !== 'function') {
-    throw new TypeError(
-      'Repository must implement list(query).'
-    );
+    throw new TypeError('Repository must implement list(filters).');
   }
 
   if (typeof repository.findById !== 'function') {
-    throw new TypeError(
-      'Repository must implement findById(id).'
-    );
+    throw new TypeError('Repository must implement findById(id).');
+  }
+
+  if (!isPlainObject(options)) {
+    throw new TypeError('CRUD options must be a plain object.');
+  }
+
+  if (
+    options.allowFields !== undefined &&
+    (!Array.isArray(options.allowFields) ||
+      !options.allowFields.every(
+        (field) => typeof field === 'string' && field.length > 0
+      ))
+  ) {
+    throw new TypeError('allowFields must be an array of field names.');
+  }
+
+  for (const name of ['sanitize', 'normalizeFilters', 'authorizeOwner']) {
+    if (options[name] !== undefined && typeof options[name] !== 'function') {
+      throw new TypeError(`${name} must be a function.`);
+    }
   }
 
   const writable = options.writable !== false;
   const removeAllowed = options.removeAllowed !== false;
   const validationEnabled = options.validate !== false;
 
-  function getData(body) {
-    if (!validationEnabled) {
-      return body;
+  function getData(body, method) {
+    const data = validationEnabled
+      ? validateBody(validator, body, { partial: method === 'PATCH' })
+      : body;
+
+    if (!isPlainObject(data) || Object.keys(data).length === 0) {
+      throw httpError(
+        400,
+        'INVALID_REQUEST_DATA',
+        'Request data must be a non-empty object.'
+      );
     }
 
-    return validateBody(validator, body);
+    if (options.allowFields) {
+      allowFields(data, options.allowFields);
+    }
+
+    return data;
   }
 
-  return {
-    /**
-     * GET collection
-     */
-    list: asyncHandler(async (req, res) => {
-      const result = await repository.list(req.query);
+  function sanitize(record) {
+    return safeResponse(record, options.sanitize);
+  }
 
-      if (
-        !result ||
-        !Array.isArray(result.items)
-      ) {
+  async function checkOwnership(req, record) {
+    if (typeof options.authorizeOwner === 'function') {
+      await requireOwnership(req, record, options.authorizeOwner);
+    }
+  }
+
+  return Object.freeze({
+    list: asyncHandler(async (req, res) => {
+      const filters =
+        typeof options.normalizeFilters === 'function'
+          ? options.normalizeFilters(req.query)
+          : req.query;
+
+      if (!isPlainObject(filters)) {
+        throw httpError(
+          400,
+          'INVALID_FILTERS',
+          'Filters must be a valid object.'
+        );
+      }
+
+      const result = await repository.list(filters);
+
+      if (!result || !Array.isArray(result.items)) {
         throw httpError(
           500,
           'INVALID_REPOSITORY_RESPONSE',
@@ -162,49 +434,37 @@ function crudController(repository, validator, options = {}) {
         );
       }
 
-      return sendSuccess(
-        res,
-        result.items,
-        200,
-        result.pagination
-          ? { pagination: result.pagination }
-          : {}
-      );
+      const items = result.items.map(sanitize);
+      const metadata = isPlainObject(result.pagination)
+        ? { pagination: result.pagination }
+        : {};
+
+      return sendSuccess(res, items, 200, metadata);
     }),
 
-    /**
-     * GET resource by ID
-     */
     get: asyncHandler(async (req, res) => {
-      const item = await repository.findById(idFrom(req));
+      const id = idFrom(req);
+      const record = await repository.findById(id);
 
-      if (!item) {
-        throw httpError(
-          404,
-          'NOT_FOUND',
-          'Record not found.'
-        );
+      if (!record) {
+        throw httpError(404, 'NOT_FOUND', 'Record not found.');
       }
 
-      return sendSuccess(res, item);
+      await checkOwnership(req, record);
+
+      return sendSuccess(res, sanitize(record), 200);
     }),
 
-    /**
-     * POST collection
-     */
     create: asyncHandler(async (req, res) => {
       if (!writable) {
         unavailable('Create');
       }
 
-      if (typeof repository.create !== 'function') {
-        unavailable('Create');
-      }
+      const create = requireFunction(repository, 'create', 'Create');
+      const data = getData(req.body, req.method);
+      const record = await create(data);
 
-      const data = getData(req.body);
-      const item = await repository.create(data);
-
-      if (!item) {
+      if (!record) {
         throw httpError(
           500,
           'CREATE_FAILED',
@@ -212,70 +472,70 @@ function crudController(repository, validator, options = {}) {
         );
       }
 
-      return sendSuccess(res, item, 201);
+      return sendSuccess(res, sanitize(record), 201);
     }),
 
-    /**
-     * PUT/PATCH resource by ID
-     */
     update: asyncHandler(async (req, res) => {
       if (!writable) {
         unavailable('Update');
       }
 
-      if (typeof repository.update !== 'function') {
-        unavailable('Update');
-      }
-
       const id = idFrom(req);
-      const data = getData(req.body);
-      const item = await repository.update(id, data);
+      const existing = await repository.findById(id);
 
-      if (!item) {
-        throw httpError(
-          404,
-          'NOT_FOUND',
-          'Record not found.'
-        );
+      if (!existing) {
+        throw httpError(404, 'NOT_FOUND', 'Record not found.');
       }
 
-      return sendSuccess(res, item);
+      await checkOwnership(req, existing);
+
+      const update = requireFunction(repository, 'update', 'Update');
+      const data = getData(req.body, req.method);
+      const record = await update(id, data);
+
+      if (!record) {
+        throw httpError(404, 'NOT_FOUND', 'Record not found.');
+      }
+
+      return sendSuccess(res, sanitize(record), 200);
     }),
 
-    /**
-     * DELETE resource by ID
-     */
     remove: asyncHandler(async (req, res) => {
       if (!removeAllowed) {
         unavailable('Delete');
       }
 
-      if (typeof repository.remove !== 'function') {
-        unavailable('Delete');
+      const id = idFrom(req);
+      const existing = await repository.findById(id);
+
+      if (!existing) {
+        throw httpError(404, 'NOT_FOUND', 'Record not found.');
       }
 
-      const id = idFrom(req);
-      const removed = await repository.remove(id);
+      await checkOwnership(req, existing);
+
+      const remove = requireFunction(repository, 'remove', 'Delete');
+      const removed = await remove(id);
 
       if (!removed) {
-        throw httpError(
-          404,
-          'NOT_FOUND',
-          'Record not found.'
-        );
+        throw httpError(404, 'NOT_FOUND', 'Record not found.');
       }
 
-      return sendSuccess(res, {
-        id,
-        deleted: true,
-      });
+      return sendSuccess(res, { id, deleted: true }, 200);
     }),
-  };
+  });
 }
 
 module.exports = {
   idFrom,
   requireUser,
+  requireFunction,
   unavailable,
+  validateBody,
+  allowFields,
+  normalizeFilters,
+  safeResponse,
+  requireOwnership,
   crudController,
+  SAFE_HTTP_METHODS,
 };

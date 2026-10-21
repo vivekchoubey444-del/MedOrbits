@@ -1,21 +1,25 @@
-MedOrbits Services Layer
 
-Directory: src/services/
+# MedOrbits Services Layer
 
-Purpose: Provide dependency-injected business services for the MedOrbits Express backend.
+**Directory:** `src/services/`
 
-1. Overview
+**Runtime:** Node.js >= 20  
+**Module system:** CommonJS  
+**Architecture:** Dependency-injected business services
 
-The services layer implements business rules and coordinates application workflows. It sits between HTTP controllers and persistence or external integrations.
+## 1. Purpose
 
-Services receive repositories, provider wrappers, and other services through dependency injection. They should not create database connections, instantiate provider SDKs inside request handlers, or depend directly on Express request and response objects.
+The services layer implements business rules and coordinates workflows between HTTP controllers, repositories, and external integrations.
 
-This design improves testability, modularity, maintainability, and provider independence.
+Services must remain independent of Express request and response objects, concrete database drivers, and provider SDK initialization.
 
-Implementation note: The presence of a service module does not establish that its repository adapters, integrations, security controls, or production workflows are complete.
+This architecture improves testability, maintainability, provider independence, and separation of concerns.
 
-2. Directory structure
+**Important:** The existence of a service module does not establish that its repository adapters, security controls, integrations, or production workflows are complete.
 
+## 2. Directory Structure
+
+```text
 src/services/
 ├── README.md
 ├── auth.service.js
@@ -44,273 +48,304 @@ src/services/
 ├── analytics.service.js
 ├── audit.service.js
 └── service-utils.js
+```
 
-Keep the directory tree synchronized with the actual repository.
+Keep this directory synchronized with the actual repository. Do not list modules as implemented until their files and exports have been verified.
 
-3. Service responsibilities
+## 3. Service Responsibilities
 
-Service	Responsibility
-auth.service.js	Registration, login, token refresh, and logout orchestration.
-session.service.js	Session creation, validation, and revocation.
-verification.service.js	Email verification tokens and resend workflows.
-password.service.js	Password reset/change and session invalidation.
-user.service.js	User profile and administrative status operations.
-course.service.js	Course catalog operations.
-college.service.js	College catalog operations.
-university.service.js	University catalog operations.
-admission.service.js	Admissions workflow coordination.
-application.service.js	Application submission and status workflows.
-counselling.service.js	Counselling records and workflow coordination.
-document.service.js	Document metadata, review, and access workflow coordination.
-storage.service.js	Private file storage operations through injected adapters.
-job.service.js	Job listing and related business operations.
-internship.service.js	Internship listing and workflow operations.
-candidate.service.js	Candidate profile and employment workflow operations.
-employer.service.js	Employer profile and employer-service operations.
-recruitment.service.js	Recruitment workflow coordination.
-search.service.js	Bounded multi-source search.
-notification.service.js	Notification orchestration and delivery-state management.
-email.service.js	Email composition and delivery orchestration.
-payment.service.js	Payment operations, webhook handling, and payment-state transitions.
-subscription.service.js	Subscription lifecycle and recurring-payment orchestration.
-analytics.service.js	Analytics aggregation and reporting.
-audit.service.js	Security and business audit records.
-service-utils.js	Shared validation, pagination, errors, and audit helpers.
+| Service | Responsibility |
+|—|—|
+| `auth.service.js` | Registration, login, token refresh, logout orchestration |
+| `session.service.js` | Session creation, validation, revocation |
+| `verification.service.js` | Email verification tokens and resend workflows |
+| `password.service.js` | Password reset/change and session invalidation |
+| `user.service.js` | User profiles and authorized account management |
+| `course.service.js` | Course catalog operations |
+| `college.service.js` | College catalog and publication workflows |
+| `university.service.js` | University catalog and publication workflows |
+| `admission.service.js` | Admission lifecycle coordination |
+| `application.service.js` | Application submission and status transitions |
+| `counselling.service.js` | Counselling records and workflow coordination |
+| `document.service.js` | Document metadata, review, and access controls |
+| `storage.service.js` | Private file storage through injected adapters |
+| `job.service.js` | Job listings and lifecycle management |
+| `internship.service.js` | Internship listings and lifecycle management |
+| `candidate.service.js` | Candidate profiles and employment workflows |
+| `employer.service.js` | Employer profiles and verification workflows |
+| `recruitment.service.js` | Recruitment workflow coordination |
+| `search.service.js` | Bounded multi-source search |
+| `notification.service.js` | Notification orchestration and delivery-state tracking |
+| `email.service.js` | Email validation, template orchestration, and delivery |
+| `payment.service.js` | Payment operations, webhook handling, and state transitions |
+| `subscription.service.js` | Subscription lifecycle and recurring-payment coordination |
+| `analytics.service.js` | Approved analytics aggregation and reporting |
+| `audit.service.js` | Security and business audit records |
+| `service-utils.js` | Shared validation, errors, pagination, and audit helpers |
 
-The table describes intended responsibilities. Verify the actual exported functions and repository contracts in each module.
+Actual exports, method signatures, and repository requirements are authoritative. This table documents intended responsibilities, not verified implementation status.
 
-4. Dependency injection
+## 4. Dependency Injection
 
-Domain services should export factories that accept their dependencies explicitly.
+Services should export factory functions that accept their dependencies explicitly.
 
 Example:
 
+```javascript
+‘use strict’;
+
 const { createJobService } = require(‘../services/job.service’);
+
 const jobService = createJobService({
   jobRepository,
-  auditService
+  auditService,
 });
+
 const jobs = await jobService.list({
   page: 1,
-  limit: 20
+  limit: 20,
 });
+```
 
-Construct services in a composition or bootstrap layer, then inject them into controllers, jobs, and workers as required.
+The example assumes that the actual job service and repository support the shown methods and signatures. Verify their contracts before integrating.
 
-Dependency injection rules
+### Dependency injection rules
 
-* Pass repositories and integrations through factory arguments.
-* Avoid importing concrete database drivers into business services.
-* Avoid creating provider clients inside individual request handlers.
-* Inject other services only where the dependency is justified.
-* Validate required dependencies when constructing the service.
-* Keep dependencies explicit and straightforward to mock.
-* Avoid circular dependencies between services.
+- Pass repositories, provider wrappers, and other justified dependencies through factory arguments.
+- Validate required dependencies during service construction.
+- Avoid importing concrete database drivers into business services.
+- Avoid creating provider clients inside request handlers.
+- Avoid unnecessary service-to-service dependencies and circular imports.
+- Keep dependencies straightforward to mock.
+- Do not pass Express `req` or `res` objects into business services.
 
-A service should not require an Express req or res object to execute its business operations.
+### Dependency lifecycle
 
-5. Repository contracts
+Construct service instances in the application composition layer and inject them into controllers, jobs, and workers as needed.
 
-Standard CRUD services may use repository methods such as:
+Services should not recreate the dependency graph for each HTTP request.
 
+## 5. Repository Contracts
+
+Standard repository operations may include:
+
+```javascript
 list({
   page,
   limit,
   offset,
   filters,
   sortBy,
-  sortOrder
+  sortOrder,
 });
+
 findById(id);
 create(data);
 updateById(id, data);
 deleteById(id);
+```
 
-Some services may use findMany or specialized methods instead. Follow the actual repository adapter and service-utils.js contracts.
+Specialized repositories may instead expose methods such as `findMany`, `findByEmail`, `updateIfStatusMatches`, `consumeValidTokenAndActivateUser`, or `processWebhookEvent`.
 
-Repository requirements
+These methods must have documented input, output, error, and atomicity contracts.
 
-* Use parameterized database queries.
-* Enforce appropriate database constraints.
-* Define pagination and sorting behavior explicitly.
-* Allowlist sortable fields rather than passing arbitrary client input into SQL.
-* Apply transactions for operations requiring atomic state changes.
-* Keep persistence concerns out of controllers.
-* Document specialized repository methods used by each service.
+### Repository requirements
 
-A service must not assume that every repository supports the same CRUD interface unless the shared contract explicitly guarantees it.
+- Use parameterized database queries.
+- Enforce appropriate database constraints and unique indexes.
+- Define pagination and sorting behavior explicitly.
+- Allowlist sortable fields.
+- Apply transactions to workflows requiring atomic state changes.
+- Return consistent representations for missing records and update conflicts.
+- Document transaction boundaries and concurrency behavior.
+- Keep persistence concerns out of controllers.
 
-6. Business logic and error handling
+Do not assume every repository implements the same interface unless the shared repository contract guarantees it.
 
-Services own domain rules and coordinate workflows.
+## 6. Business Logic and Error Handling
+
+Services own domain rules and coordinate repository and integration calls.
 
 They should:
 
-* Validate business invariants.
-* Enforce allowed state transitions.
-* Coordinate repository and integration calls.
-* Use transactions or consistency controls where necessary.
-* Return documented results or throw predictable application errors.
-* Avoid returning database internals or provider credentials.
-* Distinguish permanent business errors from transient infrastructure failures.
+- Validate business invariants and state transitions.
+- Enforce ownership and authorization policies where applicable.
+- Coordinate repository and provider operations.
+- Use transactions, conditional updates, or other consistency controls where necessary.
+- Return documented results or throw predictable application errors.
+- Avoid returning database internals, credentials, or raw provider errors.
+- Distinguish validation failures, authorization failures, conflicts, and infrastructure errors.
+- Avoid silently swallowing failures that affect business correctness.
 
-Controllers remain responsible for translating service outcomes and errors into the API’s HTTP response format.
+Controllers translate service outcomes into the API’s established HTTP response format.
 
-7. Authentication and account security
+Audit failures should follow an explicit policy appropriate to the event. For critical security or financial events, durable audit recording may need to participate in a transaction or use an outbox.
 
-The authentication-related services require particular care.
+## 7. Authentication and Account Security
 
-Password handling
+### Password handling
 
-* Use a maintained password-hashing implementation such as Argon2id or bcrypt.
-* Inject a passwordHasher interface with hash() and verify() operations.
-* Never store plaintext passwords.
-* Apply documented password and account-recovery policies.
-* Avoid exposing account existence through inconsistent responses.
+- Use a maintained password-hashing implementation such as Argon2id or bcrypt.
+- Inject a `passwordHasher` interface with `hash()` and `verify()` methods.
+- Never store plaintext passwords or reversible password representations.
+- Apply documented password and recovery policies.
+- Use consistent public responses for account-recovery requests.
+- Preserve the intended password input exactly; do not silently normalize passwords unless the policy explicitly requires it.
 
-Token and session management
+### Token and session management
 
-* Use short-lived access tokens where applicable.
-* Use rotating, revocable refresh tokens.
-* Store only refresh-token hashes when refresh tokens are persisted.
-* Detect token reuse where the chosen design supports it.
-* Revoke relevant sessions after password changes or account-security events.
-* Validate token expiry, issuer, audience, and signing configuration as appropriate.
+- Use short-lived access tokens where appropriate.
+- Use rotating, revocable refresh tokens.
+- Store only refresh-token hashes when tokens are persisted.
+- Detect refresh-token reuse where supported by the chosen design.
+- Revoke relevant sessions after password changes and security-sensitive events.
+- Validate token expiry, issuer, audience, and signing configuration as applicable.
+- Protect cookies using appropriate `HttpOnly`, `Secure`, and `SameSite` settings.
 
-Abuse prevention
+### Abuse prevention
 
-Use appropriate login throttling, credential-stuffing protections, email verification, account recovery safeguards, and multifactor authentication where required by the application’s risk profile.
+Apply login throttling, credential-stuffing defenses, account-recovery rate limits, email verification, and multifactor authentication according to the application’s risk profile.
 
-Middleware and route-level authorization must remain in place; a service method’s existence does not grant callers permission to invoke it.
+Route-level authentication and authorization remain mandatory. The existence of a service method does not authorize arbitrary callers to invoke it.
 
-8. Education, admissions, and application workflows
+## 8. Education, Admissions, and Applications
 
-Education and admissions services should coordinate validated catalog data, eligibility rules, application states, and supporting records.
+Education and admissions services coordinate catalog data, eligibility rules, applications, and supporting records.
 
-Recommended controls:
+Required controls include:
 
-* Validate identifiers and allowed status transitions.
-* Distinguish user-submitted information from verified institutional information.
-* Apply ownership and role-based access restrictions.
-* Use transactions where related records must change together.
-* Preserve appropriate audit history.
-* Prevent duplicate submissions where the business rules require uniqueness.
+- Validate identifiers and allowed state transitions.
+- Distinguish user-submitted information from institution-verified information.
+- Enforce ownership and role-based access.
+- Prevent duplicate submissions where business rules require uniqueness.
+- Use transactions for related database changes.
+- Preserve appropriate audit history.
+- Validate important eligibility rules against authoritative data.
 
-Do not treat an application summary or counselling document as official institutional confirmation unless the relevant verification and issuance workflow supports that status.
+Do not present an application summary, counselling document, or generated report as official institutional confirmation unless the relevant verification and issuance workflow supports that claim.
 
-9. Documents and storage
+## 9. Documents and Storage
 
-Document-related services should coordinate metadata, storage operations, access checks, and lifecycle policies.
+Document services coordinate metadata, access checks, storage operations, and lifecycle policies.
 
 Required safeguards include:
 
-* Private storage and unpredictable object keys.
-* File-size limits and content validation.
-* MIME sniffing and malware scanning where appropriate.
-* Authorization before document retrieval or modification.
-* Short-lived signed URLs where supported.
-* Retention and deletion policies.
-* Audit records for sensitive document operations.
+- Private storage and unpredictable object keys.
+- File-size limits and content validation.
+- Server-side MIME detection and file-signature checks.
+- Malware scanning where appropriate.
+- Authorization before document retrieval or modification.
+- Short-lived signed URLs where supported.
+- Retention, deletion, and cleanup policies.
+- Audit records for sensitive document operations.
 
-Do not trust a client-supplied filename or MIME type as proof of file content.
+Never trust a client-supplied filename or MIME type as proof of file content.
 
-Keep storage SDKs and provider-specific operations inside src/integrations/storage/ or the relevant adapter boundary.
+Keep storage SDKs and provider-specific operations inside the established integration or adapter boundary, such as `src/integrations/storage/`, if that directory exists in the repository.
 
-10. Careers and recruitment
+Deletion workflows should be retryable. If database state changes but object deletion fails, record the failure and provide a durable cleanup mechanism.
 
-Career-related services may coordinate job listings, internships, candidate profiles, employers, and recruitment workflows.
+## 10. Careers and Recruitment
+
+Career services coordinate jobs, internships, candidates, employers, and recruitment workflows.
 
 Apply:
 
-* Input validation and explicit update-field allowlists.
-* Resource ownership and role-based authorization.
-* Approved status transitions.
-* Pagination and bounded search results.
-* Appropriate privacy controls for candidate data and resumes.
-* Audit records for privileged or consequential changes.
+- Explicit update-field allowlists.
+- Resource ownership and role-based authorization.
+- Approved state transitions.
+- Bounded pagination and search results.
+- Privacy controls for candidate profiles and resumes.
+- Employer verification and listing-publication rules.
+- Audit records for privileged or consequential changes.
 
-Search results and recruitment records should not expose confidential candidate information to unauthorized users.
+Search results and recruitment records must not expose confidential candidate information to unauthorized users.
 
-11. Notifications and email
+## 11. Notifications and Email
 
-Notification and email services should coordinate message preparation, delivery, and state tracking without embedding provider-specific SDK calls in business workflows.
+Notification and email services coordinate message preparation, delivery, and delivery-state tracking.
 
-Recommended controls:
+Required safeguards include:
 
-* Validate recipients and template variables.
-* Render templates with safe escaping.
-* Validate link destinations against an approved allowlist.
-* Avoid placing sensitive data in email subjects and previews.
-* Use idempotency and durable delivery records where appropriate.
-* Retry transient failures with bounded backoff.
-* Keep delivery status distinct from enqueueing status.
-* Avoid logging complete messages or sensitive payloads.
+- Validate recipients and template variables.
+- Render trusted templates with context-appropriate escaping.
+- Restrict action URLs to approved origins.
+- Avoid sensitive information in subjects and previews.
+- Keep queued, sending, sent, delivered, and failed states distinct where the provider supports those distinctions.
+- Use idempotency and durable delivery records.
+- Retry transient failures with bounded backoff.
+- Avoid logging full messages, verification tokens, reset tokens, or sensitive payloads.
 
-Background delivery should use the established src/jobs/ and src/workers/ architecture where appropriate.
+Use the established jobs and workers architecture for asynchronous delivery where available.
 
-12. Payments and subscriptions
+A provider accepting a message does not prove that it reached the recipient’s inbox.
 
-Payment and subscription services require durable state management and careful verification.
+## 12. Payments and Subscriptions
 
-Payment processing
+Payment and subscription workflows require durable state management and strict provider verification.
 
-* Verify webhook signatures over the exact raw request body where required.
-* Validate provider event types and identifiers.
-* Persist webhook event identifiers to support duplicate-event detection.
-* Apply database transactions and appropriate uniqueness constraints.
-* Reconcile provider state with persisted payment records.
-* Never treat a browser redirect as proof of payment.
-* Keep provider secrets in environment or secret-manager configuration.
+### Payment processing
 
-Subscription workflows
+- Verify webhook signatures against the exact raw request body when required.
+- Validate provider event types, identifiers, amounts, currencies, and references.
+- Persist event identifiers to prevent duplicate processing.
+- Apply database transactions and appropriate uniqueness constraints.
+- Reconcile provider state with persisted payment records.
+- Never treat a browser redirect as proof of payment.
+- Keep provider secrets in environment or secret-manager configuration.
+- Never log payment credentials or unnecessary sensitive payloads.
 
-* Define allowed subscription-state transitions.
-* Handle renewals, failures, cancellations, and expiry explicitly.
-* Make repeated webhook and worker execution safe.
-* Use authoritative provider events and persisted records.
-* Document retry and reconciliation behavior.
+### Subscription workflows
 
-Payment idempotency must be enforced across the relevant database and provider boundaries; a unique queue job ID alone is insufficient.
+- Define explicit subscription-state transitions.
+- Handle renewals, failures, cancellations, and expiry.
+- Make repeated webhook and worker execution safe.
+- Use authoritative provider events and persisted records.
+- Document retry and reconciliation behavior.
+- Keep local and provider state consistent through transactions, idempotency, and reconciliation procedures.
 
-13. Analytics and auditing
+Payment idempotency must be enforced across relevant database and provider boundaries. A unique queue job identifier alone is insufficient.
+
+## 13. Analytics and Auditing
 
 Analytics and audit services have different purposes.
 
-Analytics
+### Analytics
 
-* Produces approved aggregates and operational insights.
-* Applies access restrictions to sensitive reporting.
-* Avoids collecting unnecessary personal information.
+- Produces approved aggregates and operational insights.
+- Enforces access restrictions on sensitive reports.
+- Minimizes collection of personal information.
+- Applies retention and aggregation policies.
 
-Audit
+### Audit
 
-* Records relevant security and business events.
-* Preserves actor, action, target, timestamp, and outcome where appropriate.
-* Avoids storing passwords, tokens, payment credentials, or complete document contents.
-* Restricts access to audit records.
-* Uses retention and integrity controls appropriate to the event type.
+- Records relevant security and business events.
+- Captures actor, action, target, timestamp, and outcome where appropriate.
+- Excludes passwords, tokens, payment credentials, and document contents.
+- Restricts access to audit records.
+- Applies appropriate retention and integrity controls.
 
-Do not treat ordinary application logs as a complete substitute for a durable audit trail.
+Ordinary application logs are not a substitute for a durable audit trail.
 
-14. Shared service utilities
+## 14. Shared Service Utilities
 
-service-utils.js may centralize reusable behavior such as:
+`service-utils.js` may centralize:
 
-* Input and dependency validation.
-* Safe pagination and bounded limits.
-* Standard application errors.
-* Audit helpers.
-* Common repository-method compatibility.
+- Dependency and input validation.
+- Safe pagination and bounded limits.
+- Standard application errors.
+- Repository-method compatibility helpers.
+- Common audit helpers.
 
-Keep utility functions small, predictable, and independently testable.
+Keep utilities small, predictable, and independently testable.
 
-Avoid turning the utility module into a general container for domain-specific business rules. Security-sensitive operations should have explicit contracts and tests.
+Avoid placing domain-specific business rules in the shared utility module. Security-sensitive operations should have explicit contracts and dedicated tests.
 
-15. Composition and application bootstrap
+## 15. Composition and Application Bootstrap
 
-Construct service instances in a dedicated composition layer, for example src/container.js, if that matches the repository’s established structure.
+Use a dedicated composition layer, such as `src/container.js`, if consistent with the actual repository architecture.
 
-A composition layer should:
+The composition layer should:
 
 1. Load and validate configuration.
 2. Initialize infrastructure adapters.
@@ -318,54 +353,67 @@ A composition layer should:
 4. Construct integrations and provider wrappers.
 5. Construct domain services.
 6. Inject services into controllers, jobs, and workers.
-7. Coordinate startup and graceful shutdown.
+7. Coordinate startup, readiness, and graceful shutdown.
 
-Do not instantiate the entire service graph inside an HTTP request handler.
+Before wiring a service, confirm that its required dependencies and exported methods match the actual repository and controller interfaces.
 
-Before implementation, confirm that each service factory’s required dependencies match the actual controller and repository interfaces.
+## 16. Testing Requirements
 
-16. Testing requirements
+- [ ] Required dependencies are validated.
+- [ ] Business rules are tested independently of Express.
+- [ ] Repository interactions follow documented contracts.
+- [ ] Authorization is tested at route and policy layers.
+- [ ] Database constraints and transactions are tested.
+- [ ] Authentication, refresh-token rotation, and revocation are tested.
+- [ ] Account-recovery responses do not expose account existence.
+- [ ] Payment webhooks use raw-body fixtures and signature verification.
+- [ ] Duplicate payment events are handled safely.
+- [ ] File-access restrictions are tested.
+- [ ] Notification retries and idempotency are tested.
+- [ ] Audit records exclude secrets and unnecessary personal data.
+- [ ] Concurrency-sensitive transitions are tested.
+- [ ] Integration failures follow documented handling policies.
+- [ ] Tests do not access production databases or live payment accounts.
 
-* [ ]	Required dependencies are validated.
-* [ ]	Business rules are tested independently of Express.
-* [ ]	Repository interactions use documented contracts.
-* [ ]	Authorization is tested at the route and policy layers.
-* [ ]	Database constraints and transactions are tested.
-* [ ]	Authentication and token-revocation behavior is tested.
-* [ ]	Payment webhooks are verified using raw-body test fixtures.
-* [ ]	Duplicate payment events are handled safely.
-* [ ]	File-access restrictions are tested.
-* [ ]	Notification retries and idempotency are tested.
-* [ ]	Audit records exclude secrets and unnecessary personal data.
-* [ ]	Integration failures are propagated or handled according to documented policy.
+Use mocks for unit tests and suitable test databases or provider sandboxes for integration tests.
 
-Use mocks for unit tests and appropriate test databases or provider sandboxes for integration tests.
+## 17. Production Readiness Checklist
 
-17. Production readiness
+Before enabling real users or accepting payments, verify:
 
-Before enabling real users or payments, verify:
+- [ ] Concrete repository adapters and database constraints.
+- [ ] Database migrations and transaction behavior.
+- [ ] Password hashing, session management, and token rotation.
+- [ ] Login abuse prevention and account-recovery safeguards.
+- [ ] Route-level authentication and resource authorization.
+- [ ] Payment webhook verification and event idempotency.
+- [ ] Private storage, file validation, and retention policies.
+- [ ] Notification retries and delivery-state handling.
+- [ ] Durable audit records, monitoring, and alerting.
+- [ ] Dependency-aware readiness checks.
+- [ ] Backup, recovery, and graceful-shutdown procedures.
+- [ ] Applicable Indian data-protection, consumer-protection, and payment requirements.
 
-* Concrete repository adapters and database constraints.
-* Database migrations and transaction behavior.
-* Password hashing, session management, and token rotation.
-* Login abuse prevention and account-recovery controls.
-* Route-level authentication and resource authorization.
-* Payment webhook verification and event idempotency.
-* Private storage, file validation, and retention policies.
-* Notification retry and delivery-state handling.
-* Audit records, monitoring, and alerting.
-* Real dependency-aware readiness checks.
-* Backup, recovery, and graceful-shutdown procedures.
-* Applicable Indian data-protection, consumer, and payment requirements.
+This checklist describes required verification. It does not certify that the controls are already implemented.
 
-This checklist describes required verification, not a certification that these controls are already implemented.
+## 18. Implementation Status
 
-18. Implementation status
+This README documents the intended architecture and integration contracts.
 
-This README documents the intended service architecture and integration contracts. Verify actual exports, dependency requirements, repository methods, route wiring, provider configuration, and tests before treating each workflow as implemented or production-ready.
+Before considering a workflow implemented or production-ready, verify:
 
-⸻
+1. The service file exists and exports the expected factory.
+2. Required repository methods are implemented.
+3. Controllers, routes, jobs, and workers are wired correctly.
+4. Authorization and validation are enforced.
+5. Database constraints and concurrency controls exist.
+6. Provider configuration and failure handling are correct.
+7. Unit and integration tests cover the documented behavior.
 
-MedOrbits — Study · Work · Grow
+Update this document whenever the actual service contracts or directory structure change.
+
+—
+
+**MedOrbits — Study · Work · Grow**
 
 Dependency-injected business services for education, admissions, careers, recruitment, and platform operations.

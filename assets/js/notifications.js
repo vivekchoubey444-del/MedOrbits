@@ -1,18 +1,19 @@
+
 /* =========================================================
    MedOrbits -- Notifications Manager
    File: /assets/js/notifications.js
-   Purpose: In-app notifications, unread counts, preferences,
-            polling, mark-as-read, deletion and rendering
+   Purpose: Notifications, unread counts, preferences, polling
    ========================================================= */
 
 (function (window, document) {
   "use strict";
 
+  if (window.MedOrbitsNotifications) return;
+
   const CONFIG = window.MedOrbitsConfig || {};
-  const API_BASE =
-    CONFIG.API_BASE_URL ||
-    CONFIG.apiBaseUrl ||
-    "/api";
+  const API_BASE = String(
+    CONFIG.API_BASE_URL || CONFIG.apiBaseUrl || "/api"
+  ).replace(/\/+$/, "");
 
   const STORAGE_KEY = "medorbits_notifications_cache";
   const DEFAULT_PAGE_SIZE = 20;
@@ -38,45 +39,56 @@
   };
 
   const listeners = new Map();
+  const boundControls = new WeakSet();
+  const pendingActions = new Set();
+
+  const EVENTS = Object.freeze({
+    LOADED: "loaded",
+    UPDATED: "updated",
+    READ: "read",
+    UNREAD: "unread",
+    DELETED: "deleted",
+    ARCHIVED: "archived",
+    ERROR: "error",
+    UNREAD_COUNT_UPDATED: "unread-count-updated"
+  });
 
   const utils = {
     escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, function (char) {
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[char];
-      });
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
     },
 
-    dispatch(name, detail) {
-      document.dispatchEvent(
-        new CustomEvent("medorbits:notifications:" + name, {
-          detail: detail || {}
-        })
-      );
+    dispatch(name, detail = {}) {
+      document.dispatchEvent(new CustomEvent(
+        `medorbits:notifications:${name}`,
+        { detail }
+      ));
     },
 
-    notify(message, type) {
-      if (window.MedOrbitsErrorHandler?.notify) {
-        window.MedOrbitsErrorHandler.notify(message, type || "info");
+    notify(message, type = "info") {
+      if (window.MedOrbitsToast?.[type]) {
+        window.MedOrbitsToast[type](message);
         return;
       }
 
-      if (window.MedOrbitsApp?.notify) {
-        window.MedOrbitsApp.notify(message, type || "info");
+      if (window.MedOrbitsErrorHandler?.notify) {
+        window.MedOrbitsErrorHandler.notify(message, type);
+        return;
       }
+
+      window.MedOrbitsApp?.notify?.(message, type);
     },
 
     formatDate(value) {
-      if (!value) return "";
+      const date = value ? new Date(value) : null;
 
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) return "";
+      if (!date || Number.isNaN(date.getTime())) return "";
 
       return new Intl.DateTimeFormat(undefined, {
         dateStyle: "medium",
@@ -85,16 +97,11 @@
     },
 
     relativeTime(value) {
-      if (!value) return "";
+      const date = value ? new Date(value) : null;
 
-      const date = new Date(value);
-      const timestamp = date.getTime();
+      if (!date || Number.isNaN(date.getTime())) return "";
 
-      if (Number.isNaN(timestamp)) return "";
-
-      const seconds = Math.round((timestamp - Date.now()) / 1000);
-      const absolute = Math.abs(seconds);
-
+      const seconds = Math.round((date.getTime() - Date.now()) / 1000);
       const units = [
         ["year", 31536000],
         ["month", 2592000],
@@ -110,7 +117,7 @@
       });
 
       for (const [unit, size] of units) {
-        if (absolute >= size || unit === "second") {
+        if (Math.abs(seconds) >= size || unit === "second") {
           return formatter.format(Math.round(seconds / size), unit);
         }
       }
@@ -120,10 +127,8 @@
 
     getCache() {
       try {
-        return JSON.parse(
-          sessionStorage.getItem(STORAGE_KEY) || "{}"
-        );
-      } catch (_) {
+        return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}");
+      } catch {
         return {};
       }
     },
@@ -131,53 +136,59 @@
     setCache(data) {
       try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (_) {
+      } catch {
         // Storage may be unavailable.
       }
     },
 
     getElement(target) {
-      if (!target) return null;
-      if (target instanceof Element) return target;
+      if (target && target.nodeType === 1) return target;
+      if (typeof target !== "string" || !target) return null;
 
-      if (typeof target === "string") {
-        try {
-          return document.querySelector(target);
-        } catch (_) {
-          return null;
-        }
+      try {
+        return document.querySelector(target);
+      } catch {
+        return null;
       }
-
-      return null;
     }
   };
 
-  async function request(path, options) {
-    const settings = options || {};
-    const headers = new Headers(settings.headers || {});
+  async function request(path, options = {}) {
+    const headers = new Headers(options.headers || {});
+    const isFormData = options.body instanceof FormData;
 
-    if (!(settings.body instanceof FormData) && settings.body != null) {
+    if (options.body != null && !isFormData &&
+        !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
+
+    if (isFormData) headers.delete("Content-Type");
 
     const token =
       window.MedOrbitsAuth?.getToken?.() ||
       window.MedOrbitsAuth?.getAccessToken?.();
 
-    if (token) {
-      headers.set("Authorization", "Bearer " + token);
-    }
+    if (token) headers.set("Authorization", `Bearer ${token}`);
 
-    const response = await fetch(API_BASE + path, {
-      ...settings,
+    const fetchOptions = {
+      ...options,
       headers,
-      credentials: "same-origin"
-    });
+      credentials: options.credentials || "same-origin"
+    };
+
+    delete fetchOptions.responseType;
+
+    const response = await fetch(
+      `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`,
+      fetchOptions
+    );
 
     const contentType = response.headers.get("content-type") || "";
     let data = null;
 
-    if (contentType.includes("application/json")) {
+    if (options.responseType === "blob" && response.ok) {
+      data = await response.blob();
+    } else if (contentType.includes("application/json")) {
       data = await response.json().catch(() => null);
     } else {
       data = await response.text().catch(() => "");
@@ -187,60 +198,15 @@
       const error = new Error(
         data?.message ||
         data?.error ||
-        "Notification request failed (" + response.status + ")."
+        `Notification request failed (${response.status}).`
       );
 
       error.status = response.status;
       error.data = data;
-
       throw error;
     }
 
     return data;
-  }
-
-  function normalizeNotification(item) {
-    const notification = item || {};
-
-    return {
-      id: String(
-        notification.id ||
-        notification._id ||
-        notification.notificationId ||
-        ""
-      ),
-      title: String(
-        notification.title ||
-        notification.subject ||
-        "Notification"
-      ).slice(0, MAX_TITLE_LENGTH),
-      message: String(
-        notification.message ||
-        notification.body ||
-        notification.description ||
-        ""
-      ).slice(0, MAX_MESSAGE_LENGTH),
-      type: String(notification.type || notification.category || "general"),
-      category: String(notification.category || notification.type || "general"),
-      priority: String(notification.priority || "normal"),
-      read: Boolean(
-        notification.read ??
-        notification.isRead ??
-        notification.is_read ??
-        false
-      ),
-      readAt: notification.readAt || notification.read_at || null,
-      createdAt:
-        notification.createdAt ||
-        notification.created_at ||
-        notification.timestamp ||
-        null,
-      updatedAt: notification.updatedAt || notification.updated_at || null,
-      link: safeLink(notification.link || notification.url || ""),
-      actionLabel: String(notification.actionLabel || notification.action_label || ""),
-      metadata: notification.metadata || {},
-      archived: Boolean(notification.archived || notification.isArchived)
-    };
   }
 
   function safeLink(value) {
@@ -249,61 +215,60 @@
     try {
       const url = new URL(String(value), window.location.origin);
 
-      if (url.protocol !== "https:" && url.protocol !== "http:") {
-        return "";
-      }
+      if (!["https:", "http:"].includes(url.protocol)) return "";
 
+      // Permit same-origin relative paths and valid HTTP(S) links.
       return url.href;
-    } catch (_) {
+    } catch {
       return "";
     }
+  }
+
+  function normalizeNotification(item = {}) {
+    const createdAt =
+      item.createdAt ||
+      item.created_at ||
+      item.timestamp ||
+      null;
+
+    return {
+      ...item,
+      id: String(item.id || item._id || item.notificationId || ""),
+      title: String(item.title || item.subject || "Notification")
+        .slice(0, MAX_TITLE_LENGTH),
+      message: String(
+        item.message || item.body || item.description || ""
+      ).slice(0, MAX_MESSAGE_LENGTH),
+      type: String(item.type || item.category || "general"),
+      category: String(item.category || item.type || "general"),
+      priority: String(item.priority || "normal"),
+      read: Boolean(item.read ?? item.isRead ?? item.is_read ?? false),
+      readAt: item.readAt || item.read_at || null,
+      createdAt,
+      updatedAt: item.updatedAt || item.updated_at || null,
+      link: safeLink(item.link || item.url || ""),
+      actionLabel: String(item.actionLabel || item.action_label || ""),
+      metadata: item.metadata && typeof item.metadata === "object"
+        ? item.metadata
+        : {},
+      archived: Boolean(item.archived || item.isArchived)
+    };
   }
 
   function normalizeList(response) {
     if (Array.isArray(response)) return response;
 
+    const data = response?.data;
+
+    if (Array.isArray(data)) return data;
+
     return (
-      response?.data?.items ||
-      response?.data?.notifications ||
+      data?.items ||
+      data?.notifications ||
       response?.items ||
       response?.notifications ||
-      response?.data ||
       []
     );
-  }
-
-  function updateUnreadCount(serverCount) {
-    if (Number.isFinite(Number(serverCount))) {
-      state.unreadCount = Math.max(0, Number(serverCount));
-    } else {
-      state.unreadCount = state.items.filter((item) => !item.read && !item.archived).length;
-    }
-
-    document.querySelectorAll("[data-notification-count]").forEach((element) => {
-      element.textContent = state.unreadCount > 99
-        ? "99+"
-        : String(state.unreadCount);
-
-      element.hidden = state.unreadCount <= 0;
-      element.setAttribute("aria-label", state.unreadCount + " unread notifications");
-    });
-
-    document.querySelectorAll("[data-notification-unread-count]").forEach((element) => {
-      element.textContent = String(state.unreadCount);
-      element.hidden = state.unreadCount <= 0;
-    });
-
-    document.querySelectorAll("[data-notification-badge]").forEach((element) => {
-      element.textContent = state.unreadCount > 99
-        ? "99+"
-        : String(state.unreadCount);
-
-      element.hidden = state.unreadCount <= 0;
-    });
-
-    utils.dispatch("unread-count-updated", {
-      unreadCount: state.unreadCount
-    });
   }
 
   function extractUnreadCount(response) {
@@ -312,81 +277,120 @@
       response?.unread_count,
       response?.data?.unreadCount,
       response?.data?.unread_count,
-      response?.meta?.unreadCount
+      response?.meta?.unreadCount,
+      response?.count,
+      response?.data?.count
     ];
 
     for (const value of candidates) {
-      if (value !== undefined && value !== null && Number.isFinite(Number(value))) {
-        return Number(value);
+      if (value !== undefined && value !== null &&
+          Number.isFinite(Number(value))) {
+        return Math.max(0, Number(value));
       }
     }
 
     return null;
   }
 
-  async function load(options) {
-    const settings = options || {};
+  function updateUnreadCount(serverCount) {
+    state.unreadCount = serverCount !== null &&
+      serverCount !== undefined &&
+      Number.isFinite(Number(serverCount))
+      ? Math.max(0, Number(serverCount))
+      : state.items.filter((item) => !item.read && !item.archived).length;
 
+    document.querySelectorAll(
+      "[data-notification-count], [data-notification-badge]"
+    ).forEach((element) => {
+      element.textContent = state.unreadCount > 99
+        ? "99+"
+        : String(state.unreadCount);
+
+      element.hidden = state.unreadCount <= 0;
+      element.setAttribute(
+        "aria-label",
+        `${state.unreadCount} unread notifications`
+      );
+    });
+
+    document.querySelectorAll(
+      "[data-notification-unread-count]"
+    ).forEach((element) => {
+      element.textContent = String(state.unreadCount);
+      element.hidden = state.unreadCount <= 0;
+    });
+
+    utils.dispatch(EVENTS.UNREAD_COUNT_UPDATED, {
+      unreadCount: state.unreadCount
+    });
+  }
+
+  function persistCache() {
+    utils.setCache({
+      items: state.items,
+      unreadCount: state.unreadCount,
+      savedAt: Date.now()
+    });
+  }
+
+  function findNotification(id) {
+    return state.items.find((item) => item.id === String(id)) || null;
+  }
+
+  async function load(options = {}) {
     state.loading = true;
     utils.dispatch("loading", { loading: true });
 
     try {
-      const params = new URLSearchParams();
+      const page = Math.max(1, Number(options.page) || state.page);
+      const limit = Math.min(
+        100,
+        Math.max(1, Number(options.limit) || state.pageSize)
+      );
 
-      params.set("page", String(settings.page || state.page));
-      params.set("limit", String(settings.limit || state.pageSize));
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit)
+      });
 
-      if (settings.unreadOnly) params.set("unreadOnly", "true");
-      if (settings.category) params.set("category", settings.category);
-      if (settings.type) params.set("type", settings.type);
-      if (settings.search) params.set("search", settings.search);
-      if (settings.archived !== undefined) {
-        params.set("archived", String(Boolean(settings.archived)));
+      if (options.unreadOnly) params.set("unreadOnly", "true");
+      if (options.category) params.set("category", String(options.category));
+      if (options.type) params.set("type", String(options.type));
+      if (options.search) params.set("search", String(options.search));
+
+      if (options.archived !== undefined) {
+        params.set("archived", String(Boolean(options.archived)));
       }
 
-      const response = await request(
-        "/notifications?" + params.toString()
-      );
+      const response = await request(`/notifications?${params}`);
 
       state.items = normalizeList(response)
         .map(normalizeNotification)
         .filter((item) => item.id);
 
-      state.page = Number(settings.page) || state.page;
-      state.pageSize = Number(settings.limit) || state.pageSize;
-
-      state.total = Number(
+      state.page = page;
+      state.pageSize = limit;
+      state.total = Math.max(0, Number(
         response?.total ??
         response?.data?.total ??
         response?.meta?.total ??
         state.items.length
-      );
+      ) || 0);
 
       updateUnreadCount(extractUnreadCount(response));
+      persistCache();
+      render(options.container);
 
-      utils.setCache({
-        items: state.items,
-        unreadCount: state.unreadCount,
-        savedAt: Date.now()
-      });
-
-      render(settings.container);
-
-      utils.dispatch("loaded", {
-        items: state.items,
+      utils.dispatch(EVENTS.LOADED, {
+        items: state.items.slice(),
         unreadCount: state.unreadCount,
         total: state.total
       });
 
-      return state.items;
+      return state.items.slice();
     } catch (error) {
-      utils.dispatch("error", {
-        error,
-        action: "load"
-      });
-
+      utils.dispatch(EVENTS.ERROR, { error, action: "load" });
       utils.notify(error.message || "Unable to load notifications.", "error");
-
       throw error;
     } finally {
       state.loading = false;
@@ -404,17 +408,10 @@
         return count;
       }
 
-      const fallback = Number(
-        response?.count ??
-        response?.data?.count ??
-        0
-      );
-
-      updateUnreadCount(fallback);
-
+      updateUnreadCount();
       return state.unreadCount;
     } catch (error) {
-      utils.dispatch("error", {
+      utils.dispatch(EVENTS.ERROR, {
         error,
         action: "load-unread-count"
       });
@@ -423,66 +420,71 @@
     }
   }
 
+  async function performAction(key, action) {
+    if (pendingActions.has(key)) return false;
+
+    pendingActions.add(key);
+
+    try {
+      return await action();
+    } finally {
+      pendingActions.delete(key);
+    }
+  }
+
   async function markRead(notificationId) {
     const id = String(notificationId || "");
+    if (!id) throw new Error("A notification ID is required.");
 
-    if (!id) {
-      throw new Error("A notification ID is required.");
-    }
+    return performAction(`read:${id}`, async () => {
+      const notification = findNotification(id);
+      if (notification?.read) return notification;
 
-    const notification = state.items.find((item) => item.id === id);
-
-    if (notification?.read) return notification;
-
-    await request(
-      "/notifications/" + encodeURIComponent(id) + "/read",
-      {
+      await request(`/notifications/${encodeURIComponent(id)}/read`, {
         method: "PATCH",
         body: JSON.stringify({})
+      });
+
+      if (notification) {
+        notification.read = true;
+        notification.readAt = new Date().toISOString();
       }
-    );
 
-    if (notification) {
-      notification.read = true;
-      notification.readAt = new Date().toISOString();
-    }
+      updateUnreadCount();
+      persistCache();
+      render();
 
-    updateUnreadCount();
-    render();
+      utils.dispatch(EVENTS.READ, { notificationId: id });
 
-    utils.dispatch("read", { notificationId: id });
-
-    return notification || { id, read: true };
+      return notification || { id, read: true };
+    });
   }
 
   async function markUnread(notificationId) {
     const id = String(notificationId || "");
+    if (!id) throw new Error("A notification ID is required.");
 
-    if (!id) {
-      throw new Error("A notification ID is required.");
-    }
-
-    await request(
-      "/notifications/" + encodeURIComponent(id) + "/unread",
-      {
+    return performAction(`unread:${id}`, async () => {
+      await request(`/notifications/${encodeURIComponent(id)}/unread`, {
         method: "PATCH",
         body: JSON.stringify({})
+      });
+
+      const notification = findNotification(id);
+
+      if (notification) {
+        notification.read = false;
+        notification.readAt = null;
       }
-    );
 
-    const notification = state.items.find((item) => item.id === id);
+      updateUnreadCount();
+      persistCache();
+      render();
 
-    if (notification) {
-      notification.read = false;
-      notification.readAt = null;
-    }
+      utils.dispatch(EVENTS.UNREAD, { notificationId: id });
 
-    updateUnreadCount();
-    render();
-
-    utils.dispatch("unread", { notificationId: id });
-
-    return notification || { id, read: false };
+      return notification || { id, read: false };
+    });
   }
 
   async function markAllRead() {
@@ -491,98 +493,85 @@
       body: JSON.stringify({})
     });
 
+    const now = new Date().toISOString();
+
     state.items = state.items.map((item) => ({
       ...item,
       read: true,
-      readAt: item.readAt || new Date().toISOString()
+      readAt: item.readAt || now
     }));
 
     updateUnreadCount(0);
+    persistCache();
     render();
 
-    utils.dispatch("all-read", {
-      count: state.items.length
-    });
-
+    utils.dispatch("all-read", { count: state.items.length });
     return true;
   }
 
   async function remove(notificationId) {
     const id = String(notificationId || "");
+    if (!id) throw new Error("A notification ID is required.");
 
-    if (!id) {
-      throw new Error("A notification ID is required.");
-    }
+    return performAction(`delete:${id}`, async () => {
+      await request(`/notifications/${encodeURIComponent(id)}`, {
+        method: "DELETE"
+      });
 
-    await request("/notifications/" + encodeURIComponent(id), {
-      method: "DELETE"
+      state.items = state.items.filter((item) => item.id !== id);
+
+      updateUnreadCount();
+      persistCache();
+      render();
+
+      utils.dispatch(EVENTS.DELETED, { notificationId: id });
+      return true;
     });
-
-    state.items = state.items.filter((item) => item.id !== id);
-
-    updateUnreadCount();
-    render();
-
-    utils.dispatch("deleted", { notificationId: id });
-
-    return true;
   }
 
   async function clearRead() {
-    await request("/notifications/read", {
-      method: "DELETE"
-    });
+    await request("/notifications/read", { method: "DELETE" });
 
     state.items = state.items.filter((item) => !item.read);
 
     updateUnreadCount();
+    persistCache();
     render();
 
     utils.dispatch("read-cleared");
-
     return true;
   }
 
   async function archive(notificationId) {
     const id = String(notificationId || "");
+    if (!id) throw new Error("A notification ID is required.");
 
-    if (!id) {
-      throw new Error("A notification ID is required.");
-    }
+    await request(`/notifications/${encodeURIComponent(id)}/archive`, {
+      method: "POST",
+      body: JSON.stringify({})
+    });
 
-    await request(
-      "/notifications/" + encodeURIComponent(id) + "/archive",
-      {
-        method: "POST",
-        body: JSON.stringify({})
-      }
-    );
-
-    const notification = state.items.find((item) => item.id === id);
+    const notification = findNotification(id);
 
     if (notification) notification.archived = true;
 
     updateUnreadCount();
+    persistCache();
     render();
 
-    utils.dispatch("archived", { notificationId: id });
+    utils.dispatch(EVENTS.ARCHIVED, { notificationId: id });
 
     return notification || { id, archived: true };
   }
 
-  async function create(payload) {
-    const data = payload || {};
-    const title = String(data.title || "").trim();
-    const message = String(data.message || "").trim();
+  async function create(payload = {}) {
+    const title = String(payload.title || "").trim();
+    const message = String(payload.message || "").trim();
 
-    if (!title) {
-      throw new Error("A notification title is required.");
-    }
-
+    if (!title) throw new Error("A notification title is required.");
     if (title.length > MAX_TITLE_LENGTH) {
       throw new Error("The notification title is too long.");
     }
-
     if (message.length > MAX_MESSAGE_LENGTH) {
       throw new Error("The notification message is too long.");
     }
@@ -592,11 +581,11 @@
       body: JSON.stringify({
         title,
         message,
-        type: data.type || "general",
-        category: data.category || data.type || "general",
-        priority: data.priority || "normal",
-        link: safeLink(data.link || ""),
-        metadata: data.metadata || {}
+        type: payload.type || "general",
+        category: payload.category || payload.type || "general",
+        priority: payload.priority || "normal",
+        link: safeLink(payload.link || ""),
+        metadata: payload.metadata || {}
       })
     });
 
@@ -608,55 +597,47 @@
     const notification = normalizeNotification(raw);
 
     if (notification.id) {
-      state.items.unshift(notification);
+      state.items = [
+        notification,
+        ...state.items.filter((item) => item.id !== notification.id)
+      ];
+
       updateUnreadCount();
+      persistCache();
       render();
     }
 
     utils.dispatch("created", { notification });
-
     return notification;
   }
 
   async function getPreferences() {
-    try {
-      const response = await request("/notifications/preferences");
+    const response = await request("/notifications/preferences");
 
-      const preferences =
-        response?.data?.preferences ||
-        response?.preferences ||
-        response?.data ||
-        response;
+    const preferences = response?.data?.preferences ||
+      response?.preferences ||
+      response?.data ||
+      response;
 
-      state.preferences = {
-        ...state.preferences,
-        ...(preferences || {}),
-        categories: {
-          ...state.preferences.categories,
-          ...(preferences?.categories || {})
-        }
-      };
+    state.preferences = {
+      ...state.preferences,
+      ...(preferences || {}),
+      categories: {
+        ...state.preferences.categories,
+        ...(preferences?.categories || {})
+      }
+    };
 
-      renderPreferences();
+    renderPreferences();
 
-      utils.dispatch("preferences-loaded", {
-        preferences: state.preferences
-      });
+    utils.dispatch("preferences-loaded", {
+      preferences: { ...state.preferences }
+    });
 
-      return state.preferences;
-    } catch (error) {
-      utils.dispatch("error", {
-        error,
-        action: "get-preferences"
-      });
-
-      throw error;
-    }
+    return { ...state.preferences };
   }
 
-  async function savePreferences(preferences) {
-    const updates = preferences || {};
-
+  async function savePreferences(updates = {}) {
     const payload = {
       ...state.preferences,
       ...updates,
@@ -671,8 +652,7 @@
       body: JSON.stringify(payload)
     });
 
-    const saved =
-      response?.data?.preferences ||
+    const saved = response?.data?.preferences ||
       response?.preferences ||
       payload;
 
@@ -688,10 +668,10 @@
     renderPreferences();
 
     utils.dispatch("preferences-saved", {
-      preferences: state.preferences
+      preferences: { ...state.preferences }
     });
 
-    return state.preferences;
+    return { ...state.preferences };
   }
 
   function renderPreferences(target) {
@@ -701,13 +681,11 @@
 
     if (!container) return;
 
-    const preferences = state.preferences;
-
     container.querySelectorAll("[data-notification-preference]").forEach((input) => {
       const key = input.dataset.notificationPreference;
 
-      if (key in preferences && typeof preferences[key] === "boolean") {
-        input.checked = preferences[key];
+      if (typeof state.preferences[key] === "boolean") {
+        input.checked = state.preferences[key];
       }
     });
 
@@ -715,7 +693,7 @@
       const category = input.dataset.notificationCategory;
 
       if (category) {
-        input.checked = preferences.categories[category] !== false;
+        input.checked = state.preferences.categories[category] !== false;
       }
     });
   }
@@ -741,20 +719,19 @@
   function render(target) {
     const containers = target
       ? [utils.getElement(target)]
-      : Array.from(
-          document.querySelectorAll("[data-notifications-list]")
-        );
+      : Array.from(document.querySelectorAll("[data-notifications-list]"));
 
     containers.filter(Boolean).forEach((container) => {
-      const visibleItems = state.items.filter((item) => {
-        if (container.dataset.filter === "unread") return !item.read;
-        if (container.dataset.filter === "read") return item.read;
-        if (container.dataset.filter === "archived") return item.archived;
+      const filter = container.dataset.filter || "all";
 
+      const items = state.items.filter((item) => {
+        if (filter === "unread") return !item.read && !item.archived;
+        if (filter === "read") return item.read && !item.archived;
+        if (filter === "archived") return item.archived;
         return !item.archived;
       });
 
-      if (!visibleItems.length) {
+      if (!items.length) {
         container.innerHTML = `
           <div class="mo-notifications-empty" role="status">
             <span class="mo-notifications-empty-icon" aria-hidden="true">♧</span>
@@ -764,19 +741,20 @@
         return;
       }
 
-      container.innerHTML = visibleItems.map((item) => {
-        const safeTitle = utils.escapeHTML(item.title);
-        const safeMessage = utils.escapeHTML(item.message);
-        const safeDate = utils.escapeHTML(utils.formatDate(item.createdAt));
-        const relativeDate = utils.escapeHTML(utils.relativeTime(item.createdAt));
-        const safeType = utils.escapeHTML(item.type);
-        const safeId = utils.escapeHTML(item.id);
+      container.innerHTML = items.map((item) => {
+        const id = utils.escapeHTML(item.id);
+        const title = utils.escapeHTML(item.title);
+        const message = utils.escapeHTML(item.message);
+        const type = utils.escapeHTML(item.type);
+        const date = utils.escapeHTML(utils.formatDate(item.createdAt));
+        const relative = utils.escapeHTML(utils.relativeTime(item.createdAt));
+        const link = safeLink(item.link);
 
         return `
           <article
             class="mo-notification-item${item.read ? " is-read" : " is-unread"}"
-            data-notification-id="${safeId}"
-            data-notification-type="${safeType}"
+            data-notification-id="${id}"
+            data-notification-type="${type}"
           >
             <span class="mo-notification-icon" aria-hidden="true">
               ${utils.escapeHTML(getIcon(item.type))}
@@ -784,42 +762,32 @@
 
             <div class="mo-notification-content">
               <div class="mo-notification-heading">
-                <h3>${safeTitle}</h3>
-                ${!item.read ? '<span class="mo-notification-dot" aria-label="Unread"></span>' : ""}
+                <h3>${title}</h3>
+                ${!item.read
+                  ? '<span class="mo-notification-dot" aria-label="Unread"></span>'
+                  : ""}
               </div>
 
-              <p>${safeMessage}</p>
+              <p>${message}</p>
 
               <time datetime="${utils.escapeHTML(item.createdAt || "")}"
-                    title="${safeDate}">
-                ${relativeDate}
-              </time>
+                    title="${date}">${relative}</time>
 
-              ${
-                item.link
-                  ? `<a class="mo-notification-action" href="${utils.escapeHTML(item.link)}">
-                       ${utils.escapeHTML(item.actionLabel || "View details")}
-                     </a>`
-                  : ""
-              }
-            </div>
+              ${link
+                ? `<a class="mo-notification-action"
+                     href="${utils.escapeHTML(link)}"
+                     data-notification-link="${id}">
+                     ${utils.escapeHTML(item.actionLabel || "View details")}
+                   </a>`
+                : ""}
 
-            <div class="mo-notification-actions">
-              ${
-                item.read
-                  ? `<button type="button" data-notification-mark-unread="${safeId}" aria-label="Mark ${safeTitle} as unread">Mark unread</button>`
-                  : `<button type="button" data-notification-mark-read="${safeId}" aria-label="Mark ${safeTitle} as read">Mark read</button>`
-              }
-              <button
-                type="button"
-                data-notification-archive="${safeId}"
-                aria-label="Archive ${safeTitle}"
-              >Archive</button>
-              <button
-                type="button"
-                data-notification-delete="${safeId}"
-                aria-label="Delete ${safeTitle}"
-              >Delete</button>
+              <div class="mo-notification-actions">
+                ${item.read
+                  ? `<button type="button" data-notification-mark-unread="${id}">Mark unread</button>`
+                  : `<button type="button" data-notification-mark-read="${id}">Mark read</button>`}
+                <button type="button" data-notification-archive="${id}">Archive</button>
+                <button type="button" data-notification-delete="${id}">Delete</button>
+              </div>
             </div>
           </article>
         `;
@@ -830,136 +798,84 @@
   }
 
   function bindActions() {
-    document.addEventListener("click", async function (event) {
-      const markReadButton = event.target.closest(
-        "[data-notification-mark-read]"
-      );
+    document.addEventListener("click", async (event) => {
+      if (!(event.target instanceof Element)) return;
 
-      if (markReadButton) {
-        event.preventDefault();
+      const readButton = event.target.closest("[data-notification-mark-read]");
+      const unreadButton = event.target.closest("[data-notification-mark-unread]");
+      const archiveButton = event.target.closest("[data-notification-archive]");
+      const deleteButton = event.target.closest("[data-notification-delete]");
+      const markAllButton = event.target.closest("[data-notifications-mark-all-read]");
+      const clearReadButton = event.target.closest("[data-notifications-clear-read]");
+      const link = event.target.closest("[data-notification-link]");
 
-        try {
-          await markRead(markReadButton.dataset.notificationMarkRead);
-        } catch (error) {
-          utils.notify(error.message || "Unable to update notification.", "error");
+      if (link) {
+        const id = link.dataset.notificationLink;
+        const item = findNotification(id);
+
+        if (item && !item.read) {
+          markRead(id).catch(() => {});
         }
 
         return;
       }
 
-      const markUnreadButton = event.target.closest(
-        "[data-notification-mark-unread]"
-      );
-
-      if (markUnreadButton) {
-        event.preventDefault();
-
-        try {
-          await markUnread(markUnreadButton.dataset.notificationMarkUnread);
-        } catch (error) {
-          utils.notify(error.message || "Unable to update notification.", "error");
-        }
-
-        return;
-      }
-
-      const archiveButton = event.target.closest(
-        "[data-notification-archive]"
-      );
-
-      if (archiveButton) {
-        event.preventDefault();
-
-        try {
+      try {
+        if (readButton) {
+          event.preventDefault();
+          await markRead(readButton.dataset.notificationMarkRead);
+        } else if (unreadButton) {
+          event.preventDefault();
+          await markUnread(unreadButton.dataset.notificationMarkUnread);
+        } else if (archiveButton) {
+          event.preventDefault();
           await archive(archiveButton.dataset.notificationArchive);
-        } catch (error) {
-          utils.notify(error.message || "Unable to archive notification.", "error");
-        }
+        } else if (deleteButton) {
+          event.preventDefault();
 
-        return;
-      }
+          if (!window.confirm("Delete this notification?")) return;
 
-      const deleteButton = event.target.closest(
-        "[data-notification-delete]"
-      );
-
-      if (deleteButton) {
-        event.preventDefault();
-
-        if (!window.confirm("Delete this notification?")) return;
-
-        try {
           await remove(deleteButton.dataset.notificationDelete);
           utils.notify("Notification deleted.", "success");
-        } catch (error) {
-          utils.notify(error.message || "Unable to delete notification.", "error");
-        }
-
-        return;
-      }
-
-      const markAllButton = event.target.closest(
-        "[data-notifications-mark-all-read]"
-      );
-
-      if (markAllButton) {
-        event.preventDefault();
-
-        try {
+        } else if (markAllButton) {
+          event.preventDefault();
           await markAllRead();
           utils.notify("All notifications marked as read.", "success");
-        } catch (error) {
-          utils.notify(error.message || "Unable to update notifications.", "error");
-        }
+        } else if (clearReadButton) {
+          event.preventDefault();
 
-        return;
-      }
+          if (!window.confirm("Delete all read notifications?")) return;
 
-      const clearReadButton = event.target.closest(
-        "[data-notifications-clear-read]"
-      );
-
-      if (clearReadButton) {
-        event.preventDefault();
-
-        if (!window.confirm("Delete all read notifications?")) return;
-
-        try {
           await clearRead();
           utils.notify("Read notifications cleared.", "success");
-        } catch (error) {
-          utils.notify(error.message || "Unable to clear notifications.", "error");
         }
+      } catch (error) {
+        utils.notify(error.message || "Unable to update notifications.", "error");
       }
     });
   }
 
   function bindPreferences() {
     document.querySelectorAll("[data-notification-preferences]").forEach((form) => {
-      if (form.dataset.notificationsBound === "true") return;
+      if (boundControls.has(form)) return;
+      boundControls.add(form);
 
-      form.dataset.notificationsBound = "true";
-
-      form.addEventListener("change", async function (event) {
+      form.addEventListener("change", async (event) => {
         const input = event.target;
 
-        if (
-          !input.matches(
-            "[data-notification-preference], [data-notification-category]"
-          )
-        ) {
-          return;
-        }
+        if (!(input instanceof HTMLInputElement)) return;
 
         const preference = input.dataset.notificationPreference;
         const category = input.dataset.notificationCategory;
+
+        if (!preference && !category) return;
 
         try {
           if (preference) {
             await savePreferences({
               [preference]: Boolean(input.checked)
             });
-          } else if (category) {
+          } else {
             await savePreferences({
               categories: {
                 [category]: Boolean(input.checked)
@@ -971,7 +887,7 @@
         }
       });
 
-      form.addEventListener("submit", async function (event) {
+      form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const preferences = {};
@@ -999,21 +915,18 @@
 
   function bindFilters() {
     document.querySelectorAll("[data-notifications-filter]").forEach((control) => {
-      if (control.dataset.notificationsBound === "true") return;
+      if (boundControls.has(control)) return;
+      boundControls.add(control);
 
-      control.dataset.notificationsBound = "true";
+      control.addEventListener("change", () => {
+        const container = utils.getElement(
+          control.dataset.target || "[data-notifications-list]"
+        );
 
-      control.addEventListener("change", function () {
-        const filter = control.value || "all";
-        const containerSelector =
-          control.dataset.target || "[data-notifications-list]";
+        if (!container) return;
 
-        const container = utils.getElement(containerSelector);
-
-        if (container) {
-          container.dataset.filter = filter;
-          render(container);
-        }
+        container.dataset.filter = control.value || "all";
+        render(container);
       });
     });
   }
@@ -1026,12 +939,12 @@
       Number(interval) || DEFAULT_POLL_INTERVAL
     );
 
-    state.pollingTimer = window.setInterval(async function () {
+    state.pollingTimer = window.setInterval(async () => {
       if (document.hidden || state.loading) return;
 
       try {
         await loadUnreadCount();
-      } catch (_) {
+      } catch {
         // Keep polling failures silent.
       }
     }, delay);
@@ -1049,44 +962,37 @@
       throw new TypeError("A callback function is required.");
     }
 
-    const event = "medorbits:notifications:" + eventName;
-
+    const event = `medorbits:notifications:${eventName}`;
     document.addEventListener(event, callback);
 
-    if (!listeners.has(event)) {
-      listeners.set(event, new Set());
-    }
-
+    if (!listeners.has(event)) listeners.set(event, new Set());
     listeners.get(event).add(callback);
 
-    return function unsubscribe() {
-      document.removeEventListener(event, callback);
-      listeners.get(event)?.delete(callback);
-    };
+    return () => off(eventName, callback);
   }
 
   function off(eventName, callback) {
-    const event = "medorbits:notifications:" + eventName;
+    const event = `medorbits:notifications:${eventName}`;
+    const callbacks = listeners.get(event);
+
+    if (!callbacks) return;
 
     if (callback) {
       document.removeEventListener(event, callback);
-      listeners.get(event)?.delete(callback);
-      return;
+      callbacks.delete(callback);
+    } else {
+      callbacks.forEach((listener) => {
+        document.removeEventListener(event, listener);
+      });
+
+      callbacks.clear();
     }
 
-    listeners.get(event)?.forEach((listener) => {
-      document.removeEventListener(event, listener);
-    });
-
-    listeners.delete(event);
+    if (!callbacks.size) listeners.delete(event);
   }
 
-  async function init(options) {
-    const settings = options || {};
-
-    if (state.initialized && !settings.force) {
-      return api;
-    }
+  async function init(options = {}) {
+    if (state.initialized && !options.force) return api;
 
     bindActions();
     bindPreferences();
@@ -1100,17 +1006,13 @@
       render();
     }
 
-    try {
-      await Promise.allSettled([
-        load(settings),
-        getPreferences()
-      ]);
-    } catch (_) {
-      // Keep the module available when the API is unreachable.
-    }
+    await Promise.allSettled([
+      load(options),
+      getPreferences()
+    ]);
 
-    if (settings.polling !== false) {
-      startPolling(settings.pollingInterval);
+    if (options.polling !== false) {
+      startPolling(options.pollingInterval);
     }
 
     state.initialized = true;
@@ -1135,7 +1037,7 @@
     state.initialized = false;
   }
 
-  const api = {
+  const api = Object.freeze({
     init,
     destroy,
     on,
@@ -1143,7 +1045,6 @@
 
     load,
     loadUnreadCount,
-
     create,
     markRead,
     markUnread,
@@ -1163,7 +1064,10 @@
     getAll: () => state.items.slice(),
     getUnread: () => state.items.filter((item) => !item.read && !item.archived),
     getUnreadCount: () => state.unreadCount,
-    getPreferencesState: () => ({ ...state.preferences }),
+    getPreferencesState: () => ({
+      ...state.preferences,
+      categories: { ...state.preferences.categories }
+    }),
 
     getState: () => ({
       items: state.items.slice(),
@@ -1172,40 +1076,41 @@
       pageSize: state.pageSize,
       total: state.total,
       loading: state.loading,
-      preferences: { ...state.preferences }
+      initialized: state.initialized,
+      preferences: {
+        ...state.preferences,
+        categories: { ...state.preferences.categories }
+      }
     }),
 
-    constants: {
+    events: EVENTS,
+
+    constants: Object.freeze({
       DEFAULT_PAGE_SIZE,
       DEFAULT_POLL_INTERVAL,
       MAX_TITLE_LENGTH,
       MAX_MESSAGE_LENGTH
-    }
-  };
+    })
+  });
 
   window.MedOrbitsNotifications = api;
 
   window.MedOrbits = window.MedOrbits || {};
   window.MedOrbits.Notifications = api;
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      if (
-        document.querySelector(
-          "[data-notifications-list], [data-notification-count], " +
-          "[data-notification-preferences]"
-        )
-      ) {
-        init();
-      }
-    }, { once: true });
-  } else if (
-    document.querySelector(
+  function autoInit() {
+    if (document.querySelector(
       "[data-notifications-list], [data-notification-count], " +
       "[data-notification-preferences]"
-    )
-  ) {
-    init();
+    )) {
+      init();
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", autoInit, { once: true });
+  } else {
+    autoInit();
   }
 
 })(window, document);

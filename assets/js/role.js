@@ -1,16 +1,31 @@
-medorbits/assets/js/role.js
+
 /**
  * MedOrbits -- Role Management
- * File: assets/js/role.js
+ * File: /assets/js/role.js
+ * Version: 1.1.0
  *
- * Handles role definitions, role checks, UI visibility,
+ * Defines application roles, role checks, UI visibility,
  * and role-based navigation helpers.
  *
+ * IMPORTANT:
+ * Client-side role checks are for UI convenience only.
  * Backend authorization remains mandatory.
  */
-(() => {
+
+(function (window, document) {
   "use strict";
+
+  if (window.MedOrbitsRole) {
+    console.warn("[MedOrbits] Role module already initialized.");
+    return;
+  }
+
   const CONSTANTS = window.MedOrbitsConstants || {};
+  const ROUTES = CONSTANTS.ROUTES || {};
+  const ACCOUNT_ROUTES = ROUTES.ACCOUNT || {};
+  const CAREER_ROUTES = ROUTES.CAREER || {};
+  const ADMIN_ROUTES = ROUTES.ADMIN || {};
+
   const ROLES = Object.freeze({
     GUEST: "guest",
     STUDENT: "student",
@@ -21,6 +36,7 @@ medorbits/assets/js/role.js
     ADMIN: "admin",
     SUPER_ADMIN: "super_admin"
   });
+
   const ROLE_GROUPS = Object.freeze({
     USERS: Object.freeze([
       ROLES.STUDENT,
@@ -41,6 +57,7 @@ medorbits/assets/js/role.js
       ROLES.SUPER_ADMIN
     ])
   });
+
   const ROLE_LABELS = Object.freeze({
     [ROLES.GUEST]: "Guest",
     [ROLES.STUDENT]: "Student",
@@ -51,160 +68,388 @@ medorbits/assets/js/role.js
     [ROLES.ADMIN]: "Administrator",
     [ROLES.SUPER_ADMIN]: "Super Administrator"
   });
+
   const ROLE_HOME = Object.freeze({
-    [ROLES.GUEST]: CONSTANTS.ROUTES?.HOME || "/index.html",
-    [ROLES.STUDENT]: CONSTANTS.ROUTES?.ACCOUNT?.DASHBOARD || "/account/dashboard.html",
-    [ROLES.CANDIDATE]: CONSTANTS.ROUTES?.ACCOUNT?.DASHBOARD || "/account/dashboard.html",
-    [ROLES.EMPLOYER]: CONSTANTS.ROUTES?.CAREER?.EMPLOYER_DASHBOARD || "/career/employer-dashboard.html",
-    [ROLES.RECRUITER]: CONSTANTS.ROUTES?.CAREER?.EMPLOYER_DASHBOARD || "/career/employer-dashboard.html",
-    [ROLES.COUNSELLOR]: CONSTANTS.ROUTES?.ACCOUNT?.COUNSELLING || "/account/counselling.html",
-    [ROLES.ADMIN]: CONSTANTS.ROUTES?.ADMIN?.DASHBOARD || "/admin/dashboard.html",
-    [ROLES.SUPER_ADMIN]: CONSTANTS.ROUTES?.ADMIN?.DASHBOARD || "/admin/dashboard.html"
+    [ROLES.GUEST]:
+      ROUTES.HOME || "/index.html",
+
+    [ROLES.STUDENT]:
+      ACCOUNT_ROUTES.DASHBOARD || "/account/dashboard.html",
+
+    [ROLES.CANDIDATE]:
+      ACCOUNT_ROUTES.DASHBOARD || "/account/dashboard.html",
+
+    [ROLES.EMPLOYER]:
+      CAREER_ROUTES.EMPLOYER_DASHBOARD ||
+      "/career/employer-dashboard.html",
+
+    [ROLES.RECRUITER]:
+      CAREER_ROUTES.EMPLOYER_DASHBOARD ||
+      "/career/employer-dashboard.html",
+
+    [ROLES.COUNSELLOR]:
+      ACCOUNT_ROUTES.COUNSELLING || "/account/counselling.html",
+
+    [ROLES.ADMIN]:
+      ADMIN_ROUTES.DASHBOARD || "/admin/dashboard.html",
+
+    [ROLES.SUPER_ADMIN]:
+      ADMIN_ROUTES.DASHBOARD || "/admin/dashboard.html"
   });
+
+  const LOGIN_ROUTE =
+    ACCOUNT_ROUTES.LOGIN || "/account/login.html";
+
   function normalizeRole(role) {
-    return typeof role === "string"
-      ? role.trim().toLowerCase()
-      : null;
+    if (typeof role !== "string") {
+      return null;
+    }
+
+    const normalized = role.trim().toLowerCase();
+
+    return normalized || null;
   }
+
   function getCurrentUser() {
-    return window.MedOrbitsAuth?.currentUser?.() || null;
+    const auth = window.MedOrbitsAuth;
+
+    if (!auth) {
+      return null;
+    }
+
+    try {
+      if (typeof auth.currentUser === "function") {
+        return auth.currentUser() || null;
+      }
+
+      if (
+        auth.currentUser &&
+        typeof auth.currentUser === "object"
+      ) {
+        return auth.currentUser;
+      }
+
+      if (
+        auth.user &&
+        typeof auth.user === "object"
+      ) {
+        return auth.user;
+      }
+    } catch (error) {
+      console.error(
+        "[MedOrbits] Unable to retrieve the current user.",
+        error
+      );
+    }
+
+    return null;
   }
+
   function getCurrentRole() {
     const user = getCurrentUser();
+
     return normalizeRole(
-      user?.role ||
-      user?.role_name ||
-      user?.account_role
+      user &&
+      (
+        user.role ||
+        user.role_name ||
+        user.account_role
+      )
     );
   }
+
   function isValidRole(role) {
-    return Object.values(ROLES).includes(normalizeRole(role));
+    const normalized = normalizeRole(role);
+
+    return normalized !== null &&
+      Object.values(ROLES).includes(normalized);
   }
+
   function hasRole(role) {
     const expected = normalizeRole(role);
-    if (!expected || !getCurrentUser()) return false;
+    const user = getCurrentUser();
+
+    if (!expected || !user) {
+      return false;
+    }
+
     return getCurrentRole() === expected;
   }
-  function hasAnyRole(roles = []) {
-    if (!Array.isArray(roles)) return false;
-    return roles.some((role) => hasRole(role));
+
+  function hasAnyRole(roles) {
+    if (!Array.isArray(roles) || !roles.length) {
+      return false;
+    }
+
+    const currentRole = getCurrentRole();
+
+    if (!getCurrentUser() || !currentRole) {
+      return false;
+    }
+
+    return roles.some(function (role) {
+      return normalizeRole(role) === currentRole;
+    });
   }
-  function hasAllRoles(roles = []) {
-    if (!Array.isArray(roles) || !roles.length) return false;
-    return roles.every((role) => hasRole(role));
+
+  function hasAllRoles(roles) {
+    if (!Array.isArray(roles) || !roles.length) {
+      return false;
+    }
+
+    const currentRole = getCurrentRole();
+
+    if (!getCurrentUser() || !currentRole) {
+      return false;
+    }
+
+    return roles.every(function (role) {
+      return normalizeRole(role) === currentRole;
+    });
   }
+
   function isInGroup(group) {
     const roles = ROLE_GROUPS[group];
+
     return Array.isArray(roles) && hasAnyRole(roles);
   }
+
   function isAdmin() {
     return isInGroup("ADMINISTRATORS");
   }
-  function getRoleLabel(role = getCurrentRole()) {
-    const normalized = normalizeRole(role);
+
+  function getRoleLabel(role) {
+    const normalized = normalizeRole(
+      role === undefined ? getCurrentRole() : role
+    );
+
     return ROLE_LABELS[normalized] || "Unknown Role";
   }
-  function getHomeRoute(role = getCurrentRole()) {
-    const normalized = normalizeRole(role);
+
+  function getHomeRoute(role) {
+    const normalized = normalizeRole(
+      role === undefined ? getCurrentRole() : role
+    );
+
     return ROLE_HOME[normalized] || ROLE_HOME[ROLES.GUEST];
   }
+
+  function parseRoleList(value) {
+    if (typeof value !== "string" || !value.trim()) {
+      return [];
+    }
+
+    return value
+      .split(",")
+      .map(normalizeRole)
+      .filter(Boolean);
+  }
+
   function canAccessElement(element) {
-    if (!(element instanceof HTMLElement)) return false;
-    const requiredRoles = (element.dataset.roles || "")
-      .split(",")
-      .map(normalizeRole)
-      .filter(Boolean);
-    const excludedRoles = (element.dataset.excludeRoles || "")
-      .split(",")
-      .map(normalizeRole)
-      .filter(Boolean);
+    if (
+      !element ||
+      element.nodeType !== 1 ||
+      typeof element.hasAttribute !== "function"
+    ) {
+      return false;
+    }
+
+    const requiredRoles = parseRoleList(
+      element.getAttribute("data-roles") || ""
+    );
+
+    const excludedRoles = parseRoleList(
+      element.getAttribute("data-exclude-roles") || ""
+    );
+
+    const user = getCurrentUser();
+
     if (
       requiredRoles.length &&
       !hasAnyRole(requiredRoles)
     ) {
       return false;
     }
-    if (excludedRoles.some((role) => hasRole(role))) {
-      return false;
-    }
+
     if (
-      element.hasAttribute("data-auth-required") &&
-      !getCurrentUser()
+      excludedRoles.length &&
+      excludedRoles.some(function (role) {
+        return hasRole(role);
+      })
     ) {
       return false;
     }
+
+    if (
+      element.hasAttribute("data-auth-required") &&
+      !user
+    ) {
+      return false;
+    }
+
     return true;
   }
-  function applyRoleVisibility(root = document) {
-    root.querySelectorAll(
-      "[data-roles], [data-exclude-roles], [data-auth-required]"
-    ).forEach((element) => {
+
+  function applyRoleVisibility(root) {
+    root = root || document;
+
+    if (typeof root.querySelectorAll !== "function") {
+      return;
+    }
+
+    const selector = [
+      "[data-roles]",
+      "[data-exclude-roles]",
+      "[data-auth-required]"
+    ].join(", ");
+
+    const elements = [];
+
+    if (
+      root.nodeType === 1 &&
+      typeof root.matches === "function" &&
+      root.matches(selector)
+    ) {
+      elements.push(root);
+    }
+
+    root.querySelectorAll(selector).forEach(function (element) {
+      elements.push(element);
+    });
+
+    elements.forEach(function (element) {
       const allowed = canAccessElement(element);
+
       element.hidden = !allowed;
       element.setAttribute("aria-hidden", String(!allowed));
     });
   }
-  function redirectToRoleHome(role = getCurrentRole()) {
-    window.location.assign(getHomeRoute(role));
+
+  function redirectToRoleHome(role) {
+    const route = getHomeRoute(role);
+
+    window.location.assign(route);
   }
-  function requireRole(roles, options = {}) {
-    const allowedRoles = Array.isArray(roles) ? roles : [roles];
-    if (!getCurrentUser()) {
+
+  function requireRole(roles, options) {
+    options = options || {};
+
+    const allowedRoles = Array.isArray(roles)
+      ? roles
+      : [roles];
+
+    const user = getCurrentUser();
+
+    if (!user) {
       if (options.redirect !== false) {
-        window.location.assign(
-          CONSTANTS.ROUTES?.ACCOUNT?.LOGIN || "/account/login.html"
-        );
+        window.location.assign(LOGIN_ROUTE);
       }
+
       return false;
     }
-    if (hasAnyRole(allowedRoles)) return true;
+
+    if (hasAnyRole(allowedRoles)) {
+      return true;
+    }
+
     if (options.redirectOnDenied === true) {
       redirectToRoleHome();
     }
+
     return false;
   }
+
+  let initialized = false;
+  let authChangeHandler = null;
+
   function init() {
+    if (initialized) {
+      applyRoleVisibility();
+      return;
+    }
+
+    initialized = true;
     applyRoleVisibility();
+
+    authChangeHandler = function () {
+      applyRoleVisibility();
+    };
+
     document.addEventListener(
       "medorbits:auth-change",
-      () => applyRoleVisibility()
+      authChangeHandler
+    );
+
+    document.addEventListener(
+      "medorbits:auth:changed",
+      authChangeHandler
     );
   }
-  const MedOrbitsRole = Object.freeze({
-    ROLES,
-    ROLE_GROUPS,
-    ROLE_LABELS,
-    ROLE_HOME,
-    normalizeRole,
-    isValidRole,
-    getCurrentUser,
-    getCurrentRole,
-    hasRole,
-    hasAnyRole,
-    hasAllRoles,
-    isInGroup,
-    isAdmin,
-    getRoleLabel,
-    getHomeRoute,
-    canAccessElement,
-    applyRoleVisibility,
-    redirectToRoleHome,
-    requireRole,
-    init
-  });
-  if (window.MedOrbitsRole) {
-    console.warn("[MedOrbits] Role module already initialized.");
-    return;
+
+  function destroy() {
+    if (authChangeHandler) {
+      document.removeEventListener(
+        "medorbits:auth-change",
+        authChangeHandler
+      );
+
+      document.removeEventListener(
+        "medorbits:auth:changed",
+        authChangeHandler
+      );
+
+      authChangeHandler = null;
+    }
+
+    initialized = false;
   }
+
+  const MedOrbitsRole = Object.freeze({
+    ROLES: ROLES,
+    ROLE_GROUPS: ROLE_GROUPS,
+    ROLE_LABELS: ROLE_LABELS,
+    ROLE_HOME: ROLE_HOME,
+
+    normalizeRole: normalizeRole,
+    isValidRole: isValidRole,
+
+    getCurrentUser: getCurrentUser,
+    getCurrentRole: getCurrentRole,
+
+    hasRole: hasRole,
+    hasAnyRole: hasAnyRole,
+    hasAllRoles: hasAllRoles,
+    isInGroup: isInGroup,
+    isAdmin: isAdmin,
+
+    getRoleLabel: getRoleLabel,
+    getHomeRoute: getHomeRoute,
+
+    canAccessElement: canAccessElement,
+    applyRoleVisibility: applyRoleVisibility,
+
+    redirectToRoleHome: redirectToRoleHome,
+    requireRole: requireRole,
+
+    init: init,
+    destroy: destroy
+  });
+
   Object.defineProperty(window, "MedOrbitsRole", {
     value: MedOrbitsRole,
     writable: false,
     configurable: false,
     enumerable: true
   });
+
+  window.MedOrbits = window.MedOrbits || {};
+  window.MedOrbits.Role = MedOrbitsRole;
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
+    document.addEventListener("DOMContentLoaded", init, {
+      once: true
+    });
   } else {
     init();
   }
-})();
+})(window, document);

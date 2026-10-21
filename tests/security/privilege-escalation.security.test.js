@@ -1,101 +1,125 @@
-
 'use strict';
-
 /**
  * MedOrbits -- Privilege Escalation Security Tests
  *
  * File: tests/security/privilege-escalation.security.test.js
- *
  * Runtime: Node.js >= 20
  * Dependencies: Node.js built-in modules only
  *
  * Configuration:
  *   PRIVILEGE_TEST_BASE_URL
  *   PRIVILEGE_TEST_USER_TOKEN
- *   PRIVILEGE_TEST_ADMIN_TOKEN          Optional
- *   PRIVILEGE_TEST_USER_ID              Optional
- *   PRIVILEGE_TEST_PROFILE_PATH         Optional
- *   PRIVILEGE_TEST_ADMIN_PATH           Optional
- *   PRIVILEGE_TEST_TIMEOUT_MS           Optional
+ *   PRIVILEGE_TEST_ADMIN_TOKEN       Optional
+ *   PRIVILEGE_TEST_USER_ID           Optional
+ *   PRIVILEGE_TEST_PROFILE_PATH      Optional
+ *   PRIVILEGE_TEST_ADMIN_PATH        Optional
+ *   PRIVILEGE_TEST_TIMEOUT_MS        Optional
+ *   PRIVILEGE_TEST_EXPECT_ROLE       Optional; defaults to user
  *
  * Run:
  *   node --test tests/security/privilege-escalation.security.test.js
  *
  * IMPORTANT:
- * - Use dedicated test accounts and a non-production environment.
- * - The user token must belong to a low-privilege account.
- * - Never use production administrator credentials in security tests.
- * - Configure routes to match the actual MedOrbits API.
+ * - Use a dedicated test environment and test accounts.
+ * - USER_TOKEN must belong to a low-privilege user.
+ * - Never use production administrator credentials.
+ * - Configure paths to match the actual MedOrbits API.
  */
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const BASE_URL = (
   process.env.PRIVILEGE_TEST_BASE_URL || ''
 ).replace(/\/+$/, '');
-
 const USER_TOKEN =
   process.env.PRIVILEGE_TEST_USER_TOKEN || '';
-
 const ADMIN_TOKEN =
   process.env.PRIVILEGE_TEST_ADMIN_TOKEN || '';
-
 const USER_ID =
   process.env.PRIVILEGE_TEST_USER_ID || '';
-
 const PROFILE_PATH =
   process.env.PRIVILEGE_TEST_PROFILE_PATH ||
-  (USER_ID ? `/api/users/${encodeURIComponent(USER_ID)}` : '');
-
+  (USER_ID
+    ? `/api/users/${encodeURIComponent(USER_ID)}`
+    : '');
 const ADMIN_PATH =
   process.env.PRIVILEGE_TEST_ADMIN_PATH || '/api/admin';
-
 const TIMEOUT_MS = Number(
   process.env.PRIVILEGE_TEST_TIMEOUT_MS || 15000
 );
-
+const EXPECTED_ROLE =
+  process.env.PRIVILEGE_TEST_EXPECT_ROLE || 'user';
 const configured = Boolean(
   BASE_URL &&
   USER_TOKEN &&
   Number.isFinite(TIMEOUT_MS) &&
   TIMEOUT_MS > 0
 );
-
-const skipReason =
-  'Configure PRIVILEGE_TEST_BASE_URL and ' +
-  'PRIVILEGE_TEST_USER_TOKEN to run integration tests.';
-
-const JSON_HEADERS = {
-  Accept: 'application/json',
-  'Content-Type': 'application/json',
-};
-
-function headers(token, extra = {}) {
+function validPath(path) {
+  return (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !/[\r\n]/.test(path)
+  );
+}
+function validateBaseUrl() {
+  let url;
+  try {
+    url = new URL(BASE_URL);
+  } catch {
+    throw new Error(
+      'PRIVILEGE_TEST_BASE_URL must be a valid absolute URL.'
+    );
+  }
+  assert.ok(
+    ['http:', 'https:'].includes(url.protocol),
+    'Base URL must use HTTP or HTTPS.'
+  );
+  assert.equal(
+    url.username + url.password,
+    '',
+    'Do not put credentials in the base URL.'
+  );
+  const localHosts = new Set([
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    '[::1]',
+  ]);
+  assert.ok(
+    localHosts.has(url.hostname) ||
+      process.env.PRIVILEGE_TEST_ALLOW_REMOTE === 'true',
+    'Remote targets require PRIVILEGE_TEST_ALLOW_REMOTE=true.'
+  );
+}
+function headers(token, extra = {}, hasBody = false) {
   return {
-    ...JSON_HEADERS,
+    Accept: 'application/json',
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extra,
   };
 }
-
 async function request(path, {
   token = USER_TOKEN,
   method = 'GET',
   body,
   extraHeaders = {},
 } = {}) {
+  assert.ok(validPath(path), `Invalid API path: ${path}`);
   const controller = new AbortController();
-
   const timeout = setTimeout(
     () => controller.abort(),
     TIMEOUT_MS
   );
-
   try {
     return await fetch(`${BASE_URL}${path}`, {
       method,
-      headers: headers(token, extraHeaders),
+      headers: headers(
+        token,
+        extraHeaders,
+        body !== undefined
+      ),
       ...(body !== undefined
         ? { body: JSON.stringify(body) }
         : {}),
@@ -106,33 +130,33 @@ async function request(path, {
     clearTimeout(timeout);
   }
 }
-
 async function responseBody(response) {
   const raw = await response.text();
-
-  if (!raw) {
-    return null;
-  }
-
+  if (!raw) return null;
   try {
     return JSON.parse(raw);
   } catch {
     return raw;
   }
 }
-
-function assertForbidden(response, description) {
+function assertNotServerError(response, description) {
+  assert.ok(
+    response.status < 500,
+    `${description}: unexpected HTTP ${response.status}`
+  );
+}
+function assertAuthorizationDenied(response, description) {
   assert.ok(
     [401, 403, 404].includes(response.status),
-    `${description}: expected 401, 403, or 404; ` +
+    `${description}: expected HTTP 401, 403, or 404; ` +
       `received HTTP ${response.status}`
   );
 }
-
 function normalizeKey(key) {
-  return String(key).replace(/[-_\s]/g, '').toLowerCase();
+  return String(key)
+    .replace(/[-_\s]/g, '')
+    .toLowerCase();
 }
-
 const PRIVILEGED_FIELDS = new Set([
   'role',
   'roles',
@@ -151,41 +175,63 @@ const PRIVILEGED_FIELDS = new Set([
   'isactive',
   'status',
 ].map(normalizeKey));
-
 function findPrivilegedFields(value, path = '$', found = []) {
   if (!value || typeof value !== 'object') {
     return found;
   }
-
   if (Array.isArray(value)) {
     value.forEach((item, index) => {
       findPrivilegedFields(item, `${path}[${index}]`, found);
     });
-
     return found;
   }
-
   for (const [key, child] of Object.entries(value)) {
     if (PRIVILEGED_FIELDS.has(normalizeKey(key))) {
       found.push(`${path}.${key}`);
     }
-
     findPrivilegedFields(child, `${path}.${key}`, found);
   }
-
   return found;
 }
-
-function assertNoPrivilegedFields(body, description) {
-  const fields = findPrivilegedFields(body);
-
-  assert.deepEqual(
-    fields,
-    [],
-    `${description}: response exposes privileged fields: ${fields.join(', ')}`
-  );
+function findRoleValues(value, path = '$', found = []) {
+  if (!value || typeof value !== 'object') {
+    return found;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      findRoleValues(item, `${path}[${index}]`, found);
+    });
+    return found;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (['role', 'roles'].includes(normalizeKey(key))) {
+      found.push({ path: `${path}.${key}`, value: child });
+    }
+    findRoleValues(child, `${path}.${key}`, found);
+  }
+  return found;
 }
-
+function assertExpectedLowPrivilegeRole(body, description) {
+  const roleValues = findRoleValues(body);
+  for (const item of roleValues) {
+    if (typeof item.value === 'string') {
+      assert.equal(
+        item.value.toLowerCase(),
+        EXPECTED_ROLE.toLowerCase(),
+        `${description}: unexpected role at ${item.path}`
+      );
+    } else if (Array.isArray(item.value)) {
+      assert.ok(
+        item.value.every(
+          (role) =>
+            typeof role === 'string' &&
+            role.toLowerCase() === EXPECTED_ROLE.toLowerCase()
+        ),
+        `${description}: unexpected role collection at ${item.path}`
+      );
+    }
+  }
+}
 const escalationPayloads = [
   {
     name: 'admin role assignment',
@@ -223,42 +269,50 @@ const escalationPayloads = [
       privileges: ['manage_users', 'manage_payments'],
     },
   },
+  {
+    name: 'account type assignment',
+    payload: { accountType: 'administrator' },
+  },
+  {
+    name: 'access level assignment',
+    payload: { accessLevel: 'superadmin' },
+  },
 ];
-
 test(
   'Privilege escalation security integration suite',
-  { skip: !configured ? skipReason : false },
+  { skip: !configured },
   async (t) => {
+    validateBaseUrl();
+    assert.ok(validPath(ADMIN_PATH), 'Invalid admin path');
+    if (PROFILE_PATH) {
+      assert.ok(validPath(PROFILE_PATH), 'Invalid profile path');
+    }
     await t.test(
       'Unauthenticated users cannot access the admin endpoint',
       async () => {
         const response = await request(ADMIN_PATH, {
           token: '',
         });
-
-        assertForbidden(
+        assertAuthorizationDenied(
           response,
           'Unauthenticated administrative access'
         );
       }
     );
-
     await t.test(
       'Low-privilege user cannot access the admin endpoint',
       async () => {
         const response = await request(ADMIN_PATH, {
           token: USER_TOKEN,
         });
-
-        assertForbidden(
+        assertAuthorizationDenied(
           response,
           'Low-privilege administrative access'
         );
       }
     );
-
     await t.test(
-      'Admin endpoint rejects privilege-escalation HTTP methods',
+      'Low-privilege user cannot mutate the admin endpoint',
       async () => {
         for (const method of ['POST', 'PATCH', 'DELETE']) {
           const response = await request(ADMIN_PATH, {
@@ -269,258 +323,211 @@ test(
               isAdmin: true,
             },
           });
-
-          assertForbidden(
+          assertAuthorizationDenied(
             response,
-            `Low-privilege ${method} access to admin endpoint`
+            `Unauthorized ${method} on admin endpoint`
           );
         }
       }
     );
-
     await t.test(
-      'User cannot escalate privileges through a profile update',
+      'Privilege assignment payloads are covered by the test suite',
+      () => {
+        assert.ok(escalationPayloads.length >= 5);
+        for (const item of escalationPayloads) {
+          assert.ok(
+            findPrivilegedFields(item.payload).length > 0,
+            `Payload "${item.name}" must include protected fields`
+          );
+        }
+      }
+    );
+    await t.test(
+      'Profile updates cannot grant elevated privileges',
       { skip: !PROFILE_PATH },
       async (t) => {
         for (const { name, payload } of escalationPayloads) {
           await t.test(name, async () => {
-            const beforeResponse = await request(PROFILE_PATH, {
-              token: USER_TOKEN,
-            });
-
+            const beforeResponse = await request(PROFILE_PATH);
             assert.ok(
               beforeResponse.ok,
               `Could not read baseline profile: HTTP ${beforeResponse.status}`
             );
-
             const before = await responseBody(beforeResponse);
-
             const updateResponse = await request(PROFILE_PATH, {
-              token: USER_TOKEN,
               method: 'PATCH',
               body: payload,
             });
-
-            assertForbidden(
+            assertNotServerError(
               updateResponse,
-              `Profile update attempting ${name}`
+              `Profile update (${name})`
             );
-
-            const afterResponse = await request(PROFILE_PATH, {
-              token: USER_TOKEN,
-            });
-
+            // The update may be rejected, or the server may safely ignore
+            // protected fields. In either case, privileges must not change.
+            if (updateResponse.ok) {
+              const updateBody = await responseBody(updateResponse);
+              const updateRoles = findRoleValues(updateBody);
+              for (const item of updateRoles) {
+                if (typeof item.value === 'string') {
+                  assert.notEqual(
+                    item.value.toLowerCase(),
+                    'admin',
+                    `Update response granted admin through ${item.path}`
+                  );
+                  assert.notEqual(
+                    item.value.toLowerCase(),
+                    'superadmin',
+                    `Update response granted superadmin through ${item.path}`
+                  );
+                }
+              }
+            }
+            const afterResponse = await request(PROFILE_PATH);
             assert.ok(
               afterResponse.ok,
               `Could not read profile after attempt: HTTP ${afterResponse.status}`
             );
-
             const after = await responseBody(afterResponse);
-
             assert.deepEqual(
               after,
               before,
-              `Profile changed after rejected ${name}`
+              `Profile changed after attempted ${name}. ` +
+                'If legitimate profile fields change dynamically, compare ' +
+                'only the stable security-relevant fields instead.'
             );
           });
         }
       }
     );
-
     await t.test(
-      'User cannot grant elevated privileges through a user-management endpoint',
-      { skip: !PROFILE_PATH },
+      'User-management route rejects unauthorized role assignment',
+      { skip: !USER_ID },
       async () => {
-        const targets = USER_ID
-          ? [USER_ID]
-          : [];
-
-        if (targets.length === 0) {
+        const targetPath =
+          `/api/users/${encodeURIComponent(USER_ID)}`;
+        const response = await request(targetPath, {
+          method: 'PATCH',
+          body: {
+            role: 'admin',
+            isAdmin: true,
+            permissions: ['*'],
+          },
+        });
+        assertNotServerError(
+          response,
+          'Unauthorized user-management role assignment'
+        );
+        // A 2xx response may mean protected fields were safely ignored.
+        // The profile invariant test above must still confirm no escalation.
+        if (response.status >= 200 && response.status < 300) {
+          const verify = await request(targetPath);
           assert.ok(
-            !USER_ID,
-            'A target user ID must be configured'
+            verify.ok,
+            `Could not verify target user: HTTP ${verify.status}`
           );
-          return;
-        }
-
-        for (const targetId of targets) {
-          const path = `/api/users/${encodeURIComponent(targetId)}`;
-
-          const response = await request(path, {
-            token: USER_TOKEN,
-            method: 'PATCH',
-            body: {
-              role: 'admin',
-              isAdmin: true,
-              permissions: ['*'],
-            },
-          });
-
-          assertForbidden(
-            response,
-            'Unauthorized role assignment to another user'
+          const user = await responseBody(verify);
+          assertExpectedLowPrivilegeRole(
+            user,
+            'Target user after attempted escalation'
           );
         }
       }
     );
-
     await t.test(
-      'User cannot bypass authorization using alternate role fields',
-      { skip: !PROFILE_PATH },
-      async () => {
-        const aliases = [
-          { is_admin: true },
-          { is_admin: 'true' },
-          { accountType: 'administrator' },
-          { accessLevel: 'superadmin' },
-          { permissions: ['manage_users'] },
-          { roles: ['admin'] },
-        ];
-
-        for (const payload of aliases) {
-          const response = await request(PROFILE_PATH, {
-            token: USER_TOKEN,
-            method: 'PATCH',
-            body: payload,
-          });
-
-          assertForbidden(
-            response,
-            `Alternate privilege field: ${Object.keys(payload).join(', ')}`
-          );
-        }
-      }
-    );
-
-    await t.test(
-      'User token cannot impersonate an administrator through headers',
+      'Client-supplied role headers do not grant administrative access',
       async () => {
         const response = await request(ADMIN_PATH, {
-          token: USER_TOKEN,
           extraHeaders: {
             'X-User-Role': 'admin',
             'X-Admin': 'true',
             'X-Authenticated-Role': 'superadmin',
           },
         });
-
-        assertForbidden(
+        assertAuthorizationDenied(
           response,
-          'Client-supplied role headers'
+          'Client-supplied privilege headers'
         );
       }
     );
-
     await t.test(
-      'User cannot access a privileged route by changing HTTP method',
+      'HTTP method variations do not bypass admin authorization',
       async () => {
-        const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-        for (const method of methods) {
+        for (const method of [
+          'GET',
+          'POST',
+          'PUT',
+          'PATCH',
+          'DELETE',
+        ]) {
           const response = await request(ADMIN_PATH, {
-            token: USER_TOKEN,
             method,
             body: {
               action: 'grant_admin',
               role: 'admin',
             },
           });
-
-          assertForbidden(
+          assertAuthorizationDenied(
             response,
-            `Privilege bypass using HTTP method ${method}`
+            `Admin authorization using ${method}`
           );
         }
       }
     );
-
     await t.test(
-      'Authenticated low-privilege account remains usable after rejected attacks',
+      'Low-privilege user remains authenticated after attack attempts',
       { skip: !PROFILE_PATH },
       async () => {
-        const response = await request(PROFILE_PATH, {
-          token: USER_TOKEN,
-        });
-
+        const response = await request(PROFILE_PATH);
         assert.ok(
           response.ok,
-          `Account access unexpectedly changed: HTTP ${response.status}`
+          `Profile became inaccessible: HTTP ${response.status}`
         );
-
         const body = await responseBody(response);
-
-        assert.ok(
-          body !== null,
-          'Expected a readable profile response'
+        assert.notEqual(
+          body,
+          null,
+          'Expected a non-empty profile response'
+        );
+        assertExpectedLowPrivilegeRole(
+          body,
+          'Profile after privilege escalation probes'
         );
       }
     );
-
     await t.test(
-      'Optional administrator token can access the configured admin endpoint',
+      'Optional administrator token can access the admin endpoint',
       { skip: !ADMIN_TOKEN },
       async () => {
         const response = await request(ADMIN_PATH, {
           token: ADMIN_TOKEN,
         });
-
         assert.ok(
           response.status >= 200 && response.status < 300,
           `Configured admin token should be authorized; HTTP ${response.status}`
         );
       }
     );
-
-    await t.test(
-      'Profile responses do not expose unexpected privileged fields',
-      { skip: !PROFILE_PATH },
-      async () => {
-        const response = await request(PROFILE_PATH, {
-          token: USER_TOKEN,
-        });
-
-        assert.ok(
-          response.ok,
-          `Could not inspect profile response: HTTP ${response.status}`
-        );
-
-        const body = await responseBody(response);
-
-        // This checks the API response contract. If MedOrbits intentionally
-        // returns the current user's role, replace this with assertions
-        // that the returned role is the expected low-privilege role.
-        assertNoPrivilegedFields(
-          body,
-          'Low-privilege profile response'
-        );
-      }
-    );
   }
 );
-
-test(
-  'Privilege escalation security helper checks',
-  () => {
+test('Privilege escalation helper invariants', () => {
+  assert.ok(
+    Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
+    'Timeout must be positive'
+  );
+  assert.ok(
+    validPath(ADMIN_PATH),
+    'Admin path must begin with one slash'
+  );
+  for (const item of escalationPayloads) {
     assert.ok(
-      escalationPayloads.length >= 5,
-      'The suite should include multiple escalation payloads'
-    );
-
-    for (const item of escalationPayloads) {
-      assert.ok(
-        findPrivilegedFields(item.payload).length > 0,
-        `Escalation payload "${item.name}" must contain protected fields`
-      );
-    }
-
-    assert.ok(
-      ADMIN_PATH.startsWith('/') && !ADMIN_PATH.startsWith('//'),
-      'Admin path must be a relative API path'
-    );
-
-    assert.ok(
-      Number.isFinite(TIMEOUT_MS) && TIMEOUT_MS > 0,
-      'Timeout must be a positive number'
+      findPrivilegedFields(item.payload).length > 0,
+      `Missing protected field in "${item.name}"`
     );
   }
-);
+  assert.ok(
+    findPrivilegedFields({
+      profile: { is_admin: true },
+    }).length > 0,
+    'Nested alternate privilege fields must be detected'
+  );
+});

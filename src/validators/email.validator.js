@@ -4,6 +4,15 @@
 const MAX_EMAIL_LENGTH = 254;
 const MAX_LOCAL_PART_LENGTH = 64;
 const MAX_DOMAIN_LENGTH = 253;
+const MAX_DOMAIN_LABEL_LENGTH = 63;
+
+const CONTROL_CHARACTERS_REGEX = /[\u0000-\u001F\u007F]/;
+
+const LOCAL_PART_REGEX =
+  /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/i;
+
+const DOMAIN_LABEL_REGEX =
+  /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
 function validationError(
   message,
@@ -26,12 +35,13 @@ function validationError(
 }
 
 /**
- * Normalize an email address according to the application policy:
+ * Normalize an email address according to the application's policy.
+ *
+ * Policy:
  * - Trim surrounding whitespace.
  * - Convert to lowercase.
  *
- * This policy is suitable for typical MedOrbits account workflows.
- * It does not prove that the mailbox exists or belongs to the user.
+ * This does not establish mailbox existence or ownership.
  */
 function normalizeEmail(value) {
   if (typeof value !== 'string') {
@@ -50,6 +60,13 @@ function normalizeEmail(value) {
     );
   }
 
+  if (CONTROL_CHARACTERS_REGEX.test(email)) {
+    throw validationError(
+      'Email address must not contain control characters.',
+      'INVALID_FORMAT'
+    );
+  }
+
   if (email.length > MAX_EMAIL_LENGTH) {
     throw validationError(
       `Email address must not exceed ${MAX_EMAIL_LENGTH} characters.`,
@@ -61,8 +78,20 @@ function normalizeEmail(value) {
 }
 
 /**
- * Basic email syntax validation.
- * Does not perform DNS, mailbox-existence, or ownership verification.
+ * Validate a common dot-atom email address.
+ *
+ * Supported:
+ * - Standard ASCII email addresses.
+ * - Lowercase normalization.
+ * - Optional missing values when required is false.
+ *
+ * Not supported:
+ * - Display-name formats.
+ * - Quoted local parts.
+ * - Internationalized email addresses.
+ *
+ * This function does not perform DNS, mailbox-existence, or
+ * ownership verification.
  */
 function validateEmail(value, options = {}) {
   const {
@@ -90,10 +119,12 @@ function validateEmail(value, options = {}) {
 
   const email = normalizeEmail(value);
 
+  // Display-name parsing is intentionally unsupported.
+  // Reject the option explicitly instead of silently ignoring it.
   if (allowDisplayName) {
     throw validationError(
       'Display-name email formats are not supported. Provide the email address only.',
-      'INVALID_FORMAT'
+      'UNSUPPORTED_FORMAT'
     );
   }
 
@@ -104,20 +135,26 @@ function validateEmail(value, options = {}) {
     );
   }
 
-  const parts = email.split('@');
+  const separatorIndex = email.indexOf('@');
 
-  if (parts.length !== 2) {
+  if (
+    separatorIndex <= 0 ||
+    separatorIndex !== email.lastIndexOf('@') ||
+    separatorIndex === email.length - 1
+  ) {
     throw validationError(
       'Enter a valid email address.',
       'INVALID_FORMAT'
     );
   }
 
-  const [localPart, domain] = parts;
+  const localPart = email.slice(0, separatorIndex);
+  const domain = email.slice(separatorIndex + 1);
 
   if (
     localPart.length === 0 ||
-    localPart.length > MAX_LOCAL_PART_LENGTH
+    localPart.length > MAX_LOCAL_PART_LENGTH ||
+    !LOCAL_PART_REGEX.test(localPart)
   ) {
     throw validationError(
       'Email address has an invalid local part.',
@@ -135,19 +172,6 @@ function validateEmail(value, options = {}) {
     );
   }
 
-  // Supports common dot-atom email addresses.
-  // Quoted local parts and internationalized domain names are not
-  // supported by this lightweight validator.
-  const localPattern =
-    /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/i;
-
-  if (!localPattern.test(localPart)) {
-    throw validationError(
-      'Email address has an invalid local part.',
-      'INVALID_FORMAT'
-    );
-  }
-
   const labels = domain.split('.');
 
   if (labels.length < 2) {
@@ -157,13 +181,11 @@ function validateEmail(value, options = {}) {
     );
   }
 
-  const validDomainLabel = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
-
   for (const label of labels) {
     if (
       label.length === 0 ||
-      label.length > 63 ||
-      !validDomainLabel.test(label)
+      label.length > MAX_DOMAIN_LABEL_LENGTH ||
+      !DOMAIN_LABEL_REGEX.test(label)
     ) {
       throw validationError(
         'Email address has an invalid domain.',
@@ -184,6 +206,11 @@ function validateEmail(value, options = {}) {
   return email;
 }
 
+/**
+ * Boolean convenience wrapper.
+ *
+ * Returns false for invalid addresses and invalid options.
+ */
 function isValidEmail(value, options = {}) {
   try {
     validateEmail(value, options);
@@ -200,4 +227,5 @@ module.exports = {
   MAX_EMAIL_LENGTH,
   MAX_LOCAL_PART_LENGTH,
   MAX_DOMAIN_LENGTH,
+  MAX_DOMAIN_LABEL_LENGTH,
 };

@@ -1,9 +1,7 @@
 MedOrbits — End-to-End Testing
 
 Directory: tests/e2e/
-
 Framework: Playwright Test
-
 Runtime: Node.js 20+
 
 1. Purpose
@@ -36,12 +34,12 @@ Before running the suite:
 * Configure a payment-provider sandbox or deterministic payment mock.
 * Ensure required backend APIs and dependent services are available.
 
-Install Playwright if it is not already installed:
+Install Playwright only if it is not already declared in the project:
 
 npm install —save-dev @playwright/test
 npx playwright install
 
-If the repository already declares Playwright, use the existing dependency rather than installing a duplicate version.
+If the repository already declares Playwright, use the existing dependency and lockfile rather than installing a duplicate version.
 
 4. Configuration
 
@@ -75,7 +73,7 @@ Route defaults are examples, not authoritative MedOrbits routes. Override them t
 
 Recommended environment setup
 
-Create a local, untracked .env.e2e file for your own configuration. Never commit credentials.
+Create a local, untracked .env.e2e file for local configuration. Never commit credentials.
 
 Example:
 
@@ -97,7 +95,19 @@ E2E_PAYMENT_MODE=mock
 E2E_ALLOWED_DOCUMENT_EXTENSIONS=.pdf,.jpg,.jpeg,.png
 E2E_MAX_UPLOAD_BYTES=5242880
 
-The example file is documentation only. Playwright does not automatically load .env.e2e unless the project config or test setup loads it. Use an approved environment-variable loader or CI secret configuration.
+These are example values, not working credentials. Use only synthetic accounts created in the dedicated test environment.
+
+Playwright does not automatically load .env.e2e. Load it explicitly through an approved environment-variable loader or configure the variables through your CI secret manager.
+
+If using dotenv, install it only if it is not already available:
+
+npm install —save-dev dotenv
+
+A configuration file can load the environment file before reading environment variables:
+
+require(‘dotenv’).config({ path: ‘.env.e2e’ });
+
+Place that statement at the top of the existing Playwright configuration, before configuration values are evaluated. Ensure .env.e2e is excluded from version control.
 
 5. Running tests
 
@@ -105,7 +115,7 @@ Run all E2E tests:
 
 npx playwright test tests/e2e/
 
-Run a specific test file:
+Run an individual test file:
 
 npx playwright test tests/e2e/authentication.e2e.test.js
 npx playwright test tests/e2e/admin-workflow.e2e.test.js
@@ -129,13 +139,13 @@ Open the HTML report:
 
 npx playwright show-report
 
-To run against a local server, start the application in another terminal before executing the tests unless playwright.config.js already defines a working webServer configuration.
+Start the application in another terminal before executing the tests unless playwright.config.js already defines a working webServer configuration.
 
 6. Authentication and authorization
 
 Authentication tests should validate:
 
-* Valid credentials can establish a session.
+* Valid credentials establish a session.
 * Invalid credentials do not establish a session.
 * Required credential fields are validated.
 * Protected pages reject unauthenticated requests.
@@ -175,7 +185,7 @@ Document upload tests should cover:
 * Prevention of unauthorized downloads.
 * Safe error messages and storage-path handling.
 
-The accept attribute is a user-interface hint, not a security boundary.
+The HTML accept attribute is a user-interface hint, not a security boundary.
 
 The backend must validate file size, content signatures, MIME type, authorization, and storage permissions. Apply malware scanning where appropriate. Store uploaded files outside publicly executable directories and serve them through authorized download endpoints.
 
@@ -219,11 +229,12 @@ When a test depends on a pre-created account, configure that account in the test
 
 11. Playwright configuration
 
-A typical playwright.config.js should define the E2E directory, test timeout, base URL, reporter, browser projects, and optional server startup.
+A typical playwright.config.js can define the E2E directory, test timeout, base URL, reporter, browser projects, and optional server startup.
 
 Example:
 
 ‘use strict’;
+require(‘dotenv’).config({ path: ‘.env.e2e’ });
 const { defineConfig, devices } = require(‘@playwright/test’);
 module.exports = defineConfig({
   testDir: ‘./tests/e2e’,
@@ -235,9 +246,10 @@ module.exports = defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI
-    ? [[‘list’], [‘html’, { open: ‘never’ }]]
-    : [[‘list’], [‘html’, { open: ‘never’ }]],
+  reporter: [
+    [‘list’],
+    [‘html’, { open: ‘never’ }],
+  ],
   use: {
     baseURL: process.env.E2E_BASE_URL || ‘http://127.0.0.1:3000’,
     trace: ‘retain-on-failure’,
@@ -254,16 +266,20 @@ module.exports = defineConfig({
   ],
 });
 
-Review fullyParallel before enabling it. Tests that mutate the same application records, share accounts, or depend on shared state may need isolated fixtures or serial execution.
+This example assumes dotenv is installed. If it is not needed, remove the require(‘dotenv’) line and configure environment variables externally.
 
 If the repository already has a Playwright configuration, extend it instead of replacing existing settings blindly.
+
+Review fullyParallel before enabling it. Tests that mutate the same application records, share accounts, or depend on shared state may need isolated fixtures or serial execution.
+
+The example does not start the application automatically. Add a webServer configuration only after confirming the correct MedOrbits startup command and readiness URL.
 
 12. CI recommendations
 
 A CI workflow should:
 
 1. Install the locked dependency tree.
-2. Install Playwright browser dependencies.
+2. Install the required Playwright browser and system dependencies.
 3. Start the application in a test environment.
 4. Initialize an isolated test database and synthetic accounts.
 5. Configure secrets through the CI secret manager.
@@ -280,7 +296,7 @@ Run critical security and payment tests on every relevant change. Broader browse
 Symptom	Investigation
 Connection refused	Confirm the application is running and E2E_BASE_URL is correct
 Element not found	Update selectors to match the actual page markup
-Login test skipped	Configure the required test credentials
+Login test skipped	Configure the required test credentials and inspect the test’s skip conditions
 Login succeeds but protected page fails	Check session cookies, redirects, and authorization middleware
 Upload rejected	Check server-side file policies, request limits, and storage configuration
 Payment test fails	Verify sandbox/mock configuration and payment status handling
@@ -309,7 +325,7 @@ An E2E test is ready for CI when:
 * Its test data is isolated and synthetic.
 * It asserts a meaningful observable result.
 * It handles asynchronous behavior without arbitrary sleeps.
-* It cleans up any created records where required.
+* It cleans up created records where required.
 * It is safe to repeat and run in parallel, or explicitly configured otherwise.
 * It does not depend on live payment processing.
 * Its behavior has been verified against the current application.

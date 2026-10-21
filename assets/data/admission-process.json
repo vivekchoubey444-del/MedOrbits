@@ -1,211 +1,1765 @@
 {
-"schemaVersion": "1.1.0",
-"updatedAt": null,
-"metadata": {
-"title": "MedOrbits Admission Processes",
-"description": "General admission-planning workflows for domestic and international education pathways.",
-"defaultCountryCode": "IN",
-"supportedCountryCodes": [],
-"language": "en",
-"dateFormat": "YYYY-MM-DD",
-"audience": [
-"students",
-"parents",
-"applicants"
-]
-},
-"processes": [
-{
-"id": "process-general-india",
-"slug": "general-admission-planning",
-"title": "General admission planning",
-"shortDescription": "A practical starting point for planning admission to an educational institution in India.",
-"countryCode": "IN",
-"category": "domestic-admission",
-"icon": "graduation-cap",
-"estimatedDuration": null,
-"steps": [
-{
-"order": 1,
-"id": "choose-course",
-"title": "Choose a course",
-"description": "Compare your interests, academic background, eligibility and long-term career goals.",
-"actionItems": [
-"Identify suitable courses and specializations.",
-"Compare institutions and programme outcomes.",
-"Review the likely entrance examinations, where applicable."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 2,
-"id": "verify-eligibility",
-"title": "Check official eligibility",
-"description": "Review the current eligibility criteria published by the institution, examination authority and relevant regulator.",
-"actionItems": [
-"Confirm academic qualifications and minimum marks.",
-"Check entrance examination requirements.",
-"Review age, category, domicile and other applicable conditions.",
-"Confirm any additional course-specific requirements."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 3,
-"id": "prepare-documents",
-"title": "Prepare documents",
-"description": "Prepare the documents requested by the relevant admission authority and verify accepted formats.",
-"actionItems": [
-"Check identity and academic document requirements.",
-"Prepare certificates and supporting documents where applicable.",
-"Verify file formats, file-size limits and document validity.",
-"Keep secure copies of submitted documents and application receipts."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 4,
-"id": "submit-application",
-"title": "Apply through the official route",
-"description": "Complete the relevant application or counselling process using verified official channels.",
-"actionItems": [
-"Check the current application instructions.",
-"Enter accurate information and review the form before submission.",
-"Pay applicable fees only through verified official payment channels.",
-"Save the application number and payment receipt."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 5,
-"id": "track-updates",
-"title": "Track notices and deadlines",
-"description": "Monitor official portals for application updates, examination notices, counselling schedules, merit lists and results.",
-"actionItems": [
-"Check official announcements regularly.",
-"Track applicable deadlines and correction windows.",
-"Review counselling, allotment and reporting instructions.",
-"Verify admission confirmation and fee-payment requirements."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
+  "schemaVersion": "1.1.0",
+  "updatedAt": "2026-10-20",
+  "metadata": {
+    "title": "MedOrbits Admission Processes",
+    "description": "General admission-planning workflows for domestic and international education pathways.",
+    "defaultCountryCode": "IN",
+    "supportedCountryCodes": [
+      "IN"
+    ],
+    "language": "en",
+    "dateFormat": "YYYY-MM-DD",
+    "audience": [
+      "students",
+      "parents",
+      "applicants"
+    ],
+    "contentStatus": "general-guidance",
+    "lastReviewedAt": "2026-10-20",
+    "reviewNote": "General workflows only. Verify current requirements on the relevant institution, examination authority, regulator and government portals before publishing specific guidance."
+  },
+  "processes": [
+    {
+      "id": "process-general-india",
+      "slug": "general-admission-planning",
+      "title": "General admission planning",
+      "shortDescription": "A practical starting point for planning admission to an educational institution in India.",
+      "countryCode": "IN",
+      "category": "domestic-admission",
+      "icon": "graduation-cap",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "choose-course",
+          "title": "Choose a course and pathway",
+          "description": "Compare course options against your academic background, interests, budget, preferred location and career goals.",
+          "actionItems": [
+            "Shortlist courses and specializations.",
+            "Compare institutions, recognition or accreditation where applicable, learning outcomes and progression options.",
+            "Identify whether admission is merit-based, entrance-exam-based, counselling-based or institution-managed.",
+            "Record application opening dates and official information pages when published."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "verify-eligibility",
+          "title": "Verify current eligibility",
+          "description": "Check the current rules published by the institution, examination authority, counselling body and relevant regulator.",
+          "actionItems": [
+            "Confirm qualifying examinations, subjects, marks and any equivalence requirements.",
+            "Check entrance tests, score validity and counselling registration requirements where applicable.",
+            "Review category, domicile, age, disability or other criteria only where relevant to the specific route.",
+            "Check whether separate eligibility rules apply to each institution, course or seat type.",
+            "Save or download the current official prospectus or information bulletin."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "build-document-pack",
+          "title": "Prepare and validate documents",
+          "description": "Prepare only the documents requested for the selected application route and check the required format and validity.",
+          "actionItems": [
+            "Create a checklist from the current official instructions.",
+            "Check names, dates of birth and other details for consistency across records.",
+            "Prepare academic records, identity documents and applicable certificates as requested.",
+            "Check file types, size limits, translation, attestation or equivalence rules where applicable.",
+            "Store copies securely and never share passwords or one-time passcodes."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "submit-application",
+          "title": "Submit through the official channel",
+          "description": "Use the verified application or counselling portal and follow its current instructions.",
+          "actionItems": [
+            "Confirm the portal address from the institution or authority's official website.",
+            "Complete the form accurately and review it before final submission.",
+            "Upload only requested documents and check that uploads are readable.",
+            "Pay fees only through the official payment flow; review refund terms before paying.",
+            "Save the application number, confirmation page and payment receipt."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "track-assessments",
+          "title": "Track tests, notices and corrections",
+          "description": "Monitor official updates for assessments, application corrections, results and subsequent admission stages.",
+          "actionItems": [
+            "Track examination dates, admit-card notices and result announcements where applicable.",
+            "Check correction windows and respond to official requests before their deadlines.",
+            "Use the same application credentials and keep them secure.",
+            "Verify every date against the latest official notice rather than old articles or social posts."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "counselling-selection",
+          "title": "Complete selection or counselling",
+          "description": "If the route uses counselling, interviews, auditions or portfolio review, follow the relevant body's official process.",
+          "actionItems": [
+            "Register separately for counselling if the rules require it.",
+            "Review seat, programme, campus and fee information before making choices.",
+            "Complete choice filling, locking, interview or assessment steps as instructed.",
+            "Check merit lists, allotment results and acceptance deadlines.",
+            "Do not assume an exam application automatically registers you for counselling."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": false
+        },
+        {
+          "order": 7,
+          "id": "confirm-admission",
+          "title": "Confirm offer, fees and enrolment",
+          "description": "Verify the offer or allotment and complete the institution's stated acceptance and reporting requirements.",
+          "actionItems": [
+            "Confirm the offer or allotment through the official portal.",
+            "Review tuition, deposits, refund rules, scholarships and any additional charges.",
+            "Submit original documents for verification only through the stated secure procedure.",
+            "Complete fee payment and reporting within the published deadline.",
+            "Save the admission letter, receipts and enrolment confirmation."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official admission notice. Eligibility, deadlines, documents, fees and procedures vary by course, institution, seat type and authority. The current official prospectus and notices take precedence.",
+      "officialResources": [
+        {
+          "title": "National Testing Agency -- NEET UG",
+          "url": "https://neet.nta.nic.in/",
+          "purpose": "Example of an official examination portal; use only when relevant to the selected pathway.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "Government of India -- Admissions portal",
+          "url": "https://admissions.nic.in/",
+          "purpose": "Centralized counselling portal for participating admission processes; availability varies by programme.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-study-abroad",
+      "slug": "study-abroad-planning",
+      "title": "Study abroad planning",
+      "shortDescription": "A general workflow for researching international education options and preparing for overseas study.",
+      "countryCode": null,
+      "category": "international-admission",
+      "icon": "globe",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "research-destination",
+          "title": "Choose destination, institution and programme",
+          "description": "Compare destinations and programmes, using official institution and government sources to confirm recognition and entry routes.",
+          "actionItems": [
+            "Shortlist countries, institutions, programmes and intake periods.",
+            "Check recognition, accreditation or professional recognition where applicable.",
+            "Review language of instruction, entry requirements and support services.",
+            "Compare programme length, location, accommodation options and progression routes."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "budget-and-eligibility",
+          "title": "Verify eligibility and total cost",
+          "description": "Build a realistic budget and confirm the programme's current entry criteria and financial terms.",
+          "actionItems": [
+            "Check academic, language and any portfolio or entrance-test requirements.",
+            "Estimate tuition, living costs, insurance, travel and other likely expenses.",
+            "Review scholarship eligibility, application deadlines and renewal conditions.",
+            "Read deposit, cancellation and refund terms before paying.",
+            "Confirm how the institution evaluates international qualifications."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "prepare-application",
+          "title": "Prepare and submit the application",
+          "description": "Follow the institution's official application instructions and retain proof of submission.",
+          "actionItems": [
+            "Prepare transcripts, certificates, references, statements and other items only as requested.",
+            "Arrange approved language tests or assessments if required.",
+            "Check translation, certification and qualification-equivalence instructions.",
+            "Submit through the official institution or authorized application portal.",
+            "Track the application and respond to requests for further information."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "review-offer",
+          "title": "Review the admission offer",
+          "description": "Check offer conditions and confirm that the programme, costs and deadlines fit your plans.",
+          "actionItems": [
+            "Verify the offer directly through the institution's official system.",
+            "Check academic conditions, deposit deadlines and required acceptance steps.",
+            "Review scholarship conditions and refund policies.",
+            "Confirm what documents are needed for final enrolment or immigration paperwork."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "verify-immigration",
+          "title": "Verify visa and immigration rules",
+          "description": "Use the destination government's official immigration sources for the applicable visa or study permission.",
+          "actionItems": [
+            "Identify the correct visa or immigration route for the destination and course.",
+            "Check financial evidence, health cover, biometrics and other requirements where applicable.",
+            "Review official processing guidance and appointment procedures.",
+            "Check work conditions, dependants' rules and any restrictions relevant to your situation.",
+            "Do not rely on admission alone as proof that a visa will be granted."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "pre-departure",
+          "title": "Plan enrolment and arrival",
+          "description": "Arrange travel and accommodation only after checking the institution's enrolment guidance and immigration conditions.",
+          "actionItems": [
+            "Confirm the conditions that must be met before enrolment.",
+            "Arrange suitable accommodation and arrival transport.",
+            "Check passport validity, travel documents and entry conditions.",
+            "Review orientation, registration, health cover and arrival instructions.",
+            "Keep digital and physical copies of essential documents securely."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Requirements vary by destination, institution, programme and applicant. Admission offers, visa decisions and permission to enter are determined by the relevant institutions and authorities. Verify current rules directly with official sources."
+    }
+  ],
+  "displaySettings": {
+    "showProgressIndicator": true,
+    "showActionItems": true,
+    "showOfficialLinks": true,
+    "showDocumentChecklist": true,
+    "showDisclaimer": true,
+    "allowStepCompletion": true,
+    "allowProcessFiltering": true,
+    "showLastReviewedAt": true,
+    "showVerificationStatus": true,
+    "showEstimatedDurationOnlyWhenKnown": true
+  },
+  "dataIntegrity": {
+    "uniqueProcessIds": true,
+    "uniqueProcessSlugs": true,
+    "uniqueStepIdsWithinProcess": true,
+    "stepsMustBeOrdered": true,
+    "officialLinksMustBeHttps": true,
+    "officialLinksMustBeVerifiedBeforeDisplay": true,
+    "unverifiedLinksMustNotBeDisplayedAsOfficial": true,
+    "unknownValuesMustRemainNull": true,
+    "doNotInventAdmissionRequirements": true,
+    "deadlinesAndFeesRequireCurrentSource": true,
+    "checklistIdsMustResolveBeforePublication": true,
+    "countryCodesMustUseIso3166Alpha2": true,
+    "personalDocumentsMustBeHandledSecurely": true
+  },
+  "note": "Treat these workflows as general planning aids. Before publishing course-specific guidance, verify eligibility, dates, documents, fees and procedures against current official notifications and authoritative sources. Do not infer missing requirements or display unresolved checklist references as available."
 }
-],
-"disclaimer": "This is a general planning outline, not an official admission notice. Eligibility, deadlines, documents and admission procedures vary by course, institution and admission authority."
-},
 {
-"id": "process-study-abroad",
-"slug": "study-abroad-planning",
-"title": "Study abroad planning",
-"shortDescription": "A general workflow for researching international education options and preparing for overseas study.",
-"countryCode": null,
-"category": "international-admission",
-"icon": "globe",
-"estimatedDuration": null,
-"steps": [
-{
-"order": 1,
-"id": "research-destination",
-"title": "Research country and institution",
-"description": "Compare destinations, recognized institutions, programmes and available student support.",
-"actionItems": [
-"Research suitable countries and institutions.",
-"Check programme recognition and accreditation where applicable.",
-"Review language of instruction and entry requirements.",
-"Assess student support, accommodation and campus services."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 2,
-"id": "verify-costs-eligibility",
-"title": "Verify eligibility and costs",
-"description": "Confirm admission criteria, tuition, living expenses and applicable refund conditions.",
-"actionItems": [
-"Review academic and language requirements.",
-"Calculate tuition and estimated living expenses.",
-"Check scholarships and financial-aid eligibility.",
-"Review deposit deadlines, refund terms and other charges."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 3,
-"id": "apply-institution",
-"title": "Apply to the institution",
-"description": "Follow the institution’s official application process and retain confirmation of submission.",
-"actionItems": [
-"Prepare the required academic and supporting documents.",
-"Complete any required language tests or entrance assessments.",
-"Submit the application through the official channel.",
-"Track application status and respond to requests for additional information."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 4,
-"id": "verify-visa",
-"title": "Confirm visa and immigration requirements",
-"description": "Use the destination government’s official immigration information to understand applicable student-visa requirements.",
-"actionItems": [
-"Review the appropriate visa category and eligibility criteria.",
-"Check financial evidence, insurance and health requirements where applicable.",
-"Confirm processing times and appointment procedures.",
-"Verify any work restrictions and conditions attached to the visa."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-},
-{
-"order": 5,
-"id": "plan-travel",
-"title": "Plan travel and accommodation",
-"description": "Coordinate travel, accommodation and arrival arrangements after reviewing enrolment and immigration requirements.",
-"actionItems": [
-"Confirm admission and enrolment requirements.",
-"Arrange suitable accommodation and arrival transport.",
-"Check travel documents and any applicable entry conditions.",
-"Review the institution’s orientation and arrival instructions."
-],
-"officialUrl": null,
-"documentChecklistIds": [],
-"required": true
-}
-],
-"disclaimer": "Requirements differ by destination country, institution, programme and applicant. Admission, visa issuance and entry permission are determined by the relevant authorities."
-}
-],
-"displaySettings": {
-"showProgressIndicator": true,
-"showActionItems": true,
-"showOfficialLinks": true,
-"showDocumentChecklist": true,
-"showDisclaimer": true,
-"allowStepCompletion": true
-},
-"dataIntegrity": {
-"uniqueProcessIds": true,
-"uniqueStepIdsWithinProcess": true,
-"stepsMustBeOrdered": true,
-"unverifiedLinksMustNotBeDisplayedAsOfficial": true,
-"unknownValuesMustRemainNull": true,
-"doNotInventAdmissionRequirements": true
-},
-"note": "Use current official notifications and authoritative sources to verify eligibility, deadlines, documents, fees and application procedures before publishing specific admission guidance."
+  "schemaVersion": "1.1.0",
+  "updatedAt": "2026-10-20",
+  "metadata": {
+    "title": "MedOrbits Admission Processes",
+    "description": "Expanded general admission-planning workflows for domestic, international, professional-course, research, scholarship and transfer pathways.",
+    "defaultCountryCode": "IN",
+    "supportedCountryCodes": [
+      "IN"
+    ],
+    "language": "en",
+    "dateFormat": "YYYY-MM-DD",
+    "audience": [
+      "students",
+      "parents",
+      "applicants"
+    ],
+    "contentStatus": "general-guidance",
+    "lastReviewedAt": "2026-10-20",
+    "reviewNote": "General workflows only. Verify current requirements on the relevant institution, examination authority, regulator and government portals before publishing specific guidance."
+  },
+  "processes": [
+    {
+      "id": "process-general-india",
+      "slug": "general-admission-planning",
+      "title": "General admission planning",
+      "shortDescription": "A practical starting point for planning admission to an educational institution in India.",
+      "countryCode": "IN",
+      "category": "domestic-admission",
+      "icon": "graduation-cap",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "choose-course",
+          "title": "Choose a course and pathway",
+          "description": "Compare course options against your academic background, interests, budget, preferred location and career goals.",
+          "actionItems": [
+            "Shortlist courses and specializations.",
+            "Compare institutions, recognition or accreditation where applicable, learning outcomes and progression options.",
+            "Identify whether admission is merit-based, entrance-exam-based, counselling-based or institution-managed.",
+            "Record application opening dates and official information pages when published."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "verify-eligibility",
+          "title": "Verify current eligibility",
+          "description": "Check the current rules published by the institution, examination authority, counselling body and relevant regulator.",
+          "actionItems": [
+            "Confirm qualifying examinations, subjects, marks and any equivalence requirements.",
+            "Check entrance tests, score validity and counselling registration requirements where applicable.",
+            "Review category, domicile, age, disability or other criteria only where relevant to the specific route.",
+            "Check whether separate eligibility rules apply to each institution, course or seat type.",
+            "Save or download the current official prospectus or information bulletin."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "build-document-pack",
+          "title": "Prepare and validate documents",
+          "description": "Prepare only the documents requested for the selected application route and check the required format and validity.",
+          "actionItems": [
+            "Create a checklist from the current official instructions.",
+            "Check names, dates of birth and other details for consistency across records.",
+            "Prepare academic records, identity documents and applicable certificates as requested.",
+            "Check file types, size limits, translation, attestation or equivalence rules where applicable.",
+            "Store copies securely and never share passwords or one-time passcodes."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "submit-application",
+          "title": "Submit through the official channel",
+          "description": "Use the verified application or counselling portal and follow its current instructions.",
+          "actionItems": [
+            "Confirm the portal address from the institution or authority's official website.",
+            "Complete the form accurately and review it before final submission.",
+            "Upload only requested documents and check that uploads are readable.",
+            "Pay fees only through the official payment flow; review refund terms before paying.",
+            "Save the application number, confirmation page and payment receipt."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "track-assessments",
+          "title": "Track tests, notices and corrections",
+          "description": "Monitor official updates for assessments, application corrections, results and subsequent admission stages.",
+          "actionItems": [
+            "Track examination dates, admit-card notices and result announcements where applicable.",
+            "Check correction windows and respond to official requests before their deadlines.",
+            "Use the same application credentials and keep them secure.",
+            "Verify every date against the latest official notice rather than old articles or social posts."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "counselling-selection",
+          "title": "Complete selection or counselling",
+          "description": "If the route uses counselling, interviews, auditions or portfolio review, follow the relevant body's official process.",
+          "actionItems": [
+            "Register separately for counselling if the rules require it.",
+            "Review seat, programme, campus and fee information before making choices.",
+            "Complete choice filling, locking, interview or assessment steps as instructed.",
+            "Check merit lists, allotment results and acceptance deadlines.",
+            "Do not assume an exam application automatically registers you for counselling."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": false
+        },
+        {
+          "order": 7,
+          "id": "confirm-admission",
+          "title": "Confirm offer, fees and enrolment",
+          "description": "Verify the offer or allotment and complete the institution's stated acceptance and reporting requirements.",
+          "actionItems": [
+            "Confirm the offer or allotment through the official portal.",
+            "Review tuition, deposits, refund rules, scholarships and any additional charges.",
+            "Submit original documents for verification only through the stated secure procedure.",
+            "Complete fee payment and reporting within the published deadline.",
+            "Save the admission letter, receipts and enrolment confirmation."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official admission notice. Eligibility, deadlines, documents, fees and procedures vary by course, institution, seat type and authority. The current official prospectus and notices take precedence.",
+      "officialResources": [
+        {
+          "title": "National Testing Agency -- NEET UG",
+          "url": "https://neet.nta.nic.in/",
+          "purpose": "Example of an official examination portal; use only when relevant to the selected pathway.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "Government of India -- Admissions portal",
+          "url": "https://admissions.nic.in/",
+          "purpose": "Centralized counselling portal for participating admission processes; availability varies by programme.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-study-abroad",
+      "slug": "study-abroad-planning",
+      "title": "Study abroad planning",
+      "shortDescription": "A general workflow for researching international education options and preparing for overseas study.",
+      "countryCode": null,
+      "category": "international-admission",
+      "icon": "globe",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "research-destination",
+          "title": "Choose destination, institution and programme",
+          "description": "Compare destinations and programmes, using official institution and government sources to confirm recognition and entry routes.",
+          "actionItems": [
+            "Shortlist countries, institutions, programmes and intake periods.",
+            "Check recognition, accreditation or professional recognition where applicable.",
+            "Review language of instruction, entry requirements and support services.",
+            "Compare programme length, location, accommodation options and progression routes."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "budget-and-eligibility",
+          "title": "Verify eligibility and total cost",
+          "description": "Build a realistic budget and confirm the programme's current entry criteria and financial terms.",
+          "actionItems": [
+            "Check academic, language and any portfolio or entrance-test requirements.",
+            "Estimate tuition, living costs, insurance, travel and other likely expenses.",
+            "Review scholarship eligibility, application deadlines and renewal conditions.",
+            "Read deposit, cancellation and refund terms before paying.",
+            "Confirm how the institution evaluates international qualifications."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "prepare-application",
+          "title": "Prepare and submit the application",
+          "description": "Follow the institution's official application instructions and retain proof of submission.",
+          "actionItems": [
+            "Prepare transcripts, certificates, references, statements and other items only as requested.",
+            "Arrange approved language tests or assessments if required.",
+            "Check translation, certification and qualification-equivalence instructions.",
+            "Submit through the official institution or authorized application portal.",
+            "Track the application and respond to requests for further information."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "review-offer",
+          "title": "Review the admission offer",
+          "description": "Check offer conditions and confirm that the programme, costs and deadlines fit your plans.",
+          "actionItems": [
+            "Verify the offer directly through the institution's official system.",
+            "Check academic conditions, deposit deadlines and required acceptance steps.",
+            "Review scholarship conditions and refund policies.",
+            "Confirm what documents are needed for final enrolment or immigration paperwork."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "verify-immigration",
+          "title": "Verify visa and immigration rules",
+          "description": "Use the destination government's official immigration sources for the applicable visa or study permission.",
+          "actionItems": [
+            "Identify the correct visa or immigration route for the destination and course.",
+            "Check financial evidence, health cover, biometrics and other requirements where applicable.",
+            "Review official processing guidance and appointment procedures.",
+            "Check work conditions, dependants' rules and any restrictions relevant to your situation.",
+            "Do not rely on admission alone as proof that a visa will be granted."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "pre-departure",
+          "title": "Plan enrolment and arrival",
+          "description": "Arrange travel and accommodation only after checking the institution's enrolment guidance and immigration conditions.",
+          "actionItems": [
+            "Confirm the conditions that must be met before enrolment.",
+            "Arrange suitable accommodation and arrival transport.",
+            "Check passport validity, travel documents and entry conditions.",
+            "Review orientation, registration, health cover and arrival instructions.",
+            "Keep digital and physical copies of essential documents securely."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Requirements vary by destination, institution, programme and applicant. Admission offers, visa decisions and permission to enter are determined by the relevant institutions and authorities. Verify current rules directly with official sources."
+    },
+    {
+      "id": "process-medical-admissions-india",
+      "slug": "medical-admission-and-counselling-india",
+      "title": "Medical, dental and allied-health admission planning",
+      "shortDescription": "A workflow for applicants researching medical, dental and related health programmes in India.",
+      "countryCode": "IN",
+      "category": "professional-course-admission",
+      "icon": "heart-pulse",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "medical-1",
+          "title": "Identify the programme and admission route",
+          "description": "Confirm the exact course and its admission route.",
+          "actionItems": [
+            "Distinguish MBBS, BDS, AYUSH, nursing, pharmacy and allied-health routes; rules may differ.",
+            "Check the relevant regulator, examination authority and counselling body.",
+            "Read the current official bulletin for the academic session.",
+            "Check whether exam and counselling registration are separate."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "medical-2",
+          "title": "Verify eligibility",
+          "description": "Use current official criteria for the chosen course.",
+          "actionItems": [
+            "Confirm qualifying subjects, marks and other published criteria.",
+            "Check entrance exam requirements and score validity.",
+            "Review category, domicile or age criteria only where applicable.",
+            "Save the current official prospectus or information bulletin."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "medical-3",
+          "title": "Register for the required examination",
+          "description": "Apply through the examination authority's official portal.",
+          "actionItems": [
+            "Enter details accurately as instructed.",
+            "Upload documents in specified formats.",
+            "Pay only through the official payment flow.",
+            "Save the application number and confirmation receipt."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "medical-4",
+          "title": "Complete the assessment and check results",
+          "description": "Follow official exam notices through results.",
+          "actionItems": [
+            "Track admit-card and examination-day instructions.",
+            "Check results and scorecards through the official portal.",
+            "Save scorecard details for later stages.",
+            "Follow correction or grievance procedures within the stated window."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "medical-5",
+          "title": "Register for applicable counselling",
+          "description": "Identify the central, state, institutional or other counselling routes that apply.",
+          "actionItems": [
+            "Read the current counselling schedule and bulletin.",
+            "Complete each required registration separately.",
+            "Review fees, deposits and refund conditions.",
+            "Keep registration confirmations and credentials secure."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "medical-6",
+          "title": "Complete choice filling and review allotment",
+          "description": "Use verified course, institution, seat and fee information.",
+          "actionItems": [
+            "Compare recognition, fees, location and course details.",
+            "Fill and lock choices as instructed.",
+            "Check allotment results and acceptance or upgrade rules.",
+            "Do not treat unofficial rank predictions as confirmed allotment."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 7,
+          "id": "medical-7",
+          "title": "Report and confirm admission",
+          "description": "Complete the allotted institution's reporting process.",
+          "actionItems": [
+            "Check reporting deadlines and document requirements.",
+            "Complete verification and any officially required checks.",
+            "Pay notified fees through verified channels.",
+            "Save the admission letter, receipts and confirmation."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying.",
+      "officialResources": [
+        {
+          "title": "National Testing Agency -- NEET UG",
+          "url": "https://neet.nta.nic.in/",
+          "purpose": "Official NEET UG information and notices where relevant.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "Medical Counselling Committee",
+          "url": "https://mcc.nic.in/",
+          "purpose": "Central counselling information for participating medical and dental seat categories; verify current scope.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "National Medical Commission",
+          "url": "https://www.nmc.org.in/",
+          "purpose": "Medical education regulatory information and notices.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-engineering-admissions-india",
+      "slug": "engineering-and-technology-admission-india",
+      "title": "Engineering and technology admission planning",
+      "shortDescription": "A workflow for engineering, technology and related programme applications in India.",
+      "countryCode": "IN",
+      "category": "entrance-exam-admission",
+      "icon": "cpu",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "engineering-1",
+          "title": "Choose programme and institution",
+          "description": "Identify the engineering, architecture, technology or diploma route that fits your goals.",
+          "actionItems": [
+            "Compare degree, diploma and integrated programme options.",
+            "Check programme recognition and prerequisites.",
+            "Identify entrance-test, merit or institution-specific routes.",
+            "Check whether exam and institution applications are separate."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "engineering-2",
+          "title": "Confirm eligibility",
+          "description": "Verify the exact subject and qualification requirements.",
+          "actionItems": [
+            "Read the current examination bulletin and institution prospectus.",
+            "Check subject prerequisites and accepted qualifications.",
+            "Review applicable category, domicile or equivalence provisions.",
+            "Record each official deadline."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "engineering-3",
+          "title": "Submit required applications",
+          "description": "Complete each application through the appropriate official portal.",
+          "actionItems": [
+            "Register on the required portals.",
+            "Use consistent personal and academic details.",
+            "Upload requested documents in the specified format.",
+            "Save application IDs and payment receipts."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "engineering-4",
+          "title": "Complete assessments",
+          "description": "Follow the official schedule for tests and other selection stages.",
+          "actionItems": [
+            "Monitor admit cards and correction windows.",
+            "Use the current official syllabus and exam pattern.",
+            "Check results and scorecards from official sources.",
+            "Complete interviews or portfolios if required."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "engineering-5",
+          "title": "Complete counselling or selection",
+          "description": "Follow the route linked to your score or application.",
+          "actionItems": [
+            "Register for counselling if required.",
+            "Compare programme, campus, fees and seat category.",
+            "Fill and lock choices within the official window.",
+            "Track allotment, acceptance, upgrade and withdrawal rules."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "engineering-6",
+          "title": "Complete enrolment",
+          "description": "Confirm the offer and finish reporting requirements.",
+          "actionItems": [
+            "Complete document verification.",
+            "Pay fees through the official portal and retain receipts.",
+            "Review scholarship and accommodation information separately.",
+            "Save the final admission letter."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying.",
+      "officialResources": [
+        {
+          "title": "National Testing Agency -- JEE Main",
+          "url": "https://jeemain.nta.nic.in/",
+          "purpose": "Official JEE Main notices and application information where applicable.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "JoSAA",
+          "url": "https://josaa.nic.in/",
+          "purpose": "Seat allocation information for participating institutions; verify the current year's scope.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-merit-based-admissions-india",
+      "slug": "merit-based-admission-india",
+      "title": "Merit-based undergraduate and postgraduate admission",
+      "shortDescription": "A workflow for applications selected through academic merit or institution-defined criteria.",
+      "countryCode": "IN",
+      "category": "merit-admission",
+      "icon": "list-check",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "merit-1",
+          "title": "Identify the selection route",
+          "description": "Check whether admission is based on marks, an entrance test or a combination.",
+          "actionItems": [
+            "Shortlist eligible programmes and institutions.",
+            "Review the official prospectus and selection formula.",
+            "Check whether separate programme applications are required.",
+            "Record how merit is calculated."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "merit-2",
+          "title": "Prepare academic records",
+          "description": "Ensure records meet the application's requirements.",
+          "actionItems": [
+            "Check marksheets and certificates.",
+            "Review rules for appearing or pending-result candidates.",
+            "Check equivalence or migration requirements if relevant.",
+            "Prepare only certificates requested by the institution."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "merit-3",
+          "title": "Submit application",
+          "description": "Complete the official application accurately.",
+          "actionItems": [
+            "Create an account on the official portal.",
+            "Enter programme choices and academic details carefully.",
+            "Upload readable documents in the required format.",
+            "Save the acknowledgement and fee receipt."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "merit-4",
+          "title": "Monitor merit lists",
+          "description": "Track official lists and correction procedures.",
+          "actionItems": [
+            "Check the official notice board and applicant dashboard.",
+            "Confirm whether a list is provisional or final.",
+            "Follow objection, verification and acceptance deadlines.",
+            "Do not treat unofficial cut-offs as guaranteed admission."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "merit-5",
+          "title": "Accept offer and enrol",
+          "description": "Complete confirmation and reporting requirements.",
+          "actionItems": [
+            "Confirm the offer through the official portal.",
+            "Review fees, scholarships and refund rules.",
+            "Complete verification and required payments.",
+            "Download the admission letter and confirmation."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying."
+    },
+    {
+      "id": "process-diploma-vocational-india",
+      "slug": "diploma-certificate-and-vocational-admission",
+      "title": "Diploma, certificate and vocational admission",
+      "shortDescription": "A workflow for diploma, certificate, skill-development and vocational applications.",
+      "countryCode": "IN",
+      "category": "vocational-admission",
+      "icon": "wrench",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "vocational-1",
+          "title": "Select the course",
+          "description": "Compare programme content, training and progression options.",
+          "actionItems": [
+            "Identify the awarding institution and regulator where applicable.",
+            "Check entry qualification and mode of study.",
+            "Review practical or placement requirements.",
+            "Check whether the qualification supports your career goal."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "vocational-2",
+          "title": "Verify entry requirements",
+          "description": "Read the current official admission notice.",
+          "actionItems": [
+            "Check minimum qualification and prerequisites.",
+            "Confirm any trade test, interview or aptitude assessment.",
+            "Review age or medical criteria only if stated.",
+            "Clarify recognition claims before paying."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "vocational-3",
+          "title": "Apply through the institution",
+          "description": "Use the institution's official process.",
+          "actionItems": [
+            "Complete registration and application fields accurately.",
+            "Upload requested documents.",
+            "Check fee schedule and refund terms.",
+            "Save the application acknowledgement."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "vocational-4",
+          "title": "Complete selection and confirm seat",
+          "description": "Follow the stated merit, entrance or interview process.",
+          "actionItems": [
+            "Monitor selection lists and deadlines.",
+            "Complete required counselling or interview.",
+            "Verify course, campus, training location and total fees.",
+            "Pay only through a verified channel."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "vocational-5",
+          "title": "Complete enrolment",
+          "description": "Confirm registration and practical training arrangements.",
+          "actionItems": [
+            "Complete document verification.",
+            "Check attendance, placement or apprenticeship rules where relevant.",
+            "Obtain timetable and student handbook.",
+            "Save enrolment and fee records."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying."
+    },
+    {
+      "id": "process-scholarship-application",
+      "slug": "scholarship-and-fee-assistance-application",
+      "title": "Scholarship and fee-assistance application",
+      "shortDescription": "A workflow for education scholarships, fee waivers and other institutional or government support.",
+      "countryCode": "IN",
+      "category": "scholarship-application",
+      "icon": "hand-coins",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "scholarship-1",
+          "title": "Find eligible opportunities",
+          "description": "Search official funding options related to the course, institution and applicant profile.",
+          "actionItems": [
+            "Check institution-funded awards and official government or sponsor portals.",
+            "Distinguish scholarships, fee waivers, stipends, loans and reimbursements.",
+            "Review nationality, course, income and academic criteria.",
+            "Avoid opportunities with unverifiable sponsors or application channels."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "scholarship-2",
+          "title": "Check terms and deadlines",
+          "description": "Read the current scheme rules before applying.",
+          "actionItems": [
+            "Confirm dates from the official notification.",
+            "Check amount, covered expenses, duration and renewal conditions.",
+            "Review whether admission must be secured first.",
+            "Check whether awards can be combined."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "scholarship-3",
+          "title": "Prepare supporting evidence",
+          "description": "Build a checklist from official scheme instructions.",
+          "actionItems": [
+            "Prepare academic and identity records as requested.",
+            "Provide income or other certificates only if required and applicable.",
+            "Check issuing authority, validity and format rules.",
+            "Store financial and identity documents securely."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "scholarship-4",
+          "title": "Submit application",
+          "description": "Apply through the verified sponsor or government portal.",
+          "actionItems": [
+            "Complete fields and declarations truthfully.",
+            "Upload requested evidence and review it before submission.",
+            "Save the acknowledgement before the deadline.",
+            "Never share OTPs, passwords or bank credentials with agents."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "scholarship-5",
+          "title": "Track decision and renewal",
+          "description": "Follow official status updates and continuing conditions.",
+          "actionItems": [
+            "Check the official dashboard and registered email.",
+            "Verify selection directly with the sponsor.",
+            "Follow disbursement instructions securely.",
+            "Track renewal, attendance or grade conditions where specified."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Scheme eligibility, award values, deadlines and renewal conditions must be checked in the current official notification. No award is guaranteed."
+    },
+    {
+      "id": "process-outbound-study-abroad",
+      "slug": "international-study-application-from-home-country",
+      "title": "Applying to study abroad",
+      "shortDescription": "A workflow for applicants applying from their home country to an overseas institution.",
+      "countryCode": null,
+      "category": "international-admission",
+      "icon": "plane",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "outbound-1",
+          "title": "Shortlist destination and institution",
+          "description": "Build a shortlist using official institution and government information.",
+          "actionItems": [
+            "Compare programme content, recognition, duration and intake dates.",
+            "Check qualification equivalence and language requirements.",
+            "Estimate tuition and living costs.",
+            "Confirm each institution's official application route."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "outbound-2",
+          "title": "Confirm academic and language eligibility",
+          "description": "Check exact requirements for international applicants.",
+          "actionItems": [
+            "Review academic prerequisites and accepted qualifications.",
+            "Check language-test requirements and validity periods.",
+            "Identify references, statements, portfolios or interviews if required.",
+            "Confirm translation or credential evaluation rules."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "outbound-3",
+          "title": "Prepare and submit applications",
+          "description": "Follow each institution's current international application instructions.",
+          "actionItems": [
+            "Prepare transcripts and supporting documents as requested.",
+            "Arrange references and tests with sufficient lead time.",
+            "Submit through the institution or an authorized portal.",
+            "Track application status and outstanding conditions."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "outbound-4",
+          "title": "Compare offers and funding",
+          "description": "Assess offers before making non-refundable commitments.",
+          "actionItems": [
+            "Compare tuition, living expenses, insurance and other costs.",
+            "Check scholarship terms and renewal criteria.",
+            "Review offer conditions, deposit deadlines and refund policies.",
+            "Verify any agent directly with the institution."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "outbound-5",
+          "title": "Check immigration requirements",
+          "description": "Use the destination government's official immigration website.",
+          "actionItems": [
+            "Identify the appropriate student visa or permit route.",
+            "Check financial evidence, insurance, biometrics and other rules.",
+            "Review current processing guidance and official fees.",
+            "Check work rights and restrictions for your specific visa."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "outbound-6",
+          "title": "Confirm arrival arrangements",
+          "description": "Plan travel after checking visa conditions and institution instructions.",
+          "actionItems": [
+            "Complete pre-enrolment conditions.",
+            "Arrange accommodation and arrival transport.",
+            "Check passport validity and entry conditions.",
+            "Review orientation, registration and health-cover instructions."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Requirements vary by destination and applicant. Institutions decide admission; immigration authorities decide visas or study permits. Verify current official sources."
+    },
+    {
+      "id": "process-international-students-india",
+      "slug": "international-student-admission-to-india",
+      "title": "International student admission to India",
+      "shortDescription": "A workflow for international applicants seeking admission to an Indian institution.",
+      "countryCode": null,
+      "category": "international-admission",
+      "icon": "globe",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "incoming-1",
+          "title": "Check the applicable admission route",
+          "description": "Determine whether the institution uses Study in India, its own portal, a scholarship route or another process.",
+          "actionItems": [
+            "Check the institution's official international admissions page.",
+            "Review applicable regulatory guidance.",
+            "Confirm whether portal registration or a unique applicant ID is required.",
+            "Check nationality and programme-specific rules."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "incoming-2",
+          "title": "Prepare academic and identity documents",
+          "description": "Prepare documents according to the institution and official route.",
+          "actionItems": [
+            "Check passport validity and identity details.",
+            "Prepare academic transcripts and certificates in accepted formats.",
+            "Arrange translations or attestations only where required.",
+            "Check whether sponsorship or financial evidence is requested."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "incoming-3",
+          "title": "Submit the application",
+          "description": "Complete the application using the official route.",
+          "actionItems": [
+            "Create the required portal account and save applicant ID.",
+            "Enter academic, contact and passport details accurately.",
+            "Upload required evidence and review choices.",
+            "Track requests for additional information."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "incoming-4",
+          "title": "Review offer and fees",
+          "description": "Confirm the offer and understand payment requirements.",
+          "actionItems": [
+            "Verify the offer through the institution or official portal.",
+            "Check tuition, deposits, refund terms and scholarship conditions.",
+            "Complete acceptance steps.",
+            "Retain the offer and official receipts."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "incoming-5",
+          "title": "Check Indian visa requirements",
+          "description": "Use current Government of India visa instructions for your nationality and programme.",
+          "actionItems": [
+            "Check the applicable visa category and evidence.",
+            "Use the official Indian visa portal and relevant Indian mission guidance.",
+            "Do not assume admission guarantees visa approval.",
+            "Follow official status updates."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 6,
+          "id": "incoming-6",
+          "title": "Complete arrival and registration steps",
+          "description": "Follow current institution and immigration instructions after arrival.",
+          "actionItems": [
+            "Check pre-arrival and enrolment requirements.",
+            "Confirm whether FRRO/FRO or other registration applies and verify the deadline.",
+            "Keep passport, visa, admission and address records secure.",
+            "Follow orientation and student-support instructions."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Portal, document and immigration steps depend on the applicant, programme and current government rules. Verify with the institution and official Government of India sources.",
+      "officialResources": [
+        {
+          "title": "Study in India",
+          "url": "https://www.studyinindia.gov.in/",
+          "purpose": "Official programme portal with international student application guidance; check the current route.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "Study in India -- Onboarding and FRRO",
+          "url": "https://studyinindia.gov.in/Onboarding-%26-FRRO",
+          "purpose": "Official guidance on applicable onboarding and immigration registration procedures.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "University Grants Commission",
+          "url": "https://www.ugc.gov.in/",
+          "purpose": "Higher education regulatory guidance and notices.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-research-phd-admission",
+      "slug": "research-and-phd-admission-planning",
+      "title": "Research and PhD admission planning",
+      "shortDescription": "A workflow for research-degree applications, subject to the institution's current programme structure and rules.",
+      "countryCode": null,
+      "category": "research-admission",
+      "icon": "flask-conical",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "research-1",
+          "title": "Identify programme and supervisor route",
+          "description": "Check whether the programme requires a supervisor, proposal, test or defined call.",
+          "actionItems": [
+            "Review the department's official research admissions page.",
+            "Check research areas and programme structure.",
+            "Confirm full-time or part-time options and funding availability where applicable.",
+            "Check the current intake and application status."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "research-2",
+          "title": "Verify eligibility",
+          "description": "Check current rules for prior qualifications and selection.",
+          "actionItems": [
+            "Review degree, marks, subject and equivalence requirements.",
+            "Check accepted tests or exemptions where specified.",
+            "Confirm whether publications or experience are required or optional.",
+            "Check additional rules for international applicants."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "research-3",
+          "title": "Prepare application materials",
+          "description": "Follow the institution's requested format.",
+          "actionItems": [
+            "Prepare a research proposal only if requested.",
+            "Prepare transcripts, CV, references and statement where required.",
+            "Contact supervisors only where the department's process permits or recommends it.",
+            "Protect unpublished or sensitive research when sharing materials."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "research-4",
+          "title": "Complete selection stages",
+          "description": "Follow the department's official process.",
+          "actionItems": [
+            "Attend required tests or interviews.",
+            "Prepare to discuss research questions and methods.",
+            "Track selection notices and clarification requests.",
+            "Check how funding decisions are communicated."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "research-5",
+          "title": "Confirm registration and funding",
+          "description": "Review the offer and complete enrolment.",
+          "actionItems": [
+            "Verify admission and registration deadlines.",
+            "Read stipend, scholarship and renewal terms separately.",
+            "Complete document verification and fee steps.",
+            "Confirm supervisor allocation and research ethics onboarding where relevant."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "Research admission, programme availability, selection stages and funding differ by institution. Verify current requirements directly with the institution."
+    },
+    {
+      "id": "process-apprenticeship-admission",
+      "slug": "apprenticeship-and-work-based-training",
+      "title": "Apprenticeship and work-based training application",
+      "shortDescription": "A workflow for apprenticeship, structured vocational training and employer-based learning opportunities.",
+      "countryCode": "IN",
+      "category": "apprenticeship-admission",
+      "icon": "briefcase-business",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "apprentice-1",
+          "title": "Identify a suitable opportunity",
+          "description": "Check occupation, training provider and employer route.",
+          "actionItems": [
+            "Review official programme and employer information.",
+            "Check eligibility, duration, stipend terms and location.",
+            "Distinguish apprenticeship from internship, employment or a training course.",
+            "Verify the employer before sharing documents."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "apprentice-2",
+          "title": "Check eligibility",
+          "description": "Read the current vacancy or programme notice.",
+          "actionItems": [
+            "Check qualification, trade, age and experience criteria as published.",
+            "Review required test, interview or medical assessment.",
+            "Confirm whether government-portal registration is required.",
+            "Prepare only requested documents."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "apprentice-3",
+          "title": "Register and apply",
+          "description": "Use the official portal or employer route stated in the notice.",
+          "actionItems": [
+            "Create or update the applicant profile.",
+            "Enter accurate education and contact details.",
+            "Upload required documents and submit.",
+            "Save the registration number."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "apprentice-4",
+          "title": "Complete selection and review terms",
+          "description": "Follow the official selection process and review written conditions.",
+          "actionItems": [
+            "Attend tests or interviews as scheduled.",
+            "Verify employer and training establishment details.",
+            "Read contract, duration, stipend and termination conditions.",
+            "Be cautious of recruitment fees and independently verify any claimed charges."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "apprentice-5",
+          "title": "Join and track training",
+          "description": "Complete onboarding and keep records of training.",
+          "actionItems": [
+            "Complete identity and qualification verification.",
+            "Read safety, attendance and assessment requirements.",
+            "Keep copies of the contract and stipend records.",
+            "Check completion certificate requirements without assuming guaranteed employment."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying.",
+      "officialResources": [
+        {
+          "title": "Apprenticeship India",
+          "url": "https://www.apprenticeshipindia.gov.in/",
+          "purpose": "Official apprenticeship portal; verify current registration and opportunity details.",
+          "verifiedAt": "2026-10-20"
+        },
+        {
+          "title": "National Career Service",
+          "url": "https://www.ncs.gov.in/",
+          "purpose": "Government career and employment services; check current availability.",
+          "verifiedAt": "2026-10-20"
+        }
+      ]
+    },
+    {
+      "id": "process-lateral-entry-credit-transfer",
+      "slug": "lateral-entry-and-credit-transfer",
+      "title": "Lateral entry and credit-transfer admission",
+      "shortDescription": "A workflow for applicants seeking advanced standing or transfer of prior study.",
+      "countryCode": null,
+      "category": "transfer-admission",
+      "icon": "arrow-left-right",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "lateral-1",
+          "title": "Check transfer policy",
+          "description": "Confirm whether the target programme permits lateral entry or credit transfer.",
+          "actionItems": [
+            "Read current institution and regulator rules.",
+            "Check availability for the specific course and intake.",
+            "Confirm accepted prior qualifications.",
+            "Do not assume prior study automatically qualifies for advanced entry."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "lateral-2",
+          "title": "Check equivalence and credits",
+          "description": "Ask how prior study is assessed under published policy.",
+          "actionItems": [
+            "Prepare transcripts and course descriptions if requested.",
+            "Check recognition and minimum marks.",
+            "Review entrance tests or bridge courses if required.",
+            "Request written clarification where rules are unclear."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "lateral-3",
+          "title": "Apply through approved route",
+          "description": "Submit the application to the official institution or authority.",
+          "actionItems": [
+            "Complete the correct form.",
+            "Upload prior qualification records and requested evidence.",
+            "Register for an exam or counselling if required.",
+            "Save acknowledgement and receipt."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "lateral-4",
+          "title": "Review admission and credit decision",
+          "description": "Check entry level, transferred credits and remaining requirements.",
+          "actionItems": [
+            "Confirm year or semester placement in writing.",
+            "Review bridging modules and outstanding credits.",
+            "Check revised duration and graduation requirements.",
+            "Use the official clarification or appeal route if applicable."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 5,
+          "id": "lateral-5",
+          "title": "Complete enrolment",
+          "description": "Confirm fees, registration and academic plan.",
+          "actionItems": [
+            "Accept the offer within the deadline.",
+            "Complete document verification and official fee payment.",
+            "Obtain the approved academic plan and timetable.",
+            "Save admission and credit-transfer decisions."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying."
+    },
+    {
+      "id": "process-institution-transfer",
+      "slug": "institution-transfer-admission",
+      "title": "Institution transfer and migration planning",
+      "shortDescription": "A workflow for students seeking to transfer institutions or migrate academic records.",
+      "countryCode": null,
+      "category": "transfer-admission",
+      "icon": "repeat",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "transfer-1",
+          "title": "Check receiving institution policy",
+          "description": "Confirm whether transfer is allowed for your course and stage.",
+          "actionItems": [
+            "Review transfer, migration and credit-recognition rules.",
+            "Check course, campus and academic-year availability.",
+            "Confirm seat and approval requirements.",
+            "Ask both institutions about deadlines and forms."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "transfer-2",
+          "title": "Collect academic records",
+          "description": "Prepare records requested by both institutions.",
+          "actionItems": [
+            "Check transcript and migration or transfer certificate requirements.",
+            "Prepare syllabi or credit details if requested.",
+            "Confirm whether no-dues or conduct records are required.",
+            "Keep copies and submission receipts."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "transfer-3",
+          "title": "Submit transfer application",
+          "description": "Follow the official application process.",
+          "actionItems": [
+            "Submit the receiving institution's form and records.",
+            "Request release documents from the current institution as required.",
+            "Track approval or equivalence decisions.",
+            "Understand implications before withdrawing from the current institution."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "transfer-4",
+          "title": "Confirm credits and enrolment",
+          "description": "Obtain written confirmation of accepted credits and next steps.",
+          "actionItems": [
+            "Check semester placement and outstanding requirements.",
+            "Review fees, refund rules and registration dates.",
+            "Complete document verification.",
+            "Save transfer approval and enrolment confirmation."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying."
+    },
+    {
+      "id": "process-re-admission-gap-year",
+      "slug": "readmission-after-gap-or-interruption",
+      "title": "Readmission after a gap or interruption",
+      "shortDescription": "A workflow for applicants returning to study after a break, deferral or interruption.",
+      "countryCode": null,
+      "category": "readmission",
+      "icon": "calendar-check",
+      "estimatedDuration": null,
+      "steps": [
+        {
+          "order": 1,
+          "id": "readmission-1",
+          "title": "Check re-entry policy",
+          "description": "Confirm whether the institution permits re-entry in your circumstances.",
+          "actionItems": [
+            "Review deferral, readmission, maximum-duration and discontinuation rules.",
+            "Check whether previous admission remains valid or a new application is required.",
+            "Confirm outstanding academic, attendance or fee conditions.",
+            "Request written clarification from the registrar or admissions office."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 2,
+          "id": "readmission-2",
+          "title": "Confirm current eligibility",
+          "description": "Check whether admission rules or curriculum requirements have changed.",
+          "actionItems": [
+            "Review current programme eligibility and entrance requirements.",
+            "Check credit validity and transition requirements.",
+            "Prepare supporting certificates only if required.",
+            "Record deadlines and any appeal process."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 3,
+          "id": "readmission-3",
+          "title": "Submit the request",
+          "description": "Use the official form and process for your status.",
+          "actionItems": [
+            "Provide accurate previous enrolment details.",
+            "Submit requested records and explanation if required.",
+            "Resolve outstanding dues through official channels.",
+            "Save the acknowledgement."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        },
+        {
+          "order": 4,
+          "id": "readmission-4",
+          "title": "Confirm decision and return plan",
+          "description": "Complete registration only after the institution confirms the applicable route.",
+          "actionItems": [
+            "Obtain written confirmation of admission status and credits.",
+            "Check fees, semester placement and timetable.",
+            "Complete required registration and verification.",
+            "Keep the final decision and study plan."
+          ],
+          "officialUrl": null,
+          "documentChecklistIds": [],
+          "required": true
+        }
+      ],
+      "disclaimer": "This is general planning guidance, not an official notice. Eligibility, dates, documents, fees and procedures vary. Verify current details with the relevant official authority before applying."
+    }
+  ],
+  "displaySettings": {
+    "showProgressIndicator": true,
+    "showActionItems": true,
+    "showOfficialLinks": true,
+    "showDocumentChecklist": true,
+    "showDisclaimer": true,
+    "allowStepCompletion": true,
+    "allowProcessFiltering": true,
+    "showLastReviewedAt": true,
+    "showVerificationStatus": true,
+    "showEstimatedDurationOnlyWhenKnown": true,
+    "showProcessCategory": true,
+    "showCountryFilter": true,
+    "showResourcePurpose": true
+  },
+  "dataIntegrity": {
+    "uniqueProcessIds": true,
+    "uniqueProcessSlugs": true,
+    "uniqueStepIdsWithinProcess": true,
+    "stepsMustBeOrdered": true,
+    "officialLinksMustBeHttps": true,
+    "officialLinksMustBeVerifiedBeforeDisplay": true,
+    "unverifiedLinksMustNotBeDisplayedAsOfficial": true,
+    "unknownValuesMustRemainNull": true,
+    "doNotInventAdmissionRequirements": true,
+    "deadlinesAndFeesRequireCurrentSource": true,
+    "checklistIdsMustResolveBeforePublication": true,
+    "countryCodesMustUseIso3166Alpha2": true,
+    "personalDocumentsMustBeHandledSecurely": true,
+    "resourceUrlsMustBeReviewedPeriodically": true
+  },
+  "note": "Expanded workflows are planning aids, not authoritative admission instructions. Verify specific dates, eligibility, fees, documents, counselling routes, immigration rules and scholarship conditions against current official sources. Resource links should be rechecked before display. Document checklist ID arrays remain empty until matching IDs exist in the document-checklist dataset."
 }

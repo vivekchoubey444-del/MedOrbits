@@ -57,25 +57,66 @@ const ALLOWED_STATUSES = Object.freeze([
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
-const MAX_DESCRIPTION_LENGTH = 15000;
+const CODE_REGEX = /^[A-Z0-9][A-Z0-9._-]*$/;
+const CONTROL_CHARACTERS_REGEX = /[\u0000-\u001F\u007F]/;
 
-function validationError(message, code = 'VALIDATION_ERROR') {
+const MAX_NAME_LENGTH = 200;
+const MAX_SLUG_LENGTH = 200;
+const MAX_CODE_LENGTH = 50;
+const MAX_DURATION_LENGTH = 150;
+const MAX_DESCRIPTION_LENGTH = 15000;
+const MAX_DEGREE_LENGTH = 200;
+const MAX_FIELD_OF_STUDY_LENGTH = 200;
+const MAX_COUNTRY_CODES = 100;
+const MAX_LIST_ITEMS = 100;
+const MAX_LIST_ITEM_LENGTH = 500;
+const MAX_URL_LENGTH = 2048;
+
+const LIST_FIELDS = Object.freeze([
+  'eligibility',
+  'entrance_exams',
+  'career_options',
+]);
+
+function validationError(
+  message,
+  code = 'VALIDATION_ERROR',
+  field
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
+  error.statusCode = 400;
   error.code = code;
   error.publicMessage = message;
+
+  if (field) {
+    error.field = field;
+  }
+
   return error;
 }
 
+function isPlainObject(input) {
+  if (input === null || typeof input !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(input);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
 function pickAllowed(input = {}) {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
+  if (!isPlainObject(input)) {
     throw validationError(
-      'Request body must be a JSON object.',
-      'INVALID_BODY'
+      'Request body must be a plain JSON object.',
+      'INVALID_BODY',
+      'body'
     );
   }
 
@@ -90,7 +131,7 @@ function pickAllowed(input = {}) {
     );
   }
 
-  const output = {};
+  const output = Object.create(null);
 
   for (const field of ALLOWED_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(input, field)) {
@@ -101,36 +142,265 @@ function pickAllowed(input = {}) {
   return output;
 }
 
-function normalizeString(data, field, maxLength, minLength = 0) {
-  if (data[field] === undefined) return;
+function normalizeString(
+  data,
+  field,
+  maxLength,
+  minLength = 0
+) {
+  if (data[field] === undefined) {
+    return;
+  }
 
   if (typeof data[field] !== 'string') {
-    throw validationError(`${field} must be a string.`);
-  }
-
-  data[field] = data[field].trim();
-
-  if (
-    data[field].length < minLength ||
-    data[field].length > maxLength
-  ) {
     throw validationError(
-      `${field} must contain between ${minLength} and ${maxLength} characters.`
+      `${field} must be a string.`,
+      'INVALID_TYPE',
+      field
     );
   }
+
+  const value = data[field].trim();
+
+  if (CONTROL_CHARACTERS_REGEX.test(value)) {
+    throw validationError(
+      `${field} must not contain control characters.`,
+      'INVALID_FORMAT',
+      field
+    );
+  }
+
+  if (
+    value.length < minLength ||
+    value.length > maxLength
+  ) {
+    throw validationError(
+      `${field} must contain between ${minLength} and ${maxLength} characters.`,
+      'OUT_OF_RANGE',
+      field
+    );
+  }
+
+  data[field] = value;
+}
+
+function validateEnum(value, field, allowedValues) {
+  if (typeof value !== 'string') {
+    throw validationError(
+      `${field} must be a string.`,
+      'INVALID_TYPE',
+      field
+    );
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (CONTROL_CHARACTERS_REGEX.test(normalized)) {
+    throw validationError(
+      `${field} must not contain control characters.`,
+      'INVALID_FORMAT',
+      field
+    );
+  }
+
+  if (!allowedValues.includes(normalized)) {
+    throw validationError(
+      `${field} must be one of: ${allowedValues.join(', ')}.`,
+      'INVALID_ENUM',
+      field
+    );
+  }
+
+  return normalized;
+}
+
+function validateSlug(value) {
+  const slug = value.toLowerCase();
+
+  if (!SLUG_REGEX.test(slug)) {
+    throw validationError(
+      'slug must contain lowercase letters, numbers, and single hyphens between words.',
+      'INVALID_SLUG',
+      'slug'
+    );
+  }
+
+  return slug;
+}
+
+function validateCode(value) {
+  const code = value.toUpperCase();
+
+  if (!CODE_REGEX.test(code)) {
+    throw validationError(
+      'code must start with a letter or number and contain only letters, numbers, dots, underscores, or hyphens.',
+      'INVALID_CODE',
+      'code'
+    );
+  }
+
+  return code;
+}
+
+function validateCountryCode(value) {
+  if (typeof value !== 'string') {
+    throw validationError(
+      'Each country code must be a two-letter country code.',
+      'INVALID_TYPE',
+      'country_codes'
+    );
+  }
+
+  const normalized = value.trim().toUpperCase();
+
+  if (!COUNTRY_CODE_REGEX.test(normalized)) {
+    throw validationError(
+      'Each country code must use the two-letter ISO country-code format.',
+      'INVALID_COUNTRY_CODE',
+      'country_codes'
+    );
+  }
+
+  return normalized;
+}
+
+function validateCountryCodes(value) {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > MAX_COUNTRY_CODES
+  ) {
+    throw validationError(
+      `country_codes must be a non-empty array containing at most ${MAX_COUNTRY_CODES} entries.`,
+      'INVALID_COUNTRY_CODES',
+      'country_codes'
+    );
+  }
+
+  const normalized = value.map(validateCountryCode);
+  const unique = new Set(normalized);
+
+  if (unique.size !== normalized.length) {
+    throw validationError(
+      'country_codes must not contain duplicates.',
+      'DUPLICATE_VALUE',
+      'country_codes'
+    );
+  }
+
+  return normalized;
+}
+
+function validateStringArray(value, field) {
+  if (!Array.isArray(value) || value.length > MAX_LIST_ITEMS) {
+    throw validationError(
+      `${field} must be an array containing at most ${MAX_LIST_ITEMS} entries.`,
+      'INVALID_ARRAY',
+      field
+    );
+  }
+
+  const normalized = value.map((item, index) => {
+    if (typeof item !== 'string') {
+      throw validationError(
+        `Each ${field} entry must be a string.`,
+        'INVALID_TYPE',
+        `${field}[${index}]`
+      );
+    }
+
+    const text = item.trim();
+
+    if (CONTROL_CHARACTERS_REGEX.test(text)) {
+      throw validationError(
+        `Each ${field} entry must not contain control characters.`,
+        'INVALID_FORMAT',
+        `${field}[${index}]`
+      );
+    }
+
+    if (
+      text.length < 1 ||
+      text.length > MAX_LIST_ITEM_LENGTH
+    ) {
+      throw validationError(
+        `Each ${field} entry must contain between 1 and ${MAX_LIST_ITEM_LENGTH} characters.`,
+        'OUT_OF_RANGE',
+        `${field}[${index}]`
+      );
+    }
+
+    return text;
+  });
+
+  const seen = new Set();
+
+  for (const item of normalized) {
+    const key = item.toLowerCase();
+
+    if (seen.has(key)) {
+      throw validationError(
+        `${field} must not contain duplicate entries.`,
+        'DUPLICATE_VALUE',
+        field
+      );
+    }
+
+    seen.add(key);
+  }
+
+  return normalized;
 }
 
 function validateUrl(value, field) {
+  if (typeof value !== 'string') {
+    throw validationError(
+      `${field} must be a URL string.`,
+      'INVALID_TYPE',
+      field
+    );
+  }
+
+  const text = value.trim();
+
+  if (
+    text.length < 1 ||
+    text.length > MAX_URL_LENGTH ||
+    CONTROL_CHARACTERS_REGEX.test(text)
+  ) {
+    throw validationError(
+      `${field} must be a valid URL no longer than ${MAX_URL_LENGTH} characters.`,
+      'INVALID_URL',
+      field
+    );
+  }
+
   let url;
 
   try {
-    url = new URL(value);
+    url = new URL(text);
   } catch {
-    throw validationError(`${field} must be a valid URL.`);
+    throw validationError(
+      `${field} must be a valid absolute URL.`,
+      'INVALID_URL',
+      field
+    );
   }
 
   if (!['http:', 'https:'].includes(url.protocol)) {
-    throw validationError(`${field} must use HTTP or HTTPS.`);
+    throw validationError(
+      `${field} must use HTTP or HTTPS.`,
+      'INVALID_URL_PROTOCOL',
+      field
+    );
+  }
+
+  if (!url.hostname || url.username || url.password) {
+    throw validationError(
+      `${field} must have a hostname and must not contain embedded credentials.`,
+      'INVALID_URL',
+      field
+    );
   }
 
   return url.toString();
@@ -142,153 +412,90 @@ function validate(input = {}, options = {}) {
 
   if (Object.keys(data).length === 0) {
     throw validationError(
-      'At least one supported field must be provided.'
+      'At least one supported field must be provided.',
+      'EMPTY_INPUT'
     );
   }
 
-  normalizeString(data, 'name', 200, 2);
-  normalizeString(data, 'slug', 200, 2);
-  normalizeString(data, 'code', 50, 1);
-  normalizeString(data, 'duration', 150, 1);
-  normalizeString(data, 'description', MAX_DESCRIPTION_LENGTH);
-  normalizeString(data, 'degree_awarded', 200);
-  normalizeString(data, 'field_of_study', 200);
+  normalizeString(data, 'name', MAX_NAME_LENGTH, 2);
+  normalizeString(data, 'slug', MAX_SLUG_LENGTH, 2);
+  normalizeString(data, 'code', MAX_CODE_LENGTH, 1);
+  normalizeString(data, 'duration', MAX_DURATION_LENGTH, 1);
+  normalizeString(
+    data,
+    'description',
+    MAX_DESCRIPTION_LENGTH
+  );
+  normalizeString(
+    data,
+    'degree_awarded',
+    MAX_DEGREE_LENGTH
+  );
+  normalizeString(
+    data,
+    'field_of_study',
+    MAX_FIELD_OF_STUDY_LENGTH
+  );
 
   if (data.slug !== undefined) {
-    data.slug = data.slug.toLowerCase();
+    data.slug = validateSlug(data.slug);
+  }
 
-    if (!SLUG_REGEX.test(data.slug)) {
-      throw validationError(
-        'slug must contain lowercase letters, numbers, and single hyphens.'
-      );
-    }
+  if (data.code !== undefined) {
+    data.code = validateCode(data.code);
   }
 
   if (data.category !== undefined) {
-    if (typeof data.category !== 'string') {
-      throw validationError('category must be a string.');
-    }
-
-    data.category = data.category.trim().toLowerCase();
-
-    if (!ALLOWED_CATEGORIES.includes(data.category)) {
-      throw validationError(
-        `category must be one of: ${ALLOWED_CATEGORIES.join(', ')}.`
-      );
-    }
+    data.category = validateEnum(
+      data.category,
+      'category',
+      ALLOWED_CATEGORIES
+    );
   }
 
   if (data.level !== undefined) {
-    if (typeof data.level !== 'string') {
-      throw validationError('level must be a string.');
-    }
-
-    data.level = data.level.trim().toLowerCase();
-
-    if (!ALLOWED_LEVELS.includes(data.level)) {
-      throw validationError(
-        `level must be one of: ${ALLOWED_LEVELS.join(', ')}.`
-      );
-    }
-  }
-
-  if (data.country_codes !== undefined) {
-    if (
-      !Array.isArray(data.country_codes) ||
-      data.country_codes.length === 0 ||
-      data.country_codes.length > 100
-    ) {
-      throw validationError(
-        'country_codes must be a non-empty array containing at most 100 entries.'
-      );
-    }
-
-    data.country_codes = data.country_codes.map((code) => {
-      if (typeof code !== 'string') {
-        throw validationError(
-          'Each country code must be a two-letter ISO country code.'
-        );
-      }
-
-      const normalized = code.trim().toUpperCase();
-
-      if (!COUNTRY_CODE_REGEX.test(normalized)) {
-        throw validationError(
-          `Invalid country code: ${code}.`
-        );
-      }
-
-      return normalized;
-    });
-
-    if (new Set(data.country_codes).size !== data.country_codes.length) {
-      throw validationError(
-        'country_codes must not contain duplicates.'
-      );
-    }
-  }
-
-  for (const field of [
-    'eligibility',
-    'entrance_exams',
-    'career_options',
-  ]) {
-    if (data[field] === undefined) continue;
-
-    if (!Array.isArray(data[field]) || data[field].length > 100) {
-      throw validationError(
-        `${field} must be an array containing at most 100 entries.`
-      );
-    }
-
-    data[field] = data[field].map((item) => {
-      if (typeof item !== 'string') {
-        throw validationError(
-          `Each ${field} entry must be a string.`
-        );
-      }
-
-      const value = item.trim();
-
-      if (value.length < 1 || value.length > 500) {
-        throw validationError(
-          `Each ${field} entry must contain between 1 and 500 characters.`
-        );
-      }
-
-      return value;
-    });
-  }
-
-  if (data.official_url !== undefined && data.official_url !== null) {
-    if (typeof data.official_url !== 'string') {
-      throw validationError(
-        'official_url must be a URL string or null.'
-      );
-    }
-
-    data.official_url = data.official_url.trim();
-
-    if (data.official_url !== '') {
-      data.official_url = validateUrl(
-        data.official_url,
-        'official_url'
-      );
-    } else {
-      data.official_url = null;
-    }
+    data.level = validateEnum(
+      data.level,
+      'level',
+      ALLOWED_LEVELS
+    );
   }
 
   if (data.status !== undefined) {
-    if (typeof data.status !== 'string') {
-      throw validationError('status must be a string.');
+    data.status = validateEnum(
+      data.status,
+      'status',
+      ALLOWED_STATUSES
+    );
+  }
+
+  if (data.country_codes !== undefined) {
+    data.country_codes = validateCountryCodes(
+      data.country_codes
+    );
+  }
+
+  for (const field of LIST_FIELDS) {
+    if (data[field] !== undefined) {
+      data[field] = validateStringArray(data[field], field);
     }
+  }
 
-    data.status = data.status.trim().toLowerCase();
+  if (data.official_url !== undefined) {
+    if (data.official_url === null) {
+      // Explicit null clears the URL.
+      data.official_url = null;
+    } else if (typeof data.official_url === 'string') {
+      const urlText = data.official_url.trim();
 
-    if (!ALLOWED_STATUSES.includes(data.status)) {
+      data.official_url = urlText === ''
+        ? null
+        : validateUrl(urlText, 'official_url');
+    } else {
       throw validationError(
-        `status must be one of: ${ALLOWED_STATUSES.join(', ')}.`
+        'official_url must be a URL string or null.',
+        'INVALID_TYPE',
+        'official_url'
       );
     }
   }
@@ -300,14 +507,20 @@ function validate(input = {}, options = {}) {
       'category',
       'level',
       'duration',
+      'country_codes',
     ]) {
-      if (!data[field]) {
-        throw validationError(`${field} is required.`);
+      if (
+        data[field] === undefined ||
+        data[field] === '' ||
+        (field === 'country_codes' &&
+          (!Array.isArray(data[field]) || data[field].length === 0))
+      ) {
+        throw validationError(
+          `${field} is required.`,
+          'REQUIRED_FIELD',
+          field
+        );
       }
-    }
-
-    if (!data.country_codes || data.country_codes.length === 0) {
-      throw validationError('country_codes is required.');
     }
   }
 
@@ -331,4 +544,10 @@ module.exports = {
   validate,
   validateCreate,
   validateUpdate,
+  validateSlug,
+  validateCode,
+  validateCountryCode,
+  validateCountryCodes,
+  validateStringArray,
+  validateUrl,
 };

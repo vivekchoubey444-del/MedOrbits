@@ -7,26 +7,46 @@ const {
   requiredString,
 } = require('./service-utils');
 
+const DEFAULT_ACTION_TOKEN_TTL_MINUTES = 30;
+const MAX_SUBJECT_LENGTH = 998;
+const MAX_BODY_LENGTH = 200000;
+const MAX_VARIABLES_BYTES = 32768;
+const MAX_METADATA_BYTES = 16384;
+const MAX_EXPIRY_MINUTES = 1440;
+
 function createEmailService({
   provider,
   from,
   emailRepository,
   allowedHosts = [],
   appUrl,
+  clock = () => new Date(),
 }) {
   requireDependency(provider, 'email provider');
 
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
+
   const sender = requiredString(from, 'from', { max: 254 });
+
+  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(sender)) {
+    throw new TypeError('from must be a valid email address.');
+  }
 
   if (
     !Array.isArray(allowedHosts) ||
-    !allowedHosts.every((host) => typeof host === 'string')
+    !allowedHosts.every(
+      (host) => typeof host === 'string' && host.trim().length > 0,
+    )
   ) {
-    throw new TypeError('allowedHosts must be an array of strings.');
+    throw new TypeError(
+      'allowedHosts must be an array of non-empty strings.',
+    );
   }
 
   const normalizedAllowedHosts = allowedHosts.map((host) =>
-    host.trim().toLowerCase(),
+    host.trim().toLowerCase().replace(/\.$/, ''),
   );
 
   const baseUrl = appUrl
@@ -42,23 +62,60 @@ function createEmailService({
       throw new TypeError('appUrl must be a valid absolute URL.');
     }
 
+    const isLocalhost =
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '[::1]';
+
     if (
       parsed.protocol !== 'https:' &&
-      parsed.hostname !== 'localhost'
+      !(parsed.protocol === 'http:' && isLocalhost)
     ) {
-      throw new TypeError('appUrl must use HTTPS.');
+      throw new TypeError(
+        'appUrl must use HTTPS except for localhost development.',
+      );
+    }
+
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      throw new TypeError(
+        'appUrl must not contain credentials, query parameters, or fragments.',
+      );
+    }
+
+    if (parsed.pathname !== '/') {
+      throw new TypeError(
+        'appUrl must be an origin without a path.',
+      );
     }
   }
 
-  function normalizeRecipient(value) {
-    const recipient = requiredString(value, 'to', {
-      max: 254,
-    });
+  function getNow() {
+    const value = clock();
+    const date = value instanceof Date
+      ? new Date(value.getTime())
+      : new Date(value);
 
-    // Deliberately support conventional email addresses rather than
-    // attempting to implement the full RFC email-address grammar.
+    if (Number.isNaN(date.getTime())) {
+      throw new ServiceError('Invalid service clock value.', {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      });
+    }
+
+    return date;
+  }
+
+  function normalizeRecipient(value) {
+    const recipient = requiredString(value, 'to', { max: 254 });
+
     if (
-      !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(recipient)
+      !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(recipient) ||
+      /[\r\n\u0000-\u001f\u007f]/.test(recipient)
     ) {
       throw new ServiceError('Invalid recipient email address.', {
         code: 'VALIDATION_ERROR',
@@ -66,7 +123,10 @@ function createEmailService({
       });
     }
 
-    const host = recipient.split('@').pop().toLowerCase();
+    const host = recipient
+      .slice(recipient.lastIndexOf('@') + 1)
+      .toLowerCase()
+      .replace(/\.$/, '');
 
     if (
       normalizedAllowedHosts.length > 0 &&
@@ -81,13 +141,93 @@ function createEmailService({
     return recipient;
   }
 
-  async function updateEmailRecord(record, changes) {
-    if (
-      record?.id != null &&
-      typeof emailRepository?.updateById === 'function'
-    ) {
-      await emailRepository.updateById(record.id, changes);
+  function normalizeText(value, field, maxLength) {
+    if (value === undefined) {
+      return undefined;
     }
+
+    if (
+      typeof value !== 'string' ||
+      value.length > maxLength ||
+      value.includes('\u0000')
+    ) {
+      throw new ServiceError(`Invalid ${field}.`, {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return value;
+  }
+
+  function normalizeObject(value, field, maxBytes) {
+    if (
+      value === null ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+    ) {
+      throw new ServiceError(`${field} must be a plain object.`, {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    let serialized;
+
+    try {
+      serialized = JSON.stringify(value);
+    } catch {
+      throw new ServiceError(`${field} is invalid.`, {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    if (
+      typeof serialized !== 'string' ||
+      Buffer.byteLength(serialized, 'utf8') > maxBytes
+    ) {
+      throw new ServiceError(`${field} exceeds the allowed size.`, {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return JSON.parse(serialized);
+  }
+
+  function normalizeExpiry(value) {
+    if (
+      !Number.isSafeInteger(value) ||
+      value < 1 ||
+      value > MAX_EXPIRY_MINUTES
+    ) {
+      throw new ServiceError('Invalid email token expiry.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return value;
+  }
+
+  async function updateEmailRecord(record, changes) {
+    if (record?.id == null) {
+      return;
+    }
+
+    if (typeof emailRepository?.updateById !== 'function') {
+      throw new ServiceError(
+        'Email repository must implement updateById().',
+        {
+          code: 'EMAIL_REPOSITORY_MISCONFIGURED',
+          status: 503,
+        },
+      );
+    }
+
+    await emailRepository.updateById(record.id, changes);
   }
 
   async function send({
@@ -100,12 +240,26 @@ function createEmailService({
     metadata = {},
   } = {}) {
     const recipient = normalizeRecipient(to);
+    const normalizedSubject = normalizeText(
+      subject,
+      'subject',
+      MAX_SUBJECT_LENGTH,
+    );
+    const normalizedText = normalizeText(text, 'text', MAX_BODY_LENGTH);
+    const normalizedHtml = normalizeText(html, 'html', MAX_BODY_LENGTH);
+    const normalizedTemplate = normalizeText(
+      template,
+      'template',
+      100,
+    );
 
     const hasSubject =
-      typeof subject === 'string' && subject.trim().length > 0;
+      typeof normalizedSubject === 'string' &&
+      normalizedSubject.trim().length > 0;
 
     const hasTemplate =
-      typeof template === 'string' && template.trim().length > 0;
+      typeof normalizedTemplate === 'string' &&
+      normalizedTemplate.trim().length > 0;
 
     if (!hasSubject && !hasTemplate) {
       throw new ServiceError(
@@ -118,71 +272,60 @@ function createEmailService({
     }
 
     if (
-      text !== undefined &&
-      typeof text !== 'string'
+      !normalizedText &&
+      !normalizedHtml &&
+      !hasTemplate
     ) {
-      throw new ServiceError('text must be a string.', {
-        code: 'VALIDATION_ERROR',
-        status: 422,
-      });
+      throw new ServiceError(
+        'Email text, HTML, or a registered template is required.',
+        {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+        },
+      );
     }
 
-    if (
-      html !== undefined &&
-      typeof html !== 'string'
-    ) {
-      throw new ServiceError('html must be a string.', {
-        code: 'VALIDATION_ERROR',
-        status: 422,
-      });
-    }
+    const safeVariables = normalizeObject(
+      variables,
+      'variables',
+      MAX_VARIABLES_BYTES,
+    );
 
-    if (
-      !variables ||
-      typeof variables !== 'object' ||
-      Array.isArray(variables)
-    ) {
-      throw new ServiceError('variables must be an object.', {
-        code: 'VALIDATION_ERROR',
-        status: 422,
-      });
-    }
-
-    if (
-      !metadata ||
-      typeof metadata !== 'object' ||
-      Array.isArray(metadata)
-    ) {
-      throw new ServiceError('metadata must be an object.', {
-        code: 'VALIDATION_ERROR',
-        status: 422,
-      });
-    }
+    const safeMetadata = normalizeObject(
+      metadata,
+      'metadata',
+      MAX_METADATA_BYTES,
+    );
 
     const payload = {
       from: sender,
       to: recipient,
-      subject: hasSubject ? subject.trim() : subject,
-      text,
-      html,
-      template,
-      variables,
+      subject: hasSubject ? normalizedSubject.trim() : undefined,
+      text: normalizedText,
+      html: normalizedHtml,
+      template: hasTemplate ? normalizedTemplate.trim() : undefined,
+      variables: safeVariables,
     };
 
     let record = null;
 
-    // Logging failures should not silently disappear. If email logging
-    // is configured, failure to create its record stops delivery.
-    if (typeof emailRepository?.create === 'function') {
+    if (emailRepository) {
+      if (typeof emailRepository.create !== 'function') {
+        throw new ServiceError(
+          'Email repository must implement create().',
+          {
+            code: 'EMAIL_REPOSITORY_MISCONFIGURED',
+            status: 503,
+          },
+        );
+      }
+
       record = await emailRepository.create({
         to: recipient,
-        subject: payload.subject || template,
-        template: template || null,
+        subject: payload.subject || payload.template,
+        template: payload.template || null,
         status: 'queued',
-        metadata: {
-          ...metadata,
-          template: template || null,
-        },
+        metadata: safeMetadata,
       });
     }
 
@@ -203,12 +346,17 @@ function createEmailService({
         );
       }
 
-      const messageId = result?.id || result?.messageId || null;
+      const messageId =
+        typeof result?.messageId === 'string'
+          ? result.messageId
+          : typeof result?.id === 'string'
+            ? result.id
+            : null;
 
       await updateEmailRecord(record, {
         status: 'sent',
         providerMessageId: messageId,
-        sentAt: new Date(),
+        sentAt: getNow(),
       });
 
       return {
@@ -220,25 +368,24 @@ function createEmailService({
         await updateEmailRecord(record, {
           status: 'failed',
           failureCode:
-            typeof error?.code === 'string'
+            typeof error?.code === 'string' &&
+            /^[A-Z0-9_-]{1,80}$/i.test(error.code)
               ? error.code
               : 'PROVIDER_ERROR',
+          failedAt: getNow(),
         });
       } catch {
-        // Use infrastructure monitoring for persistence failures.
+        // Record persistence failures through infrastructure monitoring.
       }
 
       if (error instanceof ServiceError) {
         throw error;
       }
 
-      throw new ServiceError(
-        'Email could not be delivered.',
-        {
-          code: 'EMAIL_DELIVERY_FAILED',
-          status: 502,
-        },
-      );
+      throw new ServiceError('Email could not be delivered.', {
+        code: 'EMAIL_DELIVERY_FAILED',
+        status: 502,
+      });
     }
   }
 
@@ -253,14 +400,34 @@ function createEmailService({
       );
     }
 
-    const safeToken = requiredString(token, 'token', {
-      max: 256,
-    });
+    const safeToken = requiredString(token, 'token', { max: 256 });
 
-    const url = new URL(path, baseUrl);
+    if (!/^[a-f0-9]{64}$/i.test(safeToken)) {
+      throw new ServiceError('Invalid email action token.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    const url = new URL(path, `${baseUrl}/`);
     url.searchParams.set('token', safeToken);
 
     return url.toString();
+  }
+
+  function normalizeName(name) {
+    if (name === undefined || name === null) {
+      return '';
+    }
+
+    if (typeof name !== 'string' || name.length > 200) {
+      throw new ServiceError('Invalid recipient name.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return name.trim();
   }
 
   return {
@@ -270,23 +437,20 @@ function createEmailService({
       to,
       name,
       token,
-      expiryMinutes = 30,
-    }) {
-      const verificationUrl = buildActionUrl(
-        '/verify-email',
-        token,
-      );
+      expiryMinutes = DEFAULT_ACTION_TOKEN_TTL_MINUTES,
+    } = {}) {
+      const verificationUrl = buildActionUrl('/verify-email', token);
 
       return send({
         to,
         subject: 'Verify your MedOrbits email',
         template: 'verification',
         variables: {
-          firstName: name || '',
-          email: to,
+          firstName: normalizeName(name),
+          email: normalizeRecipient(to),
           verificationUrl,
-          expiryMinutes,
-          year: new Date().getFullYear(),
+          expiryMinutes: normalizeExpiry(expiryMinutes),
+          year: getNow().getFullYear(),
         },
         metadata: {
           category: 'email_verification',
@@ -298,23 +462,20 @@ function createEmailService({
       to,
       name,
       token,
-      expiryMinutes = 30,
-    }) {
-      const resetUrl = buildActionUrl(
-        '/reset-password',
-        token,
-      );
+      expiryMinutes = DEFAULT_ACTION_TOKEN_TTL_MINUTES,
+    } = {}) {
+      const resetUrl = buildActionUrl('/reset-password', token);
 
       return send({
         to,
         subject: 'Reset your MedOrbits password',
         template: 'password-reset',
         variables: {
-          firstName: name || '',
-          email: to,
+          firstName: normalizeName(name),
+          email: normalizeRecipient(to),
           resetUrl,
-          expiryMinutes,
-          year: new Date().getFullYear(),
+          expiryMinutes: normalizeExpiry(expiryMinutes),
+          year: getNow().getFullYear(),
         },
         metadata: {
           category: 'password_reset',
@@ -324,4 +485,8 @@ function createEmailService({
   };
 }
 
-module.exports = { createEmailService };
+module.exports = {
+  createEmailService,
+  DEFAULT_ACTION_TOKEN_TTL_MINUTES,
+  MAX_EXPIRY_MINUTES,
+};

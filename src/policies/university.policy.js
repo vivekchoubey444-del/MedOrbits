@@ -1,6 +1,19 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- University Authorization Policy
+ *
+ * File: src/policies/university.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Controls university visibility, ownership, editing, publication,
+ * verification, lifecycle transitions, deletion, and exports.
+ *
+ * Protected fields and lifecycle transitions must be enforced by
+ * dedicated service methods and database-level checks.
+ */
+
 const {
   isAdmin,
   hasPermission,
@@ -10,15 +23,23 @@ const {
   safeStatus,
 } = require('./policy-utils');
 
-const OWNER_FIELDS = [
+const OWNER_FIELDS = Object.freeze([
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
-];
+  'managed_by',
+]);
 
 const EDITABLE_STATUSES = new Set([
   'draft',
   'published',
+  'archived',
+]);
+
+const PUBLISHABLE_STATUSES = new Set([
+  'draft',
   'archived',
 ]);
 
@@ -29,23 +50,79 @@ const HIDDEN_STATUSES = new Set([
 const PROTECTED_FIELDS = new Set([
   'id',
   '_id',
+  'universityId',
+  'university_id',
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
+  'managed_by',
   'status',
   'verified',
+  'isVerified',
+  'is_verified',
   'verificationStatus',
+  'verification_status',
   'approvedBy',
+  'approved_by',
   'approvedAt',
+  'approved_at',
   'publishedAt',
+  'published_at',
   'archivedAt',
+  'archived_at',
   'deletedAt',
+  'deleted_at',
   'createdAt',
+  'created_at',
   'updatedAt',
+  'updated_at',
 ]);
 
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  if (
+    actor.isActive === false ||
+    actor.is_active === false ||
+    actor.isSuspended === true ||
+    actor.is_suspended === true
+  ) {
+    return false;
+  }
+
+  return ![
+    'disabled',
+    'suspended',
+    'inactive',
+    'deleted',
+    'blocked',
+  ].includes(safeStatus(actor.status));
+}
+
+function universityStatus(university) {
+  return safeStatus(university && university.status);
+}
+
+function isDeletedUniversity(university) {
+  return HIDDEN_STATUSES.has(universityStatus(university));
+}
+
 function universityOwnerId(university) {
-  if (!university || typeof university !== 'object') {
+  if (!isPlainObject(university)) {
     return null;
   }
 
@@ -53,24 +130,44 @@ function universityOwnerId(university) {
 }
 
 function isUniversityOwner(actor, university) {
-  if (!actor || !university) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(university)
+  ) {
     return false;
   }
 
   const ownerId = universityOwnerId(university);
+  const currentActorId = actorId(actor);
 
   return ownerId != null &&
-    sameId(actorId(actor), ownerId);
+    currentActorId != null &&
+    sameId(currentActorId, ownerId);
+}
+
+function hasProtectedChanges(changes) {
+  if (!isPlainObject(changes)) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) =>
+    PROTECTED_FIELDS.has(key)
+  );
 }
 
 function canViewUniversity(actor, university) {
-  if (!university || typeof university !== 'object') {
+  if (
+    !isPlainObject(university) ||
+    isDeletedUniversity(university)
+  ) {
     return false;
   }
 
-  const status = safeStatus(university.status);
+  if (universityStatus(university) === 'published') {
+    return true;
+  }
 
-  if (HIDDEN_STATUSES.has(status)) {
+  if (!isActiveActor(actor)) {
     return false;
   }
 
@@ -81,25 +178,16 @@ function canViewUniversity(actor, university) {
     return true;
   }
 
-  if (status === 'published') {
-    return true;
-  }
-
   return Boolean(
-    actor &&
-    (
-      isUniversityOwner(actor, university) ||
-      hasPermission(actor, 'universities:read:private')
-    )
+    isUniversityOwner(actor, university) ||
+    hasPermission(actor, 'universities:read:private')
   );
 }
 
 function canCreateUniversity(actor, input = {}) {
   if (
-    !actor ||
-    !input ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
+    !isActiveActor(actor) ||
+    !isPlainObject(input)
   ) {
     return false;
   }
@@ -112,11 +200,12 @@ function canCreateUniversity(actor, input = {}) {
 
 function canUpdateUniversity(actor, university, changes = {}) {
   if (
-    !actor ||
-    !university ||
-    !changes ||
-    typeof changes !== 'object' ||
-    Array.isArray(changes)
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    isDeletedUniversity(university) ||
+    !isPlainObject(changes) ||
+    Object.keys(changes).length === 0 ||
+    hasProtectedChanges(changes)
   ) {
     return false;
   }
@@ -128,28 +217,18 @@ function canUpdateUniversity(actor, university, changes = {}) {
     return true;
   }
 
-  if (!isUniversityOwner(actor, university)) {
-    return false;
-  }
-
-  if (!EDITABLE_STATUSES.has(safeStatus(university.status))) {
-    return false;
-  }
-
-  return !Object.keys(changes).some(
-    (key) => PROTECTED_FIELDS.has(key)
+  return Boolean(
+    isUniversityOwner(actor, university) &&
+    EDITABLE_STATUSES.has(universityStatus(university)) &&
+    hasPermission(actor, 'universities:update:own')
   );
 }
 
 function canPublishUniversity(actor, university) {
-  if (!actor || !university) {
-    return false;
-  }
-
   if (
-    !['draft', 'archived'].includes(
-      safeStatus(university.status)
-    )
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    !PUBLISHABLE_STATUSES.has(universityStatus(university))
   ) {
     return false;
   }
@@ -161,11 +240,11 @@ function canPublishUniversity(actor, university) {
 }
 
 function canArchiveUniversity(actor, university) {
-  if (!actor || !university) {
-    return false;
-  }
-
-  if (safeStatus(university.status) !== 'published') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    universityStatus(university) !== 'published'
+  ) {
     return false;
   }
 
@@ -176,11 +255,11 @@ function canArchiveUniversity(actor, university) {
 }
 
 function canRestoreUniversity(actor, university) {
-  if (!actor || !university) {
-    return false;
-  }
-
-  if (safeStatus(university.status) !== 'archived') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    universityStatus(university) !== 'archived'
+  ) {
     return false;
   }
 
@@ -191,11 +270,11 @@ function canRestoreUniversity(actor, university) {
 }
 
 function canVerifyUniversity(actor, university) {
-  if (!actor || !university) {
-    return false;
-  }
-
-  if (HIDDEN_STATUSES.has(safeStatus(university.status))) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    isDeletedUniversity(university)
+  ) {
     return false;
   }
 
@@ -206,11 +285,11 @@ function canVerifyUniversity(actor, university) {
 }
 
 function canDeleteUniversity(actor, university) {
-  if (!actor || !university) {
-    return false;
-  }
-
-  if (HIDDEN_STATUSES.has(safeStatus(university.status))) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(university) ||
+    isDeletedUniversity(university)
+  ) {
     return false;
   }
 
@@ -222,7 +301,7 @@ function canDeleteUniversity(actor, university) {
 
 function canExportUniversities(actor) {
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'universities:export')
@@ -230,7 +309,7 @@ function canExportUniversities(actor) {
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
   universityOwnerId,
   isUniversityOwner,
   canViewUniversity,
@@ -242,4 +321,4 @@ module.exports = {
   canVerifyUniversity,
   canDeleteUniversity,
   canExportUniversities,
-};
+});

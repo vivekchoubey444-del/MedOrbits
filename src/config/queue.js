@@ -1,284 +1,349 @@
+
 'use strict';
 
 /**
+ * MedOrbits -- Background Queue Configuration
+ * File: src/config/queue.js
+ *
+ * Responsibilities:
+ * - Configure Redis-backed BullMQ queues.
+ * - Reuse queue instances by name.
+ * - Validate queue names and job options.
+ * - Prevent duplicate queue initialization.
+ * - Support graceful shutdown.
+ * - Avoid logging credentials or sensitive job payloads.
+ *
+ * Dependencies:
+ * - bullmq
+ * - ./redis
+ * - ./env
+ * - ./logger
+ *
+ * IMPORTANT:
+ * Queue payloads should contain opaque identifiers rather than
+ * passwords, OTPs, payment credentials, or document contents.
+ */
 
-* MedOrbits -- Redis Configuration
-* File: src/config/redis.js
-* Responsibilities:
-* ●	Create and manage a shared Redis client.
-* ●	Support REDIS_URL and individual connection settings.
-* ●	Handle connection errors and reconnect attempts.
-* ●	Prevent duplicate concurrent connection attempts.
-* ●	Support graceful application shutdown.
-* Requires:
-* ●	redis (node-redis v4 or compatible v5 API)
-* ●	./env
-* ●	./logger
-        */
-
-const { createClient } = require('redis');
+const { Queue } = require('bullmq');
+const { connectRedis } = require('./redis');
 const { env } = require('./env');
 const logger = require('./logger');
 
-let client;
-let connectPromise;
-let closePromise;
+const DEFAULT_ATTEMPTS = 3;
+const DEFAULT_BACKOFF_MS = 1000;
+const DEFAULT_REMOVE_ON_COMPLETE = 1000;
+const DEFAULT_REMOVE_ON_FAIL = 5000;
+
+const QUEUE_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,99}$/;
+
+const queues = new Map();
+const queuePromises = new Map();
+
 let closing = false;
+let closePromise;
 
-const MAX_RECONNECT_ATTEMPTS = 10;
-const RECONNECT_BASE_DELAY_MS = 250;
-const RECONNECT_MAX_DELAY_MS = 3000;
-
-function isRedisRequired() {
-return env.REDIS_ENABLED === true || env.QUEUE_ENABLED === true;
+function isQueueEnabled() {
+  return env.QUEUE_ENABLED === true;
 }
 
-function validateRedisConfiguration() {
-if (!isRedisRequired()) {
-return;
-}
-
-if (env.REDIS_URL) {
-let parsedUrl;
-
-try {
-  parsedUrl = new URL(env.REDIS_URL);
-} catch {
-  throw new Error('REDIS_URL must be a valid Redis URL.');
-}
-if (!['redis:', 'rediss:'].includes(parsedUrl.protocol)) {
-  throw new Error('REDIS_URL must use redis:// or rediss://.');
-}
-if (parsedUrl.protocol === 'rediss:' && env.REDIS_TLS_ENABLED === false) {
-  throw new Error(
-    'REDIS_URL uses TLS but REDIS_TLS_ENABLED=false. Correct the configuration.'
-  );
-}
-if (parsedUrl.protocol === 'redis:' && env.REDIS_TLS_ENABLED === true) {
-  throw new Error(
-    'REDIS_TLS_ENABLED=true conflicts with a redis:// REDIS_URL. Use rediss://.'
-  );
-}
-return;
-
-}
-
-if (
-typeof env.REDIS_HOST !== 'string' ||
-!env.REDIS_HOST.trim()
-) {
-throw new Error('REDIS_HOST is required when REDIS_URL is not configured.');
-}
-
-if (
-!Number.isInteger(env.REDIS_PORT) ||
-env.REDIS_PORT < 1 ||
-env.REDIS_PORT > 65535
-) {
-throw new Error('REDIS_PORT must be an integer between 1 and 65535.');
-}
-
-if (
-!Number.isInteger(env.REDIS_DB) ||
-env.REDIS_DB < 0
-) {
-throw new Error('REDIS_DB must be a non-negative integer.');
-}
-}
-
-function getRedisOptions() {
-const reconnectStrategy = (retries) => {
-if (retries >= MAX_RECONNECT_ATTEMPTS) {
-logger.error(
-{ retries },
-'Redis reconnect limit exceeded'
-);
-
-  return new Error('Redis reconnect limit exceeded.');
-}
-const delay = Math.min(
-  RECONNECT_BASE_DELAY_MS * (2 ** retries),
-  RECONNECT_MAX_DELAY_MS
-);
-// Add limited jitter to reduce synchronized reconnect attempts.
-return delay + Math.floor(Math.random() * 100);
-
-};
-
-if (env.REDIS_URL) {
-return {
-url: env.REDIS_URL,
-database: env.REDIS_DB,
-socket: {
-reconnectStrategy,
-},
-};
-}
-
-return {
-username: env.REDIS_USERNAME || undefined,
-password: env.REDIS_PASSWORD || undefined,
-database: env.REDIS_DB,
-socket: {
-host: env.REDIS_HOST,
-port: env.REDIS_PORT,
-tls: env.REDIS_TLS_ENABLED === true,
-reconnectStrategy,
-},
-};
-}
-
-function createRedisClient() {
-const redisClient = createClient(getRedisOptions());
-
-redisClient.on('error', (error) => {
-// Do not log connection URLs or credentials.
-logger.error(
-{
-err: {
-name: error.name,
-message: error.message,
-},
-},
-'Redis client error'
-);
-});
-
-redisClient.on('connect', () => {
-logger.info('Redis connection established');
-});
-
-redisClient.on('ready', () => {
-logger.info('Redis client ready');
-});
-
-redisClient.on('reconnecting', () => {
-logger.warn('Redis client reconnecting');
-});
-
-redisClient.on('end', () => {
-logger.info('Redis connection ended');
-});
-
-return redisClient;
-}
-
-async function connectRedis() {
-if (!isRedisRequired()) {
-return null;
-}
-
-if (closing || closePromise) {
-throw new Error(
-'Redis is shutting down. A new connection cannot be started.'
-);
-}
-
-if (client?.isReady) {
-return client;
-}
-
-if (connectPromise) {
-return connectPromise;
-}
-
-validateRedisConfiguration();
-
-if (!client) {
-client = createRedisClient();
-}
-
-const currentClient = client;
-
-connectPromise = (async () => {
-try {
-if (!currentClient.isOpen) {
-await currentClient.connect();
-}
-
-  return currentClient;
-} catch (error) {
-  // Discard a failed client so a later explicit attempt can create a new one.
-  if (client === currentClient) {
-    client = undefined;
+function validateQueueName(name) {
+  if (
+    typeof name !== 'string' ||
+    !QUEUE_NAME_PATTERN.test(name)
+  ) {
+    throw new TypeError(
+      'Queue name must be 1–100 characters and contain only letters, numbers, colons, underscores, or hyphens.'
+    );
   }
-  if (currentClient.isOpen) {
-    try {
-      await currentClient.destroy();
-    } catch {
-      // Preserve the original connection error.
+
+  return name;
+}
+
+function validateJobOptions(options = {}) {
+  if (
+    options === null ||
+    typeof options !== 'object' ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError('Job options must be an object.');
+  }
+
+  const normalized = { ...options };
+
+  if (normalized.attempts !== undefined) {
+    if (
+      !Number.isSafeInteger(normalized.attempts) ||
+      normalized.attempts < 1 ||
+      normalized.attempts > 20
+    ) {
+      throw new Error(
+        'Job attempts must be an integer between 1 and 20.'
+      );
     }
   }
-  throw error;
-} finally {
-  connectPromise = undefined;
-}
 
-})();
-
-return connectPromise;
-}
-
-async function closeRedis() {
-if (closePromise) {
-return closePromise;
-}
-
-if (!client) {
-return;
-}
-
-closing = true;
-const currentClient = client;
-
-closePromise = (async () => {
-try {
-// Wait for an in-flight initial connection before shutting down.
-if (connectPromise) {
-try {
-await connectPromise;
-} catch {
-// The connection attempt failed; continue cleanup.
-}
-}
-
-  if (currentClient.isOpen) {
-    await currentClient.quit();
+  if (normalized.delay !== undefined) {
+    if (
+      !Number.isSafeInteger(normalized.delay) ||
+      normalized.delay < 0 ||
+      normalized.delay > 86400000
+    ) {
+      throw new Error(
+        'Job delay must be between 0 and 86400000 milliseconds.'
+      );
+    }
   }
-  logger.info('Redis connection closed');
-} catch (error) {
-  logger.error(
-    {
-      err: {
-        name: error.name,
-        message: error.message,
-      },
+
+  if (normalized.priority !== undefined) {
+    if (
+      !Number.isSafeInteger(normalized.priority) ||
+      normalized.priority < 1 ||
+      normalized.priority > 2097152
+    ) {
+      throw new Error(
+        'Job priority must be an integer between 1 and 2097152.'
+      );
+    }
+  }
+
+  if (normalized.backoff !== undefined) {
+    const backoff = normalized.backoff;
+
+    if (
+      !backoff ||
+      typeof backoff !== 'object' ||
+      Array.isArray(backoff)
+    ) {
+      throw new TypeError('Job backoff must be an object.');
+    }
+
+    if (
+      !['fixed', 'exponential'].includes(backoff.type) ||
+      !Number.isSafeInteger(backoff.delay) ||
+      backoff.delay < 0 ||
+      backoff.delay > 3600000
+    ) {
+      throw new Error('Invalid job backoff configuration.');
+    }
+  }
+
+  return normalized;
+}
+
+function getDefaultJobOptions() {
+  return {
+    attempts: DEFAULT_ATTEMPTS,
+
+    backoff: {
+      type: 'exponential',
+      delay: DEFAULT_BACKOFF_MS,
     },
-    'Redis shutdown failed'
-  );
-  // Force local cleanup if a graceful quit cannot complete.
-  if (currentClient.isOpen) {
-    try {
-      currentClient.destroy();
-    } catch {
-      // Preserve the shutdown error.
-    }
-  }
-  throw error;
-} finally {
-  if (client === currentClient) {
-    client = undefined;
-  }
-  closing = false;
-  closePromise = undefined;
+
+    removeOnComplete: DEFAULT_REMOVE_ON_COMPLETE,
+    removeOnFail: DEFAULT_REMOVE_ON_FAIL,
+  };
 }
 
-})();
+async function getQueue(name, options = {}) {
+  validateQueueName(name);
 
-return closePromise;
+  if (!isQueueEnabled()) {
+    throw new Error(
+      'Background queues are disabled. Set QUEUE_ENABLED=true to enable them.'
+    );
+  }
+
+  if (closing || closePromise) {
+    throw new Error(
+      'Queue system is shutting down. New queues cannot be created.'
+    );
+  }
+
+  if (
+    options === null ||
+    typeof options !== 'object' ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError('Queue configuration must be an object.');
+  }
+
+  if (queues.has(name)) {
+    return queues.get(name);
+  }
+
+  if (queuePromises.has(name)) {
+    return queuePromises.get(name);
+  }
+
+  const initialization = (async () => {
+    const redis = await connectRedis();
+
+    if (!redis || !redis.isReady) {
+      throw new Error(
+        'Redis must be connected before a queue can be initialized.'
+      );
+    }
+
+    if (closing || closePromise) {
+      throw new Error(
+        'Queue system is shutting down.'
+      );
+    }
+
+    const queue = new Queue(name, {
+      connection: redis,
+      defaultJobOptions: {
+        ...getDefaultJobOptions(),
+        ...(options.defaultJobOptions || {}),
+      },
+      ...(options.prefix ? { prefix: options.prefix } : {}),
+    });
+
+    queue.on('error', (error) => {
+      logger.error(
+        {
+          queue: name,
+          err: {
+            name: error.name,
+            message: error.message,
+          },
+        },
+        'Background queue error'
+      );
+    });
+
+    try {
+      await queue.waitUntilReady();
+
+      if (closing || closePromise) {
+        await queue.close();
+
+        throw new Error(
+          'Queue system began shutting down during initialization.'
+        );
+      }
+
+      queues.set(name, queue);
+
+      logger.info(
+        { queue: name },
+        'Background queue initialized'
+      );
+
+      return queue;
+    } catch (error) {
+      try {
+        await queue.close();
+      } catch {
+        // Preserve the original initialization error.
+      }
+
+      throw error;
+    }
+  })();
+
+  queuePromises.set(name, initialization);
+
+  try {
+    return await initialization;
+  } finally {
+    if (queuePromises.get(name) === initialization) {
+      queuePromises.delete(name);
+    }
+  }
+}
+
+async function addJob(
+  queueName,
+  jobName,
+  payload,
+  options = {}
+) {
+  validateQueueName(queueName);
+
+  if (
+    typeof jobName !== 'string' ||
+    !QUEUE_NAME_PATTERN.test(jobName)
+  ) {
+    throw new TypeError('Invalid background job name.');
+  }
+
+  if (
+    payload === undefined ||
+    typeof payload === 'function' ||
+    typeof payload === 'symbol'
+  ) {
+    throw new TypeError('Job payload must be serializable data.');
+  }
+
+  const jobOptions = validateJobOptions(options);
+  const queue = await getQueue(queueName);
+
+  // BullMQ serializes payloads into Redis. Do not include sensitive
+  // documents, credentials, payment details, or raw OTP values.
+  return queue.add(jobName, payload, jobOptions);
+}
+
+async function closeQueues() {
+  if (closePromise) {
+    return closePromise;
+  }
+
+  closing = true;
+
+  closePromise = (async () => {
+    // Wait for all pending queue initializations to settle.
+    const pending = [...queuePromises.values()];
+
+    await Promise.allSettled(pending);
+
+    const currentQueues = [...queues.entries()];
+
+    const results = await Promise.allSettled(
+      currentQueues.map(async ([name, queue]) => {
+        await queue.close();
+
+        logger.info(
+          { queue: name },
+          'Background queue closed'
+        );
+      })
+    );
+
+    queues.clear();
+
+    const failures = results.filter(
+      (result) => result.status === 'rejected'
+    );
+
+    if (failures.length > 0) {
+      logger.error(
+        { failedQueues: failures.length },
+        'One or more background queues failed to close'
+      );
+
+      throw new Error(
+        `${failures.length} background queue(s) failed to close.`
+      );
+    }
+  })().finally(() => {
+    closing = false;
+    closePromise = undefined;
+  });
+
+  return closePromise;
+}
+
+function getQueueNames() {
+  return [...queues.keys()];
 }
 
 module.exports = {
-connectRedis,
-closeRedis,
+  getQueue,
+  addJob,
+  closeQueues,
+  getQueueNames,
+  validateQueueName,
+  validateJobOptions,
+  getDefaultJobOptions,
 };

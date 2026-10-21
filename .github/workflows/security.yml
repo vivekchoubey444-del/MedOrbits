@@ -1,22 +1,32 @@
+
+# File: .github/workflows/security.yml
+
 name: MedOrbits Security
+
 on:
   push:
     branches:
       - main
       - develop
+
   pull_request:
     branches:
       - main
       - develop
+
   schedule:
     # Every Monday at 04:00 UTC
-    - cron: '0 4 * * 1'
+    - cron: "0 4 * * 1"
+
   workflow_dispatch:
+
 permissions:
   contents: read
+
 concurrency:
   group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
 jobs:
   # ======================================================
   # 1. VALIDATE JSON CONFIGURATION
@@ -25,27 +35,35 @@ jobs:
     name: Validate JSON configuration
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     permissions:
       contents: read
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
       - name: Validate tracked JSON files
         shell: bash
         run: |
           set -euo pipefail
+
           count=0
+
           while IFS= read -r -d '' file; do
             echo "Validating: $file"
+
             node -e '
               const fs = require("node:fs");
               const file = process.argv[1];
+
               try {
                 JSON.parse(fs.readFileSync(file, "utf8"));
               } catch (error) {
@@ -53,11 +71,12 @@ jobs:
                 process.exit(1);
               }
             ' "$file"
+
             count=$((count + 1))
-          done < <(
-            git ls-files -z -- '*.json'
-          )
+          done < <(git ls-files -z -- '*.json')
+
           echo "Validated $count tracked JSON files."
+
   # ======================================================
   # 2. AUDIT NPM DEPENDENCIES
   # ======================================================
@@ -65,31 +84,39 @@ jobs:
     name: Audit npm dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     permissions:
       contents: read
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
+
       - name: Verify npm manifests
         shell: bash
         run: |
           set -euo pipefail
           test -f package.json
           test -f package-lock.json
+
       - name: Install locked dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
+
       - name: Audit all dependencies
         run: npm audit --audit-level=high
+
   # ======================================================
   # 3. CODEQL STATIC ANALYSIS
   # ======================================================
@@ -97,23 +124,29 @@ jobs:
     name: CodeQL JavaScript and TypeScript analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     permissions:
       contents: read
       security-events: write
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
           build-mode: none
+          queries: security-extended
+
       - name: Analyze code
         uses: github/codeql-action/analyze@v3
         with:
-          category: '/language:javascript-typescript'
+          category: /language:javascript-typescript
+
   # ======================================================
   # 4. SCAN FOR EXPOSED SECRETS
   # ======================================================
@@ -121,15 +154,18 @@ jobs:
     name: Gitleaks secret scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     permissions:
       contents: read
+
     steps:
       - name: Checkout repository history
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
+
       - name: Scan for secrets
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

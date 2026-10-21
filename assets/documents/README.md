@@ -1,11 +1,22 @@
 MedOrbits Documents
 
 Directory: assets/documents/
-Brand Identity: Royal Burgundy and Champagne Gold
+Brand identity: Royal Burgundy and Champagne Gold
 Classification: Public-facing document resources
 Maintained by: MedOrbits
 
-PDF cover generation: Run `npm run brand:pdfs` to preflight the library without changing files. Run `npm run brand:pdfs -- --write` to add a branded cover page with the MedOrbits logo, support contacts, and category-specific colors. Original PDFs are backed up under `storage/temporary/pdf-brand-backups/`, which is excluded from version control. The branding pass does not change publication or verification status.
+PDF cover generation
+
+The PDF branding workflow is intended to support consistent MedOrbits document presentation.
+
+* Run npm run brand:pdfs to perform a preflight without changing files, if the configured script implements that behaviour.
+* Run npm run brand:pdfs — —write to apply branding, if the script supports the —write option.
+* Original PDFs should be backed up under storage/temporary/pdf-brand-backups/ before being modified.
+* Temporary backups must be excluded from version control and must not be served as public assets.
+* Branding must not automatically change a resource’s publication status or verification status.
+* After branding, revalidate the PDF, inspect its content and layout, recalculate its checksum, and repeat the required publication checks.
+
+Implementation requirement: Confirm these commands, backup behaviour, logo, support contacts, and category colours against the actual package.json scripts and branding implementation. This README does not itself establish that the commands are implemented.
 
 ⸻
 
@@ -15,13 +26,13 @@ The assets/documents/ directory contains public-facing document resources used b
 
 This directory provides a consistent framework for managing downloadable documents, resource indexes, manifests, schemas, category documentation, publication statuses, and verification metadata.
 
-Publication rule: The presence of a file or manifest record does not automatically authorize public distribution. Only resources that have passed the required content, privacy, accessibility, file-integrity, and publication checks may be exposed as public downloads.
+Publication rule: The presence of a file or manifest record does not automatically authorize public distribution. Only resources that have passed the required content, privacy, accessibility, file-integrity, security, approval, and publication checks may be exposed as public downloads.
 
-Planned and draft resources may be registered before their files exist, but they must not be presented as available downloads.
+Planned and draft resources may be registered before their files exist. They must not be presented as available downloads.
 
-2. Directory Structure
+2. Directory structure
 
-The following is the reference structure. Keep it synchronized with the actual repository and create optional files only when they are implemented.
+The following is a reference structure. Keep it synchronized with the actual repository and create optional files only when implemented.
 
 assets/documents/
 ├── README.md
@@ -54,11 +65,13 @@ assets/documents/
     ├── README.md
     └── *.pdf
 
-A category may also contain its own schema or structured catalogue where required by its validation workflow.
+This tree is illustrative, not a claim that every listed file or directory already exists. Update it when the repository structure changes.
 
-Use consistent manifest naming. The recommended canonical filename is MANIFEST.json. If a package uses manifest.json, either retain that convention consistently or rename the file and update all references, scripts, and CI workflows.
+A package may have its own schema or structured catalogue when required by its validation and integration workflow. Document the actual schema location for each package and ensure the manifest’s $schema reference points to the correct file.
 
-3. Resource Categories
+Use consistent manifest naming. The recommended canonical filename is MANIFEST.json. If a package uses manifest.json, either retain that convention consistently or rename the file and update all references, scripts, tests, and CI workflows.
+
+3. Resource categories
 
 Directory	Purpose
 admission-guides/	General and programme-specific admission guides, application instructions, and educational resources.
@@ -69,31 +82,39 @@ study-abroad/	International education, overseas admissions, destination research
 
 Place each resource in the directory that best matches its primary purpose. Avoid duplicate public copies unless a documented operational requirement justifies them.
 
-4. Manifest and Schema Management
+4. Manifest and schema management
 
-The root manifest, shared schema, and category manifests serve different purposes.
+The root manifest, shared schema, category manifests, and application catalogues have different responsibilities.
 
 File	Responsibility
-MANIFEST.json	Provides a central inventory or discovery index for document libraries.
-manifest.schema.json	Defines shared structural rules for supported document-manifest formats.
-Category MANIFEST.json	Records resources belonging to an individual library.
-Category-specific schema	Defines additional validation rules for a package with a specialised manifest format.
-Category README.md	Documents the library’s purpose, inventory, content standards, and maintenance process.
-Structured catalogue JSON	Supplies resource metadata to frontend components when implemented.
+MANIFEST.json	Central inventory or discovery index for document libraries.
+manifest.schema.json	Structural validation rules for the manifest format it supports.
+Category MANIFEST.json	Registry of resources belonging to an individual library.
+Category-specific schema	Additional validation rules for a specialised package format.
+Category README.md	Package purpose, inventory, content standards, and maintenance procedures.
+Structured catalogue JSON	Application-facing resource metadata when implemented.
 
-4.1 Supported manifest formats
+4.1 Manifest formats
 
-The shared schema at assets/documents/manifest.schema.json supports two manifest structures:
+A standard document-library manifest may use fields such as:
 
-Standard document-library manifest
+* schemaVersion
+* manifestVersion
+* metadata
+* categories
+* publicationPolicy
+* resources
 
-Uses schemaVersion, manifestVersion, metadata, and resources.
+A specialised document-package manifest may use fields such as:
 
-Specialised document-package manifest
+* package
+* directory
+* purpose
+* brand
+* access
+* documents
 
-Uses package-level fields such as package, directory, purpose, brand, access, and documents.
-
-A package-specific schema should be used when a manifest has additional requirements that cannot be adequately enforced by the shared schema.
+These examples describe different possible formats. They must not be assumed interchangeable. Validate each manifest against its designated schema.
 
 4.2 Validation requirements
 
@@ -106,39 +127,48 @@ Manifest records should use:
 * Accurate publication and verification statuses.
 * Relevant source references and review dates.
 * Valid version values where versioning is supported.
-* Correct references to categories and related resources.
+* Correct category and related-resource references.
 
-The shared schema permits additional properties for compatibility. Consequently, schema validation alone does not enforce every project-specific business rule.
+The shared schema may allow additional properties for compatibility. Therefore, schema validation alone might not enforce every project-specific business rule.
 
 Repository validation scripts or CI workflows should separately check:
 
 1. JSON syntax and schema compliance.
 2. Duplicate IDs, filenames, and public paths.
-3. Whether required files exist for the resource’s current status.
-4. Whether category and related-resource references resolve.
-5. Whether publication statuses satisfy the publication policy.
-6. Whether published files have the required verification metadata.
-7. Whether checksums and recorded file sizes match the actual files when supplied.
-8. Whether public URLs resolve to the intended deployed assets.
+3. File existence where required by the resource’s status.
+4. Category and related-resource references.
+5. Publication statuses against the applicable package policy.
+6. Required verification metadata for published resources.
+7. Recorded checksums and file sizes against actual files, when supplied.
+8. PDF integrity, MIME type, and configured file-size limits.
+9. Path containment within the approved public document directory.
+10. Public URLs and deployed assets.
+11. Catalogue consistency with the authoritative manifest.
+12. Unexpected secrets, private information, or embedded content.
 
-Do not require planned resources to have existing files. Apply file-existence requirements according to the resource’s publication status.
+Do not require planned resources to have existing files. Apply file-existence requirements according to publication status and the applicable validation policy.
 
-5. Publication and Verification Statuses
+5. Publication and verification statuses
 
-Use the status values supported by the applicable manifest schema.
+Use only the status values supported by the applicable manifest schema.
+
+Common status meanings include:
 
 Status	Meaning
 planned	The resource is scheduled for creation or registration; the final file may not exist.
 draft	The resource is being prepared and is not approved for public distribution.
 in_review	The resource is undergoing review.
 approved	Required approval has been recorded; deployment checks may still be pending.
-published	The resource has passed the required checks and is available through its approved public distribution route.
-under_review	A previously prepared resource is undergoing a new review.
-outdated	The content may no longer be current and should not be treated as current guidance.
+verified	A package-specific status indicating that required verification checks have been recorded; approval and deployment requirements may still apply.
+published	The resource has passed required checks and is available through its approved public distribution route.
+under_review	A previously prepared resource is undergoing reassessment.
+outdated	The content may no longer be current and should not be promoted as current guidance.
 archived	The resource is retained for recordkeeping or historical purposes.
 withdrawn	The resource has been withdrawn from distribution.
 
-Recommended verification values are:
+Not every package schema supports every status in this table. For example, the checklist schema defines its own allowed status values. Do not add unsupported values to a manifest without updating and validating its schema.
+
+Common verification values include:
 
 Verification status	Meaning
 not_verified	No verification claim has been established.
@@ -146,13 +176,13 @@ content_reviewed	The document has undergone a content review.
 official_sources_checked	Relevant authoritative sources have been checked and recorded.
 officially_verified	Documented evidence supports the specific official-verification claim.
 
-Verification status and publication status are different. A resource may have undergone a content review but still require approval, privacy checks, or deployment validation.
+Verification status and publication status are different. A content-reviewed resource may still require approval, privacy checks, file validation, or deployment validation.
 
-Public-download rule: Only published resources that pass the application’s additional publication checks should be exposed as downloadable assets. A published value alone must not override a failed security check, missing file, or invalid approval.
+Public-download rule: Only resources with a published status that pass the application’s additional publication checks should receive active download links. A status value alone must never override a failed security check, missing file, or invalid approval.
 
-6. File Formats and Naming
+6. File formats and naming
 
-Use the following conventions:
+Use these conventions:
 
 * Prefer PDF (application/pdf) for finalized, printable documents.
 * Use Markdown (.md) for documentation and resource indexes.
@@ -171,9 +201,9 @@ education-budget-checklist.pdf
 study-abroad-budget-checklist.pdf
 pre-departure-checklist.pdf
 
-Where supported, record the document’s MIME type, version, file size, and checksum in its manifest. Do not invent file sizes, checksums, publication dates, or verification dates when the information has not been established.
+Where supported, record the document’s MIME type, version, file size, and checksum in its manifest. Do not invent file sizes, checksums, publication dates, or verification dates.
 
-7. Content Accuracy and Verification
+7. Content accuracy and verification
 
 Before publishing a new or materially revised resource:
 
@@ -189,11 +219,11 @@ Before publishing a new or materially revised resource:
 
 Prefer primary sources, including official institutions, examination authorities, regulators, government departments, and other relevant authorities.
 
-A resource must not be described as officially verified unless the claim is supported by documented evidence. Checking an official website does not automatically mean that MedOrbits itself is an official authority or that a document has been endorsed by that authority.
+A resource must not be described as officially verified unless the claim is supported by documented evidence. Checking an official website does not automatically mean MedOrbits is an official authority or that a document has been endorsed by that authority.
 
-8. Accessibility and Readability
+8. Accessibility and readability
 
-All published documents should be usable on common mobile and desktop PDF readers.
+Published documents should be usable on common mobile and desktop PDF readers.
 
 * Use readable typography and sufficient contrast.
 * Maintain meaningful headings and a logical reading order.
@@ -207,7 +237,7 @@ All published documents should be usable on common mobile and desktop PDF reader
 
 The MedOrbits Royal Burgundy and Champagne Gold design system should be applied during document authoring or generation. Website CSS does not automatically style PDF files.
 
-9. Brand and Design Standards
+9. Brand and design standards
 
 Primary design direction: Royal Burgundy and Champagne Gold.
 
@@ -215,9 +245,9 @@ Maintain consistent typography, spacing, headings, page numbering, branding, and
 
 Decorative elements must remain secondary to the document’s purpose. Prioritize contrast, readability, accessibility, and clear instructions.
 
-Use the approved project design tokens where available rather than introducing unrelated colour values or typography systems into individual document packages.
+Use approved project design tokens where available rather than introducing unrelated colour values or typography systems into individual document packages.
 
-10. Privacy and Security
+10. Privacy and security
 
 This directory is intended for approved public-facing assets. It is not secure storage for confidential documents.
 
@@ -236,13 +266,13 @@ Prohibited content
 * Confidential internal correspondence or case records.
 * Unreviewed files containing sensitive metadata or embedded information.
 
-Before publication, inspect PDFs for metadata, comments, attachments, hidden content, and embedded files.
+Before publication, inspect PDFs for metadata, comments, attachments, hidden content, and embedded files. Scan files using the configured security process.
 
 Keep source files and editable working documents separate from approved public downloads where necessary. Never treat a public frontend directory as secure storage.
 
 If a resource requires authentication or access restrictions, do not rely on its location inside assets/documents/ or on a manifest’s access field to protect it. Store it behind an appropriate server-side authorization mechanism.
 
-11. Website Integration
+11. Website integration
 
 Use stable, descriptive URLs for approved downloadable resources.
 
@@ -256,7 +286,7 @@ Example:
   Download the Admissions Checklist (PDF)
 </a>
 
-This example assumes that the website serves the repository’s assets/ directory from the site root. Adjust the URL if production uses a different static asset base path.
+This example assumes the website serves the repository’s assets/ directory from the site root. Adjust the URL if production uses a different static asset base path.
 
 Integration requirements:
 
@@ -275,14 +305,28 @@ The frontend should use a trusted resource catalogue or validated manifest data 
 Before displaying a download link, confirm that:
 
 * The resource has a published status.
-* The resource’s file and metadata have passed the applicable publication checks.
+* The resource’s file and metadata have passed applicable publication checks.
 * The path resolves to an approved asset.
 * The resource is permitted for the intended audience.
 * The deployed URL matches the approved resource record.
 
 The frontend must not interpret a planned or draft record as an available download.
 
-12. Publication Workflow
+11.2 Catalogue generation
+
+Where an application catalogue is generated from a manifest:
+
+1. Treat the manifest as the authoritative source.
+2. Validate the manifest before generating output.
+3. Apply publication filtering during generation.
+4. Check file existence and publication eligibility.
+5. Generate deterministic output so the same inputs produce the same catalogue.
+6. Fail the build when required validation checks fail.
+7. Do not expose unpublished resources through public sitemaps or download listings.
+
+Frontend filtering is not a security boundary. Dynamic publication and access restrictions must also be enforced on the server when applicable.
+
+12. Publication workflow
 
 Follow this workflow for each new or revised resource:
 
@@ -301,7 +345,7 @@ Where automated validation is available, publication should be blocked when requ
 
 A successful schema-validation result is not sufficient on its own to authorize publication.
 
-13. Maintenance and Versioning
+13. Maintenance and versioning
 
 Review this directory whenever resources are added, revised, renamed, reorganized, or retired.
 
@@ -328,7 +372,7 @@ Users must independently confirm applicable eligibility criteria, fees, deadline
 
 Do not describe a resource as an official form, government document, or approved notice unless that status has been specifically established.
 
-15. Contribution Checklist
+15. Contribution checklist
 
 Before submitting a new or revised resource, confirm:
 
@@ -350,5 +394,5 @@ Before submitting a new or revised resource, confirm:
 
 Maintained by: MedOrbits
 Directory: assets/documents/
-Brand Identity: Royal Burgundy and Champagne Gold
+Brand identity: Royal Burgundy and Champagne Gold
 Classification: Public-facing document resources

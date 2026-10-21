@@ -1,6 +1,19 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- Recruitment Authorization Policy
+ *
+ * File: src/policies/recruitment.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Enforces access to recruitment campaigns, lifecycle transitions,
+ * candidate data, recruitment pipelines, and exports.
+ *
+ * State changes, employer relationships, and candidate access must
+ * also be validated by the service and repository layers.
+ */
+
 const {
   isAdmin,
   hasPermission,
@@ -11,11 +24,49 @@ const {
   safeStatus,
 } = require('./policy-utils');
 
-const OWNER_FIELDS = [
+const EMPLOYER_FIELDS = Object.freeze([
+  'employerId',
+  'employer_id',
+]);
+
+const OWNER_FIELDS = Object.freeze([
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
-];
+  'managed_by',
+]);
+
+const EDITABLE_STATUSES = new Set([
+  'draft',
+  'active',
+  'published',
+  'paused',
+]);
+
+const PUBLISHABLE_STATUSES = new Set([
+  'draft',
+  'paused',
+]);
+
+const PAUSABLE_STATUSES = new Set([
+  'active',
+  'published',
+]);
+
+const CLOSABLE_STATUSES = new Set([
+  'draft',
+  'active',
+  'published',
+  'paused',
+]);
+
+const COMPLETABLE_STATUSES = new Set([
+  'active',
+  'published',
+  'paused',
+]);
 
 const TERMINAL_STATUSES = new Set([
   'completed',
@@ -24,81 +75,175 @@ const TERMINAL_STATUSES = new Set([
   'deleted',
 ]);
 
-const EDITABLE_STATUSES = new Set([
-  'draft',
-  'active',
-  'paused',
-]);
-
 const PROTECTED_FIELDS = new Set([
   'id',
   '_id',
+  'recruitmentId',
+  'recruitment_id',
   'employerId',
+  'employer_id',
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
+  'managed_by',
   'status',
-  'createdAt',
-  'updatedAt',
-  'publishedAt',
-  'closedAt',
-  'completedAt',
-  'cancelledAt',
-  'deletedAt',
+  'isPublic',
+  'is_public',
+  'verified',
+  'isVerified',
+  'is_verified',
+  'verificationStatus',
+  'verification_status',
   'approvedBy',
+  'approved_by',
   'approvedAt',
+  'approved_at',
+  'publishedAt',
+  'published_at',
+  'closedAt',
+  'closed_at',
+  'completedAt',
+  'completed_at',
+  'cancelledAt',
+  'cancelled_at',
+  'deletedAt',
+  'deleted_at',
   'candidateCount',
+  'candidate_count',
   'applicationCount',
+  'application_count',
+  'createdAt',
+  'created_at',
+  'updatedAt',
+  'updated_at',
 ]);
 
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  if (
+    actor.isActive === false ||
+    actor.is_active === false ||
+    actor.isSuspended === true ||
+    actor.is_suspended === true
+  ) {
+    return false;
+  }
+
+  return ![
+    'disabled',
+    'suspended',
+    'inactive',
+    'deleted',
+    'blocked',
+  ].includes(safeStatus(actor.status));
+}
+
+function recruitmentStatus(recruitment) {
+  return safeStatus(recruitment && recruitment.status);
+}
+
+function isDeletedRecruitment(recruitment) {
+  return recruitmentStatus(recruitment) === 'deleted';
+}
+
+function recruitmentEmployerId(recruitment) {
+  if (!isPlainObject(recruitment)) {
+    return null;
+  }
+
+  for (const field of EMPLOYER_FIELDS) {
+    if (recruitment[field] != null) {
+      return recruitment[field];
+    }
+  }
+
+  return null;
+}
+
 function recruitmentOwnerId(recruitment) {
-  if (!recruitment || typeof recruitment !== 'object') {
+  if (!isPlainObject(recruitment)) {
     return null;
   }
 
   return resourceOwnerId(recruitment, [
-    'employerId',
+    ...EMPLOYER_FIELDS,
     ...OWNER_FIELDS,
   ]);
 }
 
-function recruitmentEmployerId(recruitment) {
-  if (!recruitment || typeof recruitment !== 'object') {
-    return null;
-  }
-
-  return recruitment.employerId ?? null;
-}
-
 function isRecruitmentOwner(actor, recruitment) {
-  if (!actor || !recruitment) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment)
+  ) {
     return false;
   }
 
   const employerId = recruitmentEmployerId(recruitment);
+  const actorEmployerId = actor.employerId ?? actor.employer_id;
 
   if (
     employerId != null &&
-    sameId(actor.employerId, employerId) &&
-    hasRole(actor, 'employer')
+    actorEmployerId != null &&
+    sameId(actorEmployerId, employerId) &&
+    hasRole(actor, 'employer', 'recruiter')
   ) {
     return true;
   }
 
   const ownerId = resourceOwnerId(recruitment, OWNER_FIELDS);
+  const currentActorId = actorId(actor);
 
   return ownerId != null &&
-    sameId(actorId(actor), ownerId);
+    currentActorId != null &&
+    sameId(currentActorId, ownerId);
+}
+
+function hasProtectedChanges(changes) {
+  if (!isPlainObject(changes)) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) =>
+    PROTECTED_FIELDS.has(key)
+  );
 }
 
 function canViewRecruitment(actor, recruitment) {
-  if (!recruitment || typeof recruitment !== 'object') {
+  if (
+    !isPlainObject(recruitment) ||
+    isDeletedRecruitment(recruitment)
+  ) {
     return false;
   }
 
-  const status = safeStatus(recruitment.status);
+  const status = recruitmentStatus(recruitment);
 
-  if (status === 'deleted') {
+  if (
+    recruitment.isPublic === true ||
+    recruitment.is_public === true
+  ) {
+    if (['active', 'published'].includes(status)) {
+      return true;
+    }
+  }
+
+  if (!isActiveActor(actor)) {
     return false;
   }
 
@@ -109,28 +254,16 @@ function canViewRecruitment(actor, recruitment) {
     return true;
   }
 
-  if (
-    recruitment.isPublic === true &&
-    ['active', 'published'].includes(status)
-  ) {
-    return true;
-  }
-
   return Boolean(
-    actor &&
-    (
-      isRecruitmentOwner(actor, recruitment) ||
-      hasPermission(actor, 'recruitment:read:private')
-    )
+    isRecruitmentOwner(actor, recruitment) ||
+    hasPermission(actor, 'recruitment:read:private')
   );
 }
 
 function canCreateRecruitment(actor, input = {}) {
   if (
-    !actor ||
-    !input ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
+    !isActiveActor(actor) ||
+    !isPlainObject(input)
   ) {
     return false;
   }
@@ -142,23 +275,37 @@ function canCreateRecruitment(actor, input = {}) {
     return true;
   }
 
-  return Boolean(
-    hasRole(actor, 'employer', 'recruiter') &&
-    actor.isSuspended !== true &&
-    actor.status !== 'suspended' &&
-    actor.status !== 'disabled' &&
-    actor.employerId != null &&
-    hasPermission(actor, 'recruitment:create:own-employer')
-  );
+  if (
+    !hasRole(actor, 'employer', 'recruiter') ||
+    (actor.employerId ?? actor.employer_id) == null
+  ) {
+    return false;
+  }
+
+  const requestedEmployerId =
+    input.employerId ?? input.employer_id;
+
+  const authenticatedEmployerId =
+    actor.employerId ?? actor.employer_id;
+
+  if (
+    requestedEmployerId != null &&
+    !sameId(requestedEmployerId, authenticatedEmployerId)
+  ) {
+    return false;
+  }
+
+  return hasPermission(actor, 'recruitment:create:own-employer');
 }
 
 function canUpdateRecruitment(actor, recruitment, changes = {}) {
   if (
-    !actor ||
-    !recruitment ||
-    !changes ||
-    typeof changes !== 'object' ||
-    Array.isArray(changes)
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    isDeletedRecruitment(recruitment) ||
+    !isPlainObject(changes) ||
+    Object.keys(changes).length === 0 ||
+    hasProtectedChanges(changes)
   ) {
     return false;
   }
@@ -170,28 +317,19 @@ function canUpdateRecruitment(actor, recruitment, changes = {}) {
     return true;
   }
 
-  if (!isRecruitmentOwner(actor, recruitment)) {
-    return false;
-  }
-
-  if (!EDITABLE_STATUSES.has(safeStatus(recruitment.status))) {
-    return false;
-  }
-
-  return !Object.keys(changes).some(
-    (key) => PROTECTED_FIELDS.has(key)
+  return Boolean(
+    isRecruitmentOwner(actor, recruitment) &&
+    hasRole(actor, 'employer', 'recruiter') &&
+    EDITABLE_STATUSES.has(recruitmentStatus(recruitment)) &&
+    hasPermission(actor, 'recruitment:update:own-employer')
   );
 }
 
 function canPublishRecruitment(actor, recruitment) {
-  if (!actor || !recruitment) {
-    return false;
-  }
-
   if (
-    !['draft', 'paused'].includes(
-      safeStatus(recruitment.status)
-    )
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    !PUBLISHABLE_STATUSES.has(recruitmentStatus(recruitment))
   ) {
     return false;
   }
@@ -211,14 +349,10 @@ function canPublishRecruitment(actor, recruitment) {
 }
 
 function canPauseRecruitment(actor, recruitment) {
-  if (!actor || !recruitment) {
-    return false;
-  }
-
   if (
-    !['active', 'published'].includes(
-      safeStatus(recruitment.status)
-    )
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    !PAUSABLE_STATUSES.has(recruitmentStatus(recruitment))
   ) {
     return false;
   }
@@ -238,15 +372,10 @@ function canPauseRecruitment(actor, recruitment) {
 }
 
 function canCloseRecruitment(actor, recruitment) {
-  if (!actor || !recruitment) {
-    return false;
-  }
-
-  const status = safeStatus(recruitment.status);
-
   if (
-    TERMINAL_STATUSES.has(status) ||
-    !['draft', 'active', 'published', 'paused'].includes(status)
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    !CLOSABLE_STATUSES.has(recruitmentStatus(recruitment))
   ) {
     return false;
   }
@@ -266,14 +395,10 @@ function canCloseRecruitment(actor, recruitment) {
 }
 
 function canCompleteRecruitment(actor, recruitment) {
-  if (!actor || !recruitment) {
-    return false;
-  }
-
   if (
-    !['active', 'published', 'paused'].includes(
-      safeStatus(recruitment.status)
-    )
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    !COMPLETABLE_STATUSES.has(recruitmentStatus(recruitment))
   ) {
     return false;
   }
@@ -293,11 +418,11 @@ function canCompleteRecruitment(actor, recruitment) {
 }
 
 function canDeleteRecruitment(actor, recruitment) {
-  if (!actor || !recruitment) {
-    return false;
-  }
-
-  if (safeStatus(recruitment.status) === 'deleted') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    isDeletedRecruitment(recruitment)
+  ) {
     return false;
   }
 
@@ -310,14 +435,18 @@ function canDeleteRecruitment(actor, recruitment) {
 
   return Boolean(
     isRecruitmentOwner(actor, recruitment) &&
-    safeStatus(recruitment.status) === 'draft' &&
+    recruitmentStatus(recruitment) === 'draft' &&
     hasRole(actor, 'employer', 'recruiter') &&
     hasPermission(actor, 'recruitment:delete:own-employer')
   );
 }
 
 function canViewRecruitmentCandidates(actor, recruitment) {
-  if (!actor || !recruitment) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    isDeletedRecruitment(recruitment)
+  ) {
     return false;
   }
 
@@ -336,7 +465,11 @@ function canViewRecruitmentCandidates(actor, recruitment) {
 }
 
 function canManageRecruitmentPipeline(actor, recruitment) {
-  if (!actor || !recruitment) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(recruitment) ||
+    isDeletedRecruitment(recruitment)
+  ) {
     return false;
   }
 
@@ -356,7 +489,7 @@ function canManageRecruitmentPipeline(actor, recruitment) {
 
 function canExportRecruitment(actor) {
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'recruitment:export')
@@ -364,7 +497,7 @@ function canExportRecruitment(actor) {
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
   recruitmentOwnerId,
   recruitmentEmployerId,
   isRecruitmentOwner,
@@ -379,4 +512,4 @@ module.exports = {
   canViewRecruitmentCandidates,
   canManageRecruitmentPipeline,
   canExportRecruitment,
-};
+});

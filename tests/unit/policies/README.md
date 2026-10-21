@@ -3,13 +3,13 @@
 
 ## Overview
 
-The `tests/unit/policies/` directory contains unit tests for MedOrbits authorization policies, access-control rules, and other policy-level decisions.
+The `tests/unit/policies/` directory contains unit tests for MedOrbits authorization policies, access-control rules, and policy-level decisions.
 
-These tests help verify that application operations enforce the intended permissions, protect restricted resources, and handle unauthorized or invalid access consistently.
+These tests verify that application operations enforce intended permissions, protect restricted resources, and handle unauthorized or invalid access consistently.
 
-Policy tests should remain focused on policy behavior rather than HTTP routing, database implementation, or unrelated business-service logic.
+Policy tests should focus on policy behavior rather than HTTP routing, database implementation, or unrelated business-service logic.
 
-## Directory Structure
+## 1. Directory Structure
 
 ```text
 tests/
@@ -34,89 +34,94 @@ tests/
         └── README.md
 ```
 
-The listed files represent the current test-directory organization. Their presence alone does not establish that every test is implemented or passing.
+This is the intended inventory. File presence does not establish that the associated tests are implemented or passing.
 
-## Policy Test Inventory
+## 2. Policy Test Inventory
 
 | Test file | Primary responsibility |
 |—|—|
-| `admission.policy.test.js` | Admission-related authorization and access decisions |
-| `application.policy.test.js` | Application ownership, access permissions, and protected operations |
+| `admission.policy.test.js` | Admission authorization and access decisions |
+| `application.policy.test.js` | Application ownership, permissions, and protected operations |
 | `auth.policy.test.js` | Authentication-related policy decisions and identity requirements |
 | `candidate.policy.test.js` | Candidate access, ownership, and permitted actions |
-| `college.policy.test.js` | College-related access and authorization rules |
-| `counselling.policy.test.js` | Counselling records, access permissions, and role restrictions |
+| `college.policy.test.js` | College access and authorization rules |
+| `counselling.policy.test.js` | Counselling records, permissions, and role restrictions |
 | `course.policy.test.js` | Course access and policy enforcement |
-| `document.policy.test.js` | Document ownership, access restrictions, and protected document operations |
-| `employer.policy.test.js` | Employer permissions and access to employer-related resources |
-| `internship.policy.test.js` | Internship access and authorization decisions |
-| `job.policy.test.js` | Job-related permissions and access control |
-| `payment.policy.test.js` | Payment access, ownership, and restricted operations |
+| `document.policy.test.js` | Document ownership, access restrictions, and protected operations |
+| `employer.policy.test.js` | Employer permissions and access to employer resources |
+| `internship.policy.test.js` | Internship authorization and access decisions |
+| `job.policy.test.js` | Job permissions and access control |
+| `payment.policy.test.js` | Payment ownership, access, and restricted operations |
 | `policy-utils.test.js` | Shared policy utility behavior |
-| `subscription.policy.test.js` | Subscription ownership, administrative access, and protected subscription actions |
-| `university.policy.test.js` | University-related access and authorization rules |
+| `subscription.policy.test.js` | Subscription ownership, administrative access, and protected actions |
+| `university.policy.test.js` | University access and authorization rules |
 | `user.policy.test.js` | User access, ownership, and administrative permissions |
 
-Actual test coverage must be confirmed by inspecting each test file and its corresponding policy implementation.
+Confirm actual coverage by inspecting each test file alongside its corresponding policy implementation.
 
-## Testing Objectives
+## 3. Testing Objectives
 
-Policy tests should cover the following areas wherever applicable.
-
-### 1. Authentication and Identity
+### 3.1 Authentication and identity
 
 - Reject protected operations when the required identity is missing.
 - Handle malformed or incomplete actor information.
-- Distinguish authenticated users from unauthenticated requests when the policy supports that distinction.
+- Distinguish authenticated users from unauthenticated requests where applicable.
 - Avoid granting permissions solely because an untrusted request supplies an identity or role.
 
-### 2. Authorization and Roles
+### 3.2 Authorization and roles
 
 - Allow explicitly authorized operations.
 - Reject operations that exceed the actor’s permissions.
 - Verify administrative privileges using the application’s established role model.
-- Ensure ordinary users cannot obtain administrative access by modifying request data.
+- Prevent ordinary users from obtaining administrative access by modifying request data.
+- Verify that unknown actions do not accidentally grant access.
 
-### 3. Resource Ownership
+### 3.3 Resource ownership
 
 - Allow users to access resources they are authorized to own or manage.
-- Deny access to resources belonging to other users when ownership is required.
-- Test ownership comparisons using the identifier formats supported by the implementation.
-- Verify that missing resources and inaccessible resources are handled according to the established security policy.
+- Deny access to another user’s private resources when ownership is required.
+- Test ownership comparisons using identifier formats supported by the implementation.
+- Verify handling of missing and inaccessible resources according to the established security policy.
 
-### 4. Resource-Specific Rules
+### 3.4 Resource-specific rules
 
 - Test permissions for the relevant domain entity.
-- Verify restrictions on protected operations such as modification, deletion, cancellation, or document access.
+- Verify restrictions on modification, deletion, cancellation, publication, and document access where applicable.
 - Check that domain-specific restrictions are enforced independently of unrelated policies.
-- Avoid assuming that every resource uses the same permissions or ownership rules.
+- Avoid assuming that every resource uses identical permissions or ownership fields.
 
-### 5. Failure Handling
+### 3.5 Failure handling
 
 - Test invalid, missing, or incomplete policy inputs.
 - Verify expected error types or authorization results.
 - Ensure policy failures do not accidentally grant access.
 - Confirm that unexpected errors are handled consistently with the policy contract.
 
-## Test Design Principles
+## 4. Test Design Principles
 
-### Isolate Policy Behavior
+### 4.1 Isolate policy behavior
 
-Use small, deterministic inputs that represent the actor, resource, and requested operation.
+Use small, deterministic inputs representing the actor, resource, and requested operation.
 
-Mock external dependencies when necessary. Policy unit tests should not require a live database, payment gateway, email provider, or external API unless a test explicitly belongs to an integration suite.
+Mock external dependencies where necessary. Policy unit tests should not require a live database, payment gateway, email provider, or external API unless the test explicitly belongs to an integration suite.
 
-### Follow the Existing Contract
+### 4.2 Follow the existing contract
 
-Use the actual policy exports, function signatures, return values, error codes, and role definitions from the implementation.
+Use the actual policy exports, function signatures, return values, error codes, and role definitions.
 
-Do not invent permissions or assume that every policy returns a boolean. A policy may return a decision, throw an error, or use another established project convention.
+Do not invent permissions or assume that every policy returns a boolean. A policy may return a decision object, throw an error, or use another established project convention.
 
-### Keep Tests Independent
+Tests must match the real implementation rather than forcing the implementation to conform to an assumed interface.
 
-Each test should establish its own relevant inputs and expected outcome. Avoid relying on execution order, shared mutable state, network availability, or data left behind by another test.
+### 4.3 Keep tests independent
 
-### Test Both Allowed and Denied Paths
+- Establish relevant inputs within each test.
+- Avoid execution-order dependencies.
+- Avoid shared mutable state.
+- Do not depend on network availability or data left by another test.
+- Restore mocks and clean up temporary state when applicable.
+
+### 4.4 Test allowed and denied paths
 
 Where applicable, include:
 
@@ -127,13 +132,14 @@ Where applicable, include:
 - Incorrect ownership.
 - Administrative access.
 - Invalid input.
+- Protected-field modification attempts.
 - Boundary conditions and unexpected failures.
 
-Only include scenarios that apply to the actual policy contract.
+Only include scenarios supported by the actual policy contract.
 
-## Running Tests
+## 5. Running Tests
 
-Run all policy unit tests from the repository root:
+Run all policy tests from the repository root:
 
 ```bash
 node —test tests/unit/policies/*.test.js
@@ -145,45 +151,59 @@ Run an individual policy test:
 node —test tests/unit/policies/user.policy.test.js
 ```
 
-Run the shared policy utility tests:
+Run the shared utility tests:
 
 ```bash
 node —test tests/unit/policies/policy-utils.test.js
 ```
 
-Run the complete unit-test suite, assuming the project uses Node.js’s built-in test runner:
+Run the complete unit suite:
 
 ```bash
-node —test tests/unit/**/*.test.js
+node —test
 ```
 
-**Note:** Shell glob expansion differs between environments. If the recursive command does not discover all tests, use the project’s configured test script or a test-discovery command compatible with its supported Node.js version.
+The last command relies on Node.js test discovery. Confirm that it discovers all intended test files in the repository.
 
-## Relationship to Other Test Layers
+Shell glob expansion differs between environments. If a glob does not work, use explicit file paths or the project’s configured test script.
+
+If the repository standardizes on Jest, use its configured command instead:
+
+```bash
+npx jest tests/unit/policies —runInBand
+```
+
+Do not mix test-runner APIs within a test file.
+
+## 6. Relationship to Other Test Layers
 
 | Test layer | Responsibility |
 |—|—|
-| Policy unit tests | Verify authorization decisions and policy rules |
-| Service unit tests | Verify business operations and dependency interactions |
-| Controller tests | Verify request handling and response behavior |
-| Route or middleware tests | Verify request routing and enforcement integration |
-| Integration tests | Verify interactions across application components |
-| End-to-end tests | Verify complete user workflows |
+| Policy unit tests | Authorization decisions and policy rules |
+| Service unit tests | Business operations and dependency interactions |
+| Controller tests | Request handling and response behavior |
+| Route or middleware tests | Routing and authorization enforcement integration |
+| Integration tests | Interactions across application components |
+| API tests | HTTP contracts, status codes, and response schemas |
+| Security tests | Broader security threats, including IDOR and privilege escalation |
+| End-to-end tests | Complete user workflows |
 
-Policy tests complement service and controller tests; they do not replace them.
+Policy tests complement service, middleware, controller, and API tests. They do not replace them.
 
-## Security Requirements
+## 7. Security Requirements
 
 - Follow the principle of least privilege.
 - Deny access when authorization cannot be established, where required by the policy contract.
-- Do not trust client-supplied role or ownership claims without appropriate verification.
-- Do not expose sensitive personal information, document contents, payment details, credentials, or internal implementation details in errors.
-- Keep test fixtures synthetic and avoid real user records or production secrets.
+- Do not trust client-supplied roles or ownership claims without appropriate verification.
+- Prevent unauthorized changes to protected fields.
+- Avoid exposing sensitive personal information, document contents, payment details, credentials, or internal implementation details in errors.
+- Use synthetic fixtures; never include real customer records or production secrets.
 - Do not weaken production authorization rules merely to make tests pass.
+- Verify that denied operations do not cause unauthorized state changes when state changes are within the test’s scope.
 
-## Completion Checklist
+## 8. Completion Checklist
 
-Before considering a policy test file complete:
+A policy test file is complete when:
 
 - [ ] The corresponding policy implementation has been inspected.
 - [ ] Tests use the real exported API and established project conventions.
@@ -195,13 +215,13 @@ Before considering a policy test file complete:
 - [ ] The individual test file passes.
 - [ ] The complete policy test suite passes.
 
-## Maintenance
+A test that skips an essential authorization assertion or silently bypasses a missing implementation does not satisfy these criteria.
+
+## 9. Maintenance
 
 Update this README whenever policy test files are added, renamed, or removed, or when the policy architecture changes.
 
 Keep the inventory synchronized with the repository. Document implemented behavior rather than treating a filename or planned test scenario as proof of coverage.
-
-—
 
 **Directory:** `tests/unit/policies/`
 

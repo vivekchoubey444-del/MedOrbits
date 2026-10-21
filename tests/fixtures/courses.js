@@ -10,20 +10,9 @@
  *
  * Security:
  *   - Uses synthetic course data only.
- *   - Does not claim that an institution offers a course.
- *   - Does not invent real-world fees, admissions criteria, or recognition.
- *   - Separates public course payloads from server-managed fields.
- *
- * Usage:
- *   const {
- *     COURSE_STATUSES,
- *     COURSE_CATEGORIES,
- *     createCourse,
- *     createCoursePayload,
- *     createCourseSet,
- *     createInactiveCourse,
- *     createMassAssignmentPayload,
- *   } = require('../fixtures/courses');
+ *   - Does not assert real-world fees, admissions criteria, or recognition.
+ *   - Separates normal payload defaults from server-managed record fields.
+ *   - Does not create database records or establish permissions.
  */
 const COURSE_STATUSES = Object.freeze({
   DRAFT: 'draft',
@@ -110,20 +99,27 @@ const DEFAULT_COURSE = Object.freeze({
   createdAt: '2026-10-01T08:30:00.000Z',
   updatedAt: '2026-10-01T09:00:00.000Z',
 });
+/**
+ * Validate a plain object.
+ *
+ * @param {*} value
+ * @param {string} label
+ */
 function assertPlainObject(value, label) {
   if (
     value === null ||
     typeof value !== 'object' ||
-    Array.isArray(value) ||
-    (Object.getPrototypeOf(value) !== Object.prototype &&
-      Object.getPrototypeOf(value) !== null)
+    Array.isArray(value)
   ) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
     throw new TypeError(`${label} must be a plain object`);
   }
 }
 /**
- * Recursively copies arrays and plain objects.
- * Prevents nested fixture mutations from affecting later tests.
+ * Recursively clone arrays and plain objects.
  *
  * @param {*} value
  * @returns {*}
@@ -132,11 +128,8 @@ function clone(value) {
   if (Array.isArray(value)) {
     return value.map(clone);
   }
-  if (value && typeof value === 'object') {
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) {
-      throw new TypeError('Fixture values must contain plain objects only');
-    }
+  if (value !== null && typeof value === 'object') {
+    assertPlainObject(value, 'Fixture values');
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [key, clone(item)])
     );
@@ -144,12 +137,40 @@ function clone(value) {
   return value;
 }
 /**
- * Creates a fresh course record.
+ * Validate and copy an array of primitive values.
  *
- * Nested duration, eligibility, fees, and location objects are merged
- * with defaults when their overrides are provided.
+ * @param {*} value
+ * @param {string} label
+ * @returns {Array}
+ */
+function cloneArray(value, label) {
+  if (!Array.isArray(value)) {
+    throw new TypeError(`${label} must be an array`);
+  }
+  return clone(value);
+}
+/**
+ * Merge a nested plain-object field with its default.
  *
- * @param {object} [overrides]
+ * @param {object} base
+ * @param {*} overrides
+ * @param {string} label
+ * @returns {object}
+ */
+function mergeObject(base, overrides, label) {
+  assertPlainObject(overrides, label);
+  return {
+    ...clone(base),
+    ...clone(overrides),
+  };
+}
+/**
+ * Create a fresh course record.
+ *
+ * Nested objects are merged with their defaults. Array fields are copied
+ * so mutations do not leak between fixture instances.
+ *
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCourse(overrides = {}) {
@@ -164,51 +185,46 @@ function createCourse(overrides = {}) {
     'fees',
     'location',
   ]) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(overrides[field], `${field} overrides`);
-      course[field] = {
-        ...clone(DEFAULT_COURSE[field]),
-        ...clone(overrides[field]),
-      };
-    }
+    course[field] = overrides[field] === undefined
+      ? clone(DEFAULT_COURSE[field])
+      : mergeObject(
+          DEFAULT_COURSE[field],
+          overrides[field],
+          `${field} overrides`
+        );
   }
   for (const field of [
     'institutionIds',
     'languageOfInstruction',
   ]) {
-    if (overrides[field] !== undefined) {
-      if (!Array.isArray(overrides[field])) {
-        throw new TypeError(`${field} must be an array`);
-      }
-      course[field] = clone(overrides[field]);
-    }
+    course[field] = cloneArray(
+      overrides[field] === undefined
+        ? DEFAULT_COURSE[field]
+        : overrides[field],
+      field
+    );
   }
-  if (
-    overrides.eligibility &&
-    overrides.eligibility.requirements !== undefined &&
-    !Array.isArray(overrides.eligibility.requirements)
-  ) {
-    throw new TypeError('eligibility.requirements must be an array');
-  }
-  if (
-    overrides.eligibility &&
-    overrides.eligibility.entranceExams !== undefined &&
-    !Array.isArray(overrides.eligibility.entranceExams)
-  ) {
-    throw new TypeError('eligibility.entranceExams must be an array');
-  }
+  course.eligibility.requirements = cloneArray(
+    course.eligibility.requirements,
+    'eligibility.requirements'
+  );
+  course.eligibility.entranceExams = cloneArray(
+    course.eligibility.entranceExams,
+    'eligibility.entranceExams'
+  );
   return course;
 }
 /**
- * Creates a client-submittable course payload.
+ * Create a client-submittable course payload.
  *
- * Server-managed fields are intentionally excluded:
- *   id, code, status, isPublished, createdAt, updatedAt.
+ * Server-managed fields are excluded by default:
+ * id, code, status, isPublished, isFeatured, createdAt, updatedAt.
  *
- * Adapt this contract to the actual course creation API. Public catalog
- * clients should generally not be able to create or modify course records.
+ * Explicit overrides are supported for negative and security tests.
+ * Therefore, this helper does not prevent callers from adding server-managed
+ * fields. The API must independently enforce its accepted-field allowlist.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCoursePayload(overrides = {}) {
@@ -240,105 +256,123 @@ function createCoursePayload(overrides = {}) {
     'fees',
     'location',
   ]) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(overrides[field], `${field} payload overrides`);
-      payload[field] = {
-        ...clone(DEFAULT_COURSE[field]),
-        ...clone(overrides[field]),
-      };
-    }
+    payload[field] = overrides[field] === undefined
+      ? clone(DEFAULT_COURSE[field])
+      : mergeObject(
+          DEFAULT_COURSE[field],
+          overrides[field],
+          `${field} payload overrides`
+        );
   }
   for (const field of [
     'institutionIds',
     'languageOfInstruction',
   ]) {
-    if (overrides[field] !== undefined && !Array.isArray(overrides[field])) {
-      throw new TypeError(`${field} must be an array`);
-    }
+    payload[field] = cloneArray(
+      overrides[field] === undefined
+        ? DEFAULT_COURSE[field]
+        : overrides[field],
+      field
+    );
   }
+  payload.eligibility.requirements = cloneArray(
+    payload.eligibility.requirements,
+    'eligibility.requirements'
+  );
+  payload.eligibility.entranceExams = cloneArray(
+    payload.eligibility.entranceExams,
+    'eligibility.entranceExams'
+  );
   return payload;
 }
 /**
- * Creates several course records with unique identifiers.
+ * Create multiple courses with unique generated identities.
+ *
+ * Generated IDs, codes, slugs, and titles remain unique even when common
+ * overrides are supplied.
  *
  * @param {number} [count=3]
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object[]}
  */
 function createCourseSet(count = 3, overrides = {}) {
   if (!Number.isInteger(count) || count < 0 || count > 1000) {
-    throw new RangeError('Course count must be an integer from 0 to 1000');
+    throw new RangeError(
+      'Course count must be an integer from 0 to 1000'
+    );
   }
   assertPlainObject(overrides, 'Course set overrides');
+  const commonOverrides = clone(overrides);
+  // This factory controls these generated identity fields.
+  delete commonOverrides.id;
+  delete commonOverrides.code;
+  delete commonOverrides.slug;
+  delete commonOverrides.title;
   return Array.from({ length: count }, (_, index) => {
     const sequence = String(index + 1).padStart(4, '0');
-    const course = createCourse({
-      ...clone(overrides),
+    return createCourse({
+      ...commonOverrides,
       id: `course_test_${sequence}`,
       code: `MO-COURSE-TEST-${sequence}`,
       slug: `test-course-${sequence}`,
       title: `Test Course ${index + 1}`,
     });
-    return course;
   });
 }
 /**
- * Creates a draft course.
+ * Create a draft course.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createDraftCourse(overrides = {}) {
   assertPlainObject(overrides, 'Draft course overrides');
   return createCourse({
+    ...clone(overrides),
     status: COURSE_STATUSES.DRAFT,
     isPublished: false,
-    ...clone(overrides),
   });
 }
 /**
- * Creates an inactive course.
+ * Create an inactive course.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createInactiveCourse(overrides = {}) {
   assertPlainObject(overrides, 'Inactive course overrides');
   return createCourse({
+    ...clone(overrides),
     id: 'course_test_inactive_0001',
     slug: 'test-inactive-course',
     code: 'MO-COURSE-TEST-INACTIVE-0001',
     title: 'Test Inactive Course',
     status: COURSE_STATUSES.INACTIVE,
     isPublished: false,
-    ...clone(overrides),
   });
 }
 /**
- * Creates an archived course.
+ * Create an archived course.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createArchivedCourse(overrides = {}) {
   assertPlainObject(overrides, 'Archived course overrides');
   return createCourse({
+    ...clone(overrides),
     id: 'course_test_archived_0001',
     slug: 'test-archived-course',
     code: 'MO-COURSE-TEST-ARCHIVED-0001',
     title: 'Test Archived Course',
     status: COURSE_STATUSES.ARCHIVED,
     isPublished: false,
-    ...clone(overrides),
   });
 }
 /**
- * Creates a deliberately hostile payload for mass-assignment tests.
+ * Create a deliberately hostile payload for mass-assignment tests.
  *
- * Tests should verify that server-managed fields are rejected or ignored
- * according to the actual API contract.
- *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createMassAssignmentPayload(overrides = {}) {
@@ -358,12 +392,12 @@ function createMassAssignmentPayload(overrides = {}) {
   };
 }
 /**
- * Creates a course with a selected status.
+ * Create a course with a selected status.
  *
- * This helper does not verify workflow transition rules.
+ * This helper does not enforce valid workflow transitions.
  *
  * @param {string} status
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCourseWithStatus(status, overrides = {}) {
@@ -372,16 +406,16 @@ function createCourseWithStatus(status, overrides = {}) {
   }
   assertPlainObject(overrides, 'Course status overrides');
   return createCourse({
-    status,
     ...clone(overrides),
+    status,
   });
 }
 /**
- * Creates synthetic course fee metadata.
+ * Create synthetic course fee metadata.
  *
  * A null amount avoids implying an actual institution's current fees.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCourseFees(overrides = {}) {
@@ -395,17 +429,16 @@ function createCourseFees(overrides = {}) {
   };
 }
 /**
- * Creates synthetic eligibility metadata.
+ * Create synthetic eligibility metadata.
  *
- * Requirements are intentionally empty by default. Do not treat this fixture
- * as an authoritative admission eligibility statement.
+ * This is not an authoritative admission eligibility statement.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCourseEligibility(overrides = {}) {
   assertPlainObject(overrides, 'Course eligibility overrides');
-  return {
+  const eligibility = {
     summary: 'Synthetic eligibility summary for testing only.',
     requirements: [],
     entranceExams: [],
@@ -413,6 +446,15 @@ function createCourseEligibility(overrides = {}) {
     maximumAge: null,
     ...clone(overrides),
   };
+  eligibility.requirements = cloneArray(
+    eligibility.requirements,
+    'eligibility.requirements'
+  );
+  eligibility.entranceExams = cloneArray(
+    eligibility.entranceExams,
+    'eligibility.entranceExams'
+  );
+  return eligibility;
 }
 module.exports = {
   COURSE_STATUSES,

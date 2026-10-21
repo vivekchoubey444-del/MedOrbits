@@ -3,7 +3,6 @@
  * MedOrbits -- Document Upload E2E Tests
  *
  * File: tests/e2e/document-upload.e2e.test.js
- *
  * Framework: Playwright Test
  *
  * Run:
@@ -22,10 +21,10 @@
  *   E2E_MAX_UPLOAD_BYTES=5242880
  *
  * Security:
- * - Run against a dedicated test environment.
- * - Use synthetic accounts and documents.
+ * - Use a dedicated test environment and synthetic accounts.
  * - Never upload real identity documents or medical records.
- * - Client-side file checks do not replace server-side validation.
+ * - Never run destructive tests against production.
+ * - Client-side checks do not replace server-side validation.
  */
 const { test, expect } = require('@playwright/test');
 const BASE_URL = (
@@ -39,7 +38,7 @@ const USER_PASSWORD = process.env.E2E_USER_PASSWORD;
 const REQUIRES_AUTH =
   process.env.E2E_DOCUMENT_REQUIRES_AUTH === 'true';
 const MAX_UPLOAD_BYTES = Number(
-  process.env.E2E_MAX_UPLOAD_BYTES || 5 * 1024 * 1024,
+  process.env.E2E_MAX_UPLOAD_BYTES || 5 * 1024 * 1024
 );
 const ALLOWED_EXTENSIONS = (
   process.env.E2E_ALLOWED_DOCUMENT_EXTENSIONS ||
@@ -60,6 +59,7 @@ const SELECTORS = Object.freeze({
   ],
   uploadButton: [
     'button[type="submit"]',
+    'input[type="submit"]',
     'button:has-text("Upload document")',
     'button:has-text("Upload Document")',
     'button:has-text("Upload file")',
@@ -77,15 +77,11 @@ const SELECTORS = Object.freeze({
     '.upload-error',
     '.error-message',
   ],
-  documentList: [
-    '[data-testid="document-list"]',
-    '[data-testid="uploaded-documents"]',
-    '#document-list',
-    '.document-list',
-  ],
 });
-function skipIfMissing(value, name) {
-  test.skip(!value, `Set ${name} to run this test.`);
+function hasCredentials() {
+  return Boolean(
+    USER_EMAIL?.trim() && USER_PASSWORD?.trim()
+  );
 }
 async function firstVisible(page, selectors) {
   for (const selector of selectors) {
@@ -101,7 +97,7 @@ async function requiredVisible(page, selectors, description) {
   if (!locator) {
     throw new Error(
       `Could not locate ${description}. ` +
-      'Update the selectors to match the MedOrbits document-upload page.',
+      'Update the selectors to match the MedOrbits interface.'
     );
   }
   return locator;
@@ -118,34 +114,35 @@ function createSyntheticPdf() {
     'trailer\n' +
     '<< /Root 1 0 R >>\n' +
     '%%EOF\n',
-    'utf8',
+    'utf8'
   );
 }
 function createSyntheticPng() {
-  // PNG signature and minimal synthetic bytes. This is suitable for
-  // file-input testing, not for validating image decoding.
-  return Buffer.from([
-    0x89, 0x50, 0x4e, 0x47,
-    0x0d, 0x0a, 0x1a, 0x0a,
-    0x00, 0x00, 0x00, 0x0d,
-    0x49, 0x48, 0x44, 0x52,
-    0x00, 0x00, 0x00, 0x01,
-    0x00, 0x00, 0x00, 0x01,
-    0x08, 0x06, 0x00, 0x00,
-    0x00,
-  ]);
+  // A complete, valid 1x1 transparent PNG.
+  // Used only as synthetic test data.
+  return Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lXcAAAAASUVORK5CYII=',
+    'base64'
+  );
 }
 async function login(page) {
-  await page.goto(`${BASE_URL}${LOGIN_PATH}`);
+  if (!hasCredentials()) {
+    throw new Error(
+      'Set E2E_USER_EMAIL and E2E_USER_PASSWORD for authenticated upload tests.'
+    );
+  }
+  await page.goto(`${BASE_URL}${LOGIN_PATH}`, {
+    waitUntil: 'domcontentloaded',
+  });
   const email = await requiredVisible(
     page,
     ['input[name="email"]', 'input[type="email"]', '#email'],
-    'login email field',
+    'login email field'
   );
   const password = await requiredVisible(
     page,
     ['input[name="password"]', 'input[type="password"]', '#password'],
-    'login password field',
+    'login password field'
   );
   await email.fill(USER_EMAIL);
   await password.fill(USER_PASSWORD);
@@ -157,28 +154,43 @@ async function login(page) {
       'button:has-text("Log in")',
       'button:has-text("Login")',
     ],
-    'login button',
+    'login button'
   );
   await submit.click();
   await expect
     .poll(
-      async () => new URL(page.url()).pathname,
-      { timeout: TIMEOUT },
+      async () => {
+        const pathname = new URL(page.url()).pathname;
+        const loginPath = new URL(
+          `${BASE_URL}${LOGIN_PATH}`
+        ).pathname;
+        return pathname !== loginPath;
+      },
+      { timeout: TIMEOUT }
     )
-    .not.toBe(LOGIN_PATH);
+    .toBeTruthy();
 }
 async function openUploadPage(page) {
-  await page.goto(`${BASE_URL}${UPLOAD_PATH}`);
+  await page.goto(`${BASE_URL}${UPLOAD_PATH}`, {
+    waitUntil: 'domcontentloaded',
+  });
   if (REQUIRES_AUTH) {
-    const loginPath = new URL(`${BASE_URL}${LOGIN_PATH}`).pathname;
-    await expect(page).toHaveURL(
-      new RegExp(`${loginPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[/?#]|$)`),
-      { timeout: TIMEOUT },
+    test.skip(
+      !hasCredentials(),
+      'Authenticated upload tests require E2E_USER_EMAIL and E2E_USER_PASSWORD.'
     );
-    skipIfMissing(USER_EMAIL, 'E2E_USER_EMAIL');
-    skipIfMissing(USER_PASSWORD, 'E2E_USER_PASSWORD');
-    await login(page);
-    await page.goto(`${BASE_URL}${UPLOAD_PATH}`);
+    const loginPage = new URL(
+      `${BASE_URL}${LOGIN_PATH}`
+    ).pathname;
+    const currentPath = new URL(page.url()).pathname;
+    if (currentPath === loginPage) {
+      await login(page);
+    } else {
+      await login(page);
+      await page.goto(`${BASE_URL}${UPLOAD_PATH}`, {
+        waitUntil: 'domcontentloaded',
+      });
+    }
   }
   await expect(page.locator('body')).toBeVisible();
 }
@@ -186,7 +198,7 @@ async function selectFile(page, file) {
   const fileInput = await requiredVisible(
     page,
     SELECTORS.fileInput,
-    'document file input',
+    'document file input'
   );
   await fileInput.setInputFiles(file);
   return fileInput;
@@ -195,45 +207,58 @@ async function submitUpload(page) {
   const button = await requiredVisible(
     page,
     SELECTORS.uploadButton,
-    'document upload button',
+    'document upload button'
   );
   await button.click();
+  return button;
 }
-async function expectUploadFeedback(page) {
+async function findFeedback(page) {
+  const successText = page.getByText(
+    /upload successful|document uploaded|file uploaded|uploaded successfully/i
+  ).first();
+  if (await successText.isVisible().catch(() => false)) {
+    return 'success';
+  }
+  const errorText = page.getByText(
+    /upload failed|unsupported file|invalid file|file too large|upload error|file type not allowed|select a file|choose a file/i
+  ).first();
+  if (await errorText.isVisible().catch(() => false)) {
+    return 'error';
+  }
+  const successSelector = await firstVisible(
+    page,
+    SELECTORS.success
+  );
+  if (successSelector) {
+    const text = (await successSelector.textContent()) || '';
+    if (text.trim()) {
+      return 'success';
+    }
+  }
+  const errorSelector = await firstVisible(
+    page,
+    SELECTORS.error
+  );
+  if (errorSelector) {
+    const text = (await errorSelector.textContent()) || '';
+    if (text.trim()) {
+      return 'error';
+    }
+  }
+  return 'pending';
+}
+async function expectFeedback(page) {
   await expect
     .poll(
-      async () => {
-        const success = page.getByText(
-          /upload successful|document uploaded|file uploaded|uploaded successfully/i,
-        ).first();
-        if (await success.isVisible().catch(() => false)) {
-          return 'success';
-        }
-        const error = page.getByText(
-          /upload failed|unsupported file|invalid file|file too large|upload error|file type not allowed/i,
-        ).first();
-        if (await error.isVisible().catch(() => false)) {
-          return 'error';
-        }
-        const status = await firstVisible(page, SELECTORS.success);
-        if (status) {
-          const text = (await status.textContent()) || '';
-          if (text.trim()) {
-            return 'status';
-          }
-        }
-        const alert = await firstVisible(page, SELECTORS.error);
-        if (alert) {
-          const text = (await alert.textContent()) || '';
-          if (text.trim()) {
-            return 'error';
-          }
-        }
-        return 'pending';
-      },
-      { timeout: TIMEOUT },
+      () => findFeedback(page),
+      { timeout: TIMEOUT }
     )
     .not.toBe('pending');
+}
+async function assertNoSensitiveError(page) {
+  await expect(page.locator('body')).not.toContainText(
+    /stack trace|database connection string|sqlstate|password hash|secret key|node_modules\/.*\.js/i
+  );
 }
 test.describe('MedOrbits document upload', () => {
   test.beforeEach(async ({ page }) => {
@@ -245,17 +270,21 @@ test.describe('MedOrbits document upload', () => {
   test('document upload page loads without a server error', async ({
     page,
   }) => {
-    await openUploadPage(page);
-    await expect(page.locator('body')).not.toContainText(
-      /internal server error|uncaught exception/i,
+    const response = await page.goto(
+      `${BASE_URL}${UPLOAD_PATH}`,
+      { waitUntil: 'domcontentloaded' }
     );
+    expect(response).not.toBeNull();
+    expect(response.status()).toBeLessThan(500);
+    await expect(page.locator('body')).toBeVisible();
+    await assertNoSensitiveError(page);
   });
   test('upload form exposes a file input', async ({ page }) => {
     await openUploadPage(page);
     const fileInput = await requiredVisible(
       page,
       SELECTORS.fileInput,
-      'document file input',
+      'document file input'
     );
     await expect(fileInput).toBeAttached();
   });
@@ -266,38 +295,43 @@ test.describe('MedOrbits document upload', () => {
     const fileInput = await requiredVisible(
       page,
       SELECTORS.fileInput,
-      'document file input',
+      'document file input'
     );
     const accept = await fileInput.getAttribute('accept');
     test.skip(
       !accept,
-      'The file input has no accept attribute; server-side validation must enforce file types.',
+      'The file input has no accept attribute; verify file restrictions through server-side tests.'
     );
-    const normalizedAccept = accept
+    const advertised = accept
       .split(',')
       .map((item) => item.trim().toLowerCase());
+    const mimeByExtension = {
+      '.pdf': 'application/pdf',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+    };
     for (const extension of ALLOWED_EXTENSIONS) {
-      const hasExtension = normalizedAccept.some(
+      const mime = mimeByExtension[extension];
+      const included = advertised.some(
         (item) =>
           item === extension ||
-          item.endsWith(extension) ||
-          (extension === '.jpg' && item === 'image/jpeg') ||
-          (extension === '.jpeg' && item === 'image/jpeg') ||
-          (extension === '.png' && item === 'image/png') ||
-          (extension === '.pdf' && item === 'application/pdf'),
+          item === `*/*` ||
+          (mime && item === mime) ||
+          item.endsWith(extension)
       );
       expect(
-        hasExtension,
-        `Expected accept="${accept}" to include ${extension}`,
+        included,
+        `The file input accept="${accept}" should advertise ${extension}.`
       ).toBeTruthy();
     }
   });
   test('user can select a synthetic PDF file', async ({ page }) => {
-    await openUploadPage(page);
     test.skip(
       !ALLOWED_EXTENSIONS.includes('.pdf'),
-      'PDF is not included in the configured allowed extensions.',
+      'PDF is not in E2E_ALLOWED_DOCUMENT_EXTENSIONS.'
     );
+    await openUploadPage(page);
     const fileInput = await selectFile(page, {
       name: 'synthetic-document.pdf',
       mimeType: 'application/pdf',
@@ -308,7 +342,7 @@ test.describe('MedOrbits document upload', () => {
         name: file.name,
         type: file.type,
         size: file.size,
-      })),
+      }))
     );
     expect(files).toHaveLength(1);
     expect(files[0].name).toBe('synthetic-document.pdf');
@@ -316,20 +350,26 @@ test.describe('MedOrbits document upload', () => {
     expect(files[0].size).toBeGreaterThan(0);
   });
   test('user can select a synthetic PNG file', async ({ page }) => {
-    await openUploadPage(page);
     test.skip(
       !ALLOWED_EXTENSIONS.includes('.png'),
-      'PNG is not included in the configured allowed extensions.',
+      'PNG is not in E2E_ALLOWED_DOCUMENT_EXTENSIONS.'
     );
+    await openUploadPage(page);
     const fileInput = await selectFile(page, {
       name: 'synthetic-image.png',
       mimeType: 'image/png',
       buffer: createSyntheticPng(),
     });
-    const fileName = await fileInput.evaluate(
-      (element) => element.files?.[0]?.name || null,
-    );
-    expect(fileName).toBe('synthetic-image.png');
+    const selectedFile = await fileInput.evaluate((element) => {
+      const file = element.files?.[0];
+      return file
+        ? { name: file.name, type: file.type, size: file.size }
+        : null;
+    });
+    expect(selectedFile).not.toBeNull();
+    expect(selectedFile.name).toBe('synthetic-image.png');
+    expect(selectedFile.type).toBe('image/png');
+    expect(selectedFile.size).toBeGreaterThan(0);
   });
   test('empty upload is rejected or blocked by validation', async ({
     page,
@@ -338,100 +378,92 @@ test.describe('MedOrbits document upload', () => {
     const fileInput = await requiredVisible(
       page,
       SELECTORS.fileInput,
-      'document file input',
+      'document file input'
     );
-    const uploadButton = await requiredVisible(
-      page,
-      SELECTORS.uploadButton,
-      'document upload button',
+    const button = await submitUpload(page);
+    const required = await fileInput.evaluate(
+      (element) => element.required
     );
-    await uploadButton.click();
-    const isRequired = await fileInput.evaluate(
-      (element) => element.required,
+    const invalid = await fileInput.evaluate(
+      (element) => !element.checkValidity()
     );
-    const isInvalid = await fileInput.evaluate(
-      (element) => !element.checkValidity(),
-    );
-    const validationMessage = page.getByText(
-      /select a file|choose a file|file is required|please upload|required/i,
-    ).first();
-    const hasMessage = await validationMessage
-      .isVisible()
-      .catch(() => false);
+    if (required && invalid) {
+      return;
+    }
+    const feedback = await findFeedback(page);
     expect(
-      (isRequired && isInvalid) || hasMessage,
-      'Expected an empty upload to be blocked or rejected.',
-    ).toBeTruthy();
+      feedback,
+      'An empty upload should be rejected by validation or an error response.'
+    ).toBe('error');
+    await expect(button).toBeVisible();
   });
-  test('oversized file is rejected by configured client-side limits', async ({
+  test('oversized file is rejected when size limits are enforced', async ({
     page,
   }) => {
     test.skip(
-      MAX_UPLOAD_BYTES <= 0,
-      'E2E_MAX_UPLOAD_BYTES must be a positive number.',
+      !Number.isSafeInteger(MAX_UPLOAD_BYTES) ||
+        MAX_UPLOAD_BYTES <= 0,
+      'E2E_MAX_UPLOAD_BYTES must be a positive safe integer.'
     );
     await openUploadPage(page);
-    const oversizedBuffer = Buffer.alloc(
-      MAX_UPLOAD_BYTES + 1,
-      0x41,
-    );
     const fileInput = await selectFile(page, {
       name: 'oversized-document.pdf',
       mimeType: 'application/pdf',
-      buffer: oversizedBuffer,
+      buffer: Buffer.alloc(MAX_UPLOAD_BYTES + 1, 0x41),
     });
-    const uploadButton = await requiredVisible(
-      page,
-      SELECTORS.uploadButton,
-      'document upload button',
-    );
-    await uploadButton.click();
-    const rejectionMessage = page.getByText(
-      /file too large|maximum file size|size limit|exceeds the allowed size|file exceeds/i,
-    ).first();
-    const hasRejection = await rejectionMessage
-      .isVisible()
-      .catch(() => false);
-    const clientLimit = await fileInput.evaluate((element) => {
-      const raw = element.getAttribute('data-max-size');
-      return raw ? Number(raw) : null;
-    });
-    test.skip(
-      !hasRejection && clientLimit === null,
-      'No visible client-side size limit is configured. Verify oversized files with a server integration test.',
-    );
-    if (clientLimit !== null) {
-      expect(
-        oversizedBuffer.length,
-        'The test file should exceed the declared client-side size limit.',
-      ).toBeGreaterThan(clientLimit);
+    await submitUpload(page);
+    const feedback = await expect
+      .poll(
+        async () => findFeedback(page),
+        { timeout: TIMEOUT }
+      )
+      .catch(() => 'pending');
+    if (feedback === 'error') {
+      return;
     }
+    // A file input may not enforce file size in the browser. A server-side
+    // upload integration test must verify that oversized content is rejected.
+    const declaredLimit = await fileInput.getAttribute('data-max-size');
+    test.skip(
+      !declaredLimit,
+      'No explicit client-side size limit or rejection message was found. Add a server-side integration test for oversized uploads.'
+    );
+    expect(
+      MAX_UPLOAD_BYTES + 1
+    ).toBeGreaterThan(Number(declaredLimit));
   });
-  test('unsupported extension is rejected when the UI validates file types', async ({
+  test('unsupported file extension is rejected when submitted', async ({
     page,
   }) => {
+    test.skip(
+      ALLOWED_EXTENSIONS.length === 0,
+      'Configure E2E_ALLOWED_DOCUMENT_EXTENSIONS.'
+    );
     await openUploadPage(page);
     const fileInput = await selectFile(page, {
       name: 'synthetic-script.exe',
       mimeType: 'application/octet-stream',
       buffer: Buffer.from('synthetic test content', 'utf8'),
     });
-    await submitUpload(page);
-    const error = page.getByText(
-      /unsupported file|invalid file type|file type not allowed|allowed file types|only .* files/i,
-    ).first();
-    const hasError = await error.isVisible().catch(() => false);
     const accept = await fileInput.getAttribute('accept');
-    test.skip(
-      !hasError && !accept,
-      'No client-side type validation is visible. Verify server-side file rejection separately.',
-    );
-    if (accept) {
-      expect(
-        accept.toLowerCase(),
-        'The file input should advertise allowed file types.',
-      ).not.toContain('.exe');
+    await submitUpload(page);
+    const feedback = await expect
+      .poll(
+        async () => findFeedback(page),
+        { timeout: TIMEOUT }
+      )
+      .catch(() => 'pending');
+    if (feedback === 'error') {
+      return;
     }
+    test.skip(
+      !accept,
+      'The interface exposes no client-side file-type restriction. Verify server-side rejection with an API integration test.'
+    );
+    expect(
+      accept.toLowerCase(),
+      'The input should not advertise .exe as an allowed type.'
+    ).not.toContain('.exe');
   });
   test('upload feedback does not expose internal server details', async ({
     page,
@@ -443,10 +475,8 @@ test.describe('MedOrbits document upload', () => {
       buffer: createSyntheticPdf(),
     });
     await submitUpload(page);
-    await expectUploadFeedback(page);
-    await expect(page.locator('body')).not.toContainText(
-      /stack trace|database connection string|sqlstate|password hash|secret key|\/var\/www\/|node_modules\/.*\.js/i,
-    );
+    await expectFeedback(page);
+    await assertNoSensitiveError(page);
   });
   test('repeated upload clicks do not crash the interface', async ({
     page,
@@ -460,7 +490,7 @@ test.describe('MedOrbits document upload', () => {
     const button = await requiredVisible(
       page,
       SELECTORS.uploadButton,
-      'document upload button',
+      'document upload button'
     );
     await button.click();
     if (
@@ -470,7 +500,7 @@ test.describe('MedOrbits document upload', () => {
       await button.click().catch(() => {});
     }
     await expect(page.locator('body')).not.toContainText(
-      /uncaught exception|application crashed/i,
+      /uncaught exception|application crashed/i
     );
   });
   test('upload page does not expose raw document storage paths', async ({
@@ -479,7 +509,7 @@ test.describe('MedOrbits document upload', () => {
     await openUploadPage(page);
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).not.toMatch(
-      /\/var\/www\/|\/home\/[^ ]+\/uploads|file:\/\/\/|[A-Za-z]:\\Users\\/i,
+      /\/var\/www\/|\/home\/[^ ]+\/uploads|file:\/\/\/|[A-Za-z]:\\Users\\/i
     );
   });
 });

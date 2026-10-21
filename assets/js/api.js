@@ -1,33 +1,13 @@
 
-/**
- * MedOrbits -- Central API Client
- * File: assets/js/api.js
- *
- * Responsibilities:
- * - Centralized HTTP requests
- * - JSON request and response handling
- * - Authentication and CSRF hooks
- * - Request timeouts and cancellation
- * - Consistent API errors
- * - Query parameters and pagination support
- * - File uploads using FormData
- * - Safe integration with the MedOrbits backend
- *
- * Dependencies: None
- * Runtime: Browser, modern JavaScript
- *
- * Security:
- * - Never store authentication secrets in this module.
- * - Never trust client-side authorization.
- * - The server must enforce authentication and permissions.
- */
-
-(() => {
+/* =========================================================
+   MedOrbits -- assets/js/api.js
+   Central API client for MedOrbits
+   Version: 1.1.0
+   Runtime: Modern browsers
+   Dependencies: None
+   ========================================================= */
+(function (window, document) {
   "use strict";
-
-  // --------------------------------------------------
-  // Configuration
-  // --------------------------------------------------
 
   const DEFAULTS = Object.freeze({
     baseURL:
@@ -47,17 +27,18 @@
     })
   });
 
-  const SAFE_METHODS = new Set([
-    "GET",
-    "HEAD",
-    "OPTIONS"
+  const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+  const VALID_CREDENTIALS = new Set([
+    "omit",
+    "same-origin",
+    "include"
   ]);
-
   const BODYLESS_STATUSES = new Set([204, 205, 304]);
+  const MAX_ERROR_MESSAGE_LENGTH = 1000;
 
   let config = {
     ...DEFAULTS,
-    headers: { ...DEFAULTS.headers },
+    headers: new Headers(DEFAULTS.headers),
     csrf: { ...DEFAULTS.csrf }
   };
 
@@ -67,13 +48,9 @@
   let responseInterceptor = null;
   let errorInterceptor = null;
 
-  // --------------------------------------------------
-  // API error class
-  // --------------------------------------------------
-
   class APIError extends Error {
     constructor(message, options = {}) {
-      super(message);
+      super(String(message || "API request failed."));
 
       this.name = "APIError";
       this.status = options.status ?? 0;
@@ -85,11 +62,12 @@
       this.isNetworkError = options.isNetworkError === true;
       this.isTimeout = options.isTimeout === true;
       this.isAborted = options.isAborted === true;
+      this.retryAfter = options.retryAfter ?? null;
     }
   }
 
   // --------------------------------------------------
-  // Utility functions
+  // Validation and utilities
   // --------------------------------------------------
 
   const utils = {
@@ -104,128 +82,6 @@
         prototype === Object.prototype ||
         prototype === null
       );
-    },
-
-    normalizeBaseURL(value) {
-      const base = String(value || "/api/v1").trim();
-
-      if (!base) {
-        throw new TypeError("API base URL cannot be empty.");
-      }
-
-      if (/^[a-z][a-z\d+.-]*:/i.test(base) && typeof window !== "undefined") {
-        const parsed = new URL(base);
-
-        if (!["http:", "https:"].includes(parsed.protocol)) {
-          throw new TypeError("API URL must use HTTP or HTTPS.");
-        }
-
-        if (parsed.origin !== window.location.origin && parsed.protocol !== "https:") {
-          throw new TypeError("Cross-origin API URLs must use HTTPS.");
-        }
-
-        return parsed.href.replace(/\/+$/, "");
-      }
-
-      if (!base.startsWith("/")) {
-        throw new TypeError(
-          "Use an absolute site path such as /api or a valid API URL."
-        );
-      }
-
-      return base.replace(/\/+$/, "");
-    },
-
-    buildURL(path, params) {
-      if (typeof path !== "string" || !path.trim()) {
-        throw new TypeError("An API endpoint path is required.");
-      }
-
-      const normalizedPath = path.trim();
-
-      if (/^[a-z][a-z\d+.-]*:/i.test(normalizedPath) ||
-          normalizedPath.startsWith("//")) {
-        throw new TypeError(
-          "Pass an API path, not an arbitrary external URL."
-        );
-      }
-
-      if (normalizedPath.includes("\\") ||
-          normalizedPath.includes("\0")) {
-        throw new TypeError("Invalid API endpoint path.");
-      }
-
-      const base = config.baseURL.replace(/\/+$/, "");
-      const endpoint = normalizedPath.replace(/^\/+/, "");
-
-      const url = new URL(
-        `${base}/${endpoint}`,
-        window.location.origin
-      );
-
-      if (url.origin !== window.location.origin) {
-        const configuredOrigin = new URL(
-          config.baseURL,
-          window.location.origin
-        ).origin;
-
-        if (url.origin !== configuredOrigin) {
-          throw new TypeError("API endpoint origin mismatch.");
-        }
-      }
-
-      if (params) {
-        const entries = params instanceof URLSearchParams
-          ? params.entries()
-          : Object.entries(params);
-
-        for (const [key, value] of entries) {
-          if (value === undefined || value === null) {
-            continue;
-          }
-
-          if (Array.isArray(value)) {
-            url.searchParams.delete(key);
-
-            value.forEach((item) => {
-              if (item !== undefined && item !== null) {
-                url.searchParams.append(key, String(item));
-              }
-            });
-          } else {
-            url.searchParams.set(key, String(value));
-          }
-        }
-      }
-
-      return url;
-    },
-
-    getCookie(name) {
-      if (typeof document === "undefined") return null;
-
-      const prefix = `${encodeURIComponent(name)}=`;
-
-      const entry = document.cookie
-        .split(";")
-        .map((item) => item.trim())
-        .find((item) => item.startsWith(prefix));
-
-      if (!entry) return null;
-
-      try {
-        return decodeURIComponent(entry.slice(prefix.length));
-      } catch {
-        return entry.slice(prefix.length);
-      }
-    },
-
-    getMetaContent(name) {
-      if (typeof document === "undefined") return null;
-
-      return document
-        .querySelector(`meta[name="${name}"]`)
-        ?.getAttribute("content") || null;
     },
 
     isFormData(value) {
@@ -249,16 +105,190 @@
         this.isFormData(value) ||
         this.isBlob(value) ||
         this.isURLSearchParams(value) ||
-        (typeof ArrayBuffer !== "undefined" &&
-          (value instanceof ArrayBuffer ||
-            ArrayBuffer.isView(value))) ||
-        (typeof ReadableStream !== "undefined" &&
-          value instanceof ReadableStream)
+        (
+          typeof ArrayBuffer !== "undefined" &&
+          (
+            value instanceof ArrayBuffer ||
+            ArrayBuffer.isView(value)
+          )
+        ) ||
+        (
+          typeof ReadableStream !== "undefined" &&
+          value instanceof ReadableStream
+        )
       );
     },
 
+    normalizeBaseURL(value) {
+      const base = String(value || "/api/v1").trim();
+
+      if (!base || /[\u0000-\u001F\u007F]/.test(base)) {
+        throw new TypeError("Invalid API base URL.");
+      }
+
+      if (/^[a-z][a-z\d+.-]*:/i.test(base)) {
+        let parsed;
+
+        try {
+          parsed = new URL(base);
+        } catch {
+          throw new TypeError("Invalid API base URL.");
+        }
+
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          throw new TypeError("API URLs must use HTTP or HTTPS.");
+        }
+
+        if (parsed.username || parsed.password) {
+          throw new TypeError(
+            "API URLs must not contain embedded credentials."
+          );
+        }
+
+        if (
+          typeof window !== "undefined" &&
+          parsed.origin !== window.location.origin &&
+          parsed.protocol !== "https:"
+        ) {
+          throw new TypeError(
+            "Cross-origin API URLs must use HTTPS."
+          );
+        }
+
+        return parsed.href.replace(/\/+$/, "");
+      }
+
+      if (!base.startsWith("/") || base.startsWith("//")) {
+        throw new TypeError(
+          "Use a root-relative path such as /api/v1 or a valid API URL."
+        );
+      }
+
+      const parsed = new URL(base, window.location.origin);
+
+      if (parsed.origin !== window.location.origin) {
+        throw new TypeError("Invalid API base URL origin.");
+      }
+
+      return parsed.pathname.replace(/\/+$/, "") || "/";
+    },
+
+    buildURL(path, params) {
+      if (typeof path !== "string" || !path.trim()) {
+        throw new TypeError("An API endpoint path is required.");
+      }
+
+      const endpoint = path.trim();
+
+      if (
+        /^[a-z][a-z\d+.-]*:/i.test(endpoint) ||
+        endpoint.startsWith("//") ||
+        endpoint.includes("\\") ||
+        /[\u0000-\u001F\u007F]/.test(endpoint)
+      ) {
+        throw new TypeError("Invalid API endpoint path.");
+      }
+
+      let decodedEndpoint;
+
+      try {
+        decodedEndpoint = decodeURIComponent(endpoint);
+      } catch {
+        throw new TypeError("Invalid URL encoding in API path.");
+      }
+
+      if (
+        decodedEndpoint.startsWith("//") ||
+        decodedEndpoint.includes("\\") ||
+        /[\u0000-\u001F\u007F]/.test(decodedEndpoint)
+      ) {
+        throw new TypeError("Invalid API endpoint path.");
+      }
+
+      const base = config.baseURL.replace(/\/+$/, "");
+      const relativePath = endpoint.replace(/^\/+/, "");
+
+      const url = new URL(
+        `${base}/${relativePath}`,
+        window.location.origin
+      );
+
+      const configuredOrigin = new URL(
+        config.baseURL,
+        window.location.origin
+      ).origin;
+
+      if (
+        url.origin !== configuredOrigin &&
+        url.origin !== window.location.origin
+      ) {
+        throw new TypeError("API endpoint origin mismatch.");
+      }
+
+      if (params != null) {
+        const entries = params instanceof URLSearchParams
+          ? params.entries()
+          : Object.entries(params);
+
+        for (const [key, value] of entries) {
+          if (value === undefined || value === null) {
+            continue;
+          }
+
+          url.searchParams.delete(key);
+
+          const values = Array.isArray(value) ? value : [value];
+
+          values.forEach(item => {
+            if (item !== undefined && item !== null) {
+              url.searchParams.append(key, String(item));
+            }
+          });
+        }
+      }
+
+      return url;
+    },
+
+    getCookie(name) {
+      if (!document || !document.cookie) {
+        return null;
+      }
+
+      const prefix = `${encodeURIComponent(name)}=`;
+
+      const entry = document.cookie
+        .split(";")
+        .map(item => item.trim())
+        .find(item => item.startsWith(prefix));
+
+      if (!entry) {
+        return null;
+      }
+
+      try {
+        return decodeURIComponent(entry.slice(prefix.length));
+      } catch {
+        return entry.slice(prefix.length);
+      }
+    },
+
+    getMetaContent(name) {
+      if (!name || !document) {
+        return null;
+      }
+
+      const meta = Array.from(
+        document.querySelectorAll("meta[name]")
+      ).find(item => item.getAttribute("name") === name);
+
+      return meta?.getAttribute("content") || null;
+    },
+
     parseRetryAfter(value) {
-      if (!value) return null;
+      if (!value) {
+        return null;
+      }
 
       const seconds = Number(value);
 
@@ -271,6 +301,12 @@
       return Number.isNaN(date)
         ? null
         : Math.max(0, (date - Date.now()) / 1000);
+    },
+
+    assertInterceptor(value, name) {
+      if (value !== null && typeof value !== "function") {
+        throw new TypeError(`${name} must be a function or null.`);
+      }
     }
   };
 
@@ -280,7 +316,7 @@
 
   const security = {
     async getAuthToken() {
-      if (typeof authTokenProvider !== "function") {
+      if (!authTokenProvider) {
         return null;
       }
 
@@ -292,7 +328,7 @@
     },
 
     async getCSRFToken() {
-      if (typeof csrfTokenProvider === "function") {
+      if (csrfTokenProvider) {
         const token = await csrfTokenProvider();
 
         if (typeof token === "string" && token.trim()) {
@@ -300,32 +336,36 @@
         }
       }
 
-      const fromMeta = utils.getMetaContent(
-        config.csrf.metaName
-      );
+      const metaToken = utils.getMetaContent(config.csrf.metaName);
 
-      if (fromMeta) return fromMeta;
+      if (metaToken) {
+        return metaToken;
+      }
 
-      // A JavaScript-readable CSRF cookie is supported only when
-      // the server explicitly implements that cookie strategy.
-      // HttpOnly session cookies should remain inaccessible here.
+      // JavaScript-readable CSRF cookies are supported only when
+      // the backend explicitly implements this token strategy.
+      // HttpOnly session cookies are intentionally inaccessible.
       return utils.getCookie(config.csrf.cookieName);
     },
 
-    async apply(headers, method) {
-      const token = await this.getAuthToken();
+    async apply(headers, method, options = {}) {
+      if (options.auth !== false) {
+        const token = await this.getAuthToken();
 
-      if (token && !headers.has("Authorization")) {
-        headers.set("Authorization", `Bearer ${token}`);
+        if (token && !headers.has("Authorization")) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
       }
 
-      if (
+      const csrfEnabled =
+        options.csrf !== false &&
         config.csrf.enabled &&
-        !SAFE_METHODS.has(method)
-      ) {
+        !SAFE_METHODS.has(method);
+
+      if (csrfEnabled && !headers.has(config.csrf.headerName)) {
         const csrfToken = await this.getCSRFToken();
 
-        if (csrfToken && !headers.has(config.csrf.headerName)) {
+        if (csrfToken) {
           headers.set(config.csrf.headerName, csrfToken);
         }
       }
@@ -336,19 +376,44 @@
   // Response parsing
   // --------------------------------------------------
 
-  async function parseResponse(response) {
+  async function parseResponse(response, responseType = "auto") {
     if (BODYLESS_STATUSES.has(response.status)) {
       return null;
+    }
+
+    if (responseType === "response") {
+      return response;
+    }
+
+    if (responseType === "blob") {
+      return response.blob();
+    }
+
+    if (responseType === "arrayBuffer") {
+      return response.arrayBuffer();
+    }
+
+    if (responseType === "text") {
+      return response.text();
     }
 
     const contentType = (
       response.headers.get("content-type") || ""
     ).toLowerCase();
 
-    if (contentType.includes("application/json") ||
-        contentType.includes("+json")) {
+    if (
+      responseType === "json" ||
+      contentType.includes("application/json") ||
+      contentType.includes("+json")
+    ) {
+      const text = await response.text();
+
+      if (!text.trim()) {
+        return null;
+      }
+
       try {
-        return await response.json();
+        return JSON.parse(text);
       } catch (error) {
         throw new APIError("The server returned invalid JSON.", {
           status: response.status,
@@ -358,45 +423,100 @@
       }
     }
 
-    if (contentType.includes("text/")) {
+    if (
+      contentType.startsWith("text/") ||
+      contentType.includes("application/xml")
+    ) {
       return response.text();
     }
 
-    if (
-      contentType.includes("application/octet-stream") ||
-      contentType.includes("application/pdf") ||
-      contentType.includes("image/")
-    ) {
-      return response.blob();
-    }
-
-    const text = await response.text();
-
-    if (!text) return null;
-
-    return text;
+    return response.blob();
   }
 
   function createHTTPError(response, data, url, method) {
     const payload = utils.isPlainObject(data) ? data : {};
+    const nestedError = utils.isPlainObject(payload.error)
+      ? payload.error
+      : {};
 
-    const message =
+    const rawMessage =
       payload.message ||
-      payload.error?.message ||
-      (typeof payload.error === "string" ? payload.error : null) ||
+      nestedError.message ||
+      (
+        typeof payload.error === "string"
+          ? payload.error
+          : null
+      ) ||
       `Request failed with HTTP ${response.status}.`;
+
+    const message = String(rawMessage).slice(
+      0,
+      MAX_ERROR_MESSAGE_LENGTH
+    );
 
     return new APIError(message, {
       status: response.status,
       code:
         payload.code ||
-        payload.error?.code ||
+        nestedError.code ||
         `HTTP_${response.status}`,
       details: payload.details ?? null,
       data,
       url: url.toString(),
-      method
+      method,
+      retryAfter: utils.parseRetryAfter(
+        response.headers.get("Retry-After")
+      )
     });
+  }
+
+  function normalizeError(error, context) {
+    if (error instanceof APIError) {
+      if (!error.url) error.url = context.url;
+      if (!error.method) error.method = context.method;
+      return error;
+    }
+
+    if (context.timedOut) {
+      return new APIError("The request timed out. Please try again.", {
+        code: "REQUEST_TIMEOUT",
+        url: context.url,
+        method: context.method,
+        isTimeout: true
+      });
+    }
+
+    if (context.signal?.aborted) {
+      return new APIError("The request was cancelled.", {
+        code: "REQUEST_ABORTED",
+        url: context.url,
+        method: context.method,
+        isAborted: true
+      });
+    }
+
+    if (error instanceof TypeError) {
+      return new APIError(
+        "Unable to complete the request. Check the connection and API configuration.",
+        {
+          code: "NETWORK_ERROR",
+          url: context.url,
+          method: context.method,
+          isNetworkError: true,
+          details: error.message
+        }
+      );
+    }
+
+    return new APIError(
+      error?.message || "An unexpected API error occurred.",
+      {
+        code: "API_ERROR",
+        url: context.url,
+        method: context.method,
+        details: error?.message || null
+      }
+    );
   }
 
   // --------------------------------------------------
@@ -420,42 +540,63 @@
     } = options;
 
     const normalizedMethod = String(method).toUpperCase();
-    const url = utils.buildURL(path, params);
 
+    if (!/^[A-Z]+$/.test(normalizedMethod)) {
+      throw new TypeError("Invalid HTTP method.");
+    }
+
+    if (!VALID_CREDENTIALS.has(credentials)) {
+      throw new TypeError("Invalid credentials setting.");
+    }
+
+    if (!Number.isFinite(timeout) || timeout < 0) {
+      throw new TypeError("Timeout must be a non-negative number.");
+    }
+
+    if (
+      !["auto", "json", "text", "blob", "arrayBuffer", "response"].includes(
+        responseType
+      )
+    ) {
+      throw new TypeError("Unsupported responseType.");
+    }
+
+    if (
+      externalSignal != null &&
+      typeof externalSignal.addEventListener !== "function"
+    ) {
+      throw new TypeError("signal must be an AbortSignal.");
+    }
+
+    const url = utils.buildURL(path, params);
+    const originalURL = url.href;
     const headers = new Headers(config.headers);
 
     new Headers(customHeaders).forEach((value, key) => {
       headers.set(key, value);
     });
 
-    if (auth) {
-      await security.apply(headers, normalizedMethod);
-    } else if (
-      csrf &&
-      config.csrf.enabled &&
-      !SAFE_METHODS.has(normalizedMethod)
-    ) {
-      const csrfToken = await security.getCSRFToken();
+    await security.apply(headers, normalizedMethod, {
+      auth,
+      csrf
+    });
 
-      if (csrfToken && !headers.has(config.csrf.headerName)) {
-        headers.set(config.csrf.headerName, csrfToken);
-      }
-    }
-
-    let requestBody;
-
-    if (body !== undefined && data !== undefined) {
-      throw new TypeError(
-        "Specify either body or data, not both."
-      );
+    if (data !== undefined && body !== undefined) {
+      throw new TypeError("Specify either data or body, not both.");
     }
 
     const payload = body !== undefined ? body : data;
+    let requestBody;
 
-    if (payload !== undefined && !SAFE_METHODS.has(normalizedMethod)) {
+    if (payload !== undefined) {
+      if (SAFE_METHODS.has(normalizedMethod)) {
+        throw new TypeError(
+          `${normalizedMethod} requests cannot contain a body. Use params instead.`
+        );
+      }
+
       if (utils.isFormData(payload)) {
         requestBody = payload;
-        // The browser must set the multipart boundary.
         headers.delete("Content-Type");
       } else if (
         utils.isBodyInit(payload) ||
@@ -469,15 +610,11 @@
           headers.set("Content-Type", "application/json");
         }
       }
-    } else if (payload !== undefined && SAFE_METHODS.has(normalizedMethod)) {
-      throw new TypeError(
-        `${normalizedMethod} requests cannot contain a data/body payload. Use params for query data.`
-      );
     }
 
     const controller = new AbortController();
-    let timeoutId = null;
     let timedOut = false;
+    let timeoutId = null;
     let removeAbortListener = () => {};
 
     if (externalSignal) {
@@ -501,11 +638,18 @@
     if (timeout > 0) {
       timeoutId = window.setTimeout(() => {
         timedOut = true;
-        controller.abort(
-          new DOMException("Request timed out.", "TimeoutError")
-        );
+        controller.abort();
       }, timeout);
     }
+
+    const context = {
+      url: originalURL,
+      method: normalizedMethod,
+      signal: controller.signal,
+      get timedOut() {
+        return timedOut;
+      }
+    };
 
     let fetchConfig = {
       ...fetchOptions,
@@ -522,100 +666,100 @@
     try {
       if (typeof requestInterceptor === "function") {
         const modified = await requestInterceptor({
-          url,
-          options: fetchConfig
+          url: new URL(url.href),
+          options: { ...fetchConfig }
         });
 
-        if (modified?.options) {
-          fetchConfig = modified.options;
-        }
-
-        if (modified?.url) {
-          const modifiedURL = new URL(modified.url, window.location.origin);
-
-          const configuredOrigin = new URL(
-            config.baseURL,
-            window.location.origin
-          ).origin;
-
-          if (
-            modifiedURL.origin !== window.location.origin &&
-            modifiedURL.origin !== configuredOrigin
-          ) {
-            throw new APIError("Request interceptor changed the API origin.", {
-              code: "INVALID_REQUEST_URL"
-            });
+        if (modified != null) {
+          if (typeof modified !== "object") {
+            throw new TypeError(
+              "Request interceptor must return an object or undefined."
+            );
           }
 
-          url.href = modifiedURL.href;
+          if (modified.url !== undefined) {
+            const candidate = new URL(
+              String(modified.url),
+              window.location.origin
+            );
+
+            const configuredOrigin = new URL(
+              config.baseURL,
+              window.location.origin
+            ).origin;
+
+            if (
+              candidate.origin !== configuredOrigin &&
+              candidate.origin !== window.location.origin
+            ) {
+              throw new APIError(
+                "Request interceptor attempted to change the API origin.",
+                { code: "INVALID_REQUEST_URL" }
+              );
+            }
+
+            // Do not permit changing an API request to a URL containing
+            // credentials, or to a different API path.
+            if (candidate.username || candidate.password) {
+              throw new APIError(
+                "API URLs must not contain embedded credentials.",
+                { code: "INVALID_REQUEST_URL" }
+              );
+            }
+
+            url.href = candidate.href;
+          }
+
+          if (modified.options !== undefined) {
+            if (
+              !modified.options ||
+              typeof modified.options !== "object"
+            ) {
+              throw new TypeError(
+                "Request interceptor options must be an object."
+              );
+            }
+
+            fetchConfig = {
+              ...fetchConfig,
+              ...modified.options,
+              method: normalizedMethod,
+              signal: controller.signal
+            };
+
+            fetchConfig.headers = new Headers(
+              modified.options.headers || headers
+            );
+
+            // Do not permit the interceptor to accidentally remove the
+            // request body or override the enforced HTTP method.
+            if (requestBody !== undefined) {
+              fetchConfig.body = requestBody;
+            }
+          }
         }
       }
 
-      const response = await fetch(url, fetchConfig);
+      const response = await window.fetch(url.href, fetchConfig);
 
-      let result = await parseResponse(response);
+      let result = await parseResponse(response, responseType);
 
       if (typeof responseInterceptor === "function") {
         result = await responseInterceptor(result, response);
       }
 
       if (!response.ok) {
-        throw createHTTPError(response, result, url, normalizedMethod);
-      }
-
-      if (responseType === "blob") {
-        if (!(result instanceof Blob)) {
-          result = await response.blob();
-        }
-      } else if (responseType === "text" && typeof result !== "string") {
-        result = result == null ? "" : String(result);
-      } else if (
-        responseType === "json" &&
-        typeof result === "string"
-      ) {
-        try {
-          result = JSON.parse(result);
-        } catch {
-          throw new APIError("Expected a JSON response.", {
-            status: response.status,
-            code: "EXPECTED_JSON",
-            url: url.toString(),
-            method: normalizedMethod
-          });
-        }
+        throw createHTTPError(
+          response,
+          result,
+          url,
+          normalizedMethod
+        );
       }
 
       return result;
     } catch (error) {
-      let normalizedError = error;
-
-      if (error instanceof APIError) {
-        normalizedError = error;
-      } else if (controller.signal.aborted) {
-        normalizedError = new APIError(
-          timedOut
-            ? "The request timed out. Please try again."
-            : "The request was cancelled.",
-          {
-            code: timedOut ? "REQUEST_TIMEOUT" : "REQUEST_ABORTED",
-            url: url.toString(),
-            method: normalizedMethod,
-            isTimeout: timedOut,
-            isAborted: !timedOut
-          }
-        );
-      } else if (error instanceof TypeError) {
-        normalizedError = new APIError(
-          "Unable to reach the server. Check your connection and try again.",
-          {
-            code: "NETWORK_ERROR",
-            url: url.toString(),
-            method: normalizedMethod,
-            isNetworkError: true,
-            details: error.message
-          }
-        );
-      }
+      let normalizedError = normalizeError(error, context);
 
       if (typeof errorInterceptor === "function") {
         try {
@@ -625,6 +769,7 @@
             normalizedError = intercepted;
           }
         } catch (interceptorError) {
+          // Interceptor failure must not hide the original API error.
           console.error(
             "[MedOrbits API] Error interceptor failed.",
             interceptorError
@@ -643,7 +788,7 @@
   }
 
   // --------------------------------------------------
-  // HTTP method shortcuts
+  // HTTP shortcuts
   // --------------------------------------------------
 
   const http = {
@@ -654,27 +799,15 @@
     },
 
     post(path, data, options = {}) {
-      return request(path, {
-        ...options,
-        method: "POST",
-        data
-      });
+      return request(path, { ...options, method: "POST", data });
     },
 
     put(path, data, options = {}) {
-      return request(path, {
-        ...options,
-        method: "PUT",
-        data
-      });
+      return request(path, { ...options, method: "PUT", data });
     },
 
     patch(path, data, options = {}) {
-      return request(path, {
-        ...options,
-        method: "PATCH",
-        data
-      });
+      return request(path, { ...options, method: "PATCH", data });
     },
 
     delete(path, options = {}) {
@@ -691,30 +824,43 @@
   };
 
   // --------------------------------------------------
-  // File upload and download
+  // Uploads and downloads
   // --------------------------------------------------
 
   const files = {
-    upload(path, fileOrFormData, options = {}) {
+    upload(path, input, options = {}) {
       let formData;
 
-      if (utils.isFormData(fileOrFormData)) {
-        formData = fileOrFormData;
+      if (utils.isFormData(input)) {
+        formData = input;
       } else {
         formData = new FormData();
 
-        if (Array.isArray(fileOrFormData)) {
-          fileOrFormData.forEach((file) => {
-            if (file?.file) {
-              formData.append(
-                file.field || "files",
-                file.file,
-                file.filename || file.file.name
-              );
+        if (
+          typeof File !== "undefined" &&
+          input instanceof File
+        ) {
+          formData.append("file", input, input.name);
+        } else if (Array.isArray(input)) {
+          input.forEach(item => {
+            if (
+              !item ||
+              !item.file ||
+              typeof item.field === "string" &&
+              !item.field.trim()
+            ) {
+              throw new TypeError("Invalid file descriptor.");
             }
+
+            const field = item.field || "files";
+            const file = item.file;
+
+            formData.append(
+              field,
+              file,
+              item.filename || file.name
+            );
           });
-        } else if (fileOrFormData instanceof File) {
-          formData.append("file", fileOrFormData);
         } else {
           throw new TypeError(
             "Provide a File, an array of file descriptors, or FormData."
@@ -724,7 +870,7 @@
 
       return request(path, {
         ...options,
-        method: "POST",
+        method: options.method || "POST",
         data: formData
       });
     },
@@ -738,7 +884,7 @@
   };
 
   // --------------------------------------------------
-  // API configuration
+  // Configuration and interceptors
   // --------------------------------------------------
 
   const settings = {
@@ -761,13 +907,7 @@
       }
 
       if (options.credentials !== undefined) {
-        const allowed = [
-          "omit",
-          "same-origin",
-          "include"
-        ];
-
-        if (!allowed.includes(options.credentials)) {
+        if (!VALID_CREDENTIALS.has(options.credentials)) {
           throw new TypeError("Invalid credentials setting.");
         }
 
@@ -775,17 +915,39 @@
       }
 
       if (options.headers !== undefined) {
-        config.headers = {
-          ...config.headers,
-          ...new Headers(options.headers)
-        };
+        const nextHeaders = new Headers(config.headers);
+
+        new Headers(options.headers).forEach((value, key) => {
+          nextHeaders.set(key, value);
+        });
+
+        config.headers = nextHeaders;
       }
 
       if (options.csrf !== undefined) {
-        config.csrf = {
+        if (!utils.isPlainObject(options.csrf)) {
+          throw new TypeError("CSRF configuration must be an object.");
+        }
+
+        const nextCSRF = {
           ...config.csrf,
           ...options.csrf
         };
+
+        if (typeof nextCSRF.enabled !== "boolean") {
+          throw new TypeError("CSRF enabled must be a boolean.");
+        }
+
+        ["headerName", "metaName", "cookieName"].forEach(key => {
+          if (
+            typeof nextCSRF[key] !== "string" ||
+            !nextCSRF[key].trim()
+          ) {
+            throw new TypeError(`Invalid CSRF ${key}.`);
+          }
+        });
+
+        config.csrf = nextCSRF;
       }
 
       return this.getConfig();
@@ -796,41 +958,42 @@
         baseURL: config.baseURL,
         timeout: config.timeout,
         credentials: config.credentials,
+        headers: Object.freeze(
+          Object.fromEntries(config.headers.entries())
+        ),
         csrf: Object.freeze({ ...config.csrf })
       });
     },
 
     setAuthTokenProvider(provider) {
-      if (provider !== null && typeof provider !== "function") {
-        throw new TypeError("Auth token provider must be a function.");
-      }
-
+      utils.assertInterceptor(provider, "Auth token provider");
       authTokenProvider = provider;
     },
 
     setCSRFTokenProvider(provider) {
-      if (provider !== null && typeof provider !== "function") {
-        throw new TypeError("CSRF token provider must be a function.");
-      }
-
+      utils.assertInterceptor(provider, "CSRF token provider");
       csrfTokenProvider = provider;
     },
 
     setRequestInterceptor(interceptor) {
+      utils.assertInterceptor(interceptor, "Request interceptor");
       requestInterceptor = interceptor;
     },
 
     setResponseInterceptor(interceptor) {
+      utils.assertInterceptor(interceptor, "Response interceptor");
       responseInterceptor = interceptor;
     },
 
     setErrorInterceptor(interceptor) {
+      utils.assertInterceptor(interceptor, "Error interceptor");
       errorInterceptor = interceptor;
     }
   };
 
   // --------------------------------------------------
-  // Convenience API namespaces
+  // Endpoint constants
+  // These paths must match the deployed backend.
   // --------------------------------------------------
 
   const endpoints = Object.freeze({
@@ -864,8 +1027,13 @@
     admin: "/admin"
   });
 
+  // --------------------------------------------------
+  // Public interface
+  // --------------------------------------------------
+
   const api = {
-    version: "1.0.0",
+    version: "1.1.0",
+    APIError,
     request: http.request,
     get: http.get,
     post: http.post,
@@ -874,27 +1042,20 @@
     delete: http.delete,
     head: http.head,
     options: http.options,
-
     http,
     files,
     settings,
     endpoints,
-    APIError,
 
-    health: {
+    health: Object.freeze({
       check(options = {}) {
         return http.get(endpoints.health, options);
       }
-    }
+    })
   };
 
-  // --------------------------------------------------
-  // Export public interface
-  // --------------------------------------------------
+  const publicAPI = Object.freeze(api);
 
-  window.MedOrbitsAPI = Object.freeze(api);
-
-  // Compatibility alias, if other scripts use this name.
-  // Prefer MedOrbitsAPI for new code.
-  window.MedOrbitsApi = window.MedOrbitsAPI;
+  window.MedOrbitsAPI = publicAPI;
+  window.MedOrbitsApi = publicAPI;
 })();

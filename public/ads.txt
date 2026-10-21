@@ -1,23 +1,16 @@
-MedOrbits -- Authorized Digital Advertising Sellers
 
-Website: https://medorbits.in/
+# MedOrbits -- Authorized Digital Advertising Sellers
+# Website: https://medorbits.in/
+# Standard: IAB Tech Lab ads.txt
 
-Standard: IAB Tech Lab ads.txt
-
-Add only verified advertising partners and publisher account IDs.
-
-Do not publish example or placeholder seller records.
-
-Format:
-
-, , <DIRECT|RESELLER>, 
-
-Example format only -- replace with verified partner details:
-
-example-ad-network.com, pub-XXXXXXXXXXXXXXXX, DIRECT, XXXXXXXXXXXXXXXX
-
-Optional ads.txt 1.1 ownership declarations, when applicable:
-
+# Publisher ownership declaration (ads.txt 1.1)
 OWNERDOMAIN=medorbits.in
 
-Authorized seller records go below.
+# Authorized advertising sellers
+# Add a record only after verifying the partner's official
+# ads.txt instructions and your publisher account ID.
+#
+# Format:
+# <advertising-system-domain>, <publisher-account-id>, <DIRECT|RESELLER>, <certification-authority-id>
+#
+# No verified seller records have been configured.

@@ -1,9 +1,12 @@
+
 # ============================================================
 # MedOrbits -- Dependabot Configuration
 # File: .github/dependabot.yml
 # Purpose: Automated dependency updates and maintenance
 # ============================================================
+
 version: 2
+
 updates:
   # ----------------------------------------------------------
   # 1. NPM -- Node.js application dependencies
@@ -15,35 +18,43 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+
     open-pull-requests-limit: 10
     versioning-strategy: increase
+
     labels:
       - dependencies
       - npm
       - automated-update
+
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
       include: scope
-    # Cooldown applies to routine version updates.
-    # Security updates are not delayed by this policy.
+
+    # Cooldown for routine version updates.
+    # Security updates may follow GitHub's separate security-update process.
     cooldown:
       default-days: 7
       semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
+
     groups:
       production-dependencies:
         dependency-type: production
         update-types:
           - minor
           - patch
+
       development-dependencies:
         dependency-type: development
         update-types:
           - minor
           - patch
+
     # Major updates remain separate for focused review.
+
   # ----------------------------------------------------------
   # 2. GITHUB ACTIONS -- CI/CD workflow dependencies
   # ----------------------------------------------------------
@@ -54,25 +65,31 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+
     open-pull-requests-limit: 5
+
     labels:
       - dependencies
       - github-actions
       - ci
+
     commit-message:
       prefix: "ci"
       include: scope
+
     cooldown:
       default-days: 7
+
     groups:
       github-actions:
         patterns:
           - "*"
+
   # ----------------------------------------------------------
   # 3. DOCKER -- Container image dependencies
   # ----------------------------------------------------------
-  # Keep this entry only if a supported Dockerfile or other
-  # Docker dependency definition exists at the repository root.
+  # Keep this entry only if a Dockerfile exists at the root.
+  # Add separate entries for Dockerfiles in other directories.
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -80,13 +97,17 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Kolkata
+
     open-pull-requests-limit: 5
+
     labels:
       - dependencies
       - docker
       - infrastructure
+
     commit-message:
       prefix: "docker"
       include: scope
+
     cooldown:
       default-days: 7

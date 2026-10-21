@@ -1,6 +1,19 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- Payment Authorization Policy
+ *
+ * File: src/policies/payment.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Controls payment creation, access, cancellation, refunds,
+ * status changes, and verified webhook processing.
+ *
+ * This policy does not replace payment-provider verification,
+ * database transactions, idempotency, or refund reconciliation.
+ */
+
 const {
   isAdmin,
   hasRole,
@@ -10,12 +23,12 @@ const {
   safeStatus,
 } = require('./policy-utils');
 
-const CREATABLE_ROLES = [
+const CREATABLE_ROLES = Object.freeze([
   'user',
   'student',
   'candidate',
   'employer',
-];
+]);
 
 const CANCELLABLE_STATUSES = new Set([
   'created',
@@ -23,26 +36,102 @@ const CANCELLABLE_STATUSES = new Set([
   'requires_action',
 ]);
 
-function actorId(actor) {
-  return actor?.id ?? actor?.userId ?? actor?.sub ?? null;
+const REFUNDABLE_STATUSES = new Set([
+  'succeeded',
+]);
+
+const BLOCKED_ACTOR_STATUSES = new Set([
+  'disabled',
+  'suspended',
+  'inactive',
+  'deleted',
+  'blocked',
+]);
+
+const OWNER_FIELDS = Object.freeze([
+  'userId',
+  'user_id',
+  'payerId',
+  'payer_id',
+  'customerUserId',
+  'customer_user_id',
+  'ownerId',
+  'owner_id',
+]);
+
+const EMPLOYER_FIELDS = Object.freeze([
+  'employerId',
+  'employer_id',
+]);
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  if (
+    actor.isActive === false ||
+    actor.is_active === false ||
+    actor.isSuspended === true ||
+    actor.is_suspended === true
+  ) {
+    return false;
+  }
+
+  return !BLOCKED_ACTOR_STATUSES.has(safeStatus(actor.status));
 }
 
 function paymentPayerId(payment) {
-  if (!payment || typeof payment !== 'object') {
+  if (!isPlainObject(payment)) {
     return null;
   }
 
-  return (
-    payment.userId ??
-    payment.payerId ??
-    payment.customerUserId ??
-    payment.ownerId ??
-    null
-  );
+  for (const field of OWNER_FIELDS) {
+    const value = payment[field];
+
+    if (value !== null && value !== undefined && value !== '') {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function paymentEmployerId(payment) {
+  if (!isPlainObject(payment)) {
+    return null;
+  }
+
+  for (const field of EMPLOYER_FIELDS) {
+    if (payment[field] != null && payment[field] !== '') {
+      return payment[field];
+    }
+  }
+
+  return null;
+}
+
+function actorEmployerId(actor) {
+  return actor?.employerId ?? actor?.employer_id ?? null;
 }
 
 function canCreatePayment(actor, input = {}) {
-  if (!actor) return false;
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(input)
+  ) {
+    return false;
+  }
 
   if (
     isAdmin(actor) ||
@@ -51,17 +140,17 @@ function canCreatePayment(actor, input = {}) {
     return true;
   }
 
-  if (
-    !hasRole(actor, ...CREATABLE_ROLES) ||
-    actor.isSuspended === true
-  ) {
+  if (!hasRole(actor, ...CREATABLE_ROLES)) {
     return false;
   }
 
   const requestedPayer =
     input.userId ??
+    input.user_id ??
     input.payerId ??
-    input.customerUserId;
+    input.payer_id ??
+    input.customerUserId ??
+    input.customer_user_id;
 
   if (
     requestedPayer != null &&
@@ -71,13 +160,33 @@ function canCreatePayment(actor, input = {}) {
     return false;
   }
 
-  // The service must derive the amount, currency, and product
-  // from trusted server-side records.
+  const requestedEmployer =
+    input.employerId ?? input.employer_id;
+
+  if (requestedEmployer != null) {
+    const authenticatedEmployer = actorEmployerId(actor);
+
+    if (
+      !hasRole(actor, 'employer') ||
+      authenticatedEmployer == null ||
+      !sameId(requestedEmployer, authenticatedEmployer)
+    ) {
+      return false;
+    }
+  }
+
+  // Amount, currency, tax, plan, discount, and provider metadata
+  // must be calculated or retrieved by the trusted service.
   return true;
 }
 
 function canViewPayment(actor, payment) {
-  if (!actor || !payment) return false;
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(payment)
+  ) {
+    return false;
+  }
 
   if (
     isAdmin(actor) ||
@@ -86,21 +195,31 @@ function canViewPayment(actor, payment) {
     return true;
   }
 
-  if (isOwner(actor, paymentPayerId(payment))) {
+  const payerId = paymentPayerId(payment);
+
+  if (payerId != null && isOwner(actor, payerId)) {
     return true;
   }
 
-  return (
-    actor.employerId != null &&
-    payment.employerId != null &&
-    sameId(actor.employerId, payment.employerId) &&
+  const employerId = paymentEmployerId(payment);
+  const currentEmployerId = actorEmployerId(actor);
+
+  return Boolean(
+    employerId != null &&
+    currentEmployerId != null &&
+    sameId(currentEmployerId, employerId) &&
     hasRole(actor, 'employer') &&
     hasPermission(actor, 'payments:read:employer')
   );
 }
 
 function canRefundPayment(actor, payment) {
-  if (!actor || !payment) return false;
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(payment)
+  ) {
+    return false;
+  }
 
   if (
     !isAdmin(actor) &&
@@ -109,39 +228,55 @@ function canRefundPayment(actor, payment) {
     return false;
   }
 
-  return (
-    safeStatus(payment.status) === 'succeeded' &&
-    payment.refundedAt == null &&
-    payment.disputed !== true &&
-    payment.refundPending !== true
-  );
+  const status = safeStatus(payment.status);
+
+  if (!REFUNDABLE_STATUSES.has(status)) {
+    return false;
+  }
+
+  if (
+    payment.refundedAt != null ||
+    payment.refunded_at != null ||
+    payment.disputed === true ||
+    payment.isDisputed === true ||
+    payment.is_disputed === true ||
+    payment.refundPending === true ||
+    payment.refund_pending === true
+  ) {
+    return false;
+  }
+
+  // The service must additionally verify the remaining refundable
+  // balance and prevent concurrent or duplicate refund operations.
+  return true;
 }
 
 function canCancelPayment(actor, payment) {
-  if (!actor || !payment) return false;
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(payment) ||
+    !CANCELLABLE_STATUSES.has(safeStatus(payment.status))
+  ) {
+    return false;
+  }
 
   if (
     isAdmin(actor) ||
     hasPermission(actor, 'payments:cancel:any')
   ) {
-    return CANCELLABLE_STATUSES.has(
-      safeStatus(payment.status)
-    );
+    return true;
   }
 
-  return (
+  return Boolean(
+    paymentPayerId(payment) != null &&
     isOwner(actor, paymentPayerId(payment)) &&
-    CANCELLABLE_STATUSES.has(
-      safeStatus(payment.status)
-    )
+    hasPermission(actor, 'payments:cancel:self')
   );
 }
 
 function canUpdatePaymentStatus(actor) {
-  // This permission authorizes an internal workflow only.
-  // It does not establish that a provider event is authentic.
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'payments:status:update')
@@ -150,9 +285,10 @@ function canUpdatePaymentStatus(actor) {
 }
 
 function canProcessPaymentWebhook(context = {}) {
-  // Defense-in-depth guard. The payment controller/provider
-  // adapter must independently verify the provider signature
-  // against the exact raw request body.
+  if (!isPlainObject(context)) {
+    return false;
+  }
+
   return (
     context.source === 'verified-payment-provider' &&
     context.signatureVerified === true &&
@@ -163,16 +299,11 @@ function canProcessPaymentWebhook(context = {}) {
 }
 
 function canViewPaymentDetails(actor, payment) {
-  if (!canViewPayment(actor, payment)) {
-    return false;
-  }
-
-  // Authorization does not sanitize the response. The
-  // serializer must allowlist safe fields and omit secrets.
-  return true;
+  return canViewPayment(actor, payment);
 }
 
-module.exports = {
+module.exports = Object.freeze({
+  paymentPayerId,
   canCreatePayment,
   canViewPayment,
   canRefundPayment,
@@ -180,4 +311,4 @@ module.exports = {
   canUpdatePaymentStatus,
   canProcessPaymentWebhook,
   canViewPaymentDetails,
-};
+});

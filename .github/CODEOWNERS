@@ -1,35 +1,21 @@
-MedOrbits -- CODEOWNERS
 
-Purpose: Define default code ownership and review responsibility.
+# MedOrbits -- CODEOWNERS
+# Purpose: Define default code ownership and review responsibility.
+# Default owner: @vivekchoubey444-del
+#
+# CODEOWNERS assigns review responsibility; it does not grant repository permissions.
+# GitHub uses the last matching rule for each file.
+# Keep the default rule first and more specific rules below it.
+# Ensure the listed GitHub account has access to this repository.
 
-Default owner: Repository owner
-
-GitHub username: @vivekchoubey444-del
-
-IMPORTANT:
-
-- CODEOWNERS assigns review responsibility; it does not grant repository permissions.
-
-- GitHub uses the last matching rule for each file.
-
-- Keep the default rule at the top and specific rules below it.
-
-- Ensure the listed GitHub account has access to this repository.
-
-============================================================
-
-DEFAULT OWNER -- ALL REPOSITORY FILES
-
-============================================================
-
+# ============================================================
+# DEFAULT OWNER -- ALL REPOSITORY FILES
+# ============================================================
 * @vivekchoubey444-del
 
-============================================================
-
-REPOSITORY DOCUMENTATION AND POLICIES
-
-============================================================
-
+# ============================================================
+# REPOSITORY DOCUMENTATION AND POLICIES
+# ============================================================
 /README.md @vivekchoubey444-del
 /README-PRODUCTION.md @vivekchoubey444-del
 /PACKAGE-NOTES.md @vivekchoubey444-del
@@ -40,13 +26,11 @@ REPOSITORY DOCUMENTATION AND POLICIES
 /SECURITY.md @vivekchoubey444-del
 /NOTICE @vivekchoubey444-del
 /LICENSE @vivekchoubey444-del
+/docs/ @vivekchoubey444-del
 
-============================================================
-
-GITHUB WORKFLOWS AND REPOSITORY GOVERNANCE
-
-============================================================
-
+# ============================================================
+# GITHUB WORKFLOWS AND REPOSITORY GOVERNANCE
+# ============================================================
 /.github/ @vivekchoubey444-del
 /.editorconfig @vivekchoubey444-del
 /.prettierrc.json @vivekchoubey444-del
@@ -54,21 +38,15 @@ GITHUB WORKFLOWS AND REPOSITORY GOVERNANCE
 /.gitignore @vivekchoubey444-del
 /.gitattributes @vivekchoubey444-del
 
-============================================================
-
-BACKEND APPLICATION
-
-============================================================
-
+# ============================================================
+# BACKEND APPLICATION
+# ============================================================
 /server.js @vivekchoubey444-del
 /src/ @vivekchoubey444-del
 
-============================================================
-
-FRONTEND ASSETS AND WEBSITE PAGES
-
-============================================================
-
+# ============================================================
+# FRONTEND ASSETS AND WEBSITE PAGES
+# ============================================================
 /assets/ @vivekchoubey444-del
 /pages/ @vivekchoubey444-del
 /education/ @vivekchoubey444-del
@@ -77,42 +55,25 @@ FRONTEND ASSETS AND WEBSITE PAGES
 /admin/ @vivekchoubey444-del
 /legal/ @vivekchoubey444-del
 
-============================================================
-
-API, DATABASE, AND MIGRATIONS
-
-============================================================
-
+# ============================================================
+# API, DATABASE, AND MIGRATIONS
+# ============================================================
 /database/ @vivekchoubey444-del
+/db/ @vivekchoubey444-del
 /migrations/ @vivekchoubey444-del
 /prisma/ @vivekchoubey444-del
 
-============================================================
-
-TESTS AND QUALITY ASSURANCE
-
-============================================================
-
+# ============================================================
+# TESTS AND QUALITY ASSURANCE
+# ============================================================
 /tests/ @vivekchoubey444-del
 /test/ @vivekchoubey444-del
-/tests/ @vivekchoubey444-del
 /jest.config.js @vivekchoubey444-del
 /vitest.config.js @vivekchoubey444-del
 
-============================================================
-
-TECHNICAL DOCUMENTATION
-
-============================================================
-
-/docs/ @vivekchoubey444-del
-
-============================================================
-
-DEPLOYMENT AND INFRASTRUCTURE
-
-============================================================
-
+# ============================================================
+# DEPLOYMENT AND INFRASTRUCTURE
+# ============================================================
 /infrastructure/ @vivekchoubey444-del
 /Dockerfile @vivekchoubey444-del
 /docker-compose.yml @vivekchoubey444-del
@@ -120,12 +81,9 @@ DEPLOYMENT AND INFRASTRUCTURE
 /.dockerignore @vivekchoubey444-del
 /render.yaml @vivekchoubey444-del
 
-============================================================
-
-DEPENDENCY MANIFESTS AND LOCKFILES
-
-============================================================
-
+# ============================================================
+# DEPENDENCY MANIFESTS AND LOCKFILES
+# ============================================================
 /package.json @vivekchoubey444-del
 /package-lock.json @vivekchoubey444-del
 /yarn.lock @vivekchoubey444-del
@@ -133,22 +91,16 @@ DEPENDENCY MANIFESTS AND LOCKFILES
 /bun.lockb @vivekchoubey444-del
 /bun.lock @vivekchoubey444-del
 
-============================================================
-
-ENVIRONMENT AND CONFIGURATION TEMPLATES
-
-============================================================
-
+# ============================================================
+# ENVIRONMENT AND CONFIGURATION TEMPLATES
+# ============================================================
 /.env.example @vivekchoubey444-del
 /.env.*.example @vivekchoubey444-del
 /config/ @vivekchoubey444-del
 
-============================================================
-
-SECURITY-SENSITIVE APPLICATION COMPONENTS
-
-============================================================
-
+# ============================================================
+# SECURITY-SENSITIVE APPLICATION COMPONENTS
+# ============================================================
 /src/auth/ @vivekchoubey444-del
 /src/middleware/ @vivekchoubey444-del
 /src/validators/ @vivekchoubey444-del

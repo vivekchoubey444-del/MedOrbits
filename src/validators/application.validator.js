@@ -1,5 +1,14 @@
-
 'use strict';
+
+/**
+ * MedOrbits -- Enrollment Validator
+ *
+ * File: src/validators/enrollment.validator.js
+ * Runtime: Node.js >= 20
+ *
+ * Validates and normalizes enrollment create/update payloads.
+ * Rejects unknown fields to prevent mass assignment.
+ */
 
 const ALLOWED_FIELDS = Object.freeze([
   'user_id',
@@ -21,12 +30,27 @@ const ALLOWED_STATUSES = Object.freeze([
 ]);
 
 const MAX_NOTES_LENGTH = 5000;
+const MIN_INTAKE_YEAR = 2000;
+const MAX_INTAKE_YEAR = 2100;
+
+const ID_FIELDS = Object.freeze([
+  'user_id',
+  'course_id',
+  'college_id',
+]);
+
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object, key);
 
 function validationError(message, code = 'VALIDATION_ERROR') {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
+  error.statusCode = 400;
   error.code = code;
   error.publicMessage = message;
+
   return error;
 }
 
@@ -38,25 +62,25 @@ function pickAllowed(input = {}) {
   ) {
     throw validationError(
       'Request body must be a JSON object.',
-      'INVALID_BODY'
+      'INVALID_BODY',
     );
   }
 
   const unknownFields = Object.keys(input).filter(
-    (key) => !ALLOWED_FIELDS.includes(key)
+    (key) => !ALLOWED_FIELDS.includes(key),
   );
 
   if (unknownFields.length > 0) {
     throw validationError(
       `Unsupported field(s): ${unknownFields.join(', ')}.`,
-      'UNKNOWN_FIELDS'
+      'UNKNOWN_FIELDS',
     );
   }
 
   const output = {};
 
   for (const key of ALLOWED_FIELDS) {
-    if (Object.prototype.hasOwnProperty.call(input, key)) {
+    if (hasOwn(input, key)) {
       output[key] = input[key];
     }
   }
@@ -64,80 +88,126 @@ function pickAllowed(input = {}) {
   return output;
 }
 
-function validate(input = {}, options = {}) {
-  const data = pickAllowed(input);
-  const { partial = false } = options;
+function validateId(data, field) {
+  if (data[field] === undefined) return;
 
-  if (Object.keys(data).length === 0) {
+  if (
+    !Number.isSafeInteger(data[field]) ||
+    data[field] < 1
+  ) {
     throw validationError(
-      'At least one supported field must be provided.'
+      `${field} must be a positive integer.`,
+      'INVALID_ID',
+    );
+  }
+}
+
+function validateIntakeYear(data) {
+  if (data.intake_year === undefined) return;
+
+  if (
+    !Number.isSafeInteger(data.intake_year) ||
+    data.intake_year < MIN_INTAKE_YEAR ||
+    data.intake_year > MAX_INTAKE_YEAR
+  ) {
+    throw validationError(
+      `intake_year must be an integer between ${MIN_INTAKE_YEAR} and ${MAX_INTAKE_YEAR}.`,
+      'INVALID_INTAKE_YEAR',
+    );
+  }
+}
+
+function validateStatus(data) {
+  if (data.status === undefined) return;
+
+  if (typeof data.status !== 'string') {
+    throw validationError(
+      'status must be a string.',
+      'INVALID_STATUS',
     );
   }
 
-  for (const key of ['user_id', 'course_id', 'college_id']) {
-    if (data[key] === undefined) continue;
+  const status = data.status.trim().toLowerCase();
 
-    if (
-      !Number.isSafeInteger(data[key]) ||
-      data[key] < 1
-    ) {
-      throw validationError(
-        `${key} must be a positive integer.`
-      );
-    }
+  if (!ALLOWED_STATUSES.includes(status)) {
+    throw validationError(
+      `status must be one of: ${ALLOWED_STATUSES.join(', ')}.`,
+      'INVALID_STATUS',
+    );
   }
 
-  if (data.intake_year !== undefined) {
-    if (
-      !Number.isSafeInteger(data.intake_year) ||
-      data.intake_year < 2000 ||
-      data.intake_year > 2100
-    ) {
-      throw validationError(
-        'intake_year must be an integer between 2000 and 2100.'
-      );
-    }
+  data.status = status;
+}
+
+function validateNotes(data) {
+  if (data.notes === undefined) return;
+
+  if (typeof data.notes !== 'string') {
+    throw validationError(
+      'notes must be a string.',
+      'INVALID_NOTES',
+    );
   }
 
-  if (data.status !== undefined) {
-    if (typeof data.status !== 'string') {
-      throw validationError('status must be a string.');
-    }
+  const notes = data.notes.trim();
 
-    data.status = data.status.trim().toLowerCase();
-
-    if (!ALLOWED_STATUSES.includes(data.status)) {
-      throw validationError(
-        `status must be one of: ${ALLOWED_STATUSES.join(', ')}.`
-      );
-    }
+  if (notes.length > MAX_NOTES_LENGTH) {
+    throw validationError(
+      `notes must not exceed ${MAX_NOTES_LENGTH} characters.`,
+      'NOTES_TOO_LONG',
+    );
   }
 
-  if (data.notes !== undefined) {
-    if (typeof data.notes !== 'string') {
-      throw validationError('notes must be a string.');
-    }
+  data.notes = notes;
+}
 
-    data.notes = data.notes.trim();
-
-    if (data.notes.length > MAX_NOTES_LENGTH) {
-      throw validationError(
-        `notes must not exceed ${MAX_NOTES_LENGTH} characters.`
-      );
-    }
+function validate(input = {}, options = {}) {
+  if (
+    options === null ||
+    typeof options !== 'object' ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError('Validation options must be an object.');
   }
+
+  const partial = options.partial === true;
+  const data = pickAllowed(input);
+
+  if (Object.keys(data).length === 0) {
+    throw validationError(
+      'At least one supported field must be provided.',
+      'EMPTY_PAYLOAD',
+    );
+  }
+
+  for (const field of ID_FIELDS) {
+    validateId(data, field);
+  }
+
+  validateIntakeYear(data);
+  validateStatus(data);
+  validateNotes(data);
 
   if (!partial) {
     if (data.course_id === undefined) {
-      throw validationError('course_id is required.');
+      throw validationError(
+        'course_id is required.',
+        'MISSING_COURSE_ID',
+      );
     }
 
     if (data.college_id === undefined) {
-      throw validationError('college_id is required.');
+      throw validationError(
+        'college_id is required.',
+        'MISSING_COLLEGE_ID',
+      );
     }
 
     if (data.intake_year === undefined) {
-      throw validationError('intake_year is required.');
+      throw validationError(
+        'intake_year is required.',
+        'MISSING_INTAKE_YEAR',
+      );
     }
   }
 
@@ -145,7 +215,7 @@ function validate(input = {}, options = {}) {
 }
 
 function validateCreate(input) {
-  return validate(input);
+  return validate(input, { partial: false });
 }
 
 function validateUpdate(input) {
@@ -155,6 +225,9 @@ function validateUpdate(input) {
 module.exports = {
   ALLOWED_FIELDS,
   ALLOWED_STATUSES,
+  MAX_NOTES_LENGTH,
+  MIN_INTAKE_YEAR,
+  MAX_INTAKE_YEAR,
   pickAllowed,
   validate,
   validateCreate,

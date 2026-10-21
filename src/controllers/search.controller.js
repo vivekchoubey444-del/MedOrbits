@@ -1,20 +1,103 @@
+
 'use strict';
 
-const { asyncHandler, sendSuccess, httpError } = require('../utils/http');
+const {
+  asyncHandler,
+  sendSuccess,
+  httpError,
+} = require('../utils/http');
+
 const { unavailable } = require('./controller.helpers');
 const searchService = require('../services/search.service');
 
-const controller = {};
+const ALLOWED_CATEGORIES = Object.freeze([
+  'all',
+  'medical',
+  'education',
+  'college',
+  'university',
+  'course',
+  'career',
+  'job',
+  'internship',
+  'scholarship',
+  'study-abroad',
+  'document',
+  'news',
+]);
+
+const MAX_QUERY_LENGTH = 200;
+const MAX_PAGE_SIZE = 50;
+
+function parsePositiveInteger(value, field, defaultValue, maxValue) {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (
+    typeof value !== 'string' ||
+    !/^[1-9]\d{0,8}$/.test(value)
+  ) {
+    throw httpError(
+      400,
+      `INVALID_${field.toUpperCase()}`,
+      `${field} must be a positive integer.`
+    );
+  }
+
+  const number = Number(value);
+
+  if (
+    !Number.isSafeInteger(number) ||
+    (maxValue !== undefined && number > maxValue)
+  ) {
+    throw httpError(
+      400,
+      `INVALID_${field.toUpperCase()}`,
+      `${field} is outside the permitted range.`
+    );
+  }
+
+  return number;
+}
+
+function optionalString(value, field, maxLength = 100) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== 'string') {
+    throw httpError(
+      400,
+      `INVALID_${field.toUpperCase()}`,
+      `${field} must be a string.`
+    );
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  if (normalized.length > maxLength) {
+    throw httpError(
+      400,
+      `${field.toUpperCase()}_TOO_LONG`,
+      `${field} must not exceed ${maxLength} characters.`
+    );
+  }
+
+  return normalized;
+}
 
 /**
  * GET /api/search?q=mbbs&category=medical&page=1&limit=10
  */
-controller.search = asyncHandler(async (req, res) => {
-  const query = typeof req.query.q === 'string'
-    ? req.query.q.trim()
-    : '';
+const search = asyncHandler(async (req, res) => {
+  const rawQuery = req.query?.q;
 
-  if (!query) {
+  if (typeof rawQuery !== 'string' || !rawQuery.trim()) {
     throw httpError(
       400,
       'SEARCH_QUERY_REQUIRED',
@@ -22,11 +105,13 @@ controller.search = asyncHandler(async (req, res) => {
     );
   }
 
-  if (query.length > 200) {
+  const query = rawQuery.trim();
+
+  if (query.length > MAX_QUERY_LENGTH) {
     throw httpError(
       400,
       'SEARCH_QUERY_TOO_LONG',
-      'Search queries must not exceed 200 characters.'
+      `Search queries must not exceed ${MAX_QUERY_LENGTH} characters.`
     );
   }
 
@@ -34,24 +119,37 @@ controller.search = asyncHandler(async (req, res) => {
     unavailable('Search service');
   }
 
-  const page = req.query.page === undefined ? 1 : Number(req.query.page);
-  const limit = req.query.limit === undefined ? 10 : Number(req.query.limit);
+  const page = parsePositiveInteger(
+    req.query.page,
+    'page',
+    1,
+    100000
+  );
 
-  if (!Number.isSafeInteger(page) || page < 1) {
-    throw httpError(400, 'INVALID_PAGE', 'Page must be a positive integer.');
-  }
+  const limit = parsePositiveInteger(
+    req.query.limit,
+    'limit',
+    10,
+    MAX_PAGE_SIZE
+  );
 
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
-    throw httpError(400, 'INVALID_LIMIT', 'Limit must be an integer between 1 and 50.');
+  const category = optionalString(req.query.category, 'category');
+  const country = optionalString(req.query.country, 'country');
+
+  if (
+    category !== undefined &&
+    !ALLOWED_CATEGORIES.includes(category.toLowerCase())
+  ) {
+    throw httpError(
+      400,
+      'INVALID_CATEGORY',
+      'The requested search category is not supported.'
+    );
   }
 
   const filters = {
-    category: typeof req.query.category === 'string'
-      ? req.query.category.trim()
-      : undefined,
-    country: typeof req.query.country === 'string'
-      ? req.query.country.trim()
-      : undefined,
+    category: category?.toLowerCase(),
+    country,
     page,
     limit,
   };
@@ -61,7 +159,8 @@ controller.search = asyncHandler(async (req, res) => {
   if (
     !result ||
     !Array.isArray(result.items) ||
-    !result.pagination
+    !result.pagination ||
+    typeof result.pagination !== 'object'
   ) {
     throw httpError(
       500,
@@ -73,7 +172,11 @@ controller.search = asyncHandler(async (req, res) => {
   return sendSuccess(res, result.items, 200, {
     pagination: result.pagination,
     query,
+    filters: {
+      category: filters.category || null,
+      country: filters.country || null,
+    },
   });
 });
 
-module.exports = controller;
+module.exports = Object.freeze({ search });

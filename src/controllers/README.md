@@ -1,34 +1,41 @@
-MedOrbits — Controllers
 
-Directory: src/controllers/
+# MedOrbits — Controllers Architecture
 
-1. Overview
+**Directory:** `src/controllers/`  
+**Runtime:** Node.js >= 20  
+**Module system:** CommonJS  
+**Status:** Architecture and implementation standard
 
-Controllers translate HTTP requests into application or repository operations and standardized JSON responses.
+—
 
-They coordinate request validation, authenticated identity, authorization-aware operations, business logic invocation, and response formatting. Controllers must remain separate from route registration, infrastructure configuration, and database implementation details.
+## 1. Purpose
 
-This document defines the controller architecture and implementation requirements. The suggested inventory does not confirm that every controller, service, repository, validator, or route exists.
+Controllers form the HTTP boundary between MedOrbits routes and application logic. They translate incoming requests into validated, authorized service or repository operations and return consistent API responses.
 
-2. Responsibilities
+Controllers must remain focused on HTTP concerns. Business rules, database queries, payment-provider integrations, transactional operations, and complex state transitions belong in the appropriate application services or data-access layer.
 
-Controllers should:
+This document defines the expected architecture and security requirements. It does not assert that every listed controller, route, service, repository, validator, or integration already exists.
 
-1. Receive requests from explicitly registered routes.
-2. Validate and normalize request data using dedicated validators.
-3. Obtain authenticated identity from trusted authentication middleware.
-4. Enforce authorization and resource ownership before sensitive operations.
-5. Invoke application services or repositories for permitted operations.
-6. Return consistent JSON responses with appropriate HTTP status codes.
-7. Pass unexpected errors to centralized error-handling middleware.
-8. Exclude sensitive fields from responses.
-9. Fail safely when required functionality is not configured.
-10. Avoid embedding database queries, infrastructure configuration, or provider-specific implementation details.
+## 2. Architectural Principles
 
-3. Suggested Directory Structure
+Every controller must follow these principles:
 
-Adapt this inventory to the controller files that actually exist in the repository.
+1. **Validate input:** Never pass unrestricted request data into application logic.
+2. **Authenticate identity:** Use trusted authentication middleware and server-established identity.
+3. **Authorize operations:** Verify permissions and resource ownership before sensitive actions.
+4. **Delegate business logic:** Keep complex workflows out of controllers.
+5. **Minimize data exposure:** Return explicit, sanitized response objects.
+6. **Fail closed:** Never claim success when a required operation is unavailable or incomplete.
+7. **Standardize responses:** Follow the established MedOrbits HTTP response contract.
+8. **Handle errors centrally:** Forward unexpected failures to centralized error middleware.
+9. **Preserve data integrity:** Delegate transactions, concurrency control, and state transitions to services and repositories.
+10. **Test behavior:** Verify functional outcomes, authorization boundaries, and failure conditions.
 
+## 3. Directory Structure
+
+The following inventory is illustrative and must be reconciled with the actual repository.
+
+```text
 src/controllers/
 ├── README.md
 ├── auth.controller.js
@@ -54,258 +61,214 @@ src/controllers/
 ├── faq.controller.js
 ├── password.controller.js
 ├── verification.controller.js
+├── public-releases.controller.js
 └── admin.controller.js
+```
 
-The inventory is illustrative. Do not create placeholder files merely to match this list unless the application requires them.
+Do not create files merely to match this list. Add a controller only when a real application capability requires it.
 
-4. Request Controller
+## 4. Request Lifecycle
 
-File: src/controllers/request.controller.js
+A typical request should follow this sequence:
 
-Purpose
+```text
+HTTP Request
+    |
+    v
+Route Registration
+    |
+    v
+Request Parsing and Size Limits
+    |
+    v
+Authentication (when required)
+    |
+    v
+Authorization and Ownership Checks
+    |
+    v
+Controller Input Validation
+    |
+    v
+Application Service
+    |
+    v
+Repository / External Provider
+    |
+    v
+Response Sanitization
+    |
+    v
+Standardized HTTP Response
+```
 
-The request controller provides the HTTP boundary for request-submission workflows, including potential consultancy, admissions-guidance, and counselling enquiries.
+Errors should be passed to centralized error middleware. Route-specific requirements may change the ordering, particularly for payment webhooks, which require raw-body capture before ordinary JSON parsing.
 
-Its proposed responsibilities include:
+## 5. Controller Responsibilities
 
-* Creating a new request after validation and authorization.
-* Listing requests accessible to the authenticated caller.
-* Retrieving an individual request after ownership verification.
-* Updating explicitly permitted fields or statuses.
-* Deleting or withdrawing a request when business rules permit.
+Controllers may:
 
-These capabilities must be implemented through the application’s actual services, repositories, validators, and routes. Their presence in this document does not establish that the underlying functionality exists.
+- Read validated route parameters, query parameters, and request bodies.
+- Obtain the authenticated user from trusted middleware.
+- Invoke dedicated validators.
+- Enforce authorization checks or delegate them to an explicit authorization layer.
+- Invoke application services or authorized repository methods.
+- Sanitize returned records.
+- Select appropriate HTTP status codes.
+- Pass errors to centralized error middleware.
 
-Exported handlers
+Controllers must not:
 
-The initial controller exposes the following methods:
+- Execute ad hoc database queries.
+- Trust client-supplied ownership or role information.
+- Accept arbitrary database fields from request bodies.
+- Expose raw database records containing sensitive information.
+- Contain payment-provider secrets or infrastructure configuration.
+- Implement complex business workflows directly.
+- Return fabricated records or successful responses for failed operations.
 
-Method	Intended operation
-createRequest	Submit a new request
-listRequests	List authorized requests
-getRequestById	Retrieve a specific request
-updateRequest	Update permitted request fields
-deleteRequest	Delete or withdraw a request when permitted
+## 6. Request Controller
 
-Initial implementation status
+**File:** `src/controllers/request.controller.js`
 
-The initial request.controller.js implementation is deliberately disabled.
+### Purpose
 
-All five handlers return HTTP 501 Not Implemented using the configured API response helper. They do not create records, retrieve private data, modify request statuses, or claim successful processing.
+The request controller defines the HTTP boundary for consultancy enquiries, admissions guidance, counselling requests, and related request-management workflows.
 
-This is a fail-closed starting point, not a completed request-management workflow.
+### Expected exports
 
-Dependencies to verify
+| Handler | Intended operation |
+|—|—|
+| `createRequest` | Submit a new request |
+| `listRequests` | List requests accessible to the caller |
+| `getRequestById` | Retrieve one authorized request |
+| `updateRequest` | Update explicitly permitted fields |
+| `deleteRequest` | Delete or withdraw a request when permitted |
 
-Before enabling any operation, verify the actual project implementations and interfaces for:
+These handlers are intended capabilities, not proof that the underlying workflows are implemented.
 
-* src/utils/async-handler.js
-* src/utils/api-response.js
-* The request validator.
-* The request application service.
-* The request repository or persistence layer.
-* src/routes/request.routes.js, if implemented.
-* Authentication and authorization middleware.
-* Automated controller and route tests.
+### Current disabled state
 
-The initial controller assumes that the asynchronous handler exports a compatible wrapper and that the response utility supports the signature:
+The initial implementation is deliberately fail-closed. Its handlers validate input and return a non-success response while request processing remains unconfigured.
 
-apiResponse.sendError(
-  res,
-  501,
-  ‘REQUEST_SERVICE_NOT_CONFIGURED’,
-  ‘Request submission is not available yet. Please try again later.’
-);
+Before enabling request management, verify:
 
-Confirm that this matches the actual response helper. Adapt the controller if the repository uses a different contract.
+- `src/utils/async-handler.js`
+- `src/utils/api-response.js`
+- `src/validators/request.validator.js`
+- The request application service
+- The request repository and persistence schema
+- The request route module
+- Authentication and authorization middleware
+- Controller and route tests
 
-Request security requirements
+The response helper must match the actual implementation. If the established contract supports `apiResponse.sendError(res, status, code, message)`, use that signature consistently.
 
-Before enabling request processing:
+### Public and protected operations
+
+Public enquiry submission may be enabled only under an explicit public-access policy with validation, abuse prevention, and appropriate rate limiting.
+
+Listing, retrieval, updating, and deletion must require the applicable authentication and authorization checks. A request ID alone never establishes permission to access a record.
+
+### Activation requirements
+
+Before enabling any request operation:
 
 1. Validate request bodies using dedicated validators.
-2. Define an explicit allowlist of accepted fields.
-3. Derive the caller’s identity from trusted authentication middleware.
-4. Prevent clients from assigning arbitrary owners, roles, internal identifiers, or privileged statuses.
-5. Enforce ownership or documented administrative permissions for reads, updates, and deletions.
-6. Apply valid state-transition rules in the application service or data layer.
-7. Exclude internal metadata and sensitive information from API responses.
-8. Add persistence, duplicate-submission handling, and transactional protections where required.
-9. Ensure unexpected errors reach centralized error middleware.
-10. Add automated tests before declaring the workflow production-ready.
+2. Enforce explicit field allowlists.
+3. Derive the requester identity from trusted authentication middleware where applicable.
+4. Verify ownership or administrative permissions.
+5. Enforce permitted state transitions in the application service.
+6. Persist changes before reporting success.
+7. Handle duplicate submissions and concurrent updates where required.
+8. Return sanitized records.
+9. Add automated tests for success, validation failure, authorization failure, and service failure.
 
-Public enquiry submission, if supported, must have an explicit public-access policy and appropriate abuse-prevention controls. Protected request-management operations must require the applicable authentication and authorization checks.
+Until these requirements are met, the operation must remain disabled.
 
-Fail-closed behavior
+## 7. Authentication and Authorization
 
-Request creation and management must remain disabled until their backing services and persistence have been implemented and verified.
+Authentication identifies the caller. Authorization determines which operations and resources that caller may access.
 
-Do not fabricate request IDs, return success without persistence, expose unverified records, or silently accept operations that have not been implemented.
+Authentication must be enforced by the applicable route middleware or an equivalent trusted mechanism. Controllers must not treat request-body fields, query parameters, or arbitrary headers as proof of identity.
 
-Use HTTP 501 Not Implemented for genuinely unimplemented functionality. Use appropriate status codes for other conditions, such as validation failures, missing resources, or insufficient permissions.
+### Ownership rules
 
-5. Route Integration
+| Resource | Minimum authorization expectation |
+|—|—|
+| Users | Restrict account access and updates to permitted identities and fields |
+| Applications | Restrict applicant access to their own applications unless an authorized role grants broader access |
+| Requests | Enforce requester ownership or documented staff permissions |
+| Documents | Verify access rights before exposing metadata, downloads, or uploads |
+| Candidates | Protect personal and application information |
+| Employers | Verify organization membership and permitted employer actions |
+| Jobs and recruitment | Verify employer ownership and publishing permissions |
+| Subscriptions | Restrict billing and entitlement information to authorized identities |
+| Payments | Restrict transaction information to the payer and explicitly authorized staff |
+| Sessions | Restrict access to authorized participants and permitted session managers |
+| Notifications | Scope retrieval and state changes to the authenticated recipient |
 
-Controllers are not automatically mounted by server.js. Route modules in src/routes/ must explicitly import controller functions and register their HTTP methods and paths.
+Where practical, use user-scoped repository operations such as `findForUser(id, userId)` instead of retrieving an unrestricted record and checking ownership afterward.
 
-Illustrative example:
+Administrative access must be explicit, audited where appropriate, and enforced by server-side authorization logic.
 
-‘use strict’;
-const express = require(‘express’);
-const router = express.Router();
-const { requireAuth } = require(‘../middleware/auth.middleware’);
-const requestController = require(‘../controllers/request.controller’);
-router.post(
-  ‘/‘,
-  requireAuth,
-  requestController.createRequest
-);
-router.get(
-  ‘/‘,
-  requireAuth,
-  requestController.listRequests
-);
-router.get(
-  ‘/:id’,
-  requireAuth,
-  requestController.getRequestById
-);
-router.patch(
-  ‘/:id’,
-  requireAuth,
-  requestController.updateRequest
-);
-router.delete(
-  ‘/:id’,
-  requireAuth,
-  requestController.deleteRequest
-);
-module.exports = router;
+## 8. Input Validation and Data Integrity
 
-This route example is illustrative, not a claim that the middleware or route module exists. Do not register these endpoints until their authentication policy, validators, service implementations, and response contracts have been verified.
+Use dedicated validators for request bodies, route parameters, and query parameters.
 
-Before mounting a route, verify that:
+Validation must address:
 
-* The controller exists and exports the referenced function.
-* Authentication middleware is applied to protected routes.
-* Role-based authorization is applied where required.
-* Parameters, query strings, and request bodies are validated.
-* Private resources are checked for ownership or authorized administrative access.
-* Middleware executes in the correct order.
-* Errors are handled by the application’s established error-handling mechanism.
+- Required fields and data types.
+- String lengths and supported formats.
+- Positive identifiers and valid pagination.
+- Supported enum values.
+- URL and contact-information formats where applicable.
+- Allowed create and update fields.
+- Date ranges and numeric bounds.
+- Related-resource existence and permissions.
+- Permitted state transitions.
+- Unknown-field rejection where appropriate.
 
-Do not expose a controller method through a route merely because that method exists.
+Create and update operations should use separate validation rules when their requirements differ. Partial updates must reject empty or entirely disallowed payloads.
 
-6. Authentication and Authorization
+Never rely on controller validation alone for complex business rules. The application service and database layer must also enforce integrity constraints, authorization-sensitive transitions, uniqueness, and transaction requirements.
 
-Authentication identifies the caller. Authorization determines which resources and operations that caller may access.
+## 9. Response Sanitization
 
-Every protected operation must enforce both requirements as applicable.
+Use explicit serializers or field allowlists for all sensitive resources.
 
-Resource ownership
+Never expose:
 
-* Users: Restrict account access and modification to permitted fields and authorized identities.
-* Applications: Applicants may access their own applications unless a documented role grants broader access.
-* Requests: Restrict request access and modification to the owner or explicitly authorized administrative staff.
-* Documents: Verify ownership, purpose, and permission before metadata access, upload, or download.
-* Candidates: Restrict profile and application information to authorized users and organizations.
-* Employers: Enforce organization membership, ownership, and role permissions.
-* Subscriptions: Restrict subscription and billing information to the subscriber or authorized staff.
-* Payments: Restrict transaction details to authorized identities and trusted internal workflows.
-* Sessions: Allow users to manage only their permitted sessions.
-* Recruitment and jobs: Enforce employer ownership and authorized publishing permissions.
+- Password hashes or authentication secrets.
+- Session-token hashes or password-reset token hashes.
+- Private storage keys, filesystem paths, or signed download credentials.
+- Payment credentials, webhook secrets, or unnecessary provider metadata.
+- Internal exception messages, SQL errors, or stack traces.
+- Private applicant, counselling, or enquiry information to unauthorized callers.
+- Internal audit metadata that the caller is not permitted to access.
 
-Do not trust a client-provided user ID, role, ownership field, or resource ID as proof of authorization. Derive identity from trusted authentication middleware and verify permissions against authoritative records.
+Sanitization must apply to individual records and every item in collection responses. Verify nested objects and arrays as well; filtering only top-level fields is insufficient if nested data can contain secrets.
 
-7. Validation and Data Integrity
+Do not return a raw repository object merely because the current schema appears safe.
 
-Controllers should invoke dedicated validators before passing untrusted input to application services or repositories.
+## 10. Standardized API Responses
 
-Validation should address:
-
-* Required fields and data types.
-* String length and format constraints.
-* Positive integer identifiers where applicable.
-* Supported enum values and status transitions.
-* URL and country-code formats where relevant.
-* Permitted update fields.
-* Referential integrity and related-resource permissions.
-* Pagination bounds and supported filters.
-* Request ownership and authorized state transitions.
-
-Do not accept unrestricted request bodies as database records. Use explicit field allowlists and distinguish create validation from update validation when their requirements differ.
-
-Business rules, transactional integrity, duplicate handling, and complex workflows should be enforced in application services or the data layer rather than relying solely on controller validation.
-
-8. Sensitive Response Data
-
-Never expose the following in public API responses:
-
-* Password hashes or authentication secrets.
-* Session-token hashes and password-reset token hashes.
-* Private document storage paths, storage keys, or signed access credentials.
-* Payment credentials, webhook secrets, or unnecessary provider metadata.
-* Internal exception messages, database errors, or stack traces.
-* Private applicant information or request metadata not authorized for the caller.
-
-Use explicit response serializers or field allowlists for sensitive entities. Avoid returning raw database records when they may contain internal or private fields.
-
-Apply the same protections to logs, error responses, and administrative endpoints.
-
-9. Unconfigured Endpoints and Fail-Closed Behavior
-
-The following capabilities remain unconfigured until their backing storage, service, or provider integration has been implemented and verified:
-
-* Identity and account verification.
-* Password-reset workflows.
-* Administrative overview.
-* Request submission and request management.
-* Counselling.
-* Recruitment.
-* Service catalogue.
-* Search.
-* Notifications.
-* Uploads.
-* Frequently asked questions.
-
-Payment creation and webhook processing must also remain disabled until provider-specific integration, payment-state handling, and signature verification are implemented.
-
-An unconfigured endpoint must not fabricate success, persist incomplete data, or imply that an operation has completed.
-
-Return a consistent non-success response. HTTP 501 Not Implemented may be appropriate for a genuinely unsupported operation; use other status codes when they more accurately describe the condition.
-
-A stub must not be considered production-ready simply because it returns a standardized error.
-
-10. Payments and Webhooks
-
-Payment operations require stricter controls than ordinary CRUD endpoints.
-
-* Do not trust client-supplied payment status, amount, transaction identity, or provider confirmation.
-* Calculate payable amounts using trusted server-side records.
-* Verify provider signatures against the exact raw request body.
-* Validate the event, merchant or account identity, and expected transaction state.
-* Process events idempotently to prevent duplicate handling.
-* Protect state transitions against replay, race conditions, and inconsistent updates.
-* Keep webhook secrets outside source control.
-* Do not acknowledge successful processing before required verification and processing have succeeded.
-
-Payment creation and webhook processing must fail closed until these controls are implemented.
-
-11. Error Handling and Response Format
-
-Use the response contract already established by the application. If no contract exists, define one and apply it consistently across controllers.
+Use the existing MedOrbits response helpers and established response contract.
 
 Illustrative success response:
 
+```json
 {
   “success”: true,
   “data”: {
     “id”: “resource-id”
   }
 }
+```
 
 Illustrative error response:
 
+```json
 {
   “success”: false,
   “error”: {
@@ -313,90 +276,228 @@ Illustrative error response:
     “message”: “The requested resource was not found.”
   }
 }
+```
 
-These examples are illustrative and must be adapted to the actual API contract.
+These examples are illustrative. The actual implementation must follow the response utility already used by the application.
 
-Controllers should:
+### HTTP status guidance
 
-* Use appropriate HTTP status codes.
-* Return safe, actionable error messages.
-* Preserve known application error codes.
-* Delegate unexpected exceptions to centralized error middleware.
-* Avoid returning stack traces or implementation details to clients.
+| Status | Typical use |
+|—|—|
+| `200 OK` | Successful retrieval or update |
+| `201 Created` | Resource successfully persisted |
+| `202 Accepted` | Operation accepted for asynchronous processing |
+| `204 No Content` | Successful operation with no response body |
+| `400 Bad Request` | Invalid parameters or payload |
+| `401 Unauthorized` | Authentication missing or invalid |
+| `403 Forbidden` | Authenticated caller lacks permission |
+| `404 Not Found` | Resource absent or intentionally concealed |
+| `409 Conflict` | Duplicate or conflicting state |
+| `413 Content Too Large` | Request exceeds configured size limits |
+| `415 Unsupported Media Type` | Unsupported request content type |
+| `422 Unprocessable Content` | Valid syntax but unacceptable business input |
+| `429 Too Many Requests` | Rate limit exceeded |
+| `500 Internal Server Error` | Unexpected server failure |
+| `503 Service Unavailable` | Temporarily unavailable dependency or service |
+| `501 Not Implemented` | Requested functionality is genuinely not implemented |
 
-Do not introduce a new response format in an individual controller without reviewing compatibility with the existing API.
+Choose status codes based on the actual condition. Do not use `501` as a generic substitute for authorization failures, validation errors, or temporary outages.
 
-12. Testing Requirements
+## 11. Unconfigured Operations
 
-Add automated tests for applicable controller behavior.
+The following capabilities must be treated as unconfigured until their actual implementation is verified:
 
-Functional tests
+- Account and identity verification
+- Password-reset workflows
+- Administrative overview
+- Request submission and request management
+- Counselling
+- Recruitment
+- Service catalogue
+- Search
+- Notifications
+- Uploads
+- FAQ retrieval and answering
 
-* Successful requests when the underlying service is implemented.
-* Invalid parameters and request bodies.
-* Missing resources.
-* Unsupported operations.
-* Repository or service failures.
-* Correct response structure and HTTP status codes.
-* Request creation without false success.
-* Request updates with permitted and prohibited fields.
+This list is a verification checklist, not a claim that every capability is absent.
 
-Security tests
+Payment creation and webhook processing require verified provider integration, secure state handling, and idempotency before activation.
 
-* Missing or invalid authentication.
-* Insufficient permissions.
-* Unauthorized resource ownership.
-* Attempts to modify protected fields.
-* Sensitive-field exclusion.
-* Cross-user access to documents, applications, requests, subscriptions, and payments.
-* Attempts to bypass permitted request-state transitions.
+For unconfigured functionality:
 
-Integration tests
+1. Do not fabricate success or resource identifiers.
+2. Do not return mock records as persisted data.
+3. Do not silently ignore requested changes.
+4. Return a consistent non-success response.
+5. Log safe diagnostic information without credentials or personal data.
+6. Keep the endpoint disabled until its dependencies and tests are ready.
 
-* Route registration and exported controller methods.
-* Middleware ordering.
-* Centralized error handling.
-* Unconfigured endpoint behavior.
-* Payment signature failures and duplicate-event handling when webhook integration is implemented.
+Use `501` for genuinely unsupported functionality. Use `503` when an implemented capability is temporarily unavailable.
 
-Tests should verify both the HTTP response and whether underlying services or repositories were called with the correct authorized inputs.
+## 12. Payments and Webhooks
 
-13. Production-Readiness Checklist
+Payment endpoints require stricter safeguards than ordinary CRUD endpoints.
 
-Before treating a controller as production-ready:
+- Calculate payable amounts from trusted server-side prices and purchase records.
+- Do not accept client-supplied payment status as authoritative.
+- Verify provider signatures against the exact raw request body.
+- Validate provider account identity, event type, and transaction association.
+- Process provider events idempotently.
+- Prevent duplicate charges, duplicate fulfilment, and repeated state transitions.
+- Protect concurrent updates with appropriate transactions or locking.
+- Keep secrets in environment-based or managed secret storage.
+- Do not mark an order paid merely because the browser reports success.
+- Grant subscription entitlements only after trusted payment confirmation.
+- Preserve auditable financial records.
 
-* [ ]	The controller file exists and exports the methods used by its routes.
-* [ ]	Route modules explicitly register the controller.
-* [ ]	Authentication and authorization are enforced where required.
-* [ ]	Request validation is implemented.
-* [ ]	Resource ownership is checked against authoritative records.
-* [ ]	Sensitive fields are excluded from responses.
-* [ ]	Errors follow the established API response contract.
-* [ ]	Unconfigured operations fail safely.
-* [ ]	Repository and service interfaces match the controller.
-* [ ]	Automated tests cover success, failure, and access-control scenarios.
-* [ ]	API documentation reflects implemented behavior.
-* [ ]	Logging does not expose credentials, tokens, or private data.
-* [ ]	Request creation does not report success before persistence succeeds.
-* [ ]	Request-management operations enforce ownership and permitted state transitions.
+Configure raw-body capture before JSON parsing on webhook routes. Do not apply ordinary session authentication in place of provider signature verification.
 
-14. Maintenance Workflow
+Payment creation and webhook processing must remain disabled until these controls are implemented and tested.
 
-When adding or changing a controller:
+## 13. Route Integration
 
-1. Update the controller and relevant route module.
-2. Implement or update required validators, services, and repositories.
-3. Review authentication, authorization, ownership, and data-exposure risks.
-4. Add or update automated tests.
-5. Update API documentation.
-6. Verify route mounting and middleware order.
-7. Confirm that unimplemented capabilities remain clearly identified.
-8. Run the project’s available linting, test, and validation commands.
+Controllers are not mounted automatically. Route modules must explicitly import and register controller methods.
 
-Only document a command as available if it is defined in the project’s actual tooling configuration.
+Illustrative example:
 
-15. Architecture Principle
+```javascript
+‘use strict’;
 
-Controllers provide a clear boundary between HTTP requests and application operations. They should remain small, explicit, authorization-aware, and consistent with the project’s service, repository, validation, and error-handling contracts.
+const express = require(‘express’);
+const router = express.Router();
 
-MedOrbits — Study · Work · Grow
+const { requireAuth } = require(‘../middleware/auth.middleware’);
+const requestController = require(‘../controllers/request.controller’);
+
+router.post(‘/‘, requestController.createRequest);
+
+router.get(
+  ‘/‘,
+  requireAuth,
+  requestController.listRequests
+);
+
+router.get(
+  ‘/:id’,
+  requireAuth,
+  requestController.getRequestById
+);
+
+router.patch(
+  ‘/:id’,
+  requireAuth,
+  requestController.updateRequest
+);
+
+router.delete(
+  ‘/:id’,
+  requireAuth,
+  requestController.deleteRequest
+);
+
+module.exports = router;
+```
+
+This is an example only. The actual middleware path, public-access policy, and controller exports must be verified before use.
+
+Before registering a route, confirm:
+
+- The controller exists and exports the referenced method.
+- Authentication and role middleware are correct for that operation.
+- Middleware ordering is correct.
+- Input validation occurs before sensitive application operations.
+- Ownership checks cannot be bypassed.
+- Error handling follows the application contract.
+- The route is covered by tests.
+
+Do not mount a handler merely because it is exported.
+
+## 14. Testing Requirements
+
+### Functional tests
+
+Test:
+
+- Valid and invalid request payloads.
+- Valid and invalid identifiers.
+- Successful operations when services are configured.
+- Missing resources.
+- Unsupported operations.
+- Service and repository failures.
+- Response structure and HTTP status codes.
+- Pagination boundaries.
+- Empty update payloads.
+- Persistence before successful responses.
+
+### Security tests
+
+Test:
+
+- Missing or invalid authentication.
+- Insufficient role permissions.
+- Cross-user resource access.
+- Unauthorized updates and deletions.
+- Attempts to assign arbitrary owners or privileged statuses.
+- Sensitive-field leakage.
+- Malicious pagination and filter values.
+- Repeated or concurrent state-changing requests.
+- Payment webhook signature failures and duplicate events when implemented.
+
+### Integration tests
+
+Test:
+
+- Route registration and exported method names.
+- Middleware ordering.
+- Centralized error handling.
+- Real service/repository interface compatibility.
+- Unconfigured operation behavior.
+- Database constraints and transaction behavior where applicable.
+
+Service unit tests should mock external dependencies. Integration tests should use isolated test resources and must not mutate production data.
+
+A passing test suite is evidence of tested behavior, not proof of complete production security.
+
+## 15. Production-Readiness Checklist
+
+Before declaring a controller production-ready:
+
+- [ ] The controller exists and exports the expected methods.
+- [ ] Registered routes match those exports.
+- [ ] Authentication is enforced where required.
+- [ ] Role authorization and ownership checks are effective.
+- [ ] Request parameters and bodies are validated.
+- [ ] Create and update allowlists are explicit.
+- [ ] Response data is sanitized, including nested fields.
+- [ ] Service and repository contracts match actual implementations.
+- [ ] Unexpected errors reach centralized error middleware.
+- [ ] Unconfigured operations fail safely.
+- [ ] Sensitive values are excluded from responses and logs.
+- [ ] Successful responses follow completed operations.
+- [ ] State transitions and concurrency are protected.
+- [ ] Automated tests cover functional and security failures.
+- [ ] API documentation matches implemented behavior.
+- [ ] Deployment and configuration requirements are documented.
+
+## 16. Maintenance Workflow
+
+When changing a controller:
+
+1. Inspect the existing controller, route, validator, service, repository, and response helpers.
+2. Update the controller using actual project interfaces.
+3. Add or update input validation and response sanitization.
+4. Verify authentication, authorization, and ownership rules.
+5. Add tests for success, failure, and security boundaries.
+6. Confirm that all registered route methods exist.
+7. Run the project’s configured linting, tests, and validation commands.
+8. Update documentation to describe implemented behavior accurately.
+
+Do not claim that tests passed, routes were mounted, or deployment succeeded unless those actions were actually verified.
+
+## 17. Definition of Done
+
+A controller is complete only when its HTTP contract, validators, service/repository dependencies, authorization requirements, response format, and automated tests agree with the actual application.
+
+An exported function is not proof that a workflow is implemented. A standardized error response is not proof that a feature is production-ready.
+
+**MedOrbits — Study · Work · Grow**

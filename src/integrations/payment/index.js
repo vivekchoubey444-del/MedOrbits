@@ -1,114 +1,192 @@
+
 'use strict';
 
 /**
-
-* MedOrbits -- Payment Integration Factory
-* File: src/integrations/payment/index.js
-* Creates the configured payment client and exposes provider interfaces.
-* Security:
-* ●	Never expose provider credentials to frontend clients.
-* ●	Keep payment operations server-side.
-* ●	Verify webhook signatures in the webhook handling layer.
-* ●	Do not initialize an unconfigured payment provider.
-        */
+ * MedOrbits -- Payment Integration Factory
+ *
+ * File: src/integrations/payment/index.js
+ * Runtime: Node.js >= 20
+ *
+ * Creates the configured payment client and exposes provider interfaces.
+ *
+ * Security:
+ * - Never expose provider credentials to frontend clients.
+ * - Keep payment operations server-side.
+ * - Verify webhook signatures in the webhook handling layer.
+ * - Do not initialize an unconfigured payment provider.
+ * - Do not silently fall back to another payment provider.
+ */
 
 const {
-PaymentClient,
+  PaymentClient,
 } = require('./payment.client');
 
 const {
-PaymentProvider,
+  PaymentProvider,
 } = require('./payment.provider');
 
 const {
-RazorpayProvider,
+  RazorpayProvider,
 } = require('./razorpay.provider');
 
 const {
-StripeProvider,
+  StripeProvider,
 } = require('./stripe.provider');
 
 const {
-loadPaymentConfig,
+  loadPaymentConfig,
 } = require('./payment.config');
 
-const SUPPORTED_PROVIDERS = new Set([
-'razorpay',
-'stripe',
+const SUPPORTED_PROVIDERS = Object.freeze([
+  'razorpay',
+  'stripe',
 ]);
 
-function validateProvider(provider) {
-if (!provider || typeof provider !== 'object') {
-throw new TypeError('A valid payment provider is required.');
-}
-
-// Verify the minimum provider contract.
-// Keep this list aligned with PaymentClient and PaymentProvider.
-const requiredMethods = [
-'createPayment',
-];
-
-for (const method of requiredMethods) {
-if (typeof provider[method] !== 'function') {
-throw new TypeError(
-`Payment provider must implement ${method}().`
+const SUPPORTED_PROVIDER_SET = new Set(
+  SUPPORTED_PROVIDERS,
 );
-}
+
+function assertOptions(options) {
+  if (
+    !options ||
+    typeof options !== 'object' ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError(
+      'Payment options must be an object.',
+    );
+  }
 }
 
-return provider;
+function validateProvider(provider) {
+  if (
+    !provider ||
+    typeof provider !== 'object' ||
+    Array.isArray(provider)
+  ) {
+    throw new TypeError(
+      'A valid payment provider is required.',
+    );
+  }
+
+  if (typeof provider.createPayment !== 'function') {
+    throw new TypeError(
+      'Payment provider must implement createPayment().',
+    );
+  }
+
+  if (
+    provider.close !== undefined &&
+    typeof provider.close !== 'function'
+  ) {
+    throw new TypeError(
+      'Payment provider close, when provided, must be a function.',
+    );
+  }
+
+  return provider;
+}
+
+function validateConfig(config) {
+  if (
+    !config ||
+    typeof config !== 'object' ||
+    Array.isArray(config)
+  ) {
+    throw new TypeError(
+      'Payment configuration is invalid.',
+    );
+  }
+
+  if (!SUPPORTED_PROVIDER_SET.has(config.provider)) {
+    throw new Error(
+      `Unsupported payment provider: ${String(config.provider)}`,
+    );
+  }
+
+  return config;
 }
 
 function createPaymentClient(options = {}) {
-if (
-!options ||
-typeof options !== 'object' ||
-Array.isArray(options)
-) {
-throw new TypeError('Payment options must be an object.');
-}
+  assertOptions(options);
 
-// Dependency injection supports tests and custom implementations.
-if (options.provider !== undefined) {
-return new PaymentClient(validateProvider(options.provider));
-}
+  const {
+    provider: injectedProvider,
+    config: suppliedConfig,
+    env = process.env,
+    clientOptions = {},
+  } = options;
 
-const environment = options.env || process.env;
-const config = options.config || loadPaymentConfig(environment);
+  if (
+    !clientOptions ||
+    typeof clientOptions !== 'object' ||
+    Array.isArray(clientOptions)
+  ) {
+    throw new TypeError(
+      'clientOptions must be an object.',
+    );
+  }
 
-if (!config || typeof config !== 'object') {
-throw new TypeError('Payment configuration is invalid.');
-}
+  // Injected providers are caller-owned by default.
+  if (injectedProvider !== undefined) {
+    return new PaymentClient(
+      validateProvider(injectedProvider),
+      {
+        ...clientOptions,
+        ownsProvider: clientOptions.ownsProvider === true,
+      },
+    );
+  }
 
-if (!SUPPORTED_PROVIDERS.has(config.provider)) {
-throw new Error(
-`Unsupported payment provider: ${String(config.provider)}`
-);
-}
+  if (!env || typeof env !== 'object' || Array.isArray(env)) {
+    throw new TypeError(
+      'Payment environment must be an object.',
+    );
+  }
 
-let provider;
+  const config = validateConfig(
+    suppliedConfig || loadPaymentConfig(env),
+  );
 
-switch (config.provider) {
-case 'razorpay':
-provider = RazorpayProvider.fromEnv(environment);
-break;
+  let paymentProvider;
 
-case 'stripe':
-  provider = StripeProvider.fromEnv(environment);
-  break;
-default:
-  throw new Error('No payment provider is configured.');
+  switch (config.provider) {
+    case 'razorpay':
+      paymentProvider = suppliedConfig
+        ? new RazorpayProvider(config)
+        : RazorpayProvider.fromEnv(env);
+      break;
 
-}
+    case 'stripe':
+      paymentProvider = suppliedConfig
+        ? new StripeProvider(config)
+        : StripeProvider.fromEnv(env);
+      break;
 
-return new PaymentClient(validateProvider(provider));
+    default:
+      // Defensive fallback if supported providers change later.
+      throw new Error(
+        'No supported payment provider is configured.',
+      );
+  }
+
+  return new PaymentClient(
+    validateProvider(paymentProvider),
+    {
+      ...clientOptions,
+      ownsProvider: true,
+    },
+  );
 }
 
 module.exports = {
-createPaymentClient,
-PaymentClient,
-PaymentProvider,
-RazorpayProvider,
-StripeProvider,
-loadPaymentConfig,
+  createPaymentClient,
+  validateProvider,
+  validateConfig,
+  SUPPORTED_PROVIDERS,
+  PaymentClient,
+  PaymentProvider,
+  RazorpayProvider,
+  StripeProvider,
+  loadPaymentConfig,
 };

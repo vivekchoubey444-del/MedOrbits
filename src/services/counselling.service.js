@@ -1,10 +1,10 @@
-
 'use strict';
 
 const {
   ServiceError,
   requireDependency,
   requiredId,
+  plainObject,
   assertFound,
   createCrudService,
   audit,
@@ -22,14 +22,34 @@ const TERMINAL_STATUSES = new Set([
   'cancelled',
 ]);
 
+const ALLOWED_TRANSITIONS = Object.freeze({
+  requested: new Set([
+    'requested',
+    'scheduled',
+    'cancelled',
+  ]),
+  scheduled: new Set([
+    'scheduled',
+    'completed',
+    'cancelled',
+  ]),
+  completed: new Set(['completed']),
+  cancelled: new Set(['cancelled']),
+});
+
 function createCounsellingService({
   counsellingRepository,
   auditService,
+  clock = () => new Date(),
 }) {
   requireDependency(
     counsellingRepository,
-    'counsellingRepository'
+    'counsellingRepository',
   );
+
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
 
   const crud = createCrudService({
     repository: counsellingRepository,
@@ -43,27 +63,65 @@ function createCounsellingService({
     ],
   });
 
+  function getNow() {
+    const value = clock();
+
+    if (
+      !(value instanceof Date) ||
+      Number.isNaN(value.getTime())
+    ) {
+      throw new TypeError(
+        'clock must return a valid Date.',
+      );
+    }
+
+    return new Date(value.getTime());
+  }
+
+  function assertValidStatus(status) {
+    if (
+      typeof status !== 'string' ||
+      !ALLOWED_STATUSES.has(status)
+    ) {
+      throw new ServiceError(
+        'Unsupported counselling status.',
+        {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+          details: {
+            allowed: [...ALLOWED_STATUSES],
+          },
+        },
+      );
+    }
+  }
+
+  function assertTransitionAllowed(previousStatus, nextStatus) {
+    const transitions = ALLOWED_TRANSITIONS[previousStatus];
+
+    if (!transitions || !transitions.has(nextStatus)) {
+      throw new ServiceError(
+        'This counselling status transition is not permitted.',
+        {
+          code: 'INVALID_STATUS_TRANSITION',
+          status: 409,
+          details: {
+            previousStatus,
+            requestedStatus: nextStatus,
+          },
+        },
+      );
+    }
+  }
+
   return {
     ...crud,
 
     async setStatus(id, status, actor = {}) {
       requiredId(id, 'counsellingId');
+      assertValidStatus(status);
 
-      if (
-        typeof status !== 'string' ||
-        !ALLOWED_STATUSES.has(status)
-      ) {
-        throw new ServiceError(
-          'Unsupported counselling status.',
-          {
-            code: 'VALIDATION_ERROR',
-            status: 422,
-            details: {
-              allowed: [...ALLOWED_STATUSES],
-            },
-          }
-        );
-      }
+      const actorData = plainObject(actor, 'actor');
 
       const findById =
         counsellingRepository.findById ||
@@ -71,7 +129,7 @@ function createCounsellingService({
 
       if (typeof findById !== 'function') {
         throw new TypeError(
-          'Counselling repository must implement findById() or getById().'
+          'Counselling repository must implement findById() or getById().',
         );
       }
 
@@ -79,57 +137,64 @@ function createCounsellingService({
         typeof counsellingRepository.updateById !== 'function'
       ) {
         throw new TypeError(
-          'Counselling repository must implement updateById().'
+          'Counselling repository must implement updateById().',
         );
       }
 
       const existing = assertFound(
         await findById.call(counsellingRepository, id),
-        'Counselling'
+        'Counselling',
       );
 
-      if (
-        TERMINAL_STATUSES.has(existing.status) &&
-        existing.status !== status
-      ) {
+      if (!ALLOWED_STATUSES.has(existing.status)) {
         throw new ServiceError(
-          'A completed or cancelled counselling request cannot be reopened or changed.',
+          'The current counselling status is invalid.',
           {
-            code: 'INVALID_STATUS_TRANSITION',
+            code: 'INVALID_STORED_STATUS',
             status: 409,
-          }
+          },
         );
       }
 
+      assertTransitionAllowed(existing.status, status);
+
+      // Repeating the current status is idempotent and must not
+      // reset scheduling or completion timestamps.
+      if (existing.status === status) {
+        return existing;
+      }
+
+      const now = getNow();
+
       const changes = {
         status,
-        updatedAt: new Date(),
+        updatedAt: now,
       };
 
-      if (status === 'scheduled' && !existing.scheduledAt) {
-        changes.scheduledAt = new Date();
+      if (status === 'scheduled') {
+        if (!existing.scheduledAt) {
+          changes.scheduledAt = now;
+        }
       }
 
       if (status === 'completed') {
-        changes.completedAt =
-          existing.completedAt || new Date();
+        changes.completedAt = existing.completedAt || now;
       }
 
       if (status === 'cancelled') {
-        changes.cancelledAt =
-          existing.cancelledAt || new Date();
+        changes.cancelledAt = existing.cancelledAt || now;
       }
 
       const record = assertFound(
         await counsellingRepository.updateById(id, changes),
-        'Counselling'
+        'Counselling',
       );
 
       await audit(auditService, {
         action: 'counselling.status_changed',
         entity: 'Counselling',
         entityId: id,
-        actorId: actor.id,
+        actorId: actorData.id,
         metadata: {
           previousStatus: existing.status,
           status,
@@ -143,4 +208,7 @@ function createCounsellingService({
 
 module.exports = {
   createCounsellingService,
+  ALLOWED_STATUSES,
+  TERMINAL_STATUSES,
+  ALLOWED_TRANSITIONS,
 };

@@ -1,4 +1,4 @@
-MedOrbits Husky Git Hooks
+MedOrbits — Husky Git Hooks
 
 Directory: .husky/
 
@@ -6,16 +6,16 @@ Purpose
 
 This directory contains Git hooks managed by Husky for the MedOrbits project. The hooks automate local code-quality checks, validate commit messages, and run automated tests before code is pushed to a remote repository.
 
-The hook scripts are the source of truth for actual behavior. Keep this README synchronized with the committed scripts and package.json.
+The hook scripts determine actual behavior. Keep this README synchronized with the committed scripts, package.json, and installed Husky version.
 
 Hooks Overview
 
-File	Purpose	When It Runs
-pre-commit	Runs configured ESLint, Prettier formatting checks, and automated tests. Missing scripts are skipped with warnings.	Before a commit is created.
-commit-msg	Validates the first non-empty, non-comment line against the supported Conventional Commit format.	After the commit message is prepared.
-pre-push	Runs ESLint when configured and requires the automated test script to exist and pass.	Before pushing commits to a remote.
+File	Purpose	When it runs
+pre-commit	Runs ESLint when configured. Optional formatting and tests can run in full mode.	Before a commit is created
+commit-msg	Validates the first non-empty, non-comment line against the supported Conventional Commit format.	After the commit message is prepared
+pre-push	Runs ESLint when configured. Strict mode requires the test script and runs optional formatting and build checks.	Before pushing commits to a remote
 
-Important: The pre-commit hook may allow a commit when optional scripts are missing. The pre-push hook requires a configured test script. Any configured check that fails should block the operation.
+Important: Missing optional npm scripts may be skipped with warnings. A configured check that fails should block the operation. In strict pre-push mode, the test script must exist and pass.
 
 Requirements
 
@@ -26,12 +26,15 @@ Requirements
 * Husky installed and configured for the project’s version.
 * Required project dependencies installed.
 
-The following npm scripts are expected by the hooks:
+Expected npm scripts
 
 Script	Purpose	Requirement
 lint	ESLint validation	Optional in the current hooks
-format:check	Prettier formatting validation	Optional in pre-commit
-test	Automated tests	Optional in pre-commit; required in pre-push
+format:check	Prettier formatting validation	Optional
+test	Automated tests	Required in strict pre-push mode
+build	Production build	Optional in strict pre-push mode
+
+The actual scripts must be defined in the root package.json and must perform real checks.
 
 Setup
 
@@ -41,9 +44,9 @@ From the repository root, run:
 
 npm ci
 
-Use npm install instead if the project does not have a committed lockfile or if you are intentionally updating dependencies.
+Use npm install if the project does not have a committed lockfile or if you intentionally need to update dependencies.
 
-2. Install Husky if necessary
+2. Install or initialize Husky
 
 If Husky is not already installed, add it as a development dependency:
 
@@ -53,13 +56,13 @@ Initialize Husky using the procedure supported by the installed version:
 
 npx husky init
 
-Caution: Review any files generated during initialization. Preserve the existing MedOrbits hook scripts and verify that Husky is configured to execute them correctly.
+Review any generated files. Preserve the existing MedOrbits hook scripts and verify that Husky executes them correctly.
 
-Husky setup commands and hook conventions can vary by major version. Follow the installed version’s documentation rather than replacing existing configuration blindly.
+Husky setup commands and hook conventions vary by major version. Follow the documentation for the installed version rather than replacing existing configuration blindly.
 
 3. Verify the hook files
 
-The expected structure is:
+Expected structure:
 
 .husky/
 ├── README.md
@@ -67,16 +70,16 @@ The expected structure is:
 ├── commit-msg
 └── pre-push
 
-Check the files and permissions:
+Inspect the Git working tree and configured hooks path:
 
 git status —short
 git config —get core.hooksPath
 
-For environments that require executable permissions:
+Where required by the installed Husky version and environment, ensure the hook files have executable permissions:
 
 chmod +x .husky/pre-commit .husky/commit-msg .husky/pre-push
 
-Verify that the Git hooks path and Husky configuration match the installed version. Do not assume that executable permissions alone are sufficient.
+Executable permissions alone do not guarantee that Git invokes the hooks. Verify the hooks path and Husky configuration as well.
 
 Commit Message Convention
 
@@ -86,21 +89,24 @@ General format:
 
 type(scope): short description
 
-The scope is optional. The supported types are:
+The scope is optional.
 
-* feat — New functionality
-* fix — Bug fixes
-* docs — Documentation changes
-* style — Formatting or style-only changes
-* refactor — Code restructuring
-* perf — Performance improvements
-* test — Test-related changes
-* build — Build system or dependency changes
-* ci — Continuous integration changes
-* chore — Maintenance tasks
-* revert — Reverting earlier changes
+Supported types
 
-Examples:
+Type	Purpose
+feat	New functionality
+fix	Bug fixes
+docs	Documentation changes
+style	Formatting or style-only changes
+refactor	Code restructuring
+perf	Performance improvements
+test	Test-related changes
+build	Build system or dependency changes
+ci	Continuous integration changes
+chore	Maintenance tasks
+revert	Reverting earlier changes
+
+Examples
 
 feat(auth): add email verification
 fix(api): handle missing application ID
@@ -120,55 +126,66 @@ The current validator requires:
 * A non-empty description.
 * A description of 1–100 characters under the current regular expression.
 
-The validator checks the first qualifying line rather than the entire commit body. Confirm any changes to the exact regular expression in .husky/commit-msg.
+The validator checks only the first qualifying line, not the entire commit body. Confirm any changes to the regular expression in .husky/commit-msg.
 
 Running Checks Manually
 
-Run the project’s configured checks from the repository root:
+Run only commands whose scripts exist in package.json:
 
 npm run lint
 npm run format:check
 npm test
+npm run build
 
-Only run commands whose scripts exist in package.json.
-
-You can inspect the available scripts with:
+Inspect the available scripts with:
 
 npm run
 
-Pre-commit behavior
+Hook Behavior
 
-The pre-commit hook:
+Pre-commit
+
+The .husky/pre-commit hook:
 
 1. Locates the repository root.
 2. Verifies package.json, Node.js, and npm.
-3. Runs npm run lint if lint exists.
-4. Runs npm run format:check if format:check exists.
-5. Runs npm test if test exists.
-6. Stops when a configured command fails.
+3. Runs npm run lint if the lint script exists.
+4. Skips linting with a warning if the script is missing.
+5. Runs formatting validation and tests only when MEDORBITS_PRECOMMIT_FULL=1.
+6. Blocks the commit if a configured check fails.
 
-Missing optional scripts generate warnings and are skipped.
+Enable full local pre-commit checks in a compatible shell with:
 
-Commit-message behavior
+MEDORBITS_PRECOMMIT_FULL=1 git commit
 
-The commit-msg hook:
+This environment variable enables the optional checks for that command only.
+
+Commit message
+
+The .husky/commit-msg hook:
 
 1. Verifies that a commit-message file is supplied.
 2. Reads the first non-empty, non-comment line.
 3. Validates the line against the supported Conventional Commit pattern.
 4. Rejects messages that do not match.
 
-Pre-push behavior
+Pre-push
 
-The pre-push hook:
+The .husky/pre-push hook:
 
 1. Locates the repository root.
 2. Verifies the required project files and tools.
 3. Runs ESLint when lint is configured.
-4. Requires a configured test script.
-5. Runs npm test and blocks the push if it fails.
+4. Skips ESLint with a warning if that script is missing.
+5. In strict mode, requires the test script and runs it.
+6. Runs formatting and build checks in strict mode when those scripts are configured.
+7. Blocks the push when a configured check fails.
 
-A missing lint script produces a warning. A missing test script or failed test run blocks the push.
+Enable strict pre-push checks in a compatible shell with:
+
+MEDORBITS_PREPUSH_FULL=1 git push
+
+Without strict mode, the hook does not require automated tests or a production build.
 
 Package Scripts
 
@@ -178,13 +195,14 @@ The following is an illustrative configuration, not a claim about the current Me
   “scripts”: {
     “lint”: “eslint .”,
     “format:check”: “prettier —check .”,
-    “test”: “node —test”
+    “test”: “node —test”,
+    “build”: “node scripts/build.js”
   }
 }
 
-Adapt these commands to the actual dependencies, ESLint configuration, Prettier configuration, test framework, and project structure. Do not add placeholder commands that report success without performing real checks.
+Adapt the commands to the actual dependencies, ESLint configuration, Prettier configuration, test framework, build process, and project structure.
 
-Before making hooks mandatory, confirm that all required scripts work locally and in CI.
+Do not add placeholder commands that report success without performing real checks. Verify every script locally and in CI before making it mandatory.
 
 Troubleshooting
 
@@ -193,32 +211,32 @@ A hook does not run
 * Confirm Husky is installed and configured.
 * Verify the hook filename and location under .husky/.
 * Check the configured Git hooks path.
-* Review the initialization procedure for the installed Husky version.
+* Review initialization instructions for the installed Husky version.
 * Inspect the hook for shell syntax errors or invalid quotation marks.
-* Confirm the hooks have not been disabled or bypassed in the local environment.
+* Confirm hooks have not been disabled or bypassed in the local environment.
 
 A commit is rejected
 
-Read the hook output, fix the reported issue, and retry.
+Read the hook output, correct the reported issue, and retry.
 
-For a commit-message rejection, verify the type, optional scope, colon and space, description length, and punctuation against .husky/commit-msg.
+For commit-message rejection, verify the type, optional scope, colon and space, description length, and formatting against .husky/commit-msg.
 
 A push is rejected
 
-Run the checks locally:
+Run the applicable checks locally:
 
 npm run lint
 npm test
 
-Fix any failures and retry. If the test script is missing, configure a real test command in package.json before pushing.
+If strict mode reports that the test script is missing, configure a real test command in package.json before pushing.
 
 A check is skipped
 
-Inspect the configured scripts:
+Inspect the available scripts:
 
 npm run
 
-A missing optional script may explain the warning. A missing test script is not acceptable for the pre-push hook.
+A missing optional script may explain the warning. If a check is important to project quality, configure it and enforce it in CI.
 
 Dependencies are missing
 
@@ -230,11 +248,7 @@ If installation fails, inspect the npm output, lockfile, registry configuration,
 
 GitHub Actions and Branch Protection
 
-Local Git hooks improve development practices, but they are not a security boundary. They can be bypassed, for example, with:
-
-git -c core.hooksPath=/dev/null commit
-
-or by deliberately skipping hooks with supported Git options.
+Local Git hooks improve development practices, but they are not a security boundary and can be bypassed.
 
 For stronger enforcement:
 
@@ -263,13 +277,13 @@ When hook behavior changes:
 4. Test both successful and failing hook scenarios.
 5. Confirm commit-message examples match the actual validator.
 6. Run the checks locally and in GitHub Actions.
-7. Review the changes before merging them.
+7. Review the changes before merging.
 
 Final Notes
 
 * The hook scripts, not this README, determine actual behavior.
 * Optional scripts may be skipped by the current hooks.
-* Automated tests are required before pushing.
+* Automated tests are required before pushing only when strict pre-push mode is enabled.
 * Husky initialization and hook conventions depend on the installed version.
 * CI and branch protection should enforce important repository policies.
 

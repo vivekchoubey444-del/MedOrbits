@@ -5,12 +5,18 @@
  * MedOrbits -- Pagination Utilities
  *
  * File: src/utils/pagination.js
+ * Runtime: Node.js >= 20
  *
  * Provides:
  * - Safe page and limit parsing.
  * - Configurable default and maximum page sizes.
  * - Safe SQL offset calculation.
  * - Standard pagination metadata.
+ *
+ * Notes:
+ * - Invalid query values fall back to defaults.
+ * - Page size is capped to prevent excessively large queries.
+ * - Always use parameterized SQL queries when applying LIMIT and OFFSET.
  */
 
 const DEFAULT_PAGE = 1;
@@ -18,7 +24,40 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const MAX_PAGE = Number.MAX_SAFE_INTEGER;
 
+function assertOptionsObject(value, name) {
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    throw new TypeError(`${name} must be an object.`);
+  }
+}
+
+function assertPositiveSafeInteger(value, name) {
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new RangeError(
+      `${name} must be a positive safe integer.`,
+    );
+  }
+}
+
+/**
+ * Parse a positive integer.
+ *
+ * Accepts integer numbers and digit-only strings.
+ * Returns the fallback for absent, malformed, or out-of-range values.
+ */
 function toPositiveInteger(value, fallback, maximum = MAX_PAGE) {
+  assertPositiveSafeInteger(fallback, 'fallback');
+  assertPositiveSafeInteger(maximum, 'maximum');
+
+  if (fallback > maximum) {
+    throw new RangeError(
+      'fallback must not exceed maximum.',
+    );
+  }
+
   if (
     value === undefined ||
     value === null ||
@@ -27,17 +66,18 @@ function toPositiveInteger(value, fallback, maximum = MAX_PAGE) {
     return fallback;
   }
 
-  // Accept positive integer numbers and digit-only strings.
-  // Reject decimals, negative numbers, booleans, and other types.
   let parsed;
 
   if (typeof value === 'number') {
     parsed = value;
-  } else if (
-    typeof value === 'string' &&
-    /^\d+$/.test(value.trim())
-  ) {
-    parsed = Number(value.trim());
+  } else if (typeof value === 'string') {
+    const normalized = value.trim();
+
+    if (!/^\d+$/.test(normalized)) {
+      return fallback;
+    }
+
+    parsed = Number(normalized);
   } else {
     return fallback;
   }
@@ -53,44 +93,46 @@ function toPositiveInteger(value, fallback, maximum = MAX_PAGE) {
   return parsed;
 }
 
+/**
+ * Build pagination parameters from a query object.
+ *
+ * Options:
+ * - defaultLimit: default page size.
+ * - maxLimit: maximum allowed page size.
+ * - maxPage: maximum accepted page number.
+ */
 function getPagination(query = {}, options = {}) {
-  if (
-    query === null ||
-    typeof query !== 'object' ||
-    Array.isArray(query)
-  ) {
-    throw new TypeError('Pagination query must be an object.');
-  }
-
-  if (
-    options === null ||
-    typeof options !== 'object' ||
-    Array.isArray(options)
-  ) {
-    throw new TypeError('Pagination options must be an object.');
-  }
+  assertOptionsObject(query, 'Pagination query');
+  assertOptionsObject(options, 'Pagination options');
 
   const maxLimit = toPositiveInteger(
     options.maxLimit,
     MAX_LIMIT,
-    MAX_LIMIT
+    MAX_LIMIT,
   );
 
   const defaultLimit = toPositiveInteger(
     options.defaultLimit,
-    DEFAULT_LIMIT,
-    maxLimit
+    Math.min(DEFAULT_LIMIT, maxLimit),
+    maxLimit,
+  );
+
+  const maxPage = toPositiveInteger(
+    options.maxPage,
+    MAX_PAGE,
+    MAX_PAGE,
   );
 
   const page = toPositiveInteger(
     query.page,
-    DEFAULT_PAGE
+    DEFAULT_PAGE,
+    maxPage,
   );
 
   const requestedLimit = toPositiveInteger(
     query.limit,
     defaultLimit,
-    Number.MAX_SAFE_INTEGER
+    Number.MAX_SAFE_INTEGER,
   );
 
   const limit = Math.min(requestedLimit, maxLimit);
@@ -98,7 +140,7 @@ function getPagination(query = {}, options = {}) {
 
   if (!Number.isSafeInteger(offset)) {
     throw new RangeError(
-      'Pagination offset exceeds the safe integer range.'
+      'Pagination offset exceeds the safe integer range.',
     );
   }
 
@@ -109,6 +151,12 @@ function getPagination(query = {}, options = {}) {
   });
 }
 
+/**
+ * Create pagination metadata.
+ *
+ * `totalItems` must represent the total number of matching records
+ * before LIMIT and OFFSET are applied.
+ */
 function getPaginationMeta(totalItems, pagination = {}) {
   const total = Number(totalItems);
 
@@ -117,27 +165,25 @@ function getPaginationMeta(totalItems, pagination = {}) {
     total < 0
   ) {
     throw new TypeError(
-      'totalItems must be a non-negative safe integer.'
+      'totalItems must be a non-negative safe integer.',
     );
   }
 
-  if (
-    pagination === null ||
-    typeof pagination !== 'object' ||
-    Array.isArray(pagination)
-  ) {
-    throw new TypeError('Pagination metadata input must be an object.');
-  }
+  assertOptionsObject(
+    pagination,
+    'Pagination metadata input',
+  );
 
   const page = toPositiveInteger(
     pagination.page,
-    DEFAULT_PAGE
+    DEFAULT_PAGE,
+    MAX_PAGE,
   );
 
   const limit = toPositiveInteger(
     pagination.limit,
     DEFAULT_LIMIT,
-    MAX_LIMIT
+    MAX_LIMIT,
   );
 
   const totalPages = Math.ceil(total / limit);

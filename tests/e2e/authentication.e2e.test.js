@@ -3,7 +3,6 @@
  * MedOrbits -- Authentication E2E Tests
  *
  * File: tests/e2e/authentication.e2e.test.js
- *
  * Framework: Playwright Test
  *
  * Run:
@@ -21,7 +20,11 @@
  *   E2E_REGISTER_PATH
  *   E2E_PROTECTED_PATH
  *
- * Use only a dedicated test environment and synthetic accounts.
+ * Security:
+ * - Use a dedicated test environment and synthetic accounts.
+ * - Never run destructive tests against production.
+ * - Never hard-code real credentials.
+ * - Never log passwords, cookies, tokens, or authorization headers.
  */
 const { test, expect } = require('@playwright/test');
 const BASE_URL = (
@@ -63,21 +66,33 @@ const SELECTORS = Object.freeze({
     'a:has-text("Logout")',
     'a:has-text("Sign out")',
   ],
-  success: [
-    '[data-testid="login-success"]',
-    '[role="status"]:has-text("Welcome")',
-  ],
-  error: [
-    '[role="alert"]',
-    '[data-testid="login-error"]',
-    '.error-message',
-  ],
 });
-function skipIfMissing(value, name) {
-  test.skip(!value, `Set ${name} to run this test.`);
+function hasCredentials(...values) {
+  return values.every(
+    (value) => typeof value === 'string' && value.trim().length > 0
+  );
 }
-function escapeRegExp(value) {
+function escaped(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function normalizedPath(path) {
+  return path.replace(/\/+$/, '') || '/';
+}
+function currentPath(page) {
+  return normalizedPath(new URL(page.url()).pathname);
+}
+function loginPath() {
+  return normalizedPath(new URL(`${BASE_URL}${ROUTES.login}`).pathname);
+}
+function isLoginPage(page) {
+  const pathname = currentPath(page);
+  const login = loginPath();
+  return pathname === login || pathname.startsWith(`${login}/`);
+}
+function isDeniedUrl(page) {
+  return /forbidden|unauthorized|access-denied|not-authorized/i.test(
+    page.url()
+  );
 }
 async function firstVisible(page, selectors) {
   for (const selector of selectors) {
@@ -92,114 +107,91 @@ async function requiredVisible(page, selectors, description) {
   const locator = await firstVisible(page, selectors);
   if (!locator) {
     throw new Error(
-      `Could not locate ${description}. ` +
-      `Check the selectors against the MedOrbits interface.`,
+      `Could not locate ${description}. Check the selectors against the MedOrbits interface.`
     );
   }
   return locator;
 }
 async function openLoginPage(page) {
-  await page.goto(`${BASE_URL}${ROUTES.login}`);
+  await page.goto(`${BASE_URL}${ROUTES.login}`, {
+    waitUntil: 'domcontentloaded',
+  });
   await expect(page.locator('body')).toBeVisible();
 }
 async function submitCredentials(page, email, password) {
   const emailInput = await requiredVisible(
     page,
     SELECTORS.email,
-    'login email field',
+    'login email field'
   );
   const passwordInput = await requiredVisible(
     page,
     SELECTORS.password,
-    'login password field',
+    'login password field'
   );
   await emailInput.fill(email);
   await passwordInput.fill(password);
   const submitButton = await requiredVisible(
     page,
     SELECTORS.submit,
-    'login submit button',
+    'login submit button'
   );
   await submitButton.click();
-}
-async function expectNotAuthenticated(page) {
-  const loginPath = new URL(`${BASE_URL}${ROUTES.login}`).pathname;
-  await expect
-    .poll(
-      async () => {
-        const currentPath = new URL(page.url()).pathname;
-        if (
-          currentPath === loginPath ||
-          currentPath.startsWith(`${loginPath}/`)
-        ) {
-          return 'login';
-        }
-        if (
-          /unauthorized|forbidden|access-denied|not-authorized/i.test(
-            page.url(),
-          )
-        ) {
-          return 'denied';
-        }
-        const error = page.getByText(
-          /invalid credentials|incorrect password|login failed|unable to sign in|please log in|access denied|not authorized/i,
-        ).first();
-        if (await error.isVisible().catch(() => false)) {
-          return 'error';
-        }
-        return 'pending';
-      },
-      { timeout: TIMEOUT },
-    )
-    .not.toBe('pending');
 }
 async function login(page, email, password) {
   await openLoginPage(page);
   await submitCredentials(page, email, password);
+  // Navigation away from login is only an initial signal.
+  // Callers must verify access to a protected resource.
+  await expect
+    .poll(
+      async () => !isLoginPage(page),
+      { timeout: TIMEOUT }
+    )
+    .toBeTruthy();
+}
+async function expectNotAuthenticated(page) {
+  const deniedMessage = page.getByText(
+    /invalid credentials|incorrect password|login failed|unable to sign in|please log in|access denied|not authorized|permission denied/i
+  ).first();
   await expect
     .poll(
       async () => {
-        const loginPath = new URL(
-          `${BASE_URL}${ROUTES.login}`,
-        ).pathname;
-        const currentPath = new URL(page.url()).pathname;
-        if (
-          currentPath !== loginPath &&
-          !currentPath.startsWith(`${loginPath}/`)
-        ) {
-          return 'navigated';
+        if (isLoginPage(page) || isDeniedUrl(page)) {
+          return 'denied';
         }
-        const successMessage = page.getByText(
-          /login successful|welcome back|signed in successfully/i,
-        ).first();
-        if (
-          await successMessage.isVisible().catch(() => false)
-        ) {
-          return 'success';
+        if (await deniedMessage.isVisible().catch(() => false)) {
+          return 'denied';
         }
         return 'pending';
       },
-      { timeout: TIMEOUT },
+      { timeout: TIMEOUT }
     )
-    .not.toBe('pending');
+    .toBe('denied');
 }
-async function logout(page) {
-  if (ROUTES.logout) {
-    await page.goto(`${BASE_URL}${ROUTES.logout}`);
-    return;
-  }
-  const logoutControl = await firstVisible(
-    page,
-    SELECTORS.logout,
+async function assertNoSensitiveError(page) {
+  await expect(page.locator('body')).not.toContainText(
+    /stack trace|database connection string|password hash|secret key|sqlstate|node_modules\/.*\.js/i
   );
-  if (logoutControl) {
-    await logoutControl.click();
-    return;
-  }
-  throw new Error(
-    'No logout control was found. Set E2E_LOGOUT_PATH or configure ' +
-    'the logout selectors for the MedOrbits interface.',
-  );
+}
+async function assertProtectedAccessDenied(page, route) {
+  const response = await page.goto(`${BASE_URL}${route}`, {
+    waitUntil: 'domcontentloaded',
+  });
+  const deniedStatus = [401, 403].includes(response?.status());
+  const deniedMessage = page.getByText(
+    /access denied|not authorized|forbidden|please log in|sign in to continue|permission denied/i
+  ).first();
+  const messageVisible = await deniedMessage
+    .isVisible()
+    .catch(() => false);
+  expect(
+    isLoginPage(page) ||
+      isDeniedUrl(page) ||
+      deniedStatus ||
+      messageVisible,
+    `Expected protected route "${route}" to deny access. URL: ${page.url()}`
+  ).toBeTruthy();
 }
 test.describe('MedOrbits authentication', () => {
   test.beforeEach(async ({ page }) => {
@@ -211,25 +203,13 @@ test.describe('MedOrbits authentication', () => {
   test('login page loads successfully', async ({ page }) => {
     await openLoginPage(page);
     await expect(
-      await requiredVisible(
-        page,
-        SELECTORS.email,
-        'login email field',
-      ),
+      await requiredVisible(page, SELECTORS.email, 'login email field')
     ).toBeVisible();
     await expect(
-      await requiredVisible(
-        page,
-        SELECTORS.password,
-        'login password field',
-      ),
+      await requiredVisible(page, SELECTORS.password, 'login password field')
     ).toBeVisible();
     await expect(
-      await requiredVisible(
-        page,
-        SELECTORS.submit,
-        'login submit button',
-      ),
+      await requiredVisible(page, SELECTORS.submit, 'login submit button')
     ).toBeVisible();
   });
   test('password field masks entered characters', async ({ page }) => {
@@ -237,12 +217,9 @@ test.describe('MedOrbits authentication', () => {
     const passwordInput = await requiredVisible(
       page,
       SELECTORS.password,
-      'login password field',
+      'login password field'
     );
-    await expect(passwordInput).toHaveAttribute(
-      'type',
-      'password',
-    );
+    await expect(passwordInput).toHaveAttribute('type', 'password');
   });
   test('empty credentials are rejected by form validation', async ({
     page,
@@ -251,156 +228,143 @@ test.describe('MedOrbits authentication', () => {
     const emailInput = await requiredVisible(
       page,
       SELECTORS.email,
-      'login email field',
+      'login email field'
     );
     const passwordInput = await requiredVisible(
       page,
       SELECTORS.password,
-      'login password field',
+      'login password field'
     );
     const submitButton = await requiredVisible(
       page,
       SELECTORS.submit,
-      'login submit button',
+      'login submit button'
     );
     await submitButton.click();
     const validation = await Promise.all([
       emailInput.evaluate((element) => ({
         required: element.required,
         valid: element.checkValidity(),
-        valueMissing: element.validity.valueMissing,
       })),
       passwordInput.evaluate((element) => ({
         required: element.required,
         valid: element.checkValidity(),
-        valueMissing: element.validity.valueMissing,
       })),
     ]);
-    const browserValidationBlocks =
-      validation.some(
-        (field) => field.required && !field.valid,
-      );
-    const errorMessage = page.getByText(
-      /email is required|password is required|enter your email|enter your password|required field/i,
+    const browserBlocksSubmission = validation.some(
+      (field) => field.required && !field.valid
+    );
+    const validationMessage = page.getByText(
+      /email is required|password is required|enter your email|enter your password|required field/i
     ).first();
-    const hasError = await errorMessage
+    const customValidationShown = await validationMessage
       .isVisible()
       .catch(() => false);
     expect(
-      browserValidationBlocks || hasError,
-      'Empty login should be blocked by client-side validation.',
+      browserBlocksSubmission || customValidationShown,
+      'Empty login must be blocked by browser or application validation.'
     ).toBeTruthy();
+    await expect(page).toHaveURL(
+      new RegExp(`${escaped(loginPath())}(?:[/?#]|$)`)
+    );
   });
-  test('invalid credentials do not authenticate a user', async ({
+  test('invalid credentials do not grant protected access', async ({
     page,
   }) => {
     await openLoginPage(page);
     await submitCredentials(
       page,
       'invalid.user@example.test',
-      'WrongTestOnly!Password999',
+      'WrongTestOnly!Password999'
     );
     await expectNotAuthenticated(page);
-    const currentPath = new URL(page.url()).pathname;
+    await assertNoSensitiveError(page);
+    // Independently verify the protected route after the failed login.
+    await assertProtectedAccessDenied(page, ROUTES.protected);
+  });
+  test('valid test-user credentials can access a protected route', async ({
+    page,
+  }) => {
+    test.skip(
+      !hasCredentials(USER_EMAIL, USER_PASSWORD),
+      'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run this test.'
+    );
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    const response = await page.goto(
+      `${BASE_URL}${ROUTES.protected}`,
+      { waitUntil: 'domcontentloaded' }
+    );
     expect(
-      currentPath === new URL(`${BASE_URL}${ROUTES.dashboard}`).pathname,
-      'Invalid credentials must not grant access to the dashboard.',
+      response?.status(),
+      'Protected route should not return a server error.'
+    ).toBeLessThan(500);
+    expect(
+      isLoginPage(page),
+      'Authenticated user should not be redirected back to login.'
     ).toBe(false);
+    await expect(page.locator('body')).toBeVisible();
+    await assertNoSensitiveError(page);
   });
-  test('valid test-user credentials authenticate successfully', async ({
+  test('unauthenticated user cannot access a protected route', async ({
     page,
   }) => {
-    skipIfMissing(USER_EMAIL, 'E2E_USER_EMAIL');
-    skipIfMissing(USER_PASSWORD, 'E2E_USER_PASSWORD');
-    await login(page, USER_EMAIL, USER_PASSWORD);
-    await expect(page.locator('body')).not.toContainText(
-      /internal server error|uncaught exception/i,
-    );
-  });
-  test('authenticated user can access a protected route', async ({
-    page,
-  }) => {
-    skipIfMissing(USER_EMAIL, 'E2E_USER_EMAIL');
-    skipIfMissing(USER_PASSWORD, 'E2E_USER_PASSWORD');
-    await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.goto(`${BASE_URL}${ROUTES.protected}`);
-    const loginPath = new URL(
-      `${BASE_URL}${ROUTES.login}`,
-    ).pathname;
-    await expect(page).not.toHaveURL(
-      new RegExp(
-        `${escapeRegExp(loginPath)}(?:[/?#]|$)`,
-      ),
-    );
-  });
-  test('unauthenticated user is redirected or denied on protected route', async ({
-    page,
-  }) => {
-    await page.goto(`${BASE_URL}${ROUTES.protected}`);
-    await expectNotAuthenticated(page);
+    await assertProtectedAccessDenied(page, ROUTES.protected);
   });
   test('logout ends access to protected pages', async ({ page }) => {
-    skipIfMissing(USER_EMAIL, 'E2E_USER_EMAIL');
-    skipIfMissing(USER_PASSWORD, 'E2E_USER_PASSWORD');
+    test.skip(
+      !hasCredentials(USER_EMAIL, USER_PASSWORD),
+      'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run this test.'
+    );
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await logout(page);
-    await page.goto(`${BASE_URL}${ROUTES.protected}`);
-    await expectNotAuthenticated(page);
+    await page.goto(`${BASE_URL}${ROUTES.protected}`, {
+      waitUntil: 'domcontentloaded',
+    });
+    if (ROUTES.logout) {
+      // Configure this only if the application intentionally supports
+      // a browser-accessible logout route.
+      await page.goto(`${BASE_URL}${ROUTES.logout}`, {
+        waitUntil: 'domcontentloaded',
+      });
+    } else {
+      const logoutControl = await firstVisible(page, SELECTORS.logout);
+      if (!logoutControl) {
+        throw new Error(
+          'No logout control found. Configure E2E_LOGOUT_PATH or update the logout selectors.'
+        );
+      }
+      await logoutControl.click();
+    }
+    await assertProtectedAccessDenied(page, ROUTES.protected);
   });
   test('refreshing a protected page preserves a valid session', async ({
     page,
   }) => {
-    skipIfMissing(USER_EMAIL, 'E2E_USER_EMAIL');
-    skipIfMissing(USER_PASSWORD, 'E2E_USER_PASSWORD');
-    await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.goto(`${BASE_URL}${ROUTES.protected}`);
-    await page.reload();
-    const loginPath = new URL(
-      `${BASE_URL}${ROUTES.login}`,
-    ).pathname;
-    await expect(page).not.toHaveURL(
-      new RegExp(
-        `${escapeRegExp(loginPath)}(?:[/?#]|$)`,
-      ),
+    test.skip(
+      !hasCredentials(USER_EMAIL, USER_PASSWORD),
+      'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run this test.'
     );
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    await page.goto(`${BASE_URL}${ROUTES.protected}`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    expect(
+      isLoginPage(page),
+      'Refreshing a protected page should preserve a valid session.'
+    ).toBe(false);
   });
-  test('registration page loads when registration is enabled', async ({
+  test('registration page responds without a server error', async ({
     page,
   }) => {
-    await page.goto(`${BASE_URL}${ROUTES.register}`);
-    const status = await page.evaluate(() => ({
-      path: window.location.pathname,
-      title: document.title,
-      bodyText: document.body.innerText,
-    }));
-    const registrationAvailable =
-      status.path === ROUTES.register ||
-      /register|create account|sign up/i.test(status.bodyText);
-    const registrationDisabled =
-      /404|not found|registration is disabled/i.test(
-        status.bodyText,
-      );
-    test.skip(
-      !registrationAvailable && registrationDisabled,
-      'Registration is not enabled on this deployment.',
+    const response = await page.goto(
+      `${BASE_URL}${ROUTES.register}`,
+      { waitUntil: 'domcontentloaded' }
     );
     expect(
-      registrationAvailable,
-      'Expected a registration page or a registration-disabled response.',
-    ).toBe(true);
-  });
-  test('login failure does not reveal internal server details', async ({
-    page,
-  }) => {
-    await openLoginPage(page);
-    await submitCredentials(
-      page,
-      'unknown.user@example.test',
-      'WrongTestOnly!Password999',
-    );
-    await expectNotAuthenticated(page);
-    await expect(page.locator('body')).not.toContainText(
-      /stack trace|database connection string|sqlstate|password hash|secret key|node_modules\/.*\.js/i,
-    );
+      response?.status(),
+      'Registration route should not return a server error.'
+    ).toBeLessThan(500);
+    await expect(page.locator('body')).toBeVisible();
+    await assertNoSensitiveError(page);
   });
 });

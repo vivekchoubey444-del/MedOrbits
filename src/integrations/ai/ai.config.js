@@ -1,162 +1,212 @@
 'use strict';
 
+/**
+ * MedOrbits -- AI Provider Configuration
+ *
+ * File: src/integrations/ai/ai.config.js
+ * Runtime: Node.js >= 20
+ *
+ * Loads and validates AI provider settings.
+ * Never logs or exposes API credentials through diagnostic output.
+ */
+
 const DEFAULTS = Object.freeze({
-baseUrl: 'https://api.openai.com/v1',
-model: 'gpt-4o-mini',
-timeoutMs: 20_000,
-maxOutputTokens: 800,
-maxInputChars: 12_000,
+  baseUrl: 'https://api.openai.com/v1',
+  model: 'gpt-4o-mini',
+  timeoutMs: 20_000,
+  maxOutputTokens: 800,
+  maxInputChars: 12_000,
 });
 
 const LIMITS = Object.freeze({
-timeoutMs: { min: 1_000, max: 120_000 },
-maxOutputTokens: { min: 1, max: 8_000 },
-maxInputChars: { min: 1, max: 100_000 },
+  timeoutMs: Object.freeze({ min: 1_000, max: 120_000 }),
+  maxOutputTokens: Object.freeze({ min: 1, max: 8_000 }),
+  maxInputChars: Object.freeze({ min: 1, max: 100_000 }),
 });
 
-function readString(env, key, fallback = '') {
-const value = env[key];
+function readString(source, key, fallback = '') {
+  const value = source[key];
 
-if (value == null || value === '') {
-return fallback;
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  if (typeof value !== 'string') {
+    throw new TypeError(`${key} must be a string.`);
+  }
+
+  return value.trim();
 }
 
-if (typeof value !== 'string') {
-		throw new TypeError(`${key} must be a string.`);
+function readInteger(source, key, fallback, min, max) {
+  const raw = source[key];
+
+  if (raw === undefined || raw === null || raw === '') {
+    return fallback;
+  }
+
+  if (typeof raw !== 'string' && typeof raw !== 'number') {
+    throw new TypeError(`${key} must be an integer.`);
+  }
+
+  const value = String(raw).trim();
+
+  if (!/^\d+$/.test(value)) {
+    throw new TypeError(`${key} must be an integer.`);
+  }
+
+  const parsed = Number(value);
+
+  if (
+    !Number.isSafeInteger(parsed) ||
+    parsed < min ||
+    parsed > max
+  ) {
+    throw new RangeError(
+      `${key} must be between ${min} and ${max}.`,
+    );
+  }
+
+  return parsed;
 }
 
-return value.trim();
-}
+function normalizeBaseUrl(value, nodeEnv = 'development') {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TypeError('AI_API_URL must be a non-empty URL.');
+  }
 
-function readInteger(env, key, fallback, min, max) {
-const raw = env[key];
+  let parsed;
 
-if (raw == null || raw === '') {
-return fallback;
-}
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    throw new TypeError(
+      'AI_API_URL must be a valid absolute URL.',
+    );
+  }
 
-if (
-typeof raw !== 'string' &&
-typeof raw !== 'number'
-) {
-		throw new TypeError(`${key} must be an integer.`);
-}
+  if (
+    !['https:', 'http:'].includes(parsed.protocol) ||
+    !parsed.hostname ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new TypeError(
+      'AI_API_URL must use HTTP(S) and cannot contain credentials, query parameters, or fragments.',
+    );
+  }
 
-const value = String(raw).trim();
+  if (nodeEnv === 'production' && parsed.protocol !== 'https:') {
+    throw new TypeError(
+      'AI_API_URL must use HTTPS in production.',
+    );
+  }
 
-if (!/^-?\d+$/.test(value)) {
-		throw new TypeError(`${key} must be an integer.`);
-}
+  // Reject URLs that include a non-root path ending in a traversal segment.
+  const segments = parsed.pathname.split('/');
 
-const parsed = Number(value);
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    throw new TypeError(
+      'AI_API_URL must not contain path traversal segments.',
+    );
+  }
 
-if (
-!Number.isSafeInteger(parsed) ||
-parsed < min ||
-parsed > max
-) {
-throw new RangeError(
-			`${key} must be between ${min} and ${max}.`
-);
-}
-
-return parsed;
-}
-
-function normalizeBaseUrl(value) {
-let parsed;
-
-try {
-parsed = new URL(value);
-} catch {
-throw new Error('AI_API_URL must be a valid absolute URL.');
-}
-
-if (
-!['https:', 'http:'].includes(parsed.protocol) ||
-!parsed.hostname ||
-parsed.username ||
-parsed.password ||
-parsed.search ||
-parsed.hash
-) {
-throw new Error(
-'AI_API_URL must use HTTP(S) and cannot contain credentials, query parameters, or fragments.'
-);
-}
-
-if (
-parsed.protocol === 'http:' &&
-process.env.NODE_ENV === 'production'
-) {
-throw new Error('AI_API_URL must use HTTPS in production.');
-}
-
-	return parsed.href.replace(/\/+$/, '');
+  return parsed.href.replace(/\/+$/, '');
 }
 
 function validateModel(model) {
-if (
-!model ||
-model.length > 128 ||
-		Array.from(model).some((character) => {
-			const code = character.charCodeAt(0);
-			return code === 0 || code === 10 || code === 13;
-		})
-) {
-throw new Error('AI_MODEL is invalid.');
+  if (
+    typeof model !== 'string' ||
+    !model ||
+    model.length > 128 ||
+    /[\u0000-\u001f\u007f]/.test(model)
+  ) {
+    throw new TypeError('AI_MODEL is invalid.');
+  }
+
+  return model;
 }
 
-return model;
+function validateApiKey(apiKey) {
+  if (
+    typeof apiKey !== 'string' ||
+    /[\u0000-\u001f\u007f]/.test(apiKey)
+  ) {
+    throw new TypeError('AI_API_KEY is invalid.');
+  }
+
+  // Empty keys are allowed at configuration load time so that deployments
+  // without the optional AI integration can still start. The provider
+  // must reject generation requests when credentials are missing.
+  return apiKey;
 }
 
-function loadAiConfig(env = process.env) {
-if (!env || typeof env !== 'object' || Array.isArray(env)) {
-throw new TypeError('AI environment configuration must be an object.');
-}
+function loadAiConfig(source = process.env) {
+  if (
+    source === null ||
+    typeof source !== 'object' ||
+    Array.isArray(source)
+  ) {
+    throw new TypeError(
+      'AI environment configuration must be an object.',
+    );
+  }
 
-const apiKey = readString(env, 'AI_API_KEY');
-const baseUrl = normalizeBaseUrl(
-readString(env, 'AI_API_URL', DEFAULTS.baseUrl)
-);
-const model = validateModel(
-readString(env, 'AI_MODEL', DEFAULTS.model)
-);
+  const nodeEnv = readString(source, 'NODE_ENV', 'development');
 
-const timeoutMs = readInteger(
-env,
-'AI_TIMEOUT_MS',
-DEFAULTS.timeoutMs,
-LIMITS.timeoutMs.min,
-LIMITS.timeoutMs.max
-);
+  const apiKey = validateApiKey(
+    readString(source, 'AI_API_KEY'),
+  );
 
-const maxOutputTokens = readInteger(
-env,
-'AI_MAX_OUTPUT_TOKENS',
-DEFAULTS.maxOutputTokens,
-LIMITS.maxOutputTokens.min,
-LIMITS.maxOutputTokens.max
-);
+  const baseUrl = normalizeBaseUrl(
+    readString(source, 'AI_API_URL', DEFAULTS.baseUrl),
+    nodeEnv,
+  );
 
-const maxInputChars = readInteger(
-env,
-'AI_MAX_INPUT_CHARS',
-DEFAULTS.maxInputChars,
-LIMITS.maxInputChars.min,
-LIMITS.maxInputChars.max
-);
+  const model = validateModel(
+    readString(source, 'AI_MODEL', DEFAULTS.model),
+  );
 
-return Object.freeze({
-apiKey,
-baseUrl,
-model,
-timeoutMs,
-maxOutputTokens,
-maxInputChars,
-});
+  const timeoutMs = readInteger(
+    source,
+    'AI_TIMEOUT_MS',
+    DEFAULTS.timeoutMs,
+    LIMITS.timeoutMs.min,
+    LIMITS.timeoutMs.max,
+  );
+
+  const maxOutputTokens = readInteger(
+    source,
+    'AI_MAX_OUTPUT_TOKENS',
+    DEFAULTS.maxOutputTokens,
+    LIMITS.maxOutputTokens.min,
+    LIMITS.maxOutputTokens.max,
+  );
+
+  const maxInputChars = readInteger(
+    source,
+    'AI_MAX_INPUT_CHARS',
+    DEFAULTS.maxInputChars,
+    LIMITS.maxInputChars.min,
+    LIMITS.maxInputChars.max,
+  );
+
+  return Object.freeze({
+    apiKey,
+    baseUrl,
+    model,
+    timeoutMs,
+    maxOutputTokens,
+    maxInputChars,
+  });
 }
 
 module.exports = {
-loadAiConfig,
+  DEFAULTS,
+  LIMITS,
+  loadAiConfig,
+  normalizeBaseUrl,
+  validateModel,
 };

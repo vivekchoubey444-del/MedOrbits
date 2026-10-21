@@ -10,20 +10,9 @@
  *
  * Security:
  *   - Uses synthetic data only.
- *   - Does not include real candidate records or production credentials.
- *   - Separates client-submittable fields from server-managed fields.
- *   - Does not imply that candidate ownership or permissions are valid.
- *
- * Usage:
- *   const {
- *     CANDIDATE_STATUSES,
- *     CANDIDATE_TYPES,
- *     createCandidate,
- *     createCandidatePayload,
- *     createCandidateSet,
- *     createForeignCandidate,
- *     createMassAssignmentPayload,
- *   } = require('../fixtures/candidates');
+ *   - Separates normal client payloads from server-managed fields.
+ *   - Does not establish ownership, permissions, or authenticated sessions.
+ *   - Does not create database records or physical files.
  */
 const CANDIDATE_STATUSES = Object.freeze({
   DRAFT: 'draft',
@@ -88,10 +77,40 @@ const DEFAULT_CANDIDATE = Object.freeze({
   updatedAt: '2026-10-01T09:00:00.000Z',
 });
 /**
- * Recursively copies plain objects and arrays.
+ * Validate a plain object.
  *
- * The fixtures use JSON-compatible data. This helper prevents nested
- * fixture mutations from leaking into later tests.
+ * @param {unknown} value
+ * @param {string} label
+ */
+function assertPlainObject(value, label) {
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+}
+/**
+ * Validate a non-empty string.
+ *
+ * @param {unknown} value
+ * @param {string} label
+ */
+function assertNonEmptyString(value, label) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new TypeError(`${label} must be a non-empty string`);
+  }
+}
+/**
+ * Recursively clone fixture values.
+ *
+ * Supports primitives, arrays, and plain objects. Rejects class instances
+ * and other non-plain object values.
  *
  * @param {*} value
  * @returns {*}
@@ -100,41 +119,95 @@ function clone(value) {
   if (Array.isArray(value)) {
     return value.map(clone);
   }
-  if (value && typeof value === 'object') {
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) {
-      throw new TypeError('Fixture values must contain plain objects only');
-    }
+  if (value !== null && typeof value === 'object') {
+    assertPlainObject(value, 'Fixture values');
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [key, clone(item)])
     );
   }
   return value;
 }
-function assertPlainObject(value, label) {
-  if (
-    value === null ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    (Object.getPrototypeOf(value) !== Object.prototype &&
-      Object.getPrototypeOf(value) !== null)
-  ) {
-    throw new TypeError(`${label} must be a plain object`);
+/**
+ * Validate and clone an array of plain-object records.
+ *
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {object[]}
+ */
+function cloneRecordArray(value, label) {
+  if (!Array.isArray(value)) {
+    throw new TypeError(`${label} must be an array`);
   }
-}
-function assertNonEmptyString(value, label) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new TypeError(`${label} must be a non-empty string`);
-  }
+  return value.map((record, index) => {
+    assertPlainObject(record, `${label}[${index}]`);
+    return clone(record);
+  });
 }
 /**
- * Creates a fresh candidate record.
+ * Merge profile overrides while validating the nested location object.
  *
- * Overrides are applied at the top level. Nested profile, professional,
- * consent, education, experience, and certification fields are copied
- * independently when supplied.
+ * @param {object} base
+ * @param {object} overrides
+ * @param {string} label
+ * @returns {object}
+ */
+function mergeProfile(base, overrides, label = 'Profile overrides') {
+  assertPlainObject(overrides, label);
+  const result = {
+    ...clone(base),
+    ...clone(overrides),
+  };
+  if (overrides.location !== undefined) {
+    assertPlainObject(overrides.location, `${label}.location`);
+    result.location = {
+      ...clone(base.location || {}),
+      ...clone(overrides.location),
+    };
+  } else if (base.location !== undefined) {
+    result.location = clone(base.location);
+  }
+  return result;
+}
+/**
+ * Merge professional details and validate nested arrays.
  *
- * @param {object} [overrides]
+ * @param {object} base
+ * @param {object} overrides
+ * @param {string} label
+ * @returns {object}
+ */
+function mergeProfessional(
+  base,
+  overrides,
+  label = 'Professional overrides'
+) {
+  assertPlainObject(overrides, label);
+  const result = {
+    ...clone(base),
+    ...clone(overrides),
+  };
+  for (const field of [
+    'skills',
+    'preferredEmploymentTypes',
+    'preferredLocations',
+  ]) {
+    if (overrides[field] !== undefined) {
+      if (!Array.isArray(overrides[field])) {
+        throw new TypeError(`${label}.${field} must be an array`);
+      }
+      result[field] = clone(overrides[field]);
+    }
+  }
+  return result;
+}
+/**
+ * Create a fresh candidate record.
+ *
+ * Top-level overrides are supported. Profile and professional fields are
+ * merged with their defaults. Nested records and arrays are independently
+ * copied to prevent mutations leaking between tests.
+ *
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCandidate(overrides = {}) {
@@ -143,66 +216,50 @@ function createCandidate(overrides = {}) {
     ...clone(DEFAULT_CANDIDATE),
     ...clone(overrides),
   };
-  for (const field of [
-    'profile',
-    'professional',
-    'consent',
-  ]) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(overrides[field], `${field} overrides`);
-      candidate[field] = {
-        ...clone(DEFAULT_CANDIDATE[field]),
-        ...clone(overrides[field]),
-      };
-    }
-  }
-  for (const field of [
-    'education',
-    'experience',
-    'certifications',
-  ]) {
-    if (overrides[field] !== undefined) {
-      if (!Array.isArray(overrides[field])) {
-        throw new TypeError(`${field} must be an array`);
-      }
-      candidate[field] = clone(overrides[field]);
-    }
-  }
-  if (
-    overrides.professional &&
-    overrides.professional.skills !== undefined &&
-    !Array.isArray(overrides.professional.skills)
-  ) {
-    throw new TypeError('professional.skills must be an array');
-  }
-  if (
-    overrides.professional &&
-    overrides.professional.preferredLocations !== undefined &&
-    !Array.isArray(overrides.professional.preferredLocations)
-  ) {
-    throw new TypeError('professional.preferredLocations must be an array');
-  }
-  if (
-    overrides.professional &&
-    overrides.professional.preferredEmploymentTypes !== undefined &&
-    !Array.isArray(overrides.professional.preferredEmploymentTypes)
-  ) {
-    throw new TypeError(
-      'professional.preferredEmploymentTypes must be an array'
+  if (overrides.profile !== undefined) {
+    candidate.profile = mergeProfile(
+      DEFAULT_CANDIDATE.profile,
+      overrides.profile
     );
+  }
+  if (overrides.professional !== undefined) {
+    candidate.professional = mergeProfessional(
+      DEFAULT_CANDIDATE.professional,
+      overrides.professional
+    );
+  }
+  if (overrides.consent !== undefined) {
+    assertPlainObject(overrides.consent, 'Consent overrides');
+    candidate.consent = {
+      ...clone(DEFAULT_CANDIDATE.consent),
+      ...clone(overrides.consent),
+    };
+  }
+  for (const field of ['education', 'experience', 'certifications']) {
+    candidate[field] = cloneRecordArray(
+      overrides[field] === undefined
+        ? DEFAULT_CANDIDATE[field]
+        : overrides[field],
+      field
+    );
+  }
+  if (overrides.resume !== undefined && overrides.resume !== null) {
+    assertPlainObject(overrides.resume, 'Resume metadata');
+    candidate.resume = clone(overrides.resume);
   }
   return candidate;
 }
 /**
- * Creates a client-submittable candidate profile.
+ * Create a normal client-submittable candidate payload.
  *
- * Server-managed fields are intentionally excluded:
- *   id, candidateNumber, userId, status, createdAt, updatedAt.
+ * Server-managed fields are excluded by default:
+ * id, candidateNumber, userId, status, createdAt, updatedAt.
  *
- * The application must derive identity from authenticated context and
- * validate all submitted properties using its own schema.
+ * Overrides are intentionally supported for negative and security tests.
+ * Therefore, explicitly supplied extra fields can still appear in the
+ * returned object. The application must enforce its own request allowlist.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCandidatePayload(overrides = {}) {
@@ -218,69 +275,105 @@ function createCandidatePayload(overrides = {}) {
     consent: clone(DEFAULT_CANDIDATE.consent),
     ...clone(overrides),
   };
-  for (const field of ['profile', 'professional', 'consent']) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(overrides[field], `${field} payload overrides`);
-      payload[field] = {
-        ...clone(DEFAULT_CANDIDATE[field]),
-        ...clone(overrides[field]),
-      };
-    }
+  if (overrides.profile !== undefined) {
+    payload.profile = mergeProfile(
+      DEFAULT_CANDIDATE.profile,
+      overrides.profile,
+      'Profile payload overrides'
+    );
+  }
+  if (overrides.professional !== undefined) {
+    payload.professional = mergeProfessional(
+      DEFAULT_CANDIDATE.professional,
+      overrides.professional,
+      'Professional payload overrides'
+    );
+  }
+  if (overrides.consent !== undefined) {
+    assertPlainObject(overrides.consent, 'Consent payload overrides');
+    payload.consent = {
+      ...clone(DEFAULT_CANDIDATE.consent),
+      ...clone(overrides.consent),
+    };
   }
   for (const field of ['education', 'experience', 'certifications']) {
-    if (overrides[field] !== undefined && !Array.isArray(overrides[field])) {
-      throw new TypeError(`${field} must be an array`);
-    }
+    payload[field] = cloneRecordArray(
+      overrides[field] === undefined ? [] : overrides[field],
+      field
+    );
+  }
+  if (overrides.resume !== undefined && overrides.resume !== null) {
+    assertPlainObject(overrides.resume, 'Resume payload metadata');
+    payload.resume = clone(overrides.resume);
   }
   return payload;
 }
 /**
- * Creates a collection of candidates with distinct synthetic identities.
+ * Create multiple candidates with unique generated identities.
+ *
+ * Common overrides can customize shared attributes, but generated identity
+ * fields remain unique. By default, generated names, email addresses, and
+ * phone numbers are also unique.
+ *
+ * Explicit profile overrides take precedence for the supplied profile
+ * fields; unspecified identity fields remain unique.
  *
  * @param {number} [count=3]
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object[]}
  */
 function createCandidateSet(count = 3, overrides = {}) {
   if (!Number.isInteger(count) || count < 0 || count > 1000) {
-    throw new RangeError('Candidate count must be an integer from 0 to 1000');
+    throw new RangeError(
+      'Candidate count must be an integer from 0 to 1000'
+    );
   }
   assertPlainObject(overrides, 'Candidate set overrides');
+  if (overrides.profile !== undefined) {
+    assertPlainObject(overrides.profile, 'Candidate set profile overrides');
+  }
+  const commonOverrides = clone(overrides);
+  // Generated identity fields are controlled by this factory.
+  delete commonOverrides.id;
+  delete commonOverrides.candidateNumber;
+  delete commonOverrides.userId;
+  const profileOverrides = commonOverrides.profile || {};
+  delete commonOverrides.profile;
   return Array.from({ length: count }, (_, index) => {
     const sequence = String(index + 1).padStart(4, '0');
-    const candidate = createCandidate({
+    const generatedProfile = {
+      firstName: 'Test',
+      lastName: `Candidate${index + 1}`,
+      email: `candidate${index + 1}@example.test`,
+      phone: `+91000000${String(index + 1).padStart(4, '0')}`,
+      ...clone(profileOverrides),
+    };
+    if (profileOverrides.lastName === undefined) {
+      generatedProfile.lastName = `Candidate${index + 1}`;
+    }
+    if (profileOverrides.email === undefined) {
+      generatedProfile.email = `candidate${index + 1}@example.test`;
+    }
+    if (profileOverrides.phone === undefined) {
+      generatedProfile.phone =
+        `+91000000${String(index + 1).padStart(4, '0')}`;
+    }
+    return createCandidate({
+      ...commonOverrides,
       id: `candidate_test_${sequence}`,
       candidateNumber: `MO-CAND-TEST-${sequence}`,
       userId: `user_test_${sequence}`,
-      profile: {
-        firstName: 'Test',
-        lastName: `Candidate${index + 1}`,
-        email: `candidate${index + 1}@example.test`,
-        phone: `+91000000${String(index + 1).padStart(4, '0')}`,
-      },
-      ...clone(overrides),
+      profile: generatedProfile,
     });
-    // Preserve unique fixture identities even when common overrides are used.
-    candidate.id = `candidate_test_${sequence}`;
-    candidate.candidateNumber = `MO-CAND-TEST-${sequence}`;
-    candidate.userId = `user_test_${sequence}`;
-    if (!overrides.profile || overrides.profile.email === undefined) {
-      candidate.profile.email = `candidate${index + 1}@example.test`;
-    }
-    if (!overrides.profile || overrides.profile.lastName === undefined) {
-      candidate.profile.lastName = `Candidate${index + 1}`;
-    }
-    return candidate;
   });
 }
 /**
- * Creates a candidate owned by a different synthetic user.
+ * Create a candidate owned by a different synthetic user.
  *
- * Useful for testing ownership enforcement and insecure direct object
- * reference (IDOR) protections.
+ * Useful for testing object-level authorization and IDOR protections.
  *
- * @param {string} [ownerId]
- * @param {object} [overrides]
+ * @param {string} [ownerId='user_test_foreign']
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createForeignCandidate(
@@ -289,27 +382,33 @@ function createForeignCandidate(
 ) {
   assertNonEmptyString(ownerId, 'Foreign candidate owner ID');
   assertPlainObject(overrides, 'Foreign candidate overrides');
-  return createCandidate({
+  const foreignProfile = {
+    firstName: 'Foreign',
+    lastName: 'Candidate',
+    email: 'foreign.candidate@example.test',
+    phone: '+910000000099',
+    ...(overrides.profile === undefined
+      ? {}
+      : clone(overrides.profile)),
+  };
+  const foreignOverrides = {
+    ...clone(overrides),
     id: 'candidate_test_foreign_0001',
     candidateNumber: 'MO-CAND-TEST-FOREIGN-0001',
     userId: ownerId,
-    profile: {
-      firstName: 'Foreign',
-      lastName: 'Candidate',
-      email: 'foreign.candidate@example.test',
-      phone: '+910000000099',
-    },
-    ...clone(overrides),
-    userId: ownerId,
-  });
+    profile: foreignProfile,
+  };
+  // Reassert ownership after applying every caller-provided override.
+  foreignOverrides.userId = ownerId;
+  return createCandidate(foreignOverrides);
 }
 /**
- * Creates a deliberately hostile client payload for mass-assignment tests.
+ * Create a deliberately hostile payload for mass-assignment tests.
  *
  * Tests should verify that the server rejects or ignores unauthorized
  * server-managed properties.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createMassAssignmentPayload(overrides = {}) {
@@ -328,9 +427,9 @@ function createMassAssignmentPayload(overrides = {}) {
   };
 }
 /**
- * Creates synthetic education history.
+ * Create synthetic education history.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEducationRecord(overrides = {}) {
@@ -347,9 +446,9 @@ function createEducationRecord(overrides = {}) {
   };
 }
 /**
- * Creates synthetic employment history.
+ * Create synthetic employment history.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createExperienceRecord(overrides = {}) {
@@ -367,9 +466,9 @@ function createExperienceRecord(overrides = {}) {
   };
 }
 /**
- * Creates a synthetic certification record.
+ * Create a synthetic certification record.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCertificationRecord(overrides = {}) {
@@ -386,13 +485,11 @@ function createCertificationRecord(overrides = {}) {
   };
 }
 /**
- * Creates synthetic resume metadata.
+ * Create synthetic resume metadata.
  *
- * This does not create a real file or authorize downloads.
- * Tests involving file access must separately validate ownership,
- * storage keys, permissions, and download authorization.
+ * This does not create a file or authorize access to a download endpoint.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createResumeMetadata(overrides = {}) {
@@ -408,13 +505,12 @@ function createResumeMetadata(overrides = {}) {
   };
 }
 /**
- * Creates a candidate with a selected recruitment status.
+ * Create a candidate with a selected recruitment status.
  *
- * This helper does not validate whether a workflow transition is permitted.
- * Transition rules belong in the relevant service or domain layer.
+ * This helper does not validate workflow transitions.
  *
  * @param {string} status
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createCandidateWithStatus(status, overrides = {}) {
@@ -423,8 +519,8 @@ function createCandidateWithStatus(status, overrides = {}) {
   }
   assertPlainObject(overrides, 'Candidate status overrides');
   return createCandidate({
-    status,
     ...clone(overrides),
+    status,
   });
 }
 module.exports = {

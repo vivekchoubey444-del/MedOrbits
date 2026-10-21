@@ -1,6 +1,20 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- Counselling Authorization Policies
+ *
+ * File: src/policies/counselling.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Controls counselling-session access, requests, updates, assignment,
+ * cancellation, completion, deletion, scheduling, and exports.
+ *
+ * Actor identity and permissions must come from trusted authentication
+ * middleware. Services must validate counsellor eligibility, session
+ * transitions, appointment times, and database ownership.
+ */
+
 const {
   isAdmin,
   hasPermission,
@@ -12,17 +26,27 @@ const {
   resourceOwnerId,
 } = require('./policy-utils');
 
-const OWNER_FIELDS = [
+const OWNER_FIELDS = Object.freeze([
   'userId',
+  'user_id',
   'candidateId',
+  'candidate_id',
   'applicantId',
+  'applicant_id',
   'ownerId',
-];
+  'owner_id',
+]);
 
-const STAFF_ROLES = [
+const STAFF_ROLES = Object.freeze([
   'counsellor',
   'support',
-];
+]);
+
+const APPLICANT_ROLES = Object.freeze([
+  'user',
+  'student',
+  'candidate',
+]);
 
 const EDITABLE_STATUSES = new Set([
   'requested',
@@ -32,26 +56,80 @@ const EDITABLE_STATUSES = new Set([
 const TERMINAL_STATUSES = new Set([
   'completed',
   'cancelled',
+  'deleted',
 ]);
 
 const PROTECTED_FIELDS = new Set([
   'id',
   '_id',
+  'sessionId',
+  'session_id',
   'userId',
+  'user_id',
   'candidateId',
+  'candidate_id',
   'applicantId',
+  'applicant_id',
   'ownerId',
+  'owner_id',
   'counsellorId',
+  'counsellor_id',
   'assignedCounsellorId',
+  'assigned_counsellor_id',
   'assignedTo',
+  'assigned_to',
   'status',
   'completedAt',
+  'completed_at',
   'cancelledAt',
+  'cancelled_at',
   'createdAt',
+  'created_at',
   'updatedAt',
+  'updated_at',
+  'deletedAt',
+  'deleted_at',
 ]);
 
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  const status = safeStatus(actor.status);
+
+  return (
+    actor.isSuspended !== true &&
+    actor.isDisabled !== true &&
+    actor.isLocked !== true &&
+    actor.deletedAt == null &&
+    actor.deleted_at == null &&
+    !['suspended', 'disabled', 'locked', 'deleted', 'banned'].includes(status)
+  );
+}
+
+function isDeletedSession(session) {
+  return (
+    safeStatus(session?.status) === 'deleted' ||
+    session?.deletedAt != null ||
+    session?.deleted_at != null
+  );
+}
+
 function counsellingOwnerId(session) {
+  if (!session || typeof session !== 'object') {
+    return null;
+  }
+
   return resourceOwnerId(session, OWNER_FIELDS);
 }
 
@@ -60,26 +138,58 @@ function assignedCounsellorId(session) {
     return null;
   }
 
-  return session.assignedCounsellorId ??
+  return (
+    session.assignedCounsellorId ??
+    session.assigned_counsellor_id ??
     session.counsellorId ??
+    session.counsellor_id ??
     session.assignedTo ??
-    null;
+    session.assigned_to ??
+    null
+  );
 }
 
 function isAssignedCounsellor(actor, session) {
-  if (!actor || !session) {
+  if (!isActiveActor(actor) || !session || typeof session !== 'object') {
     return false;
   }
 
+  const id = actorId(actor);
   const assignedId = assignedCounsellorId(session);
 
-  return assignedId != null &&
-    sameId(actorId(actor), assignedId) &&
-    hasRole(actor, 'counsellor');
+  return Boolean(
+    id != null &&
+    assignedId != null &&
+    sameId(id, assignedId) &&
+    hasRole(actor, 'counsellor')
+  );
+}
+
+function hasProtectedChanges(changes) {
+  if (!isPlainObject(changes)) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) => {
+    if (PROTECTED_FIELDS.has(key)) {
+      return true;
+    }
+
+    const snakeCase = key
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .toLowerCase();
+
+    return PROTECTED_FIELDS.has(snakeCase);
+  });
 }
 
 function canViewCounselling(actor, session) {
-  if (!actor || !session) {
+  if (
+    !isActiveActor(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    isDeletedSession(session)
+  ) {
     return false;
   }
 
@@ -90,7 +200,9 @@ function canViewCounselling(actor, session) {
     return true;
   }
 
-  if (isOwner(actor, counsellingOwnerId(session))) {
+  const ownerId = counsellingOwnerId(session);
+
+  if (ownerId != null && isOwner(actor, ownerId)) {
     return true;
   }
 
@@ -101,12 +213,7 @@ function canViewCounselling(actor, session) {
 }
 
 function canRequestCounselling(actor, input = {}) {
-  if (
-    !actor ||
-    !input ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
+  if (!isActiveActor(actor) || !isPlainObject(input)) {
     return false;
   }
 
@@ -117,33 +224,37 @@ function canRequestCounselling(actor, input = {}) {
     return true;
   }
 
-  if (
-    !hasRole(actor, 'user', 'student', 'candidate') ||
-    actor.isSuspended === true ||
-    actor.status === 'suspended' ||
-    actor.status === 'disabled'
-  ) {
+  if (!hasRole(actor, ...APPLICANT_ROLES)) {
     return false;
   }
 
   const requestedOwner =
     input.userId ??
+    input.user_id ??
     input.candidateId ??
+    input.candidate_id ??
     input.applicantId ??
-    input.ownerId;
+    input.applicant_id ??
+    input.ownerId ??
+    input.owner_id;
 
-  return requestedOwner == null ||
+  // The service must set the stored owner from the authenticated actor.
+  return (
+    requestedOwner == null ||
     requestedOwner === '' ||
-    isOwner(actor, requestedOwner);
+    isOwner(actor, requestedOwner)
+  );
 }
 
 function canUpdateCounselling(actor, session, changes = {}) {
   if (
-    !actor ||
+    !isActiveActor(actor) ||
     !session ||
-    !changes ||
-    typeof changes !== 'object' ||
-    Array.isArray(changes)
+    typeof session !== 'object' ||
+    isDeletedSession(session) ||
+    !isPlainObject(changes) ||
+    hasProtectedChanges(changes) ||
+    !EDITABLE_STATUSES.has(safeStatus(session.status))
   ) {
     return false;
   }
@@ -155,21 +266,9 @@ function canUpdateCounselling(actor, session, changes = {}) {
     return true;
   }
 
-  const status = safeStatus(session.status);
+  const ownerId = counsellingOwnerId(session);
 
-  if (!EDITABLE_STATUSES.has(status)) {
-    return false;
-  }
-
-  if (
-    Object.keys(changes).some(
-      (key) => PROTECTED_FIELDS.has(key)
-    )
-  ) {
-    return false;
-  }
-
-  if (isOwner(actor, counsellingOwnerId(session))) {
+  if (ownerId != null && isOwner(actor, ownerId)) {
     return true;
   }
 
@@ -181,36 +280,34 @@ function canUpdateCounselling(actor, session, changes = {}) {
 
 function canAssignCounsellor(actor, session, targetCounsellorId) {
   if (
-    !actor ||
+    !isActiveActor(actor) ||
     !session ||
+    typeof session !== 'object' ||
+    isDeletedSession(session) ||
     targetCounsellorId == null ||
-    targetCounsellorId === ''
-  ) {
-    return false;
-  }
-
-  if (
+    targetCounsellorId === '' ||
     TERMINAL_STATUSES.has(safeStatus(session.status))
   ) {
     return false;
   }
 
-  return Boolean(
-    isAdmin(actor) ||
-    hasPermission(actor, 'counselling:assign')
-  );
-}
-
-function canCancelCounselling(actor, session) {
-  if (!actor || !session) {
+  if (
+    !isAdmin(actor) &&
+    !hasPermission(actor, 'counselling:assign')
+  ) {
     return false;
   }
 
-  const status = safeStatus(session.status);
+  return !sameId(assignedCounsellorId(session), targetCounsellorId);
+}
 
+function canCancelCounselling(actor, session) {
   if (
-    TERMINAL_STATUSES.has(status) ||
-    !EDITABLE_STATUSES.has(status)
+    !isActiveActor(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    isDeletedSession(session) ||
+    !EDITABLE_STATUSES.has(safeStatus(session.status))
   ) {
     return false;
   }
@@ -222,19 +319,26 @@ function canCancelCounselling(actor, session) {
     return true;
   }
 
-  return isOwner(actor, counsellingOwnerId(session)) ||
-    Boolean(
-      isAssignedCounsellor(actor, session) &&
-      hasPermission(actor, 'counselling:cancel:assigned')
-    );
+  const ownerId = counsellingOwnerId(session);
+
+  if (ownerId != null && isOwner(actor, ownerId)) {
+    return true;
+  }
+
+  return Boolean(
+    isAssignedCounsellor(actor, session) &&
+    hasPermission(actor, 'counselling:cancel:assigned')
+  );
 }
 
 function canCompleteCounselling(actor, session) {
-  if (!actor || !session) {
-    return false;
-  }
-
-  if (safeStatus(session.status) !== 'scheduled') {
+  if (
+    !isActiveActor(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    isDeletedSession(session) ||
+    safeStatus(session.status) !== 'scheduled'
+  ) {
     return false;
   }
 
@@ -252,7 +356,12 @@ function canCompleteCounselling(actor, session) {
 }
 
 function canDeleteCounselling(actor, session) {
-  if (!actor || !session) {
+  if (
+    !isActiveActor(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    isDeletedSession(session)
+  ) {
     return false;
   }
 
@@ -263,12 +372,22 @@ function canDeleteCounselling(actor, session) {
     return true;
   }
 
-  return isOwner(actor, counsellingOwnerId(session)) &&
-    safeStatus(session.status) === 'requested';
+  const ownerId = counsellingOwnerId(session);
+
+  return Boolean(
+    ownerId != null &&
+    isOwner(actor, ownerId) &&
+    safeStatus(session.status) === 'requested' &&
+    hasPermission(actor, 'counselling:delete:self')
+  );
 }
 
 function canViewCounsellingSchedule(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
+  if (
+    !isActiveActor(actor) ||
+    targetUserId == null ||
+    targetUserId === ''
+  ) {
     return false;
   }
 
@@ -284,7 +403,7 @@ function canViewCounsellingSchedule(actor, targetUserId) {
 
 function canExportCounsellingRecords(actor) {
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'counselling:export')
@@ -292,10 +411,17 @@ function canExportCounsellingRecords(actor) {
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
+  OWNER_FIELDS,
+  STAFF_ROLES,
+  APPLICANT_ROLES,
+  EDITABLE_STATUSES,
+  TERMINAL_STATUSES,
+  PROTECTED_FIELDS,
   counsellingOwnerId,
   assignedCounsellorId,
   isAssignedCounsellor,
+  hasProtectedChanges,
   canViewCounselling,
   canRequestCounselling,
   canUpdateCounselling,
@@ -305,4 +431,4 @@ module.exports = {
   canDeleteCounselling,
   canViewCounsellingSchedule,
   canExportCounsellingRecords,
-};
+});

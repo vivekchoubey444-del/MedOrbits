@@ -1,3 +1,4 @@
+
 /* =========================================================
    MedOrbits -- Visits Manager
    File: /assets/js/visits.js
@@ -6,8 +7,9 @@
 (function (window, document) {
   "use strict";
 
-  const CONFIG = window.MedOrbitsConfig || {};
+  if (window.MedOrbitsVisits) return;
 
+  const CONFIG = window.MedOrbitsConfig || {};
   const API_BASE = String(
     CONFIG.API_BASE_URL || CONFIG.apiBaseUrl || "/api"
   ).replace(/\/+$/, "");
@@ -30,13 +32,31 @@
   const state = {
     visits: [],
     currentVisit: null,
-    loading: false
+    loading: false,
+    initialized: false,
+    activeController: null
   };
 
+  const CANCELLED_STATUSES = new Set([
+    "cancelled", "canceled", "completed", "visited", "rejected"
+  ]);
+
+  const DATE_FORMATTER = new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+
+  const TIME_FORMATTER = new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+
   function emit(name, detail) {
-    document.dispatchEvent(
-      new CustomEvent(name, { detail: detail || {} })
-    );
+    document.dispatchEvent(new CustomEvent(name, {
+      detail: detail || {}
+    }));
   }
 
   function escapeHTML(value) {
@@ -64,9 +84,7 @@
       if (typeof auth.getAccessToken === "function") {
         return auth.getAccessToken() || "";
       }
-    } catch (_) {
-      return "";
-    }
+    } catch (_) {}
 
     return "";
   }
@@ -89,24 +107,35 @@
     const token = getToken();
     const csrfToken = getCsrfToken();
 
-    if (token) {
-      headers.set("Authorization", "Bearer " + token);
-    }
+    if (token) headers.set("Authorization", "Bearer " + token);
+    if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
 
-    if (csrfToken) {
-      headers.set("X-CSRF-Token", csrfToken);
-    }
+    let response;
 
-    const response = await fetch(API_BASE + path, {
-      method: options.method || "GET",
-      headers: headers,
-      credentials: "same-origin",
-      cache: "no-store",
-      signal: options.signal,
-      body: options.body === undefined
-        ? undefined
-        : JSON.stringify(options.body)
-    });
+    try {
+      response = await fetch(API_BASE + path, {
+        method: options.method || "GET",
+        headers: headers,
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: options.signal,
+        body: options.body === undefined
+          ? undefined
+          : JSON.stringify(options.body)
+      });
+    } catch (cause) {
+      if (cause && cause.name === "AbortError") throw cause;
+
+      const error = new Error("Unable to connect to the visits service.");
+      error.cause = cause;
+
+      emit(EVENTS.ERROR, {
+        message: error.message,
+        endpoint: path
+      });
+
+      throw error;
+    }
 
     const contentType = response.headers.get("content-type") || "";
     let result = null;
@@ -139,12 +168,11 @@
         endpoint: path
       });
 
-      if (
-        window.MedOrbitsErrorHandler &&
-        typeof window.MedOrbitsErrorHandler.notify === "function"
-      ) {
+      const handler = window.MedOrbitsErrorHandler;
+
+      if (handler && typeof handler.notify === "function") {
         try {
-          window.MedOrbitsErrorHandler.notify(error, {
+          handler.notify(error, {
             module: "visits",
             endpoint: path
           });
@@ -177,13 +205,9 @@
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) return "--";
-
-    return new Intl.DateTimeFormat("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    }).format(date);
+    return Number.isNaN(date.getTime())
+      ? "--"
+      : DATE_FORMATTER.format(date);
   }
 
   function formatTime(value) {
@@ -191,15 +215,9 @@
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-      return String(value);
-    }
-
-    return new Intl.DateTimeFormat("en-IN", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true
-    }).format(date);
+    return Number.isNaN(date.getTime())
+      ? String(value)
+      : TIME_FORMATTER.format(date);
   }
 
   function statusClass(status) {
@@ -221,16 +239,19 @@
   }
 
   function getVisitId(visit) {
-    return visit && (
-      visit.id ||
+    if (!visit) return "";
+
+    return visit.id ||
       visit.visitId ||
       visit.visit_id ||
       visit.bookingId ||
-      visit.booking_id
-    );
+      visit.booking_id ||
+      "";
   }
 
   function getVisitDate(visit) {
+    if (!visit) return null;
+
     return visit.scheduledAt ||
       visit.scheduled_at ||
       visit.visitDate ||
@@ -247,6 +268,20 @@
       "Property visit";
   }
 
+  function getLocation(visit) {
+    return visit.location ||
+      visit.propertyAddress ||
+      visit.property_address ||
+      (visit.property && visit.property.address) ||
+      "";
+  }
+
+  function canCancelVisit(status) {
+    return !CANCELLED_STATUSES.has(
+      String(status || "scheduled").toLowerCase()
+    );
+  }
+
   function renderVisits() {
     document.querySelectorAll("[data-visits-list]").forEach(function (container) {
       if (!state.visits.length) {
@@ -259,19 +294,7 @@
         const id = getVisitId(visit);
         const status = visit.status || "scheduled";
         const date = getVisitDate(visit);
-        const location = visit.location ||
-          visit.propertyAddress ||
-          visit.property_address ||
-          (visit.property && visit.property.address) ||
-          "";
-
-        const canCancel = ![
-          "cancelled",
-          "canceled",
-          "completed",
-          "visited",
-          "rejected"
-        ].includes(String(status).toLowerCase());
+        const location = getLocation(visit);
 
         return [
           '<article class="visit-card" data-visit-id="' + escapeHTML(id) + '">',
@@ -291,8 +314,11 @@
               escapeHTML(visit.visitType || visit.visit_type) + '</p>'
             : "",
           '<div class="visit-card__actions">',
-          '<button type="button" data-visit-view="' + escapeHTML(id) + '">View details</button>',
-          canCancel
+          id
+            ? '<button type="button" data-visit-view="' +
+              escapeHTML(id) + '">View details</button>'
+            : "",
+          id && canCancelVisit(status)
             ? '<button type="button" data-visit-cancel="' +
               escapeHTML(id) + '">Cancel visit</button>'
             : "",
@@ -316,16 +342,12 @@
       const id = getVisitId(visit);
       const status = visit.status || "scheduled";
       const date = getVisitDate(visit);
-      const location = visit.location ||
-        visit.propertyAddress ||
-        visit.property_address ||
-        (visit.property && visit.property.address) ||
-        "";
+      const location = getLocation(visit);
 
       container.innerHTML = [
         '<article class="visit-details">',
         '<h2>' + escapeHTML(getPropertyName(visit)) + '</h2>',
-        '<p>Visit ID: ' + escapeHTML(id) + '</p>',
+        id ? '<p>Visit ID: ' + escapeHTML(id) + '</p>' : "",
         '<p>Status: <span class="visit-card__status ' +
           statusClass(status) + '">' + escapeHTML(status) + '</span></p>',
         '<p>Date: ' + escapeHTML(formatDate(date)) + '</p>',
@@ -333,7 +355,8 @@
         location ? '<p>Location: ' + escapeHTML(location) + '</p>' : "",
         visit.notes ? '<p>Notes: ' + escapeHTML(visit.notes) + '</p>' : "",
         visit.contactName || visit.contact_name
-          ? '<p>Contact: ' + escapeHTML(visit.contactName || visit.contact_name) + '</p>'
+          ? '<p>Contact: ' +
+            escapeHTML(visit.contactName || visit.contact_name) + '</p>'
           : "",
         '</article>'
       ].join("");
@@ -348,7 +371,9 @@
     if (options.status) params.set("status", options.status);
     if (options.page) params.set("page", String(options.page));
     if (options.limit) params.set("limit", String(options.limit));
-    if (options.propertyId) params.set("propertyId", String(options.propertyId));
+    if (options.propertyId) {
+      params.set("propertyId", String(options.propertyId));
+    }
 
     const query = params.toString();
     const data = await request(
@@ -367,9 +392,7 @@
   }
 
   async function getVisit(visitId) {
-    if (!visitId) {
-      throw new Error("Visit ID is required.");
-    }
+    if (!visitId) throw new Error("Visit ID is required.");
 
     const data = await request(
       ENDPOINTS.details + encodeURIComponent(String(visitId))
@@ -377,6 +400,7 @@
 
     const payload = unwrap(data);
     state.currentVisit = payload && (payload.visit || payload);
+
     renderVisitDetails();
 
     emit(EVENTS.LOADED, {
@@ -393,20 +417,20 @@
     }
 
     const propertyId = payload.propertyId || payload.property_id;
-    const date = payload.scheduledAt ||
+    const scheduledAt = payload.scheduledAt ||
       payload.scheduled_at ||
       payload.visitDate ||
       payload.visit_date;
 
-    if (!propertyId) {
-      throw new Error("Property ID is required.");
-    }
+    if (!propertyId) throw new Error("Property ID is required.");
 
-    if (!date || Number.isNaN(new Date(date).getTime())) {
+    const date = new Date(scheduledAt);
+
+    if (!scheduledAt || Number.isNaN(date.getTime())) {
       throw new Error("Select a valid visit date and time.");
     }
 
-    if (new Date(date).getTime() <= Date.now()) {
+    if (date.getTime() <= Date.now()) {
       throw new Error("Visit date and time must be in the future.");
     }
 
@@ -414,7 +438,7 @@
       method: "POST",
       body: {
         propertyId: propertyId,
-        scheduledAt: new Date(date).toISOString(),
+        scheduledAt: date.toISOString(),
         visitType: payload.visitType || payload.visit_type || "in-person",
         notes: String(payload.notes || "").trim()
       }
@@ -423,24 +447,19 @@
     const visit = unwrap(data);
 
     emit(EVENTS.BOOKED, { visit: visit });
-
     await loadVisits().catch(function () {});
 
     return visit;
   }
 
   async function cancelVisit(visitId, reason) {
-    if (!visitId) {
-      throw new Error("Visit ID is required.");
-    }
+    if (!visitId) throw new Error("Visit ID is required.");
 
     const data = await request(
       ENDPOINTS.cancel + encodeURIComponent(String(visitId)) + "/cancel",
       {
         method: "POST",
-        body: {
-          reason: String(reason || "").trim()
-        }
+        body: { reason: String(reason || "").trim() }
       }
     );
 
@@ -460,9 +479,7 @@
   }
 
   async function rescheduleVisit(visitId, scheduledAt, notes) {
-    if (!visitId) {
-      throw new Error("Visit ID is required.");
-    }
+    if (!visitId) throw new Error("Visit ID is required.");
 
     const date = new Date(scheduledAt);
 
@@ -475,7 +492,8 @@
     }
 
     const data = await request(
-      ENDPOINTS.reschedule + encodeURIComponent(String(visitId)) + "/reschedule",
+      ENDPOINTS.reschedule + encodeURIComponent(String(visitId)) +
+        "/reschedule",
       {
         method: "PATCH",
         body: {
@@ -511,12 +529,22 @@
   function setLoading(form, loading) {
     if (!form) return;
 
-    form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(
-      function (button) {
-        button.disabled = Boolean(loading);
-        button.setAttribute("aria-busy", String(Boolean(loading)));
+    form.querySelectorAll(
+      'button[type="submit"], input[type="submit"]'
+    ).forEach(function (button) {
+      if (loading) {
+        if (!button.hasAttribute("data-visits-original-disabled")) {
+          button.dataset.visitsOriginalDisabled = String(button.disabled);
+        }
+
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+      } else {
+        button.disabled = button.dataset.visitsOriginalDisabled === "true";
+        button.removeAttribute("data-visits-original-disabled");
+        button.removeAttribute("aria-busy");
       }
-    );
+    });
   }
 
   function handleError(error) {
@@ -530,13 +558,15 @@
 
   function bindBookingForms() {
     document.querySelectorAll("[data-visit-booking-form]").forEach(function (form) {
+      if (form.dataset.visitsBound === "true") return;
+      form.dataset.visitsBound = "true";
+
       form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         if (!form.reportValidity()) return;
 
         const formData = new FormData(form);
-
         const payload = {
           propertyId: formData.get("propertyId") || formData.get("property_id"),
           scheduledAt: formData.get("scheduledAt") ||
@@ -551,12 +581,12 @@
 
         try {
           const visit = await bookVisit(payload);
-
           form.reset();
 
+          const id = getVisitId(visit);
           showMessage(
             "Property visit requested successfully." +
-              (getVisitId(visit) ? " Visit ID: " + getVisitId(visit) : ""),
+              (id ? " Visit ID: " + id : ""),
             false
           );
         } catch (error) {
@@ -570,6 +600,9 @@
 
   function bindRescheduleForms() {
     document.querySelectorAll("[data-visit-reschedule-form]").forEach(function (form) {
+      if (form.dataset.visitsBound === "true") return;
+      form.dataset.visitsBound = "true";
+
       form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -579,7 +612,6 @@
         const visitId = form.dataset.visitId ||
           formData.get("visitId") ||
           formData.get("visit_id");
-
         const date = formData.get("scheduledAt") ||
           formData.get("scheduled_at") ||
           formData.get("visitDate");
@@ -600,9 +632,18 @@
   }
 
   function bindActions() {
+    if (state.actionsBound) return;
+    state.actionsBound = true;
+
     document.addEventListener("click", async function (event) {
-      const viewButton = event.target.closest("[data-visit-view]");
-      const cancelButton = event.target.closest("[data-visit-cancel]");
+      const target = event.target instanceof Element
+        ? event.target
+        : event.target && event.target.parentElement;
+
+      if (!target) return;
+
+      const viewButton = target.closest("[data-visit-view]");
+      const cancelButton = target.closest("[data-visit-cancel]");
 
       if (viewButton) {
         try {
@@ -611,7 +652,6 @@
         } catch (error) {
           handleError(error);
         }
-
         return;
       }
 
@@ -657,12 +697,16 @@
   }
 
   function init() {
+    if (state.initialized) return;
+
     const hasUI = document.querySelector(
       "[data-visits-list], [data-visit-details], " +
       "[data-visit-booking-form], [data-visit-reschedule-form]"
     );
 
     if (!hasUI) return;
+
+    state.initialized = true;
 
     bindBookingForms();
     bindRescheduleForms();
@@ -685,7 +729,6 @@
   });
 
   window.MedOrbitsVisits = api;
-
   window.MedOrbits = window.MedOrbits || {};
   window.MedOrbits.Visits = api;
 
@@ -694,5 +737,4 @@
   } else {
     init();
   }
-
 })(window, document);

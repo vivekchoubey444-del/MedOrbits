@@ -1,149 +1,245 @@
+
 'use strict';
 
 /**
-
-* MedOrbits -- HTTP Security Headers
-* File: src/config/security.js
-* Responsibilities:
-* ●	Configure Helmet security headers.
-* ●	Apply a configurable Content Security Policy.
-* ●	Enable HSTS in production.
-* ●	Enforce safe defaults for browser resource loading.
-* Requires:
-* ●	helmet
-* ●	./env
-        */
+ * MedOrbits -- HTTP Security Headers
+ * File: src/config/security.js
+ *
+ * Responsibilities:
+ * - Configure Helmet security headers.
+ * - Apply a configurable Content Security Policy (CSP).
+ * - Enable HSTS in production.
+ * - Enforce safe defaults for browser resource loading.
+ *
+ * Dependencies:
+ * - helmet
+ * - ./env
+ *
+ * Important:
+ * CSP must be tested against the actual frontend, API integrations,
+ * payment providers, authentication flows, and external resources.
+ */
 
 const helmet = require('helmet');
 const { env } = require('./env');
 
 const IS_PRODUCTION = env.NODE_ENV === 'production';
 
+const DEFAULT_CSP_DIRECTIVES = Object.freeze({
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'self'"],
+  formAction: ["'self'"],
+  scriptSrc: ["'self'"],
+  styleSrc: ["'self'"],
+  imgSrc: ["'self'", 'data:'],
+  fontSrc: ["'self'", 'data:'],
+  connectSrc: ["'self'"],
+  mediaSrc: ["'self'"],
+  workerSrc: ["'self'"],
+  manifestSrc: ["'self'"],
+  frameSrc: ["'self'"],
+});
+
+const CONFIGURABLE_DIRECTIVES = Object.freeze({
+  scriptSrc: 'CSP_SCRIPT_SRC',
+  styleSrc: 'CSP_STYLE_SRC',
+  imgSrc: 'CSP_IMG_SRC',
+  fontSrc: 'CSP_FONT_SRC',
+  connectSrc: 'CSP_CONNECT_SRC',
+  mediaSrc: 'CSP_MEDIA_SRC',
+  frameSrc: 'CSP_FRAME_SRC',
+});
+
+const ALLOWED_CSP_KEYWORDS = new Set([
+  "'self'",
+  "'none'",
+  "'unsafe-inline'",
+  "'unsafe-eval'",
+  "'strict-dynamic'",
+  "'report-sample'",
+  "'wasm-unsafe-eval'",
+]);
+
 function parseDirectiveSources(value, fallback, name) {
-if (value === undefined || value === null) {
-return fallback;
-}
+  if (value === undefined || value === null) {
+    return [...fallback];
+  }
 
-if (!Array.isArray(value)) {
-throw new TypeError(`${name} must be an array of CSP sources.`);
-}
+  if (!Array.isArray(value)) {
+    throw new TypeError(
+      `${name} must be an array of CSP sources.`
+    );
+  }
 
-const sources = value
-.filter((item) => typeof item === 'string')
-.map((item) => item.trim())
-.filter(Boolean);
+  const sources = value.map((item) => {
+    if (
+      typeof item !== 'string' ||
+      item.trim() === '' ||
+      /[\u0000-\u0020\u007F]/.test(item.trim())
+    ) {
+      throw new TypeError(
+        `${name} contains invalid CSP source values.`
+      );
+    }
 
-if (sources.length !== value.length) {
-throw new TypeError(`${name} contains invalid CSP source values.`);
-}
+    const source = item.trim();
 
-if (IS_PRODUCTION && sources.includes("'unsafe-eval'")) {
-throw new Error(
-`${name} must not contain 'unsafe-eval' in production.`
-);
-}
+    if (source === '*') {
+      return source;
+    }
 
-return [...new Set(sources)];
+    if (source.startsWith("'") || source.endsWith("'")) {
+      if (!ALLOWED_CSP_KEYWORDS.has(source)) {
+        // Permit nonce/hash sources, which Helmet supports.
+        if (
+          !/^'nonce-[A-Za-z0-9+/_=-]+'$/.test(source) &&
+          !/^'sha256-[A-Za-z0-9+/=]+'$/.test(source) &&
+          !/^'sha384-[A-Za-z0-9+/=]+'$/.test(source) &&
+          !/^'sha512-[A-Za-z0-9+/=]+'$/.test(source)
+        ) {
+          throw new TypeError(
+            `${name} contains an invalid quoted CSP source.`
+          );
+        }
+      }
+    }
+
+    if (
+      IS_PRODUCTION &&
+      ["'unsafe-eval'", "'wasm-unsafe-eval'"].includes(source)
+    ) {
+      throw new Error(
+        `${name} must not contain ${source} in production.`
+      );
+    }
+
+    return source;
+  });
+
+  const uniqueSources = [...new Set(sources)];
+
+  if (
+    uniqueSources.includes("'none'") &&
+    uniqueSources.length > 1
+  ) {
+    throw new Error(
+      `${name} cannot combine 'none' with other CSP sources.`
+    );
+  }
+
+  if (
+    IS_PRODUCTION &&
+    uniqueSources.includes('*')
+  ) {
+    throw new Error(
+      `${name} must not contain a wildcard source in production.`
+    );
+  }
+
+  return uniqueSources;
 }
 
 function buildContentSecurityPolicy() {
-if (!env.CONTENT_SECURITY_POLICY_ENABLED) {
-return false;
-}
+  if (env.CONTENT_SECURITY_POLICY_ENABLED === false) {
+    return false;
+  }
 
-const directives = {
-defaultSrc: ["'self'"],
-baseUri: ["'self'"],
-objectSrc: ["'none'"],
-frameAncestors: ["'self'"],
-formAction: ["'self'"],
-scriptSrc: ["'self'"],
-styleSrc: ["'self'"],
-imgSrc: ["'self'", 'data:'],
-fontSrc: ["'self'", 'data:'],
-connectSrc: ["'self'"],
-mediaSrc: ["'self'"],
-workerSrc: ["'self'"],
-manifestSrc: ["'self'"],
-};
+  const directives = Object.fromEntries(
+    Object.entries(DEFAULT_CSP_DIRECTIVES).map(
+      ([name, sources]) => [name, [...sources]]
+    )
+  );
 
-/*
+  for (const [directive, variableName] of Object.entries(
+    CONFIGURABLE_DIRECTIVES
+  )) {
+    const configuredSources = env[variableName];
 
-* Optional source overrides must be supplied as arrays by env.js.
-* Configure only the external origins that MedOrbits actually uses.
-* Example:
-* CSP_SCRIPT_SRC=["'self'","https://trusted.example"]
-    */
-    const configurableDirectives = {
-    scriptSrc: env.CSP_SCRIPT_SRC,
-    styleSrc: env.CSP_STYLE_SRC,
-    imgSrc: env.CSP_IMG_SRC,
-    fontSrc: env.CSP_FONT_SRC,
-    connectSrc: env.CSP_CONNECT_SRC,
-    mediaSrc: env.CSP_MEDIA_SRC,
-    frameSrc: env.CSP_FRAME_SRC,
-    };
+    if (configuredSources !== undefined && configuredSources !== null) {
+      directives[directive] = parseDirectiveSources(
+        configuredSources,
+        directives[directive] || [],
+        variableName
+      );
+    }
+  }
 
-for (const [directive, configuredSources] of Object.entries(
-configurableDirectives
-)) {
-if (configuredSources !== undefined && configuredSources !== null) {
-directives[directive] = parseDirectiveSources(
-configuredSources,
-directives[directive] || [],
-directive
-);
-}
-}
+  // Keep the browser from loading insecure HTTP resources on HTTPS pages.
+  if (IS_PRODUCTION) {
+    directives.upgradeInsecureRequests = [];
+  }
 
-// Prevent mixed-content requests in production HTTPS deployments.
-if (IS_PRODUCTION) {
-directives.upgradeInsecureRequests = [];
-}
-
-return {
-useDefaults: true,
-directives,
-};
+  return {
+    useDefaults: true,
+    directives,
+  };
 }
 
 function buildHelmetOptions() {
-const options = {
-contentSecurityPolicy: buildContentSecurityPolicy(),
+  const options = {
+    contentSecurityPolicy: buildContentSecurityPolicy(),
 
-// Enable only after confirming cross-origin resources remain compatible.
-crossOriginEmbedderPolicy: false,
-referrerPolicy: {
-  policy: 'strict-origin-when-cross-origin',
-},
-// Disable legacy browser-specific headers.
-xPoweredBy: false,
+    // Enable only after confirming cross-origin resources remain compatible.
+    crossOriginEmbedderPolicy: false,
 
-};
+    // Prevent MIME-type sniffing.
+    xContentTypeOptions: true,
 
-if (IS_PRODUCTION) {
-options.hsts = {
-maxAge: 15_552_000, // 180 days
-includeSubDomains: true,
-preload: false,
-};
-} else {
-options.hsts = false;
-}
+    // Reduce referrer information sent to other origins.
+    referrerPolicy: {
+      policy: 'strict-origin-when-cross-origin',
+    },
 
-return options;
+    // Disable legacy browser-specific headers.
+    xPoweredBy: false,
+
+    // Restrict framing; CSP frame-ancestors also applies when supported.
+    frameguard: {
+      action: 'sameorigin',
+    },
+
+    // Disable browser DNS prefetching.
+    xDnsPrefetchControl: {
+      allow: false,
+    },
+
+    // Prevent legacy download behavior from executing HTML in some contexts.
+    xDownloadOptions: true,
+
+    // Reduce cross-origin information leakage.
+    crossOriginResourcePolicy: {
+      policy: 'same-origin',
+    },
+  };
+
+  if (IS_PRODUCTION) {
+    options.strictTransportSecurity = {
+      maxAge: 15_552_000,
+      includeSubDomains: true,
+      preload: false,
+    };
+  } else {
+    options.strictTransportSecurity = false;
+  }
+
+  return options;
 }
 
 const securityHeaders = helmet(buildHelmetOptions());
 
 function securityHeadersMiddleware(req, res, next) {
-if (env.HELMET_ENABLED === false) {
-return next();
-}
+  if (env.HELMET_ENABLED === false) {
+    return next();
+  }
 
-return securityHeaders(req, res, next);
+  return securityHeaders(req, res, next);
 }
 
 module.exports = {
-securityHeadersMiddleware,
+  securityHeadersMiddleware,
+  buildContentSecurityPolicy,
+  buildHelmetOptions,
+  parseDirectiveSources,
 };

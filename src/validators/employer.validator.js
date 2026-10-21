@@ -43,26 +43,61 @@ const ALLOWED_STATUSES = Object.freeze([
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const PHONE_REGEX = /^[+()\d\s.-]+$/;
+const CONTROL_CHARACTERS_REGEX = /[\u0000-\u001F\u007F]/;
 
 const MAX_DESCRIPTION_LENGTH = 5000;
+const MAX_NAME_LENGTH = 200;
+const MAX_SLUG_LENGTH = 200;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_URL_LENGTH = 2048;
+const MAX_PHONE_LENGTH = 25;
+const MAX_EMPLOYEE_COUNT = 100000000;
 
-function validationError(message, code = 'VALIDATION_ERROR') {
+const PROTECTED_FIELDS = Object.freeze([
+  'user_id',
+  'status',
+]);
+
+function validationError(
+  message,
+  code = 'VALIDATION_ERROR',
+  field
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
+  error.statusCode = 400;
   error.code = code;
   error.publicMessage = message;
+
+  if (field) {
+    error.field = field;
+  }
+
   return error;
 }
 
+function isPlainObject(input) {
+  if (input === null || typeof input !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(input);
+
+  return (
+    prototype === Object.prototype ||
+    prototype === null
+  );
+}
+
 function pickAllowed(input = {}) {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
+  if (!isPlainObject(input)) {
     throw validationError(
-      'Request body must be a JSON object.',
-      'INVALID_BODY'
+      'Request body must be a plain JSON object.',
+      'INVALID_BODY',
+      'body'
     );
   }
 
@@ -77,7 +112,7 @@ function pickAllowed(input = {}) {
     );
   }
 
-  const output = {};
+  const output = Object.create(null);
 
   for (const field of ALLOWED_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(input, field)) {
@@ -88,23 +123,113 @@ function pickAllowed(input = {}) {
   return output;
 }
 
-function normalizeString(data, field, maxLength, minLength = 0) {
-  if (data[field] === undefined) return;
+function normalizeString(
+  data,
+  field,
+  maxLength,
+  minLength = 0
+) {
+  if (data[field] === undefined) {
+    return;
+  }
 
   if (typeof data[field] !== 'string') {
-    throw validationError(`${field} must be a string.`);
-  }
-
-  data[field] = data[field].trim();
-
-  if (
-    data[field].length < minLength ||
-    data[field].length > maxLength
-  ) {
     throw validationError(
-      `${field} must contain between ${minLength} and ${maxLength} characters.`
+      `${field} must be a string.`,
+      'INVALID_TYPE',
+      field
     );
   }
+
+  const value = data[field].trim();
+
+  if (CONTROL_CHARACTERS_REGEX.test(value)) {
+    throw validationError(
+      `${field} must not contain control characters.`,
+      'INVALID_FORMAT',
+      field
+    );
+  }
+
+  if (
+    value.length < minLength ||
+    value.length > maxLength
+  ) {
+    throw validationError(
+      `${field} must contain between ${minLength} and ${maxLength} characters.`,
+      'OUT_OF_RANGE',
+      field
+    );
+  }
+
+  data[field] = value;
+}
+
+function validatePositiveId(value, field) {
+  let id = value;
+
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+
+    if (!/^[1-9]\d*$/.test(normalized)) {
+      throw validationError(
+        `${field} must be a positive integer.`,
+        'INVALID_ID',
+        field
+      );
+    }
+
+    id = Number(normalized);
+  }
+
+  if (!Number.isSafeInteger(id) || id < 1) {
+    throw validationError(
+      `${field} must be a positive integer.`,
+      'INVALID_ID',
+      field
+    );
+  }
+
+  return id;
+}
+
+function validateEnum(value, field, allowedValues) {
+  if (typeof value !== 'string') {
+    throw validationError(
+      `${field} must be a string.`,
+      'INVALID_TYPE',
+      field
+    );
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (!allowedValues.includes(normalized)) {
+    throw validationError(
+      `${field} must be one of: ${allowedValues.join(', ')}.`,
+      'INVALID_ENUM',
+      field
+    );
+  }
+
+  return normalized;
+}
+
+function validateEmail(value) {
+  const email = value.toLowerCase();
+
+  if (
+    email.length > MAX_EMAIL_LENGTH ||
+    !EMAIL_REGEX.test(email)
+  ) {
+    throw validationError(
+      'A valid email address is required.',
+      'INVALID_EMAIL',
+      'email'
+    );
+  }
+
+  return email;
 }
 
 function validateUrl(value, field) {
@@ -113,57 +238,133 @@ function validateUrl(value, field) {
   try {
     url = new URL(value);
   } catch {
-    throw validationError(`${field} must be a valid URL.`);
+    throw validationError(
+      `${field} must be a valid absolute URL.`,
+      'INVALID_URL',
+      field
+    );
   }
 
   if (!['http:', 'https:'].includes(url.protocol)) {
-    throw validationError(`${field} must use HTTP or HTTPS.`);
+    throw validationError(
+      `${field} must use HTTP or HTTPS.`,
+      'INVALID_URL_PROTOCOL',
+      field
+    );
+  }
+
+  if (!url.hostname || url.username || url.password) {
+    throw validationError(
+      `${field} must contain a hostname and must not contain embedded credentials.`,
+      'INVALID_URL',
+      field
+    );
   }
 
   return url.toString();
 }
 
+function validatePhone(value) {
+  if (!PHONE_REGEX.test(value)) {
+    throw validationError(
+      'A valid phone number is required.',
+      'INVALID_PHONE',
+      'phone'
+    );
+  }
+
+  const digits = value.replace(/\D/g, '');
+
+  if (digits.length < 7 || digits.length > 15) {
+    throw validationError(
+      'Phone number must contain between 7 and 15 digits.',
+      'INVALID_PHONE',
+      'phone'
+    );
+  }
+
+  return value;
+}
+
+function validateCountryCode(value) {
+  const code = value.toUpperCase();
+
+  if (!COUNTRY_CODE_REGEX.test(code)) {
+    throw validationError(
+      'country_code must be a two-letter country code.',
+      'INVALID_COUNTRY_CODE',
+      'country_code'
+    );
+  }
+
+  return code;
+}
+
 function validate(input = {}, options = {}) {
-  const { partial = false } = options;
+  const {
+    partial = false,
+    mode = 'client',
+  } = options;
+
   const data = pickAllowed(input);
 
   if (Object.keys(data).length === 0) {
     throw validationError(
-      'At least one supported field must be provided.'
+      'At least one supported field must be provided.',
+      'EMPTY_INPUT'
     );
   }
 
-  normalizeString(data, 'organization_name', 200, 2);
-  normalizeString(data, 'slug', 200, 2);
-  normalizeString(data, 'registration_number', 100, 1);
-  normalizeString(data, 'industry', 100, 1);
-  normalizeString(data, 'phone', 25, 0);
-  normalizeString(data, 'address', 500, 1);
-  normalizeString(data, 'city', 100, 1);
-  normalizeString(data, 'state', 100, 1);
-  normalizeString(data, 'pincode', 20, 1);
-  normalizeString(data, 'description', MAX_DESCRIPTION_LENGTH);
-  normalizeString(data, 'website', 2048, 1);
-  normalizeString(data, 'email', 254, 1);
+  if (mode !== 'client' && mode !== 'system') {
+    throw validationError(
+      'Unsupported validation mode.',
+      'INVALID_VALIDATION_MODE',
+      'mode'
+    );
+  }
 
-  if (data.user_id !== undefined) {
-    if (
-      !Number.isSafeInteger(data.user_id) ||
-      data.user_id < 1
-    ) {
-      throw validationError('user_id must be a positive integer.');
+  // Identity and lifecycle status are controlled by trusted workflows.
+  if (mode === 'client') {
+    for (const field of PROTECTED_FIELDS) {
+      if (data[field] !== undefined) {
+        throw validationError(
+          `${field} is server-managed and cannot be supplied by clients.`,
+          'PROTECTED_FIELD',
+          field
+        );
+      }
     }
   }
 
+  for (const [field, maxLength, minLength] of [
+    ['organization_name', MAX_NAME_LENGTH, 2],
+    ['slug', MAX_SLUG_LENGTH, 2],
+    ['registration_number', 100, 1],
+    ['industry', 100, 1],
+    ['phone', MAX_PHONE_LENGTH, 0],
+    ['address', 500, 1],
+    ['city', 100, 1],
+    ['state', 100, 1],
+    ['pincode', 20, 1],
+    ['description', MAX_DESCRIPTION_LENGTH, 0],
+    ['website', MAX_URL_LENGTH, 1],
+    ['email', MAX_EMAIL_LENGTH, 1],
+  ]) {
+    normalizeString(data, field, maxLength, minLength);
+  }
+
+  if (data.user_id !== undefined) {
+    data.user_id = validatePositiveId(
+      data.user_id,
+      'user_id'
+    );
+  }
+
   if (data.logo_document_id !== undefined) {
-    if (
-      !Number.isSafeInteger(data.logo_document_id) ||
-      data.logo_document_id < 1
-    ) {
-      throw validationError(
-        'logo_document_id must be a positive integer.'
-      );
-    }
+    data.logo_document_id = validatePositiveId(
+      data.logo_document_id,
+      'logo_document_id'
+    );
   }
 
   if (data.slug !== undefined) {
@@ -171,25 +372,19 @@ function validate(input = {}, options = {}) {
 
     if (!SLUG_REGEX.test(data.slug)) {
       throw validationError(
-        'slug must contain lowercase letters, numbers, and single hyphens.'
+        'slug must contain lowercase letters, numbers, and single hyphens.',
+        'INVALID_SLUG',
+        'slug'
       );
     }
   }
 
   if (data.organization_type !== undefined) {
-    if (typeof data.organization_type !== 'string') {
-      throw validationError('organization_type must be a string.');
-    }
-
-    data.organization_type = data.organization_type
-      .trim()
-      .toLowerCase();
-
-    if (!ALLOWED_ORGANIZATION_TYPES.includes(data.organization_type)) {
-      throw validationError(
-        `organization_type must be one of: ${ALLOWED_ORGANIZATION_TYPES.join(', ')}.`
-      );
-    }
+    data.organization_type = validateEnum(
+      data.organization_type,
+      'organization_type',
+      ALLOWED_ORGANIZATION_TYPES
+    );
   }
 
   if (data.website !== undefined && data.website !== '') {
@@ -197,32 +392,25 @@ function validate(input = {}, options = {}) {
   }
 
   if (data.email !== undefined) {
-    data.email = data.email.toLowerCase();
-
-    if (!EMAIL_REGEX.test(data.email)) {
-      throw validationError('A valid email address is required.');
-    }
+    data.email = validateEmail(data.email);
   }
 
   if (data.phone !== undefined && data.phone !== '') {
-    if (
-      !/^[+()\d\s.-]+$/.test(data.phone) ||
-      data.phone.replace(/\D/g, '').length < 7
-    ) {
-      throw validationError('A valid phone number is required.');
-    }
+    data.phone = validatePhone(data.phone);
   }
 
   if (data.country_code !== undefined) {
-    if (typeof data.country_code !== 'string') {
-      throw validationError('country_code must be a string.');
-    }
+    data.country_code = validateCountryCode(
+      data.country_code
+    );
+  }
 
-    data.country_code = data.country_code.trim().toUpperCase();
-
-    if (!COUNTRY_CODE_REGEX.test(data.country_code)) {
+  if (data.pincode !== undefined) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9\s-]*$/.test(data.pincode)) {
       throw validationError(
-        'country_code must be a two-letter ISO country code.'
+        'pincode contains unsupported characters.',
+        'INVALID_PINCODE',
+        'pincode'
       );
     }
   }
@@ -231,31 +419,31 @@ function validate(input = {}, options = {}) {
     if (
       !Number.isSafeInteger(data.employee_count) ||
       data.employee_count < 0 ||
-      data.employee_count > 100000000
+      data.employee_count > MAX_EMPLOYEE_COUNT
     ) {
       throw validationError(
-        'employee_count must be a non-negative integer.'
+        `employee_count must be an integer between 0 and ${MAX_EMPLOYEE_COUNT}.`,
+        'INVALID_EMPLOYEE_COUNT',
+        'employee_count'
       );
     }
   }
 
   if (data.status !== undefined) {
-    if (typeof data.status !== 'string') {
-      throw validationError('status must be a string.');
-    }
+    data.status = validateEnum(
+      data.status,
+      'status',
+      ALLOWED_STATUSES
+    );
 
-    data.status = data.status.trim().toLowerCase();
-
-    if (!ALLOWED_STATUSES.includes(data.status)) {
-      throw validationError(
-        `status must be one of: ${ALLOWED_STATUSES.join(', ')}.`
-      );
-    }
-
-    if (['active', 'suspended'].includes(data.status)) {
+    if (
+      mode === 'client' &&
+      ['active', 'suspended'].includes(data.status)
+    ) {
       throw validationError(
         `status "${data.status}" can only be changed through an authorized administrative workflow.`,
-        'PROTECTED_FIELD'
+        'PROTECTED_FIELD',
+        'status'
       );
     }
   }
@@ -267,8 +455,12 @@ function validate(input = {}, options = {}) {
       'email',
       'country_code',
     ]) {
-      if (!data[field]) {
-        throw validationError(`${field} is required.`);
+      if (data[field] === undefined || data[field] === '') {
+        throw validationError(
+          `${field} is required.`,
+          'REQUIRED_FIELD',
+          field
+        );
       }
     }
   }
@@ -277,19 +469,47 @@ function validate(input = {}, options = {}) {
 }
 
 function validateCreate(input) {
-  return validate(input);
+  return validate(input, {
+    partial: false,
+    mode: 'client',
+  });
 }
 
 function validateUpdate(input) {
-  return validate(input, { partial: true });
+  return validate(input, {
+    partial: true,
+    mode: 'client',
+  });
+}
+
+function validateSystemCreate(input) {
+  return validate(input, {
+    partial: false,
+    mode: 'system',
+  });
+}
+
+function validateSystemUpdate(input) {
+  return validate(input, {
+    partial: true,
+    mode: 'system',
+  });
 }
 
 module.exports = {
   ALLOWED_FIELDS,
   ALLOWED_ORGANIZATION_TYPES,
   ALLOWED_STATUSES,
+  PROTECTED_FIELDS,
   pickAllowed,
   validate,
   validateCreate,
   validateUpdate,
+  validateSystemCreate,
+  validateSystemUpdate,
+  validateEmail,
+  validatePhone,
+  validateUrl,
+  validateCountryCode,
+  validatePositiveId,
 };

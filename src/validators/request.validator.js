@@ -1,4 +1,3 @@
-
 'use strict';
 
 const DEFAULT_BODY_FIELDS = Object.freeze([]);
@@ -8,6 +7,7 @@ const DEFAULT_PARAM_FIELDS = Object.freeze([]);
 const DEFAULT_MAX_PAGE = 1000000;
 const DEFAULT_MAX_LIMIT = 100;
 const DEFAULT_MAX_STRING_LENGTH = 10000;
+const DEFAULT_MAX_ARRAY_LENGTH = 100;
 
 function createValidationError(
   message,
@@ -36,10 +36,7 @@ function isPlainObject(value) {
 
   const prototype = Object.getPrototypeOf(value);
 
-  return (
-    prototype === Object.prototype ||
-    prototype === null
-  );
+  return prototype === Object.prototype || prototype === null;
 }
 
 function requireObject(input, field = 'request') {
@@ -54,17 +51,28 @@ function requireObject(input, field = 'request') {
   return input;
 }
 
+function validateFieldList(fields, name) {
+  if (
+    !Array.isArray(fields) ||
+    fields.some((field) => typeof field !== 'string' || field.length === 0)
+  ) {
+    throw new TypeError(`${name} must be an array of non-empty strings.`);
+  }
+
+  if (new Set(fields).size !== fields.length) {
+    throw new TypeError(`${name} must not contain duplicate fields.`);
+  }
+
+  return fields;
+}
+
 function rejectUnknownFields(input, allowedFields, options = {}) {
   const field = options.field || 'request';
 
   requireObject(input, field);
-
-  if (!Array.isArray(allowedFields)) {
-    throw new TypeError('allowedFields must be an array.');
-  }
+  validateFieldList(allowedFields, 'allowedFields');
 
   const allowed = new Set(allowedFields);
-
   const unknownFields = Object.keys(input).filter(
     (key) => !allowed.has(key)
   );
@@ -84,16 +92,14 @@ function pickAllowed(input, allowedFields, options = {}) {
   const field = options.field || 'request';
 
   requireObject(input, field);
-
-  if (!Array.isArray(allowedFields)) {
-    throw new TypeError('allowedFields must be an array.');
-  }
+  validateFieldList(allowedFields, 'allowedFields');
 
   if (options.rejectUnknown === true) {
     rejectUnknownFields(input, allowedFields, { field });
   }
 
-  const result = {};
+  // Avoid special-key assignment hazards when copying untrusted fields.
+  const result = Object.create(null);
 
   for (const key of allowedFields) {
     if (Object.prototype.hasOwnProperty.call(input, key)) {
@@ -113,9 +119,11 @@ function validateRequestObject(input, options = {}) {
 
   requireObject(input, field);
 
-  if (!Array.isArray(allowedFields)) {
+  if (allowedFields === undefined) {
     return input;
   }
+
+  validateFieldList(allowedFields, 'allowedFields');
 
   if (rejectUnknown) {
     rejectUnknownFields(input, allowedFields, { field });
@@ -155,10 +163,7 @@ function validateRequiredFields(input, requiredFields, options = {}) {
   const field = options.field || 'request';
 
   requireObject(input, field);
-
-  if (!Array.isArray(requiredFields)) {
-    throw new TypeError('requiredFields must be an array.');
-  }
+  validateFieldList(requiredFields, 'requiredFields');
 
   const missing = requiredFields.filter((key) => {
     if (!Object.prototype.hasOwnProperty.call(input, key)) {
@@ -185,18 +190,22 @@ function validateRequiredFields(input, requiredFields, options = {}) {
   return input;
 }
 
-function validateAllowedValues(
-  input,
-  field,
-  allowedValues,
-  options = {}
-) {
+function validateAllowedValues(input, field, allowedValues, options = {}) {
   requireObject(input, options.objectField || 'request');
 
-  if (!Array.isArray(allowedValues) || allowedValues.length === 0) {
-    throw new TypeError(
-      'allowedValues must be a non-empty array.'
-    );
+  if (
+    !Array.isArray(allowedValues) ||
+    allowedValues.length === 0
+  ) {
+    throw new TypeError('allowedValues must be a non-empty array.');
+  }
+
+  if (!allowedValues.every((value) => typeof value === 'string')) {
+    throw new TypeError('allowedValues must contain only strings.');
+  }
+
+  if (typeof field !== 'string' || field.length === 0) {
+    throw new TypeError('field must be a non-empty string.');
   }
 
   if (!Object.prototype.hasOwnProperty.call(input, field)) {
@@ -221,15 +230,11 @@ function validateAllowedValues(
     );
   }
 
-  const normalized = options.trim === false
-    ? value
-    : value.trim();
+  const normalized = options.trim === false ? value : value.trim();
 
   const matchedValue = options.caseInsensitive === true
     ? allowedValues.find(
-        (item) =>
-          typeof item === 'string' &&
-          item.toLowerCase() === normalized.toLowerCase()
+        (item) => item.toLowerCase() === normalized.toLowerCase()
       )
     : allowedValues.find((item) => item === normalized);
 
@@ -263,6 +268,15 @@ function validateString(value, options = {}) {
     );
   }
 
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
+  }
+
   const normalized = trim ? value.trim() : value;
 
   if (!allowEmpty && normalized.length === 0) {
@@ -284,12 +298,23 @@ function validateString(value, options = {}) {
     );
   }
 
-  if (pattern && !pattern.test(normalized)) {
-    throw createValidationError(
-      patternMessage || `${field} has an invalid format.`,
-      'INVALID_FORMAT',
-      field
-    );
+  if (pattern !== undefined) {
+    if (!(pattern instanceof RegExp)) {
+      throw new TypeError('pattern must be a RegExp.');
+    }
+
+    // Reset state for global/sticky patterns before and after testing.
+    pattern.lastIndex = 0;
+    const matches = pattern.test(normalized);
+    pattern.lastIndex = 0;
+
+    if (!matches) {
+      throw createValidationError(
+        patternMessage || `${field} has an invalid format.`,
+        'INVALID_FORMAT',
+        field
+      );
+    }
   }
 
   return normalized;
@@ -316,12 +341,22 @@ function validateNumber(value, options = {}) {
     allowNumericString = false,
   } = options;
 
+  if (
+    typeof min !== 'number' ||
+    typeof max !== 'number' ||
+    Number.isNaN(min) ||
+    Number.isNaN(max) ||
+    min > max
+  ) {
+    throw new TypeError('Invalid numeric range constraints.');
+  }
+
   let normalized = value;
 
   if (allowNumericString && typeof value === 'string') {
     const text = value.trim();
 
-    if (!text || !/^-?(?:\d+\.?\d*|\.\d+)$/.test(text)) {
+    if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) {
       throw createValidationError(
         `${field} must be a valid number.`,
         'INVALID_TYPE',
@@ -387,6 +422,30 @@ function validatePagination(input = {}, options = {}) {
     maxLimit = DEFAULT_MAX_LIMIT,
   } = options;
 
+  // Validate configuration as well as request values.
+  validateNumber(defaultPage, {
+    field: 'defaultPage',
+    min: 1,
+    max: maxPage,
+    integer: true,
+  });
+
+  validateNumber(defaultLimit, {
+    field: 'defaultLimit',
+    min: 1,
+    max: maxLimit,
+    integer: true,
+  });
+
+  if (
+    !Number.isSafeInteger(maxPage) ||
+    maxPage < 1 ||
+    !Number.isSafeInteger(maxLimit) ||
+    maxLimit < 1
+  ) {
+    throw new TypeError('Pagination maximums must be positive safe integers.');
+  }
+
   const page = input.page === undefined
     ? defaultPage
     : validateNumber(input.page, {
@@ -406,21 +465,6 @@ function validatePagination(input = {}, options = {}) {
         integer: true,
         allowNumericString: true,
       });
-
-  // Validate defaults too, so invalid configuration cannot bypass checks.
-  validateNumber(page, {
-    field: 'page',
-    min: 1,
-    max: maxPage,
-    integer: true,
-  });
-
-  validateNumber(limit, {
-    field: 'limit',
-    min: 1,
-    max: maxLimit,
-    integer: true,
-  });
 
   return { page, limit };
 }
@@ -459,7 +503,7 @@ function validateDateOnly(value, options = {}) {
     );
   }
 
-  if (min && date < min) {
+  if (min !== undefined && date < min) {
     throw createValidationError(
       `${field} must be on or after ${min}.`,
       'OUT_OF_RANGE',
@@ -467,7 +511,7 @@ function validateDateOnly(value, options = {}) {
     );
   }
 
-  if (max && date > max) {
+  if (max !== undefined && date > max) {
     throw createValidationError(
       `${field} must be on or before ${max}.`,
       'OUT_OF_RANGE',
@@ -526,7 +570,7 @@ function validateTextArray(value, options = {}) {
   const {
     field = 'value',
     minItems = 0,
-    maxItems = 100,
+    maxItems = DEFAULT_MAX_ARRAY_LENGTH,
     maxItemLength = 255,
     unique = false,
     caseInsensitiveUnique = true,
@@ -540,7 +584,14 @@ function validateTextArray(value, options = {}) {
     );
   }
 
-  if (value.length < minItems || value.length > maxItems) {
+  if (
+    !Number.isSafeInteger(minItems) ||
+    !Number.isSafeInteger(maxItems) ||
+    minItems < 0 ||
+    maxItems < minItems ||
+    value.length < minItems ||
+    value.length > maxItems
+  ) {
     throw createValidationError(
       `${field} must contain between ${minItems} and ${maxItems} items.`,
       'OUT_OF_RANGE',
@@ -580,7 +631,11 @@ function validateTextArray(value, options = {}) {
 }
 
 function validateCompleteRequest(req, options = {}) {
-  if (!req || typeof req !== 'object' || Array.isArray(req)) {
+  if (
+    req === null ||
+    typeof req !== 'object' ||
+    Array.isArray(req)
+  ) {
     throw createValidationError(
       'Request must be an object.',
       'INVALID_TYPE',
@@ -638,4 +693,5 @@ module.exports = {
   DEFAULT_MAX_PAGE,
   DEFAULT_MAX_LIMIT,
   DEFAULT_MAX_STRING_LENGTH,
+  DEFAULT_MAX_ARRAY_LENGTH,
 };

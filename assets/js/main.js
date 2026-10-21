@@ -1,7 +1,8 @@
 
 /**
  * MedOrbits -- Main Frontend Controller
- * File: assets/js/main.js
+ * File: /assets/js/main.js
+ * Version: 1.1.0
  *
  * Responsibilities:
  * - Coordinate page-level UI initialization
@@ -10,22 +11,25 @@
  * - Handle scroll progress and back-to-top controls
  * - Support search interfaces and clear controls
  * - Initialize tabs, accordions, and dismissible banners
+ * - Support reveal effects and animated counters
  * - Provide reusable page utilities
  *
  * Dependencies:
  * - Optional: assets/js/app.js
  *
- * Keep API, authentication, payments, authorization, and
- * data persistence in their dedicated modules.
+ * API, authentication, payments, authorization, and
+ * persistence remain in their dedicated modules.
  */
 
-(() => {
+(function (window, document) {
   "use strict";
+
+  if (window.MedOrbitsMain) return;
 
   const CONFIG = Object.freeze({
     name: "MedOrbits",
     module: "main",
-    version: "1.0.0",
+    version: "1.1.0",
 
     selectors: Object.freeze({
       header: "[data-site-header]",
@@ -62,12 +66,9 @@
     header: null,
     scrollScheduled: false,
     observers: [],
-    eventHandlers: new Map()
+    eventHandlers: new Map(),
+    cleanups: []
   };
-
-  // --------------------------------------------------
-  // DOM utilities
-  // --------------------------------------------------
 
   const dom = {
     one(selector, root = document) {
@@ -116,19 +117,21 @@
   };
 
   // --------------------------------------------------
-  // URL and route utilities
+  // Route and navigation utilities
   // --------------------------------------------------
 
   const routes = {
     normalize(path) {
       if (!path) return "/";
 
-      let normalized = path.split("?")[0].split("#")[0];
+      let normalized = String(path)
+        .split("?")[0]
+        .split("#")[0];
 
       try {
         normalized = decodeURIComponent(normalized);
       } catch {
-        // Keep the original path if decoding fails.
+        // Retain the original path if decoding fails.
       }
 
       normalized = normalized.replace(/\/+/g, "/");
@@ -159,11 +162,15 @@
 
         if (current === target) return true;
 
-        // Treat index.html as the default document for a directory.
-        return (
-          target.endsWith("/index.html") &&
-          this.normalize(target.slice(0, -"index.html".length)) === current
-        );
+        if (target.endsWith("/index.html")) {
+          const directory = this.normalize(
+            target.slice(0, -"index.html".length)
+          );
+
+          return directory === current;
+        }
+
+        return false;
       } catch {
         return false;
       }
@@ -171,26 +178,36 @@
 
     updateActiveNavigation() {
       const links = dom.all(
-        'a[href]:not([data-no-active-route])'
+        `${CONFIG.selectors.activeNav} a[href], ` +
+        'a[data-active-nav][href]'
       );
 
-      links.forEach((link) => {
-        if (!this.isCurrentLink(link)) return;
+      const candidates = links.length
+        ? links
+        : dom.all('a[href]:not([data-no-active-route])');
 
-        link.classList.add("is-active");
-        link.setAttribute("aria-current", "page");
+      candidates.forEach(link => {
+        const active = this.isCurrentLink(link);
+
+        link.classList.toggle("is-active", active);
+
+        if (active) {
+          link.setAttribute("aria-current", "page");
+        } else if (link.getAttribute("aria-current") === "page") {
+          link.removeAttribute("aria-current");
+        }
 
         const parent = link.closest(
           "[data-nav-group], li, [data-navigation-item]"
         );
 
-        parent?.classList.add("is-active");
+        parent?.classList.toggle("is-active", active);
       });
     }
   };
 
   // --------------------------------------------------
-  // Sticky header
+  // Sticky header and scroll scheduling
   // --------------------------------------------------
 
   const header = {
@@ -213,6 +230,7 @@
 
       window.requestAnimationFrame(() => {
         state.scrollScheduled = false;
+
         header.update();
         scrollControls.update();
       });
@@ -229,10 +247,13 @@
   };
 
   // --------------------------------------------------
-  // Scroll progress and top controls
+  // Scroll progress and back-to-top controls
   // --------------------------------------------------
 
   const scrollControls = {
+    progressElements: [],
+    topButtons: [],
+
     init() {
       this.progressElements = dom.all(
         CONFIG.selectors.scrollProgress
@@ -244,22 +265,23 @@
 
       this.update();
 
-      window.addEventListener(
-        "scroll",
-        header.scheduleUpdate,
-        { passive: true }
-      );
-
+      // header.init() already registers the scroll handler.
       window.addEventListener("resize", header.scheduleUpdate, {
         passive: true
       });
 
-      this.topButtons.forEach((button) => {
-        button.addEventListener("click", () => {
+      this.topButtons.forEach(button => {
+        const onClick = () => {
           window.scrollTo({
             top: 0,
             behavior: dom.prefersReducedMotion() ? "auto" : "smooth"
           });
+        };
+
+        button.addEventListener("click", onClick);
+
+        state.cleanups.push(() => {
+          button.removeEventListener("click", onClick);
         });
       });
     },
@@ -269,16 +291,21 @@
         document.documentElement.scrollHeight - window.innerHeight;
 
       const progress = scrollableHeight > 0
-        ? Math.min(100, Math.max(0,
-            (window.scrollY / scrollableHeight) * 100))
+        ? Math.min(
+            100,
+            Math.max(0, (window.scrollY / scrollableHeight) * 100)
+          )
         : 0;
 
-      this.progressElements?.forEach((element) => {
+      this.progressElements.forEach(element => {
         element.style.width = `${progress}%`;
-        element.setAttribute("aria-valuenow", String(Math.round(progress)));
+        element.setAttribute(
+          "aria-valuenow",
+          String(Math.round(progress))
+        );
       });
 
-      this.topButtons?.forEach((button) => {
+      this.topButtons.forEach(button => {
         button.hidden = window.scrollY < CONFIG.topThreshold;
       });
     }
@@ -290,7 +317,11 @@
 
   const search = {
     init() {
-      dom.all(CONFIG.selectors.searchForm).forEach((form) => {
+      dom.all(CONFIG.selectors.searchForm).forEach(form => {
+        if (form.dataset.mainSearchInitialized === "true") return;
+
+        form.dataset.mainSearchInitialized = "true";
+
         const input = dom.one(
           CONFIG.selectors.searchInput,
           form
@@ -309,7 +340,7 @@
           }
         };
 
-        input.addEventListener("input", () => {
+        const onInput = () => {
           updateClearButton();
 
           form.dispatchEvent(
@@ -321,19 +352,18 @@
               }
             })
           );
-        });
+        };
 
-        clearButton?.addEventListener("click", () => {
+        const onClear = () => {
           input.value = "";
           input.focus();
-          updateClearButton();
 
-          input.dispatchEvent(new Event("input", {
-            bubbles: true
-          }));
-        });
+          input.dispatchEvent(
+            new Event("input", { bubbles: true })
+          );
+        };
 
-        form.addEventListener("submit", (event) => {
+        const onSubmit = event => {
           const query = input.value.trim();
 
           if (!query) {
@@ -342,14 +372,26 @@
             return;
           }
 
-          // Native GET form submission remains available.
-          // Search API behavior belongs in search.js.
           form.dispatchEvent(
             new CustomEvent("medorbits:search-submit", {
               bubbles: true,
               detail: { query, form }
             })
           );
+
+          // Native form submission remains available.
+          // Actual search processing belongs to search.js.
+        };
+
+        input.addEventListener("input", onInput);
+        form.addEventListener("submit", onSubmit);
+        clearButton?.addEventListener("click", onClear);
+
+        state.cleanups.push(() => {
+          input.removeEventListener("input", onInput);
+          form.removeEventListener("submit", onSubmit);
+          clearButton?.removeEventListener("click", onClear);
+          delete form.dataset.mainSearchInitialized;
         });
 
         updateClearButton();
@@ -363,7 +405,11 @@
 
   const tabs = {
     init() {
-      dom.all(CONFIG.selectors.tabs).forEach((container) => {
+      dom.all(CONFIG.selectors.tabs).forEach(container => {
+        if (container.dataset.mainTabsInitialized === "true") return;
+
+        container.dataset.mainTabsInitialized = "true";
+
         const buttons = dom.all(
           CONFIG.selectors.tabButton,
           container
@@ -383,7 +429,7 @@
 
           if (!selectedId) return;
 
-          buttons.forEach((button) => {
+          buttons.forEach(button => {
             const active = button === selectedButton;
 
             button.setAttribute("aria-selected", String(active));
@@ -391,7 +437,7 @@
             button.classList.toggle("is-active", active);
           });
 
-          panels.forEach((panel) => {
+          panels.forEach(panel => {
             const active =
               panel.id === selectedId ||
               panel.dataset.tabPanel === selectedId;
@@ -411,14 +457,15 @@
         };
 
         buttons.forEach((button, index) => {
-          button.addEventListener("click", () => {
-            activate(button);
-          });
+          const onClick = () => activate(button);
 
-          button.addEventListener("keydown", (event) => {
+          const onKeydown = event => {
             let nextIndex = index;
 
-            if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            if (
+              event.key === "ArrowRight" ||
+              event.key === "ArrowDown"
+            ) {
               nextIndex = (index + 1) % buttons.length;
             } else if (
               event.key === "ArrowLeft" ||
@@ -435,11 +482,19 @@
 
             event.preventDefault();
             activate(buttons[nextIndex], true);
+          };
+
+          button.addEventListener("click", onClick);
+          button.addEventListener("keydown", onKeydown);
+
+          state.cleanups.push(() => {
+            button.removeEventListener("click", onClick);
+            button.removeEventListener("keydown", onKeydown);
           });
         });
 
         const initial =
-          buttons.find((button) =>
+          buttons.find(button =>
             button.getAttribute("aria-selected") === "true"
           ) || buttons[0];
 
@@ -454,7 +509,11 @@
 
   const accordions = {
     init() {
-      dom.all(CONFIG.selectors.accordion).forEach((item) => {
+      dom.all(CONFIG.selectors.accordion).forEach(item => {
+        if (item.dataset.mainAccordionInitialized === "true") return;
+
+        item.dataset.mainAccordionInitialized = "true";
+
         const toggle = dom.one(
           CONFIG.selectors.accordionToggle,
           item
@@ -467,28 +526,29 @@
 
         if (!toggle || !panel) return;
 
-        const setOpen = (open) => {
+        const setOpen = open => {
           toggle.setAttribute("aria-expanded", String(open));
           panel.hidden = !open;
-
           item.classList.toggle("is-open", open);
         };
 
-        if (!toggle.hasAttribute("aria-expanded")) {
-          setOpen(!panel.hidden);
-        } else {
-          setOpen(toggle.getAttribute("aria-expanded") === "true");
-        }
+        setOpen(
+          toggle.hasAttribute("aria-expanded")
+            ? toggle.getAttribute("aria-expanded") === "true"
+            : !panel.hidden
+        );
 
-        toggle.addEventListener("click", () => {
+        const onClick = () => {
           const open = toggle.getAttribute("aria-expanded") !== "true";
 
-          // Optional single-open accordion.
-          if (item.parentElement?.dataset.accordionMode === "single" && open) {
+          if (
+            item.parentElement?.dataset.accordionMode === "single" &&
+            open
+          ) {
             dom.all(
               CONFIG.selectors.accordion,
               item.parentElement
-            ).forEach((other) => {
+            ).forEach(other => {
               if (other === item) return;
 
               const otherToggle = dom.one(
@@ -510,6 +570,12 @@
           }
 
           setOpen(open);
+        };
+
+        toggle.addEventListener("click", onClick);
+
+        state.cleanups.push(() => {
+          toggle.removeEventListener("click", onClick);
         });
       });
     }
@@ -521,14 +587,15 @@
 
   const dismissible = {
     init() {
-      document.addEventListener("click", (event) => {
-        const button = event.target.closest(
-          CONFIG.selectors.dismiss
-        );
+      const onClick = event => {
+        if (!(event.target instanceof Element)) return;
+
+        const button = event.target.closest(CONFIG.selectors.dismiss);
 
         if (!button) return;
 
         const targetId = button.getAttribute("aria-controls");
+
         const target = targetId
           ? document.getElementById(targetId)
           : button.closest(
@@ -545,6 +612,12 @@
             detail: { target }
           })
         );
+      };
+
+      document.addEventListener("click", onClick);
+
+      state.cleanups.push(() => {
+        document.removeEventListener("click", onClick);
       });
     }
   };
@@ -563,7 +636,7 @@
         dom.prefersReducedMotion() ||
         !("IntersectionObserver" in window)
       ) {
-        elements.forEach((element) => {
+        elements.forEach(element => {
           element.classList.add("is-visible");
         });
 
@@ -572,7 +645,7 @@
 
       const observer = new IntersectionObserver(
         (entries, currentObserver) => {
-          entries.forEach((entry) => {
+          entries.forEach(entry => {
             if (!entry.isIntersecting) return;
 
             entry.target.classList.add("is-visible");
@@ -585,10 +658,7 @@
         }
       );
 
-      elements.forEach((element) => {
-        observer.observe(element);
-      });
-
+      elements.forEach(element => observer.observe(element));
       state.observers.push(observer);
     }
   };
@@ -603,54 +673,46 @@
 
       if (!elements.length) return;
 
-      const animate = (element) => {
+      const animate = element => {
         if (element.dataset.counterAnimated === "true") return;
-
-        element.dataset.counterAnimated = "true";
 
         const target = Number(element.dataset.counter);
 
         if (!Number.isFinite(target)) return;
 
+        element.dataset.counterAnimated = "true";
+
         const decimals = Math.min(
           6,
-          Math.max(
-            0,
-            Number(element.dataset.decimals) || 0
-          )
+          Math.max(0, Number(element.dataset.decimals) || 0)
         );
 
         const duration = Math.max(
           100,
-          Math.min(
-            5000,
-            Number(element.dataset.duration) || 1200
-          )
+          Math.min(5000, Number(element.dataset.duration) || 1200)
         );
 
+        const format = value => value.toLocaleString(undefined, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+
         if (dom.prefersReducedMotion()) {
-          element.textContent = target.toLocaleString(undefined, {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          });
+          element.textContent = format(target);
           return;
         }
 
         const startTime = performance.now();
 
-        const step = (now) => {
+        const step = now => {
           const progress = Math.min(
             1,
             (now - startTime) / duration
           );
 
           const eased = 1 - Math.pow(1 - progress, 3);
-          const current = target * eased;
 
-          element.textContent = current.toLocaleString(undefined, {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          });
+          element.textContent = format(target * eased);
 
           if (progress < 1) {
             window.requestAnimationFrame(step);
@@ -667,7 +729,7 @@
 
       const observer = new IntersectionObserver(
         (entries, currentObserver) => {
-          entries.forEach((entry) => {
+          entries.forEach(entry => {
             if (!entry.isIntersecting) return;
 
             animate(entry.target);
@@ -677,7 +739,7 @@
         { threshold: 0.4 }
       );
 
-      elements.forEach((element) => observer.observe(element));
+      elements.forEach(element => observer.observe(element));
       state.observers.push(observer);
     }
   };
@@ -690,7 +752,7 @@
     init() {
       const year = String(new Date().getFullYear());
 
-      dom.all(CONFIG.selectors.currentYear).forEach((element) => {
+      dom.all(CONFIG.selectors.currentYear).forEach(element => {
         element.textContent = year;
       });
     }
@@ -709,7 +771,7 @@
 
         timeoutId = window.setTimeout(() => {
           callback(...args);
-        }, delay);
+        }, Math.max(0, Number(delay) || 0));
       };
     },
 
@@ -741,7 +803,11 @@
         url.searchParams.set(name, String(value));
       }
 
-      window.history.replaceState({}, "", url);
+      window.history.replaceState(
+        window.history.state,
+        "",
+        url
+      );
     },
 
     scrollToElement(target, offset = 0) {
@@ -754,7 +820,7 @@
       const top =
         element.getBoundingClientRect().top +
         window.scrollY -
-        offset;
+        (Number(offset) || 0);
 
       window.scrollTo({
         top: Math.max(0, top),
@@ -765,7 +831,9 @@
     },
 
     on(name, handler) {
-      if (typeof handler !== "function") return () => {};
+      if (typeof handler !== "function") {
+        return () => {};
+      }
 
       document.addEventListener(name, handler);
 
@@ -781,6 +849,29 @@
           state.eventHandlers.delete(name);
         }
       };
+    },
+
+    destroy() {
+      state.cleanups.forEach(cleanup => {
+        try {
+          cleanup();
+        } catch (error) {
+          console.error("[MedOrbits] Cleanup failed:", error);
+        }
+      });
+
+      state.cleanups = [];
+
+      state.observers.forEach(observer => observer.disconnect());
+      state.observers = [];
+
+      window.removeEventListener("scroll", header.scheduleUpdate);
+      window.removeEventListener("resize", header.scheduleUpdate);
+
+      state.header = null;
+      state.initialized = false;
+
+      document.documentElement.classList.remove("js-enabled");
     }
   };
 
@@ -816,14 +907,6 @@
           }
         })
       );
-
-      if (
-        window.MedOrbits &&
-        typeof window.MedOrbits.toast === "object"
-      ) {
-        // The shared app module is available when loaded.
-        // No duplicate notifications or app initialization here.
-      }
     } catch (error) {
       state.initialized = false;
 
@@ -834,13 +917,8 @@
     }
   }
 
-  // --------------------------------------------------
-  // Public API
-  // --------------------------------------------------
-
-  window.MedOrbitsMain = Object.freeze({
+  const api = Object.freeze({
     version: CONFIG.version,
-
     init,
     routes,
     search,
@@ -854,6 +932,8 @@
     }
   });
 
+  window.MedOrbitsMain = api;
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, {
       once: true
@@ -861,4 +941,5 @@
   } else {
     init();
   }
-})();
+
+})(window, document);

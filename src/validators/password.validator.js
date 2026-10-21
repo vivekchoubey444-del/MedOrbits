@@ -1,4 +1,3 @@
-
 'use strict';
 
 const ALLOWED_CHANGE_FIELDS = Object.freeze([
@@ -22,37 +21,72 @@ const MAX_PASSWORD_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 2048;
 const MAX_EMAIL_LENGTH = 254;
 
-function validationError(message, field, code = 'VALIDATION_ERROR') {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CONTROL_CHARACTERS_REGEX = /[\u0000-\u001F\u007F]/;
+
+function validationError(
+  message,
+  field,
+  code = 'VALIDATION_ERROR'
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
   error.statusCode = 400;
   error.code = code;
-  error.field = field;
+  error.publicMessage = message;
+
+  if (field) {
+    error.field = field;
+  }
+
   return error;
 }
 
+function isPlainObject(input) {
+  if (input === null || typeof input !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(input);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 function requireObject(input, label = 'Request body') {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
-    throw validationError(`${label} must be a JSON object.`);
+  if (!isPlainObject(input)) {
+    throw validationError(
+      `${label} must be a plain JSON object.`,
+      'body',
+      'INVALID_TYPE'
+    );
   }
 
   return input;
 }
 
 function rejectUnknownFields(input, allowedFields) {
+  requireObject(input);
+
+  if (!Array.isArray(allowedFields)) {
+    throw new TypeError('allowedFields must be an array.');
+  }
+
+  const allowed = new Set(allowedFields);
   const unknownFields = Object.keys(input).filter(
-    (field) => !allowedFields.includes(field)
+    (field) => !allowed.has(field)
   );
 
   if (unknownFields.length > 0) {
     throw validationError(
-      `Unsupported field(s): ${unknownFields.join(', ')}.`
+      `Unsupported field(s): ${unknownFields.join(', ')}.`,
+      undefined,
+      'UNKNOWN_FIELD'
     );
   }
+
+  return input;
 }
 
 function requireString(value, field, options = {}) {
@@ -64,7 +98,20 @@ function requireString(value, field, options = {}) {
   } = options;
 
   if (typeof value !== 'string') {
-    throw validationError(`${label} must be a string.`, field);
+    throw validationError(
+      `${label} must be a string.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
   }
 
   const normalized = trim ? value.trim() : value;
@@ -72,14 +119,16 @@ function requireString(value, field, options = {}) {
   if (normalized.length < minLength) {
     throw validationError(
       `${label} must be at least ${minLength} character(s).`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
   if (normalized.length > maxLength) {
     throw validationError(
       `${label} must not exceed ${maxLength} characters.`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -87,17 +136,19 @@ function requireString(value, field, options = {}) {
 }
 
 function validatePassword(value, field = 'newPassword') {
+  // Passwords are never trimmed, lowercased, or silently normalized.
   const password = requireString(value, field, {
     minLength: MIN_PASSWORD_LENGTH,
     maxLength: MAX_PASSWORD_LENGTH,
+    trim: false,
     label: 'Password',
   });
 
-  // Do not trim, normalize, or silently modify passwords.
-  if (/\u0000/.test(password)) {
+  if (CONTROL_CHARACTERS_REGEX.test(password)) {
     throw validationError(
-      'Password must not contain null characters.',
-      field
+      'Password must not contain control characters.',
+      field,
+      'INVALID_FORMAT'
     );
   }
 
@@ -112,14 +163,34 @@ function validateEmail(value) {
     label: 'Email',
   }).toLowerCase();
 
-  // Practical format check; the application should still verify ownership.
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailPattern.test(email)) {
-    throw validationError('Enter a valid email address.', 'email');
+  if (!EMAIL_REGEX.test(email)) {
+    throw validationError(
+      'Enter a valid email address.',
+      'email',
+      'INVALID_FORMAT'
+    );
   }
 
   return email;
+}
+
+function validateConfirmation(value, expectedPassword) {
+  const confirmation = requireString(value, 'confirmPassword', {
+    minLength: MIN_PASSWORD_LENGTH,
+    maxLength: MAX_PASSWORD_LENGTH,
+    trim: false,
+    label: 'Password confirmation',
+  });
+
+  if (confirmation !== expectedPassword) {
+    throw validationError(
+      'New password and confirmation do not match.',
+      'confirmPassword',
+      'PASSWORD_MISMATCH'
+    );
+  }
+
+  return confirmation;
 }
 
 function validateChange(input) {
@@ -132,28 +203,21 @@ function validateChange(input) {
     {
       minLength: 1,
       maxLength: MAX_PASSWORD_LENGTH,
+      trim: false,
       label: 'Current password',
     }
   );
 
-  const newPassword = validatePassword(body.newPassword);
-  const confirmPassword = requireString(
-    body.confirmPassword,
-    'confirmPassword',
-    {
-      minLength: MIN_PASSWORD_LENGTH,
-      maxLength: MAX_PASSWORD_LENGTH,
-      label: 'Password confirmation',
-    }
-  );
-
-  if (newPassword !== confirmPassword) {
+  if (CONTROL_CHARACTERS_REGEX.test(currentPassword)) {
     throw validationError(
-      'New password and confirmation do not match.',
-      'confirmPassword',
-      'PASSWORD_MISMATCH'
+      'Current password contains unsupported control characters.',
+      'currentPassword',
+      'INVALID_FORMAT'
     );
   }
+
+  const newPassword = validatePassword(body.newPassword);
+  validateConfirmation(body.confirmPassword, newPassword);
 
   if (currentPassword === newPassword) {
     throw validationError(
@@ -189,24 +253,16 @@ function validateReset(input) {
     label: 'Password reset token',
   });
 
-  const newPassword = validatePassword(body.newPassword);
-  const confirmPassword = requireString(
-    body.confirmPassword,
-    'confirmPassword',
-    {
-      minLength: MIN_PASSWORD_LENGTH,
-      maxLength: MAX_PASSWORD_LENGTH,
-      label: 'Password confirmation',
-    }
-  );
-
-  if (newPassword !== confirmPassword) {
+  if (CONTROL_CHARACTERS_REGEX.test(token)) {
     throw validationError(
-      'New password and confirmation do not match.',
-      'confirmPassword',
-      'PASSWORD_MISMATCH'
+      'Password reset token contains unsupported characters.',
+      'token',
+      'INVALID_FORMAT'
     );
   }
+
+  const newPassword = validatePassword(body.newPassword);
+  validateConfirmation(body.confirmPassword, newPassword);
 
   return {
     token,

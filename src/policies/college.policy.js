@@ -1,6 +1,20 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- College Authorization Policies
+ *
+ * File: src/policies/college.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Controls college visibility, creation, updates, publishing,
+ * archiving, restoration, verification, deletion, and exports.
+ *
+ * Trusted actor identity and permissions must be established by
+ * authentication middleware. Services must validate input schemas,
+ * publication readiness, status transitions, and database ownership.
+ */
+
 const {
   isAdmin,
   hasPermission,
@@ -9,11 +23,14 @@ const {
   safeStatus,
 } = require('./policy-utils');
 
-const COLLEGE_OWNER_FIELDS = [
+const COLLEGE_OWNER_FIELDS = Object.freeze([
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
-];
+  'managed_by',
+]);
 
 const PUBLIC_STATUSES = new Set([
   'published',
@@ -25,27 +42,76 @@ const EDITABLE_STATUSES = new Set([
   'archived',
 ]);
 
-const TERMINAL_OR_HIDDEN_STATUSES = new Set([
+const HIDDEN_STATUSES = new Set([
   'deleted',
 ]);
 
 const PROTECTED_FIELDS = new Set([
   'id',
   '_id',
+  'collegeId',
+  'college_id',
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
+  'managed_by',
   'status',
   'verified',
+  'isVerified',
+  'is_verified',
   'verificationStatus',
+  'verification_status',
   'approvedBy',
+  'approved_by',
   'approvedAt',
+  'approved_at',
   'publishedAt',
+  'published_at',
   'archivedAt',
+  'archived_at',
   'deletedAt',
+  'deleted_at',
   'createdAt',
+  'created_at',
   'updatedAt',
+  'updated_at',
 ]);
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  const status = safeStatus(actor.status);
+
+  return (
+    actor.isDisabled !== true &&
+    actor.isSuspended !== true &&
+    actor.isLocked !== true &&
+    actor.deletedAt == null &&
+    actor.deleted_at == null &&
+    !['disabled', 'suspended', 'locked', 'deleted', 'banned'].includes(status)
+  );
+}
+
+function isDeletedCollege(college) {
+  return (
+    safeStatus(college?.status) === 'deleted' ||
+    college?.deletedAt != null ||
+    college?.deleted_at != null
+  );
+}
 
 function collegeOwnerId(college) {
   if (!college || typeof college !== 'object') {
@@ -64,56 +130,85 @@ function collegeOwnerId(college) {
 }
 
 function isCollegeOwner(actor, college) {
-  if (!actor || !college) {
+  if (
+    !actor ||
+    !college ||
+    typeof college !== 'object'
+  ) {
     return false;
   }
 
   const ownerId = collegeOwnerId(college);
+  const currentActorId = actorId(actor);
 
-  return ownerId != null &&
-    sameId(actorId(actor), ownerId);
+  return (
+    ownerId != null &&
+    currentActorId != null &&
+    sameId(currentActorId, ownerId)
+  );
+}
+
+function hasProtectedChanges(changes) {
+  if (!isPlainObject(changes)) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) => {
+    if (PROTECTED_FIELDS.has(key)) {
+      return true;
+    }
+
+    const snakeCase = key
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .toLowerCase();
+
+    return PROTECTED_FIELDS.has(snakeCase);
+  });
 }
 
 /**
  * Public access is limited to published colleges.
- * Private records require ownership or explicit permission.
+ * Deleted records are never visible through this policy.
  */
 function canViewCollege(actor, college) {
-  if (!college || typeof college !== 'object') {
+  if (
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college)
+  ) {
     return false;
   }
 
-  const status = safeStatus(college.status);
+  if (
+    isActiveActor(actor) &&
+    (
+      isAdmin(actor) ||
+      hasPermission(actor, 'colleges:read:any')
+    )
+  ) {
+    return true;
+  }
 
-  if (TERMINAL_OR_HIDDEN_STATUSES.has(status)) {
+  if (PUBLIC_STATUSES.has(safeStatus(college.status))) {
+    return true;
+  }
+
+  if (!isActiveActor(actor)) {
     return false;
-  }
-
-  if (isAdmin(actor) ||
-      hasPermission(actor, 'colleges:read:any')) {
-    return true;
-  }
-
-  if (PUBLIC_STATUSES.has(status)) {
-    return true;
   }
 
   return Boolean(
-    actor &&
-    (
-      isCollegeOwner(actor, college) ||
-      hasPermission(actor, 'colleges:read:private')
-    )
+    isCollegeOwner(actor, college) ||
+    hasPermission(actor, 'colleges:read:private')
   );
 }
 
 /**
- * Creating a college record.
- * Ownership must be assigned by trusted server-side code.
+ * Creates a college record.
+ * The service must assign ownership using trusted server-side data.
  */
 function canCreateCollege(actor, input = {}) {
-  if (!actor || !input ||
-      typeof input !== 'object' || Array.isArray(input)) {
+  if (!isActiveActor(actor) || !isPlainObject(input)) {
     return false;
   }
 
@@ -124,48 +219,46 @@ function canCreateCollege(actor, input = {}) {
 }
 
 /**
- * Updating ordinary college fields.
- * Status, ownership, and verification fields require separate
- * authorized operations.
+ * Updates ordinary college fields only.
+ * Status, ownership, and verification changes use dedicated methods.
  */
 function canUpdateCollege(actor, college, changes = {}) {
-  if (!actor || !college || !changes ||
-      typeof changes !== 'object' || Array.isArray(changes)) {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college) ||
+    !isPlainObject(changes) ||
+    hasProtectedChanges(changes)
+  ) {
     return false;
   }
 
-  if (isAdmin(actor) ||
-      hasPermission(actor, 'colleges:update:any')) {
+  if (
+    isAdmin(actor) ||
+    hasPermission(actor, 'colleges:update:any')
+  ) {
     return true;
   }
 
-  if (!isCollegeOwner(actor, college)) {
-    return false;
-  }
-
-  const status = safeStatus(college.status);
-
-  if (!EDITABLE_STATUSES.has(status)) {
-    return false;
-  }
-
-  return !Object.keys(changes).some(
-    (key) => PROTECTED_FIELDS.has(key)
+  return Boolean(
+    isCollegeOwner(actor, college) &&
+    EDITABLE_STATUSES.has(safeStatus(college.status))
   );
 }
 
 /**
- * Publishing requires an explicit permission.
- * Publication-readiness checks belong in the service layer.
+ * Publishing requires explicit permission and service-level readiness
+ * checks, such as required fields and verification requirements.
  */
 function canPublishCollege(actor, college) {
-  if (!actor || !college) {
-    return false;
-  }
-
-  const status = safeStatus(college.status);
-
-  if (status !== 'draft' && status !== 'archived') {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college) ||
+    !['draft', 'archived'].includes(safeStatus(college.status))
+  ) {
     return false;
   }
 
@@ -175,15 +268,14 @@ function canPublishCollege(actor, college) {
   );
 }
 
-/**
- * Archiving a published college.
- */
 function canArchiveCollege(actor, college) {
-  if (!actor || !college) {
-    return false;
-  }
-
-  if (safeStatus(college.status) !== 'published') {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college) ||
+    safeStatus(college.status) !== 'published'
+  ) {
     return false;
   }
 
@@ -194,15 +286,17 @@ function canArchiveCollege(actor, college) {
 }
 
 /**
- * Restoring an archived college to draft status.
- * This does not publish the college.
+ * Restores an archived college to draft status.
+ * Restoration does not automatically publish the record.
  */
 function canRestoreCollege(actor, college) {
-  if (!actor || !college) {
-    return false;
-  }
-
-  if (safeStatus(college.status) !== 'archived') {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college) ||
+    safeStatus(college.status) !== 'archived'
+  ) {
     return false;
   }
 
@@ -212,16 +306,13 @@ function canRestoreCollege(actor, college) {
   );
 }
 
-/**
- * Verifying college information.
- * Verification should follow the configured review workflow.
- */
 function canVerifyCollege(actor, college) {
-  if (!actor || !college) {
-    return false;
-  }
-
-  if (safeStatus(college.status) === 'deleted') {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college)
+  ) {
     return false;
   }
 
@@ -232,16 +323,16 @@ function canVerifyCollege(actor, college) {
 }
 
 /**
- * Deleting a college record.
- * Prefer soft deletion and retain records needed for audit or
- * admission-history integrity.
+ * Prefer soft deletion and preserve records referenced by applications
+ * or historical admissions.
  */
 function canDeleteCollege(actor, college) {
-  if (!actor || !college) {
-    return false;
-  }
-
-  if (safeStatus(college.status) === 'deleted') {
+  if (
+    !isActiveActor(actor) ||
+    !college ||
+    typeof college !== 'object' ||
+    isDeletedCollege(college)
+  ) {
     return false;
   }
 
@@ -251,12 +342,9 @@ function canDeleteCollege(actor, college) {
   );
 }
 
-/**
- * Exporting college records.
- */
 function canExportColleges(actor) {
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'colleges:export')
@@ -264,9 +352,15 @@ function canExportColleges(actor) {
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
+  COLLEGE_OWNER_FIELDS,
+  PUBLIC_STATUSES,
+  EDITABLE_STATUSES,
+  HIDDEN_STATUSES,
+  PROTECTED_FIELDS,
   collegeOwnerId,
   isCollegeOwner,
+  hasProtectedChanges,
   canViewCollege,
   canCreateCollege,
   canUpdateCollege,
@@ -276,4 +370,4 @@ module.exports = {
   canVerifyCollege,
   canDeleteCollege,
   canExportColleges,
-};
+});

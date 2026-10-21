@@ -1,9 +1,8 @@
-
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://medorbits.in/schemas/study-abroad-manifest.schema.json",
   "title": "MedOrbits Study Abroad Guides Manifest",
-  "description": "Validation schema for the MedOrbits public study-abroad PDF resource package.",
+  "description": "Strict validation schema for the MedOrbits study-abroad guide package. Structural validation does not prove file existence, authenticity, or runtime publication authorization.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -157,6 +156,14 @@
           "type": "boolean",
           "const": true
         },
+        "prohibitFalseDocuments": {
+          "type": "boolean",
+          "const": true
+        },
+        "prohibitUnverifiedAgentPromises": {
+          "type": "boolean",
+          "const": true
+        },
         "admissionGuarantee": {
           "type": "boolean",
           "const": false
@@ -180,14 +187,6 @@
         "providesLegalImmigrationOrFinancialAdvice": {
           "type": "boolean",
           "const": false
-        },
-        "prohibitFalseDocuments": {
-          "type": "boolean",
-          "const": true
-        },
-        "prohibitUnverifiedAgentPromises": {
-          "type": "boolean",
-          "const": true
         }
       }
     },
@@ -441,24 +440,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": [
-                  "planned",
-                  "draft",
-                  "outdated",
-                  "archived"
-                ]
-              }
-            },
-            "required": [
-              "status"
-            ]
-          },
-          "then": {}
         }
       ]
     },

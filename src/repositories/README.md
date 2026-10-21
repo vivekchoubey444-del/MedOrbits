@@ -1,154 +1,276 @@
-MedOrbits Repositories
 
-Directory: src/repositories/
+# MedOrbits Repositories
 
-1. Purpose
+**Directory:** `src/repositories/`
 
-The repositories layer provides controlled database access for MedOrbits. It contains parameterized MySQL queries and explicit table and column allowlists to reduce SQL injection risks and prevent unintended database operations.
+## 1. Purpose
 
-Repositories isolate database operations from business logic. Services use repositories to retrieve and persist data, while controllers handle HTTP requests and responses.
+The repository layer provides controlled database access for MedOrbits. It centralizes MySQL queries, enforces server-defined table and column allowlists, and separates persistence logic from application business rules.
 
-2. Available Repositories
+Repositories are used by services to retrieve and persist data. Controllers handle HTTP requests and responses, while services enforce business rules and coordinate repository operations.
 
-The following repositories are planned or available within the MedOrbits architecture:
+**Runtime:** Node.js >= 20  
+**Module system:** CommonJS  
+**Database:** MySQL
 
-* user.repository.js — User records and profile data.
-* session.repository.js — Session records and session lifecycle data.
-* course.repository.js — Course information.
-* college.repository.js — College records.
-* university.repository.js — University records.
-* application.repository.js — Admission and service application records.
-* document.repository.js — Document metadata and associated records.
-* job.repository.js — Job listings.
-* candidate.repository.js — Candidate profiles and job-seeking records.
-* employer.repository.js — Employer profiles and employer-related records.
-* payment.repository.js — Payment records and transaction references.
-* subscription.repository.js — Subscription records and lifecycle data.
+## 2. Repository Directory Structure
 
-The list describes the repository architecture; the presence of a name in this document does not establish that its implementation, schema, or migrations are complete.
+```text
+src/repositories/
+├── base.repository.js
+├── user.repository.js
+├── session.repository.js
+├── course.repository.js
+├── college.repository.js
+├── university.repository.js
+├── application.repository.js
+├── document.repository.js
+├── job.repository.js
+├── candidate.repository.js
+├── employer.repository.js
+├── payment.repository.js
+├── subscription.repository.js
+└── internship.repository.js
+```
 
-3. Responsibilities
+The directory above represents the intended repository layout. Verify that each file, corresponding model, database table, and required migration exists before considering that repository implemented.
+
+## 3. Repository Responsibilities
 
 Repositories are responsible for:
 
-* Executing parameterized MySQL queries.
-* Using explicit allowlists for permitted tables, columns, and sortable fields.
-* Retrieving, inserting, updating, and deleting records where supported.
-* Applying consistent database access patterns.
-* Handling database errors without exposing SQL statements, credentials, or sensitive internal details.
-* Supporting transactions where multiple related database operations must succeed or fail together.
-* Returning predictable results for service-layer consumption.
+- Executing parameterized MySQL queries.
+- Restricting table and column identifiers to trusted model definitions.
+- Retrieving, inserting, updating, and deleting records where supported.
+- Validating pagination and sorting inputs.
+- Returning predictable data structures to services.
+- Supporting conditional updates for concurrency-sensitive operations.
+- Participating in transactions when workflows require atomic database changes.
+- Propagating database errors without exposing sensitive internals to clients.
 
-Repositories should not implement HTTP response handling, role-based authorization, request validation, or application workflow decisions.
+Repositories must not independently implement HTTP response handling, authentication, role-based authorization, or application workflow decisions.
 
-4. Generic CRUD Repository
+## 4. Base Repository
 
-The generic CRUD repository provides reusable database operations for trusted server-side callers.
+The `base.repository.js` module provides shared database operations through a repository factory.
 
-Before using it, ensure that:
+Example:
 
-1. Table names come from a fixed server-side allowlist.
-2. Column names come from an explicit allowlist for the selected table.
-3. Values are passed through parameterized query bindings.
-4. Sort fields and sort directions are validated against permitted values.
-5. Update operations accept only explicitly permitted fields.
-6. Delete operations are restricted to authorized, well-defined use cases.
-7. The selected repository and operation are appropriate for the calling service.
+```javascript
+‘use strict’;
 
-SQL parameters generally protect values, not arbitrary table names, column names, or SQL fragments. Identifiers must therefore be selected from trusted allowlists rather than interpolated from user input.
+const { createRepository } = require(‘./base.repository’);
+const model = require(‘../models/course.model’);
 
-5. Authorization and Data Ownership
+module.exports = createRepository({
+  table: model.TABLE,
+  columns: model.COLUMNS,
+  searchable: model.SEARCHABLE,
+  defaultOrder: model.DEFAULT_ORDER,
+});
+```
 
-Generic CRUD operations do not replace application authorization.
+Each model must define its permitted table, columns, searchable fields, and default ordering column.
 
-Controllers and services must enforce the applicable ownership, role, and resource-access rules before accessing protected records.
+The base repository should validate these definitions when the repository is initialized.
 
-Examples include:
+### Security requirements
 
-* Users may access only the profile information permitted by the application’s access policy.
-* Candidates must not access another candidate’s private documents or application records without authorization.
-* Employers must not access another employer’s restricted records.
-* Payment and subscription records must be protected from unauthorized modification.
-* Administrative operations must require appropriate administrative privileges.
+- Table names must originate from trusted model definitions.
+- Column names must belong to the configured column allowlist.
+- Search values, identifiers, and other untrusted values must use parameterized query bindings.
+- Sort columns must be allowlisted.
+- Sort direction must be restricted to `ASC` or `DESC`.
+- Create and update operations must reject fields that are not permitted.
+- Primary keys and immutable fields must not be modified through generic update operations.
+- SQL fragments must never be constructed from untrusted input.
 
-Never expose unrestricted generic update or delete operations directly to public users.
+Parameterized queries protect values, not arbitrary SQL identifiers. Identifier validation and value binding are separate requirements.
 
-Authorization should be enforced for the specific resource and operation, not merely by checking whether a user is logged in.
+## 5. Repository Inventory
 
-6. Expected Request Flow
+| Repository | Primary responsibility |
+|—|—|
+| `user.repository.js` | User records and profile persistence |
+| `session.repository.js` | Session records and session lifecycle |
+| `course.repository.js` | Course information |
+| `college.repository.js` | College information |
+| `university.repository.js` | University information |
+| `application.repository.js` | Admission and service applications |
+| `document.repository.js` | Document metadata and record persistence |
+| `job.repository.js` | Job listings |
+| `candidate.repository.js` | Candidate profiles and job-seeking records |
+| `employer.repository.js` | Employer profiles and records |
+| `payment.repository.js` | Payment records and transaction references |
+| `subscription.repository.js` | Subscription records and lifecycle data |
+| `internship.repository.js` | Internship listings |
 
-The intended application flow is:
+The generic repository API is not necessarily sufficient for every domain. Authentication, document access, payment processing, subscriptions, and application status transitions may require specialized repository methods.
 
-Route → Controller → Service → Repository → MySQL
+## 6. Expected Repository Interface
 
-* Routes: Define endpoints and attach appropriate middleware.
-* Controllers: Process HTTP input, invoke services, and format responses.
-* Services: Apply business rules, coordinate operations, and enforce relevant workflow constraints.
-* Repositories: Execute controlled database queries.
-* MySQL: Persist and retrieve application data.
+The generic repository currently provides the following interface, subject to the implementation in `base.repository.js`:
 
-This separation keeps database logic reusable and prevents HTTP handlers from becoming tightly coupled to SQL.
+```javascript
+{
+  table,
+  columns,
+  findById,
+  list,
+  create,
+  update,
+  remove,
+  updateIfStatusMatches
+}
+```
 
-7. Database and Transaction Safety
+Method behavior:
+
+- `findById(id)`: Retrieves a record by its primary key.
+- `list(params)`: Retrieves a paginated and optionally filtered record collection.
+- `create(data)`: Inserts a record containing permitted fields.
+- `update(id, data)`: Updates permitted fields for an existing record.
+- `remove(id)`: Deletes a record where deletion is supported.
+- `updateIfStatusMatches(id, expectedStatus, data)`: Performs a conditional update when the record’s current status matches the expected value.
+
+The conditional update requires a `status` column. It should be used for state transitions that need concurrency protection.
+
+These operations do not automatically enforce ownership, administrative permissions, or domain-specific validation.
+
+## 7. Authorization and Ownership
+
+Authorization must be enforced by the appropriate service or controller before protected records are accessed or modified.
+
+Examples:
+
+- Users must not access another user’s restricted profile data.
+- Candidates must not access another candidate’s private documents or applications.
+- Employers must not modify another employer’s restricted records.
+- Payment records must not be modified through unrestricted generic CRUD endpoints.
+- Subscription changes must follow the subscription and payment workflow.
+- Administrative operations must require verified administrative privileges.
+
+Use resource-specific authorization checks, not merely a logged-in session check.
+
+For sensitive operations, combine authorization with database-level ownership conditions where practical. This reduces the risk of time-of-check/time-of-use errors and accidental cross-user access.
+
+## 8. Expected Request Flow
+
+```text
+HTTP Request
+    |
+    v
+Route and Middleware
+    |
+    v
+Controller
+    |
+    v
+Service
+    |
+    v
+Repository
+    |
+    v
+MySQL
+```
+
+### Routes and middleware
+
+Define endpoints and attach authentication, authorization, validation, and rate-limiting middleware as appropriate.
+
+### Controllers
+
+Validate request structure, invoke services, and translate service results into HTTP responses.
+
+### Services
+
+Enforce business rules, validate state transitions, check ownership, coordinate transactions, and invoke repositories.
+
+### Repositories
+
+Execute controlled SQL queries and return database results.
+
+### MySQL
+
+Persist application records and enforce applicable constraints, indexes, and transactional guarantees.
+
+## 9. Database and Transaction Safety
 
 Production implementations should:
 
-* Use a supported MySQL driver and connection pool.
-* Keep database credentials in environment-based configuration.
-* Use parameterized queries for all untrusted values.
-* Apply appropriate transaction boundaries to multi-step operations.
-* Use consistent transaction connections for every query in a transaction.
-* Enforce database constraints and appropriate indexes.
-* Define predictable handling for missing records, duplicate keys, deadlocks, and connection failures.
-* Avoid logging passwords, access tokens, payment credentials, document contents, or unnecessary personal information.
+- Use a supported MySQL driver and connection pool.
+- Load credentials from secure environment-based configuration.
+- Use parameterized queries for all untrusted values.
+- Define appropriate primary keys, foreign keys, unique constraints, and indexes.
+- Use transactions for operations that must succeed or fail together.
+- Use the same database connection for all queries in a transaction.
+- Handle deadlocks, connection failures, timeouts, and constraint violations predictably.
+- Avoid logging passwords, access tokens, payment credentials, document contents, and unnecessary personal information.
+- Use idempotency controls for operations that may be retried.
 
-Payment state changes, application updates, and other multi-step workflows should use transactions and idempotency controls where appropriate.
+Payment state changes, subscription updates, application transitions, and document workflows may require transactions or carefully designed compensating actions.
 
-8. Repository API and Error Handling
+A transaction cannot make an external payment provider or object-storage operation atomic with MySQL. Such workflows need idempotency, retry handling, and reconciliation.
 
-Each repository should expose a documented interface consistent with its callers. For example, a repository may provide methods such as findById, findMany, create, updateById, or deleteById where those operations are appropriate.
+## 10. Error Handling
 
-These method names are conventions, not a claim that every repository already implements them.
+Repository methods should distinguish expected outcomes from failures.
 
-Repository methods should:
+Examples:
 
-* Return documented result types.
-* Distinguish a missing record from a database failure.
-* Propagate or translate errors consistently.
-* Avoid silently swallowing database errors.
-* Avoid returning database internals directly to clients.
+- A record does not exist: return `null` or another documented missing-record result.
+- Invalid input: reject with a consistent validation error.
+- Duplicate key: translate into a documented conflict where appropriate.
+- Database unavailable: propagate a controlled service error.
+- Transaction failure: roll back the transaction and preserve the original error.
 
-Services and controllers should translate failures into suitable application or HTTP responses.
+Never return raw SQL, credentials, connection strings, stack traces, or driver internals in public HTTP responses.
 
-9. Testing Requirements
+Centralized error middleware should format client-facing errors consistently.
+
+## 11. Testing Requirements
 
 Repository tests should cover:
 
-* Valid queries and expected results.
-* Parameter binding and SQL-injection resistance.
-* Rejection of unknown table names, column names, and sort fields.
-* Update field allowlists.
-* Missing-record behavior.
-* Duplicate records and constraint violations.
-* Transaction rollback on failure.
-* Database connection and timeout errors.
-* Tenant, ownership, and resource boundaries where applicable.
+- Correct SQL and parameter binding.
+- SQL-injection resistance.
+- Rejection of invalid table and column definitions.
+- Search, pagination, sorting, and filtering.
+- Unknown-field rejection.
+- Missing-record behavior.
+- Duplicate records and database constraints.
+- Concurrent conditional updates.
+- Transaction commit and rollback behavior.
+- Database connection failures and timeouts.
+- Ownership and cross-user access boundaries at the service/API level.
 
-Use a controlled test database or a reliable database test environment for integration tests. Mock-only tests cannot establish that real MySQL queries, constraints, and transactions behave correctly.
+Use unit tests for isolated repository logic and integration tests against a controlled MySQL environment for real SQL, schema, constraint, and transaction behavior.
 
-10. Production Readiness Checklist
+Mock-only tests do not establish that production database queries work correctly.
 
-Before a repository is used in production, verify that:
+## 12. Production Readiness Checklist
 
-* [ ]	Its implementation matches the actual MySQL schema.
-* [ ]	Required migrations and indexes exist.
-* [ ]	All values use parameterized queries.
-* [ ]	Table and column identifiers use fixed allowlists.
-* [ ]	Update and delete operations are restricted.
-* [ ]	Authorization is enforced by the relevant service or controller.
-* [ ]	Transactions are used where required.
-* [ ]	Errors and logs do not expose sensitive information.
-* [ ]	Automated tests cover important database behavior.
-* [ ]	Database credentials and connection settings are configured securely.
+- [ ] Every repository has a corresponding valid model definition.
+- [ ] Model definitions match the actual MySQL schema.
+- [ ] Required migrations and indexes exist.
+- [ ] All untrusted values use parameterized queries.
+- [ ] Table and column identifiers use trusted allowlists.
+- [ ] Sorting and pagination are validated.
+- [ ] Create and update operations enforce field restrictions.
+- [ ] Sensitive operations cannot bypass service-level business rules.
+- [ ] Ownership and administrative authorization are enforced.
+- [ ] Conditional updates protect important state transitions.
+- [ ] Required transactions and idempotency controls are implemented.
+- [ ] Database errors are handled consistently.
+- [ ] Logs do not expose sensitive information.
+- [ ] Unit and integration tests cover critical behavior.
+- [ ] Production database credentials are configured securely.
 
-Important: A repository file, exported method, or generic CRUD implementation is not evidence that the associated feature is production-ready. Verify implementation, schema, authorization, and tests independently.
+## 13. Implementation Status
+
+This document defines the intended repository architecture and expected behavior. It does not certify that every repository, model, database table, migration, or test has been implemented or verified.
+
+Before deployment, validate the actual source files, model definitions, MySQL schema, migration history, repository contracts, service integrations, and test results.
+
+**MedOrbits — Study · Work · Grow**

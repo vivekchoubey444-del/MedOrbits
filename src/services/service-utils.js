@@ -1,4 +1,3 @@
-
 'use strict';
 
 class ServiceError extends Error {
@@ -35,7 +34,9 @@ function requireDependency(value, name) {
 
 function requireMethod(target, method, label = method) {
   if (!target || typeof target[method] !== 'function') {
-    throw new TypeError(`Dependency must implement ${label}().`);
+    throw new TypeError(
+      `Dependency must implement ${label}().`,
+    );
   }
 
   return target[method].bind(target);
@@ -79,10 +80,13 @@ function requiredString(
 
 function requiredId(value, field = 'id') {
   const validString =
-    typeof value === 'string' && value.trim().length > 0;
+    typeof value === 'string' &&
+    value.trim().length > 0;
 
   const validNumber =
-    typeof value === 'number' && Number.isFinite(value);
+    typeof value === 'number' &&
+    Number.isSafeInteger(value) &&
+    value >= 0;
 
   if (!validString && !validNumber) {
     throw new ServiceError(`${field} is required.`, {
@@ -108,11 +112,17 @@ function plainObject(value, field = 'input') {
 
   const prototype = Object.getPrototypeOf(value);
 
-  if (prototype !== Object.prototype && prototype !== null) {
-    throw new ServiceError(`${field} must be a plain object.`, {
-      code: 'VALIDATION_ERROR',
-      status: 422,
-    });
+  if (
+    prototype !== Object.prototype &&
+    prototype !== null
+  ) {
+    throw new ServiceError(
+      `${field} must be a plain object.`,
+      {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      },
+    );
   }
 
   return { ...value };
@@ -134,7 +144,11 @@ function assertAllowed(value, allowed, field) {
     throw new ServiceError(`Invalid ${field}.`, {
       code: 'VALIDATION_ERROR',
       status: 422,
-      details: { allowed },
+      details: {
+        allowed: Array.isArray(allowed)
+          ? [...allowed]
+          : [],
+      },
     });
   }
 
@@ -142,13 +156,28 @@ function assertAllowed(value, allowed, field) {
 }
 
 function safePage(query = {}) {
-  const parsePositiveInteger = (value, fallback, maximum) => {
-    const parsed = Number(value);
+  const input = plainObject(query, 'query');
 
+  const parsePositiveInteger = (
+    value,
+    fallback,
+    maximum,
+  ) => {
     if (
       value === undefined ||
       value === null ||
-      value === '' ||
+      value === ''
+    ) {
+      return fallback;
+    }
+
+    const parsed =
+      typeof value === 'number' ||
+      typeof value === 'string'
+        ? Number(value)
+        : NaN;
+
+    if (
       !Number.isSafeInteger(parsed) ||
       parsed < 1
     ) {
@@ -158,8 +187,17 @@ function safePage(query = {}) {
     return Math.min(parsed, maximum);
   };
 
-  const page = parsePositiveInteger(query.page, 1, 100000);
-  const limit = parsePositiveInteger(query.limit, 20, 100);
+  const page = parsePositiveInteger(
+    input.page,
+    1,
+    100000,
+  );
+
+  const limit = parsePositiveInteger(
+    input.limit,
+    20,
+    100,
+  );
 
   return {
     page,
@@ -185,9 +223,9 @@ async function audit(auditService, event) {
   try {
     await fn.call(auditService, event);
   } catch {
-    // Preserve the existing non-fatal audit behavior.
-    // Production deployments should report this failure through
-    // independent monitoring without logging sensitive event data.
+    // Audit failures must be reported through independent,
+    // appropriately secured operational monitoring.
+    // Do not log sensitive event data here.
   }
 }
 
@@ -199,22 +237,52 @@ function createCrudService({
 }) {
   requireDependency(repository, `${entity} repository`);
 
-  if (!Array.isArray(allowedSort) || allowedSort.length === 0) {
-    throw new TypeError('allowedSort must be a non-empty array.');
+  if (
+    typeof entity !== 'string' ||
+    entity.trim().length === 0
+  ) {
+    throw new TypeError(
+      'entity must be a non-empty string.',
+    );
   }
 
-  const listFn = repository.list || repository.findMany;
+  if (
+    !Array.isArray(allowedSort) ||
+    allowedSort.length === 0 ||
+    allowedSort.some(
+      (field) =>
+        typeof field !== 'string' ||
+        field.trim().length === 0,
+    )
+  ) {
+    throw new TypeError(
+      'allowedSort must be a non-empty array of field names.',
+    );
+  }
+
+  const sortFields = new Set(allowedSort);
+
+  const listFn =
+    repository.list || repository.findMany;
+
   const findFn =
     repository.findById ||
     repository.getById ||
     repository.findOne;
-  const createFn = repository.create || repository.insert;
-  const updateFn = repository.updateById || repository.update;
-  const deleteFn =
-    repository.deleteById ||
-    repository.remove;
 
-  function requireRepositoryFunction(fn, description) {
+  const createFn =
+    repository.create || repository.insert;
+
+  const updateFn =
+    repository.updateById || repository.update;
+
+  const deleteFn =
+    repository.deleteById || repository.remove;
+
+  function requireRepositoryFunction(
+    fn,
+    description,
+  ) {
     if (typeof fn !== 'function') {
       throw new TypeError(
         `${entity} repository must implement ${description}.`,
@@ -224,25 +292,29 @@ function createCrudService({
     return fn;
   }
 
+  function getEntityId(record) {
+    return record?.id ?? record?._id;
+  }
+
   return {
     async list(query = {}) {
-      const pagination = safePage(query);
+      const input = plainObject(query, 'query');
+      const pagination = safePage(input);
 
       const filters =
-        query.filters &&
-        typeof query.filters === 'object' &&
-        !Array.isArray(query.filters)
-          ? { ...query.filters }
-          : {};
+        input.filters === undefined
+          ? {}
+          : plainObject(input.filters, 'filters');
 
-      const sortBy = allowedSort.includes(query.sortBy)
-        ? query.sortBy
-        : allowedSort.includes('createdAt')
+      const sortBy = sortFields.has(input.sortBy)
+        ? input.sortBy
+        : sortFields.has('createdAt')
           ? 'createdAt'
           : allowedSort[0];
 
       const sortOrder =
-        String(query.sortOrder).toLowerCase() === 'asc'
+        typeof input.sortOrder === 'string' &&
+        input.sortOrder.toLowerCase() === 'asc'
           ? 'asc'
           : 'desc';
 
@@ -275,6 +347,7 @@ function createCrudService({
 
     async create(input, actor = {}) {
       const data = plainObject(input);
+      const actorData = plainObject(actor, 'actor');
 
       const fn = requireRepositoryFunction(
         createFn,
@@ -289,8 +362,8 @@ function createCrudService({
       await audit(auditService, {
         action: `${entity.toLowerCase()}.created`,
         entity,
-        entityId: created.id ?? created._id,
-        actorId: actor.id,
+        entityId: getEntityId(created),
+        actorId: actorData.id,
         metadata: {},
       });
 
@@ -301,6 +374,7 @@ function createCrudService({
       requiredId(id);
 
       const data = plainObject(input);
+      const actorData = plainObject(actor, 'actor');
 
       const fn = requireRepositoryFunction(
         updateFn,
@@ -316,7 +390,7 @@ function createCrudService({
         action: `${entity.toLowerCase()}.updated`,
         entity,
         entityId: id,
-        actorId: actor.id,
+        actorId: actorData.id,
         metadata: {},
       });
 
@@ -325,6 +399,8 @@ function createCrudService({
 
     async remove(id, actor = {}) {
       requiredId(id);
+
+      const actorData = plainObject(actor, 'actor');
 
       const fn = requireRepositoryFunction(
         deleteFn,
@@ -348,7 +424,7 @@ function createCrudService({
         action: `${entity.toLowerCase()}.deleted`,
         entity,
         entityId: id,
-        actorId: actor.id,
+        actorId: actorData.id,
         metadata: {},
       });
 

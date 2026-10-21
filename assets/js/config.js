@@ -1,48 +1,47 @@
 
 /**
  * MedOrbits -- Central Configuration
- * File: assets/js/config.js
+ * File: /assets/js/config.js
+ * Version: 1.1.0
  *
- * Responsibilities:
- * - Centralize application settings
- * - Configure API and asset paths
- * - Define routes and feature flags
- * - Set request, upload, pagination, and UI defaults
- * - Expose a consistent read-only configuration API
+ * Centralizes public application settings, routes, API endpoints,
+ * feature flags, upload limits, pagination, and UI defaults.
  *
  * Security:
- * - Never store API secrets, database credentials, private tokens,
- *   payment secrets, or other sensitive values in this frontend file.
- * - All security-sensitive configuration belongs on the server.
+ * - Never store API secrets, private tokens, payment secrets,
+ *   database credentials, or other sensitive values here.
+ * - Frontend feature flags are not authorization controls.
+ * - The backend must independently validate all requests and permissions.
  */
 
-(() => {
+(function (window, document) {
   "use strict";
 
-  const GLOBAL_KEY = "MedOrbitsConfig";
+  var GLOBAL_KEY = "MedOrbitsConfig";
 
   if (window[GLOBAL_KEY]) {
     return;
   }
 
   // --------------------------------------------------
-  // Environment detection
+  // Environment
   // --------------------------------------------------
 
   function detectEnvironment() {
-    const hostname = window.location.hostname;
+    var hostname = window.location.hostname.toLowerCase();
 
     if (
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
-      hostname === "::1"
+      hostname === "::1" ||
+      hostname === "[::1]"
     ) {
       return "development";
     }
 
     if (
-      hostname.startsWith("staging.") ||
-      hostname.startsWith("test.")
+      hostname.indexOf("staging.") === 0 ||
+      hostname.indexOf("test.") === 0
     ) {
       return "staging";
     }
@@ -50,54 +49,107 @@
     return "production";
   }
 
-  const environment = detectEnvironment();
+  var environment = detectEnvironment();
 
   // --------------------------------------------------
-  // Base URL configuration
+  // Base paths and origins
   // --------------------------------------------------
 
   function normalizeBasePath(value) {
-    if (!value || value === "/") return "";
+    var path = String(value || "").trim();
 
-    return `/${String(value)
-      .replace(/^\/+|\/+$/g, "")}`;
+    if (!path || path === "/") {
+      return "";
+    }
+
+    if (
+      path.indexOf("\\") !== -1 ||
+      /[?#]/.test(path) ||
+      /(^|\/)\.\.?($|\/)/.test(path)
+    ) {
+      throw new TypeError("Invalid application base path.");
+    }
+
+    path = "/" + path.replace(/^\/+|\/+$/g, "");
+
+    return path;
   }
 
   function normalizeOrigin(value) {
-    if (!value) return "";
+    var input = String(value || "").trim();
 
-    const url = new URL(value, window.location.origin);
+    if (!input) {
+      return "";
+    }
 
-    if (!["http:", "https:"].includes(url.protocol)) {
-      throw new TypeError("Unsupported application URL protocol.");
+    var url;
+
+    try {
+      url = new URL(input, window.location.origin);
+    } catch (error) {
+      throw new TypeError("Invalid API origin configuration.");
+    }
+
+    if (
+      url.protocol !== "https:" &&
+      url.protocol !== "http:"
+    ) {
+      throw new TypeError("Unsupported API origin protocol.");
+    }
+
+    if (url.username || url.password) {
+      throw new TypeError("API origin must not contain credentials.");
+    }
+
+    if (
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash
+    ) {
+      throw new TypeError(
+        "API origin must contain only the origin, without a path or query."
+      );
+    }
+
+    if (
+      environment === "production" &&
+      url.protocol !== "https:"
+    ) {
+      throw new TypeError("Production API origins must use HTTPS.");
     }
 
     return url.origin;
   }
 
-  const htmlBasePath = normalizeBasePath(
-    document.documentElement.dataset.basePath || ""
+  var htmlBasePath = normalizeBasePath(
+    document.documentElement.getAttribute("data-base-path") || ""
   );
 
-  const configuredApiOrigin = document.documentElement.dataset.apiOrigin || "";
+  var configuredApiOrigin =
+    document.documentElement.getAttribute("data-api-origin") || "";
 
-  const apiOrigin = normalizeOrigin(configuredApiOrigin);
+  var apiOrigin = normalizeOrigin(configuredApiOrigin);
 
-  const baseURL = window.location.origin + htmlBasePath;
+  var origin = window.location.origin;
+  var baseURL = origin + htmlBasePath;
+  var apiBasePath = "/api/v1";
+  var apiBaseURL = (apiOrigin || origin) + apiBasePath;
 
-  const apiBasePath = "/api/v1";
+  function assetPath(path) {
+    return htmlBasePath + "/assets/" + path;
+  }
 
   // --------------------------------------------------
   // Application metadata
   // --------------------------------------------------
 
-  const app = {
+  var app = {
     name: "MedOrbits",
     shortName: "MedOrbits",
     description:
       "Education guidance, medical admissions, study abroad, careers, jobs and recruitment services.",
-    version: "1.0.0",
-    environment,
+    version: "1.1.0",
+    environment: environment,
     defaultLanguage: "en",
     defaultCountry: "IN",
     defaultCurrency: "INR",
@@ -110,23 +162,26 @@
   // URL configuration
   // --------------------------------------------------
 
-  const urls = {
-    origin: window.location.origin,
-    baseURL,
-    apiOrigin,
-    apiBaseURL: `${apiOrigin || window.location.origin}${apiBasePath}`,
-    assets: `${htmlBasePath}/assets`.replace(/^\/\//, "/"),
-    images: `${htmlBasePath}/assets/images`.replace(/^\/\//, "/"),
-    icons: `${htmlBasePath}/assets/icons`.replace(/^\/\//, "/"),
-    data: `${htmlBasePath}/assets/data`.replace(/^\/\//, "/"),
-    documents: `${htmlBasePath}/assets/documents`.replace(/^\/\//, "/")
+  var urls = {
+    origin: origin,
+    baseURL: baseURL,
+    apiOrigin: apiOrigin,
+    apiBasePath: apiBasePath,
+    apiBaseURL: apiBaseURL,
+    assets: assetPath(""),
+    images: assetPath("images"),
+    icons: assetPath("icons"),
+    data: assetPath("data"),
+    documents: assetPath("documents"),
+    styles: assetPath("css"),
+    scripts: assetPath("js")
   };
 
   // --------------------------------------------------
   // Public site routes
   // --------------------------------------------------
 
-  const routes = {
+  var routes = {
     home: "/index.html",
 
     pages: {
@@ -248,7 +303,6 @@
       resumeSupport: "/career/resume-support.html",
       resumeBuilder: "/career/resume-builder.html",
       interviewPreparation: "/career/interview-preparation.html",
-
       sectors: "/career/sectors/index.html",
       locations: "/career/locations/index.html",
       resources: "/career/resources/index.html"
@@ -290,106 +344,111 @@
   };
 
   // --------------------------------------------------
-  // API endpoint configuration
+  // API endpoints
   // --------------------------------------------------
 
-  const api = {
-    baseURL: urls.apiBaseURL,
+  var endpoints = {
+    health: "/health",
 
-    endpoints: {
-      health: "/health",
-      auth: {
-        login: "/auth/login",
-        register: "/auth/register",
-        logout: "/auth/logout",
-        refresh: "/auth/refresh",
-        me: "/auth/me",
-        sessions: "/sessions",
-        sendEmailVerification: "/verification/email/send",
-        verifyEmail: "/verification/email/confirm",
-        resendVerification: "/verification/email/send",
-        sendPhoneVerification: "/verification/phone/send",
-        verifyPhone: "/verification/phone/confirm",
-        forgotPassword: "/password/forgot",
-        resetPassword: "/password/reset",
-        changePassword: "/password/change"
-      },
+    auth: {
+      login: "/auth/login",
+      register: "/auth/register",
+      logout: "/auth/logout",
+      refresh: "/auth/refresh",
+      me: "/auth/me",
+      sessions: "/sessions",
+      sendEmailVerification: "/verification/email/send",
+      verifyEmail: "/verification/email/confirm",
+      resendVerification: "/verification/email/send",
+      sendPhoneVerification: "/verification/phone/send",
+      verifyPhone: "/verification/phone/confirm",
+      forgotPassword: "/password/forgot",
+      resetPassword: "/password/reset",
+      changePassword: "/password/change"
+    },
 
-      users: {
-        profile: "/users/me",
-        settings: "/users/me/settings",
-        activity: "/users/me/activity",
-        deleteAccount: "/users/me"
-      },
+    users: {
+      profile: "/users/me",
+      settings: "/users/me/settings",
+      activity: "/users/me/activity",
+      deleteAccount: "/users/me"
+    },
 
-      education: {
-        courses: "/courses",
-        colleges: "/colleges",
-        universities: "/universities",
-        admissions: "/admissions",
-        applications: "/applications",
-        counselling: "/counselling",
-        fees: "/resources/fees",
-        scholarships: "/resources/scholarships",
-        hostels: "/resources/hostels"
-      },
+    education: {
+      courses: "/courses",
+      colleges: "/colleges",
+      universities: "/universities",
+      admissions: "/admissions",
+      applications: "/applications",
+      counselling: "/counselling",
+      fees: "/resources/fees",
+      scholarships: "/resources/scholarships",
+      hostels: "/resources/hostels"
+    },
 
-      career: {
-        jobs: "/jobs",
-        internships: "/internships",
-        candidates: "/candidates",
-        employers: "/employers",
-        recruitment: "/recruitment",
-        resume: "/candidates/resume",
-        savedJobs: "/users/me/saved-jobs"
-      },
+    career: {
+      jobs: "/jobs",
+      internships: "/internships",
+      candidates: "/candidates",
+      employers: "/employers",
+      recruitment: "/recruitment",
+      resume: "/candidates/resume",
+      savedJobs: "/users/me/saved-jobs"
+    },
 
-      documents: {
-        list: "/documents",
-        mine: "/documents/mine",
-        upload: "/uploads",
-        verify: "/documents/:id/verify",
-        delete: "/documents/:id"
-      },
+    documents: {
+      list: "/documents",
+      mine: "/documents/mine",
+      upload: "/uploads",
+      verify: "/documents/:id/verify",
+      delete: "/documents/:id"
+    },
 
-      payments: {
-        createCheckout: "/payments/checkout",
-        history: "/payments/mine",
-        subscriptions: "/subscriptions"
-      },
+    payments: {
+      createCheckout: "/payments/checkout",
+      history: "/payments/mine",
+      subscriptions: "/subscriptions"
+    },
 
-      notifications: "/notifications",
-      search: "/search",
-      contact: "/contact",
-      support: "/support",
-      faqs: {
-        list: "/faqs",
-        answer: "/faqs/answer"
-      },
+    notifications: "/notifications",
+    search: "/search",
+    contact: "/contact",
+    support: "/support",
 
-      admin: {
-        dashboard: "/admin/dashboard",
-        users: "/admin/users",
-        roles: "/admin/roles",
-        applications: "/admin/applications",
-        documents: "/admin/documents",
-        payments: "/admin/payments",
-        auditLogs: "/admin/audit-logs",
-        settings: "/admin/settings"
-      }
+    faqs: {
+      list: "/faqs",
+      answer: "/faqs/answer"
+    },
+
+    admin: {
+      dashboard: "/admin/dashboard",
+      users: "/admin/users",
+      roles: "/admin/roles",
+      applications: "/admin/applications",
+      documents: "/admin/documents",
+      payments: "/admin/payments",
+      auditLogs: "/admin/audit-logs",
+      settings: "/admin/settings"
     }
   };
 
+  var api = {
+    baseURL: apiBaseURL,
+    endpoints: endpoints
+  };
+
   // --------------------------------------------------
-  // HTTP request defaults
+  // Request defaults
   // --------------------------------------------------
 
-  const request = {
+  var request = {
     timeoutMs: 20000,
     credentials: "same-origin",
+
     defaultHeaders: {
       Accept: "application/json"
     },
+
     retry: {
       enabled: true,
       maxAttempts: 2,
@@ -400,10 +459,10 @@
   };
 
   // --------------------------------------------------
-  // Upload configuration
+  // Upload defaults
   // --------------------------------------------------
 
-  const uploads = {
+  var uploads = {
     maxFileSizeBytes: 10 * 1024 * 1024,
 
     allowedExtensions: [
@@ -434,7 +493,7 @@
   // Pagination and search
   // --------------------------------------------------
 
-  const data = {
+  var data = {
     pagination: {
       defaultPage: 1,
       defaultPageSize: 12,
@@ -451,10 +510,10 @@
   };
 
   // --------------------------------------------------
-  // UI configuration
+  // UI defaults
   // --------------------------------------------------
 
-  const ui = {
+  var ui = {
     theme: {
       default: "dark",
       allowed: ["dark", "light"],
@@ -487,7 +546,7 @@
   // Feature flags
   // --------------------------------------------------
 
-  const features = {
+  var features = {
     education: true,
     studyAbroad: true,
     careerServices: true,
@@ -499,21 +558,21 @@
     documentManagement: true,
     notifications: true,
     subscriptions: true,
+
+    // Enable only after the corresponding backend integration is ready.
     paymentIntegration: false,
     twoFactorAuthentication: false,
     aiGuidance: false,
     analytics: false
   };
 
-  // These flags control frontend visibility only.
-  // The backend must independently enforce all permissions.
-
   // --------------------------------------------------
   // Localization
   // --------------------------------------------------
 
-  const localization = {
+  var localization = {
     defaultLanguage: "en",
+
     supportedLanguages: [
       "en",
       "hi",
@@ -543,10 +602,10 @@
   };
 
   // --------------------------------------------------
-  // Validation configuration
+  // Validation defaults
   // --------------------------------------------------
 
-  const validation = {
+  var validation = {
     password: {
       minLength: 12,
       maxLength: 128
@@ -567,92 +626,74 @@
   };
 
   // --------------------------------------------------
-  // Public runtime configuration
+  // Configuration lookup helpers
   // --------------------------------------------------
 
-  const config = {
-    app,
-    urls,
-    routes,
-    api,
-    API_BASE_URL: api.baseURL,
-    apiBaseUrl: api.baseURL,
-    request,
-    uploads,
-    data,
-    ui,
-    features,
-    localization,
-    validation,
-
-    getRoute(path) {
-      if (typeof path !== "string" || !path.trim()) {
-        return null;
-      }
-
-      const segments = path.split(".");
-      let current = routes;
-
-      for (const segment of segments) {
-        if (
-          current === null ||
-          typeof current !== "object" ||
-          !Object.prototype.hasOwnProperty.call(current, segment)
-        ) {
-          return null;
-        }
-
-        current = current[segment];
-      }
-
-      return typeof current === "string" ? current : null;
-    },
-
-    getEndpoint(path) {
-      if (typeof path !== "string" || !path.trim()) {
-        return null;
-      }
-
-      const segments = path.split(".");
-      let current = api.endpoints;
-
-      for (const segment of segments) {
-        if (
-          current === null ||
-          typeof current !== "object" ||
-          !Object.prototype.hasOwnProperty.call(current, segment)
-        ) {
-          return null;
-        }
-
-        current = current[segment];
-      }
-
-      return typeof current === "string" ? current : null;
-    },
-
-    getApiURL(endpoint) {
-      if (
-        typeof endpoint !== "string" ||
-        !endpoint.startsWith("/") ||
-        endpoint.startsWith("//")
-      ) {
-        throw new TypeError("A relative API endpoint is required.");
-      }
-
-      return `${api.baseURL}${endpoint}`;
-    },
-
-    isFeatureEnabled(featureName) {
-      return (
-        typeof featureName === "string" &&
-        Object.prototype.hasOwnProperty.call(features, featureName) &&
-        features[featureName] === true
-      );
+  function getNestedValue(object, path) {
+    if (
+      !object ||
+      typeof path !== "string" ||
+      !path.trim()
+    ) {
+      return null;
     }
-  };
 
-  // Prevent accidental changes to nested configuration values.
+    var segments = path.split(".");
+    var current = object;
+
+    for (var i = 0; i < segments.length; i++) {
+      var segment = segments[i];
+
+      if (
+        segment === "__proto__" ||
+        segment === "prototype" ||
+        segment === "constructor" ||
+        !Object.prototype.hasOwnProperty.call(current, segment)
+      ) {
+        return null;
+      }
+
+      current = current[segment];
+    }
+
+    return typeof current === "string" ? current : null;
+  }
+
+  function getRoute(path) {
+    return getNestedValue(routes, path);
+  }
+
+  function getEndpoint(path) {
+    return getNestedValue(endpoints, path);
+  }
+
+  function getApiURL(endpoint) {
+    if (
+      typeof endpoint !== "string" ||
+      !endpoint.startsWith("/") ||
+      endpoint.startsWith("//") ||
+      endpoint.indexOf("\\") !== -1 ||
+      /[?#]/.test(endpoint) ||
+      /(^|\/)\.\.?($|\/)/.test(endpoint)
+    ) {
+      throw new TypeError("A valid relative API endpoint is required.");
+    }
+
+    return apiBaseURL + endpoint;
+  }
+
+  function isFeatureEnabled(featureName) {
+    return (
+      typeof featureName === "string" &&
+      Object.prototype.hasOwnProperty.call(features, featureName) &&
+      features[featureName] === true
+    );
+  }
+
+  // --------------------------------------------------
+  // Freeze configuration
+  // --------------------------------------------------
+
   function deepFreeze(value) {
     if (
       value === null ||
@@ -662,24 +703,50 @@
       return value;
     }
 
-    Object.freeze(value);
-
-    for (const key of Object.keys(value)) {
+    Object.keys(value).forEach(function (key) {
       deepFreeze(value[key]);
-    }
+    });
 
-    return value;
+    return Object.freeze(value);
   }
 
-  window[GLOBAL_KEY] = deepFreeze(config);
+  var config = {
+    app: app,
+    urls: urls,
+    routes: routes,
+    api: api,
 
-  // Optional compatibility alias for the application bootstrap.
-  window.MedOrbitsConfig = window[GLOBAL_KEY];
+    // Compatibility aliases.
+    API_BASE_URL: apiBaseURL,
+    apiBaseUrl: apiBaseURL,
+
+    request: request,
+    uploads: uploads,
+    data: data,
+    ui: ui,
+    features: features,
+    localization: localization,
+    validation: validation,
+
+    getRoute: getRoute,
+    getEndpoint: getEndpoint,
+    getApiURL: getApiURL,
+    isFeatureEnabled: isFeatureEnabled
+  };
+
+  deepFreeze(config);
+
+  Object.defineProperty(window, GLOBAL_KEY, {
+    value: config,
+    writable: false,
+    configurable: false,
+    enumerable: true
+  });
 
   if (window.MEDORBITS_DEBUG === true) {
     console.info("[MedOrbits] Configuration loaded.", {
-      environment,
+      environment: environment,
       version: app.version
     });
   }
-})();
+})(window, document);

@@ -1,41 +1,36 @@
+
 /* =========================================================
    MedOrbits -- Pagination Manager
    File: /assets/js/pagination.js
-   Purpose: Client-side pagination, API pagination, page controls,
-            page-size selection, URL sync and accessible rendering
+   Version: 1.1.0
    ========================================================= */
 
 (function (window, document) {
   "use strict";
 
-  const CONFIG = window.MedOrbitsConfig || {};
-  const CONSTANTS = window.MedOrbitsConstants || {};
+  if (window.MedOrbitsPagination) return;
 
   const DEFAULT_PAGE_SIZE = 10;
   const DEFAULT_MAX_VISIBLE_PAGES = 5;
-  const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-
+  const DEFAULT_PAGE_SIZE_OPTIONS = Object.freeze([10, 20, 50, 100]);
   const instances = new Map();
 
   const utils = {
     escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, function (char) {
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[char];
-      });
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
     },
 
-    dispatch(name, detail) {
-      document.dispatchEvent(
-        new CustomEvent("medorbits:pagination:" + name, {
-          detail: detail || {}
-        })
-      );
+    dispatch(name, detail = {}) {
+      document.dispatchEvent(new CustomEvent(
+        "medorbits:pagination:" + name,
+        { detail }
+      ));
     },
 
     getElement(target) {
@@ -53,10 +48,16 @@
       return null;
     },
 
-    toPositiveInteger(value, fallback) {
-      const number = Number.parseInt(value, 10);
+    positiveInteger(value, fallback) {
+      const number = Number(value);
+      return Number.isSafeInteger(number) && number > 0
+        ? number
+        : fallback;
+    },
 
-      return Number.isFinite(number) && number > 0
+    nonNegativeInteger(value, fallback = 0) {
+      const number = Number(value);
+      return Number.isSafeInteger(number) && number >= 0
         ? number
         : fallback;
     },
@@ -66,36 +67,46 @@
     }
   };
 
-  function normalizeOptions(options) {
-    const settings = options || {};
+  function normalizeOptions(options = {}) {
+    const pageSize = Math.min(
+      1000,
+      utils.positiveInteger(
+        options.pageSize ?? options.limit,
+        DEFAULT_PAGE_SIZE
+      )
+    );
+
+    const pageSizeOptions = Array.isArray(options.pageSizeOptions)
+      ? [...new Set(options.pageSizeOptions
+          .map((value) => utils.positiveInteger(value, 0))
+          .filter((value) => value > 0 && value <= 1000))]
+      : [...DEFAULT_PAGE_SIZE_OPTIONS];
+
+    if (!pageSizeOptions.includes(pageSize)) {
+      pageSizeOptions.push(pageSize);
+    }
 
     return {
-      container: settings.container || null,
-      target: settings.target || null,
-      page: utils.toPositiveInteger(settings.page, 1),
-      pageSize: utils.toPositiveInteger(
-        settings.pageSize || settings.limit,
-        DEFAULT_PAGE_SIZE
+      page: utils.positiveInteger(options.page, 1),
+      pageSize,
+      totalItems: utils.nonNegativeInteger(options.totalItems),
+      totalPages: utils.nonNegativeInteger(options.totalPages),
+      maxVisiblePages: Math.min(
+        15,
+        utils.positiveInteger(
+          options.maxVisiblePages,
+          DEFAULT_MAX_VISIBLE_PAGES
+        )
       ),
-      totalItems: Math.max(0, Number(settings.totalItems) || 0),
-      totalPages: Math.max(0, Number(settings.totalPages) || 0),
-      maxVisiblePages: utils.toPositiveInteger(
-        settings.maxVisiblePages,
-        DEFAULT_MAX_VISIBLE_PAGES
-      ),
-      pageSizeOptions: Array.isArray(settings.pageSizeOptions)
-        ? settings.pageSizeOptions
-            .map((value) => utils.toPositiveInteger(value, 0))
-            .filter((value) => value > 0)
-        : DEFAULT_PAGE_SIZE_OPTIONS.slice(),
-      showFirstLast: settings.showFirstLast !== false,
-      showPreviousNext: settings.showPreviousNext !== false,
-      showPageSize: settings.showPageSize !== false,
-      showSummary: settings.showSummary !== false,
-      showJumpToPage: Boolean(settings.showJumpToPage),
-      urlSync: Boolean(settings.urlSync),
-      urlPageParam: settings.urlPageParam || "page",
-      urlPageSizeParam: settings.urlPageSizeParam || "limit",
+      pageSizeOptions: pageSizeOptions.sort((a, b) => a - b),
+      showFirstLast: options.showFirstLast !== false,
+      showPreviousNext: options.showPreviousNext !== false,
+      showPageSize: options.showPageSize !== false,
+      showSummary: options.showSummary !== false,
+      showJumpToPage: Boolean(options.showJumpToPage),
+      urlSync: Boolean(options.urlSync),
+      urlPageParam: options.urlPageParam || "page",
+      urlPageSizeParam: options.urlPageSizeParam || "limit",
       labels: {
         first: "First",
         previous: "Previous",
@@ -107,26 +118,21 @@
         of: "of",
         items: "items",
         jump: "Go",
-        ...settings.labels
+        ...(options.labels || {})
       },
-      onChange: typeof settings.onChange === "function"
-        ? settings.onChange
+      onChange: typeof options.onChange === "function"
+        ? options.onChange
         : null
     };
   }
 
   function getTotalPages(totalItems, pageSize, suppliedTotalPages) {
-    if (suppliedTotalPages > 0) {
-      return suppliedTotalPages;
-    }
-
+    if (suppliedTotalPages > 0) return suppliedTotalPages;
     return Math.ceil(totalItems / pageSize);
   }
 
   function getPageRange(page, pageSize, totalItems) {
-    if (totalItems === 0) {
-      return { start: 0, end: 0 };
-    }
+    if (totalItems === 0) return { start: 0, end: 0 };
 
     return {
       start: (page - 1) * pageSize + 1,
@@ -137,24 +143,21 @@
   function getVisiblePages(currentPage, totalPages, maxVisiblePages) {
     if (totalPages <= 0) return [];
 
-    const visibleCount = Math.min(maxVisiblePages, totalPages);
-    const half = Math.floor(visibleCount / 2);
+    const count = Math.min(maxVisiblePages, totalPages);
+    const half = Math.floor(count / 2);
 
     let start = Math.max(1, currentPage - half);
-    let end = start + visibleCount - 1;
+    let end = start + count - 1;
 
     if (end > totalPages) {
       end = totalPages;
-      start = Math.max(1, end - visibleCount + 1);
+      start = Math.max(1, end - count + 1);
     }
 
-    const pages = [];
-
-    for (let page = start; page <= end; page += 1) {
-      pages.push(page);
-    }
-
-    return pages;
+    return Array.from(
+      { length: end - start + 1 },
+      (_, index) => start + index
+    );
   }
 
   function buildPaginationMarkup(options) {
@@ -186,39 +189,31 @@
     const labels = settings.labels;
     const controls = [];
 
+    function button(label, action, disabled, ariaLabel) {
+      return `
+        <button type="button"
+          class="mo-pagination-button mo-pagination-${action}"
+          data-page-action="${action}"
+          aria-label="${utils.escapeHTML(ariaLabel)}"
+          ${disabled ? "disabled" : ""}>
+          ${label}
+        </button>`;
+    }
+
     if (settings.showFirstLast) {
-      controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button mo-pagination-first"
-          data-page-action="first"
-          aria-label="${utils.escapeHTML(labels.first)} page"
-          ${page <= 1 || totalPages === 0 ? "disabled" : ""}
-        >«</button>
-      `);
+      controls.push(button("«", "first", page <= 1 || !totalPages,
+        labels.first + " page"));
     }
 
     if (settings.showPreviousNext) {
-      controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button mo-pagination-previous"
-          data-page-action="previous"
-          aria-label="${utils.escapeHTML(labels.previous)} page"
-          ${page <= 1 || totalPages === 0 ? "disabled" : ""}
-        >‹</button>
-      `);
+      controls.push(button("‹", "previous", page <= 1 || !totalPages,
+        labels.previous + " page"));
     }
 
     if (visiblePages.length && visiblePages[0] > 1) {
       controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button"
-          data-page-number="1"
-          aria-label="Page 1"
-        >1</button>
-      `);
+        <button type="button" class="mo-pagination-button"
+          data-page-number="1" aria-label="Page 1">1</button>`);
 
       if (visiblePages[0] > 2) {
         controls.push(
@@ -227,18 +222,17 @@
       }
     }
 
-    visiblePages.forEach((pageNumber) => {
-      const active = pageNumber === page;
+    visiblePages.forEach((number) => {
+      const active = number === page;
 
       controls.push(`
-        <button
-          type="button"
+        <button type="button"
           class="mo-pagination-button${active ? " is-active" : ""}"
-          data-page-number="${pageNumber}"
-          aria-label="Page ${pageNumber}"
-          ${active ? 'aria-current="page"' : ""}
-        >${pageNumber}</button>
-      `);
+          data-page-number="${number}"
+          aria-label="Page ${number}"
+          ${active ? 'aria-current="page"' : ""}>
+          ${number}
+        </button>`);
     });
 
     if (
@@ -252,72 +246,44 @@
       }
 
       controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button"
+        <button type="button" class="mo-pagination-button"
           data-page-number="${totalPages}"
-          aria-label="Page ${totalPages}"
-        >${totalPages}</button>
-      `);
+          aria-label="Page ${totalPages}">${totalPages}</button>`);
     }
 
     if (settings.showPreviousNext) {
-      controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button mo-pagination-next"
-          data-page-action="next"
-          aria-label="${utils.escapeHTML(labels.next)} page"
-          ${page >= totalPages || totalPages === 0 ? "disabled" : ""}
-        >›</button>
-      `);
+      controls.push(button("›", "next", page >= totalPages || !totalPages,
+        labels.next + " page"));
     }
 
     if (settings.showFirstLast) {
-      controls.push(`
-        <button
-          type="button"
-          class="mo-pagination-button mo-pagination-last"
-          data-page-action="last"
-          aria-label="${utils.escapeHTML(labels.last)} page"
-          ${page >= totalPages || totalPages === 0 ? "disabled" : ""}
-        >»</button>
-      `);
+      controls.push(button("»", "last", page >= totalPages || !totalPages,
+        labels.last + " page"));
     }
 
-    let pageSizeControl = "";
-
-    if (settings.showPageSize) {
-      const sizeOptions = Array.from(new Set([
-        ...settings.pageSizeOptions,
-        settings.pageSize
-      ])).sort((a, b) => a - b);
-
-      pageSizeControl = `
+    const pageSizeControl = settings.showPageSize
+      ? `
         <label class="mo-pagination-size-label">
           <span>${utils.escapeHTML(labels.pageSize)}</span>
-          <select data-page-size>
-            ${sizeOptions.map((size) => `
-              <option
-                value="${size}"
-                ${size === settings.pageSize ? "selected" : ""}
-              >${size}</option>
-            `).join("")}
+          <select data-page-size aria-label="${utils.escapeHTML(labels.pageSize)}">
+            ${settings.pageSizeOptions.map((size) => `
+              <option value="${size}"
+                ${size === settings.pageSize ? "selected" : ""}>
+                ${size}
+              </option>`).join("")}
           </select>
-        </label>
-      `;
-    }
+        </label>`
+      : "";
 
     const summary = settings.showSummary
       ? `
-        <div class="mo-pagination-summary" aria-live="polite">
+        <div class="mo-pagination-summary" aria-live="polite" aria-atomic="true">
           ${utils.escapeHTML(labels.showing)}
           <strong>${range.start}–${range.end}</strong>
           ${utils.escapeHTML(labels.of)}
           <strong>${settings.totalItems}</strong>
           ${utils.escapeHTML(labels.items)}
-        </div>
-      `
+        </div>`
       : "";
 
     const jumpControl = settings.showJumpToPage && totalPages > 1
@@ -325,77 +291,86 @@
         <form class="mo-pagination-jump-form" data-page-jump-form>
           <label>
             <span>${utils.escapeHTML(labels.page)}</span>
-            <input
-              type="number"
-              data-page-jump
-              min="1"
-              max="${totalPages}"
-              value="${page}"
-              inputmode="numeric"
-              aria-label="Go to page"
-            >
+            <input type="number" data-page-jump min="1"
+              max="${totalPages}" value="${page}"
+              inputmode="numeric" required
+              aria-label="Go to page">
           </label>
           <button type="submit">${utils.escapeHTML(labels.jump)}</button>
-        </form>
-      `
+        </form>`
       : "";
 
     return `
-      <div
-        class="mo-pagination"
-        role="navigation"
-        aria-label="Pagination"
-        data-pagination-root
-      >
+      <nav class="mo-pagination" aria-label="Pagination"
+        data-pagination-root>
         ${summary}
         ${pageSizeControl}
         <div class="mo-pagination-controls">
           ${totalPages > 1 ? controls.join("") : ""}
         </div>
         ${jumpControl}
-      </div>
-    `;
+      </nav>`;
   }
 
   function syncUrl(instance) {
     if (!instance.options.urlSync) return;
 
-    const url = new URL(window.location.href);
+    try {
+      const url = new URL(window.location.href);
 
-    url.searchParams.set(
-      instance.options.urlPageParam,
-      String(instance.page)
-    );
+      url.searchParams.set(
+        instance.options.urlPageParam,
+        String(instance.page)
+      );
 
-    url.searchParams.set(
-      instance.options.urlPageSizeParam,
-      String(instance.pageSize)
-    );
+      url.searchParams.set(
+        instance.options.urlPageSizeParam,
+        String(instance.pageSize)
+      );
 
-    window.history.replaceState(
-      window.history.state,
-      "",
-      url.pathname + url.search + url.hash
-    );
+      window.history.replaceState(
+        window.history.state,
+        "",
+        url.pathname + url.search + url.hash
+      );
+    } catch (error) {
+      console.warn("[MedOrbits Pagination] URL sync failed.", error);
+    }
   }
 
   function getUrlState(options) {
     const settings = normalizeOptions(options);
     const url = new URL(window.location.href);
 
+    const allowedSizes = settings.pageSizeOptions;
+
+    const requestedSize = utils.positiveInteger(
+      url.searchParams.get(settings.urlPageSizeParam),
+      settings.pageSize
+    );
+
     return {
-      page: utils.toPositiveInteger(
+      page: utils.positiveInteger(
         url.searchParams.get(settings.urlPageParam),
         settings.page
       ),
-      pageSize: utils.toPositiveInteger(
-        url.searchParams.get(settings.urlPageSizeParam),
-        settings.pageSize
-      )
+      pageSize: allowedSizes.includes(requestedSize)
+        ? requestedSize
+        : settings.pageSize
     };
   }
 
-  function render(target, options) {
+  function renderMarkup(instance) {
+    instance.container.innerHTML = buildPaginationMarkup({
+      ...instance.options,
+      page: instance.page,
+      pageSize: instance.pageSize,
+      totalItems: instance.totalItems,
+      totalPages: instance.totalPages
+    });
+  }
+
+  function render(target, options = {}) {
     const container = utils.getElement(target);
 
     if (!container) {
@@ -403,31 +378,38 @@
     }
 
     const settings = normalizeOptions(options);
-    const instanceId =
-      container.dataset.paginationId ||
-      "pagination-" + Math.random().toString(36).slice(2, 10);
+    const existingId = container.dataset.paginationId;
 
-    container.dataset.paginationId = instanceId;
+    if (existingId) {
+      destroy(existingId);
+    }
 
-    const instance = {
-      id: instanceId,
-      container,
-      options: settings,
-      page: settings.page,
-      pageSize: settings.pageSize,
-      totalItems: settings.totalItems,
-      totalPages: getTotalPages(
-        settings.totalItems,
-        settings.pageSize,
-        settings.totalPages
-      )
-    };
+    const id = "pagination-" +
+      (window.crypto?.randomUUID?.() ||
+        Math.random().toString(36).slice(2, 12));
+
+    let page = settings.page;
+    let pageSize = settings.pageSize;
 
     if (settings.urlSync) {
       const urlState = getUrlState(settings);
-      instance.page = urlState.page;
-      instance.pageSize = urlState.pageSize;
+      page = urlState.page;
+      pageSize = urlState.pageSize;
     }
+
+    const instance = {
+      id,
+      container,
+      options: settings,
+      page,
+      pageSize,
+      totalItems: settings.totalItems,
+      totalPages: getTotalPages(
+        settings.totalItems,
+        pageSize,
+        settings.totalPages
+      )
+    };
 
     instance.page = utils.clamp(
       instance.page,
@@ -435,15 +417,13 @@
       Math.max(1, instance.totalPages)
     );
 
-    instances.set(instanceId, instance);
+    container.dataset.paginationId = id;
+    instances.set(id, instance);
 
-    container.innerHTML = buildPaginationMarkup({
-      ...settings,
-      page: instance.page,
-      pageSize: instance.pageSize
-    });
-
+    renderMarkup(instance);
     bindInstance(instance);
+
+    if (settings.urlSync) syncUrl(instance);
 
     return instance;
   }
@@ -451,14 +431,14 @@
   function bindInstance(instance) {
     const container = instance.container;
 
-    if (container.dataset.paginationBound === "true") {
-      container.removeEventListener("click", container._moPaginationClick);
-      container.removeEventListener("change", container._moPaginationChange);
-      container.removeEventListener("submit", container._moPaginationSubmit);
-    }
-
     container._moPaginationClick = function (event) {
-      const button = event.target.closest("[data-page-number], [data-page-action]");
+      const target = event.target;
+
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest(
+        "[data-page-number], [data-page-action]"
+      );
 
       if (!button || !container.contains(button) || button.disabled) {
         return;
@@ -473,35 +453,44 @@
 
       const action = button.dataset.pageAction;
 
-      if (action === "first") {
-        goToPage(instance.id, 1);
-      } else if (action === "previous") {
-        goToPage(instance.id, instance.page - 1);
-      } else if (action === "next") {
-        goToPage(instance.id, instance.page + 1);
-      } else if (action === "last") {
-        goToPage(instance.id, instance.totalPages);
+      const destinations = {
+        first: 1,
+        previous: instance.page - 1,
+        next: instance.page + 1,
+        last: instance.totalPages
+      };
+
+      if (Object.prototype.hasOwnProperty.call(destinations, action)) {
+        goToPage(instance.id, destinations[action]);
       }
     };
 
     container._moPaginationChange = function (event) {
-      if (!event.target.matches("[data-page-size]")) return;
-
-      setPageSize(instance.id, Number(event.target.value));
+      if (
+        event.target instanceof HTMLSelectElement &&
+        event.target.matches("[data-page-size]")
+      ) {
+        setPageSize(instance.id, Number(event.target.value));
+      }
     };
 
     container._moPaginationSubmit = function (event) {
-      const form = event.target.closest("[data-page-jump-form]");
+      const form = event.target;
 
-      if (!form || !container.contains(form)) return;
+      if (
+        !(form instanceof HTMLFormElement) ||
+        !form.matches("[data-page-jump-form]")
+      ) {
+        return;
+      }
 
       event.preventDefault();
 
       const input = form.querySelector("[data-page-jump]");
 
-      if (input) {
-        goToPage(instance.id, Number(input.value));
-      }
+      if (!input || !input.reportValidity()) return;
+
+      goToPage(instance.id, Number(input.value));
     };
 
     container.addEventListener("click", container._moPaginationClick);
@@ -511,41 +500,44 @@
     container.dataset.paginationBound = "true";
   }
 
-  function update(instance, options) {
-    const settings = options || {};
-
-    if (settings.totalItems !== undefined) {
-      instance.totalItems = Math.max(0, Number(settings.totalItems) || 0);
+  function update(instance, options = {}) {
+    if (options.totalItems !== undefined) {
+      instance.totalItems = utils.nonNegativeInteger(options.totalItems);
+      instance.options.totalPages = 0;
     }
 
-    if (settings.totalPages !== undefined) {
-      instance.options.totalPages = Math.max(
-        0,
-        Number(settings.totalPages) || 0
+    if (options.totalPages !== undefined) {
+      instance.options.totalPages = utils.nonNegativeInteger(
+        options.totalPages
       );
     }
 
-    if (settings.page !== undefined) {
-      instance.page = utils.toPositiveInteger(settings.page, 1);
-    }
-
-    if (settings.pageSize !== undefined) {
-      instance.pageSize = utils.toPositiveInteger(
-        settings.pageSize,
-        instance.pageSize
+    if (options.pageSize !== undefined) {
+      instance.pageSize = Math.min(
+        1000,
+        utils.positiveInteger(options.pageSize, instance.pageSize)
       );
     }
 
-    if (settings.onChange !== undefined) {
+    if (options.page !== undefined) {
+      instance.page = utils.positiveInteger(options.page, instance.page);
+    }
+
+    if (options.onChange !== undefined) {
       instance.options.onChange =
-        typeof settings.onChange === "function"
-          ? settings.onChange
+        typeof options.onChange === "function"
+          ? options.onChange
           : null;
     }
 
-    instance.options.totalItems = instance.totalItems;
-    instance.options.page = instance.page;
-    instance.options.pageSize = instance.pageSize;
+    if (options.pageSizeOptions !== undefined) {
+      instance.options.pageSizeOptions =
+        normalizeOptions({
+          ...instance.options,
+          pageSize: instance.pageSize,
+          pageSizeOptions: options.pageSizeOptions
+        }).pageSizeOptions;
+    }
 
     instance.totalPages = getTotalPages(
       instance.totalItems,
@@ -559,47 +551,44 @@
       Math.max(1, instance.totalPages)
     );
 
+    instance.options.totalItems = instance.totalItems;
     instance.options.totalPages = instance.totalPages;
+    instance.options.page = instance.page;
+    instance.options.pageSize = instance.pageSize;
 
-    instance.container.innerHTML = buildPaginationMarkup({
-      ...instance.options,
-      page: instance.page,
-      pageSize: instance.pageSize,
-      totalItems: instance.totalItems,
-      totalPages: instance.totalPages
-    });
-
+    renderMarkup(instance);
     bindInstance(instance);
 
     return instance;
   }
 
   function notifyChange(instance, reason) {
+    const range = getPageRange(
+      instance.page,
+      instance.pageSize,
+      instance.totalItems
+    );
+
     const detail = {
       id: instance.id,
       page: instance.page,
       pageSize: instance.pageSize,
       totalItems: instance.totalItems,
       totalPages: instance.totalPages,
-      start: getPageRange(
-        instance.page,
-        instance.pageSize,
-        instance.totalItems
-      ).start,
-      end: getPageRange(
-        instance.page,
-        instance.pageSize,
-        instance.totalItems
-      ).end,
+      start: range.start,
+      end: range.end,
       reason
     };
 
     syncUrl(instance);
-
     utils.dispatch("change", detail);
 
     if (instance.options.onChange) {
-      instance.options.onChange(detail);
+      try {
+        instance.options.onChange(detail);
+      } catch (error) {
+        console.error("[MedOrbits Pagination] onChange failed.", error);
+      }
     }
   }
 
@@ -621,7 +610,6 @@
     if (nextPage === instance.page) return instance;
 
     instance.page = nextPage;
-
     update(instance, { page: nextPage });
     notifyChange(instance, "page");
 
@@ -633,18 +621,17 @@
 
     if (!instance) return null;
 
-    const nextSize = utils.toPositiveInteger(
+    const requestedSize = utils.positiveInteger(
       pageSize,
       instance.pageSize
     );
+
+    const nextSize = Math.min(1000, requestedSize);
 
     if (nextSize === instance.pageSize) return instance;
 
     instance.pageSize = nextSize;
     instance.page = 1;
-
-    instance.options.pageSize = nextSize;
-    instance.options.page = 1;
     instance.options.totalPages = 0;
 
     update(instance, {
@@ -663,10 +650,8 @@
 
     if (!instance) return null;
 
-    instance.options.totalPages = 0;
-
     update(instance, {
-      totalItems: Math.max(0, Number(totalItems) || 0),
+      totalItems: utils.nonNegativeInteger(totalItems),
       totalPages: 0
     });
 
@@ -677,11 +662,15 @@
 
   function getPageData(items, page, pageSize) {
     const data = Array.isArray(items) ? items : [];
-    const size = utils.toPositiveInteger(pageSize, DEFAULT_PAGE_SIZE);
+    const size = Math.min(
+      1000,
+      utils.positiveInteger(pageSize, DEFAULT_PAGE_SIZE)
+    );
+
     const totalItems = data.length;
     const totalPages = Math.ceil(totalItems / size);
     const currentPage = utils.clamp(
-      utils.toPositiveInteger(page, 1),
+      utils.positiveInteger(page, 1),
       1,
       Math.max(1, totalPages)
     );
@@ -699,22 +688,12 @@
     };
   }
 
-  function paginate(items, options) {
-    const settings = options || {};
-
+  function paginate(items, options = {}) {
     return getPageData(
       items,
-      settings.page || 1,
-      settings.pageSize || settings.limit || DEFAULT_PAGE_SIZE
+      options.page || 1,
+      options.pageSize || options.limit || DEFAULT_PAGE_SIZE
     );
-  }
-
-  function create(target, options) {
-    return render(target, options);
-  }
-
-  function getInstance(id) {
-    return instances.get(String(id)) || null;
   }
 
   function destroy(id) {
@@ -754,29 +733,22 @@
 
   function initAll() {
     document.querySelectorAll("[data-pagination]").forEach((container) => {
-      const page = utils.toPositiveInteger(
-        container.dataset.page,
-        1
-      );
-
-      const pageSize = utils.toPositiveInteger(
-        container.dataset.pageSize,
-        DEFAULT_PAGE_SIZE
-      );
-
-      const totalItems = Math.max(
-        0,
-        Number(container.dataset.totalItems) || 0
-      );
-
       render(container, {
-        page,
-        pageSize,
-        totalItems,
-        totalPages: Number(container.dataset.totalPages) || 0,
-        maxVisiblePages:
-          Number(container.dataset.maxVisiblePages) ||
-          DEFAULT_MAX_VISIBLE_PAGES,
+        page: utils.positiveInteger(container.dataset.page, 1),
+        pageSize: utils.positiveInteger(
+          container.dataset.pageSize,
+          DEFAULT_PAGE_SIZE
+        ),
+        totalItems: utils.nonNegativeInteger(
+          container.dataset.totalItems
+        ),
+        totalPages: utils.nonNegativeInteger(
+          container.dataset.totalPages
+        ),
+        maxVisiblePages: utils.positiveInteger(
+          container.dataset.maxVisiblePages,
+          DEFAULT_MAX_VISIBLE_PAGES
+        ),
         showPageSize: container.dataset.showPageSize !== "false",
         showSummary: container.dataset.showSummary !== "false",
         showJumpToPage: container.dataset.showJumpToPage === "true",
@@ -785,9 +757,9 @@
     });
   }
 
-  const api = {
+  const api = Object.freeze({
     initAll,
-    create,
+    create: render,
     render,
     update,
     destroy,
@@ -801,28 +773,28 @@
     getPageData,
     getPageRange,
     getVisiblePages,
-    getInstance,
+    getInstance: (id) => instances.get(String(id)) || null,
+    getInstances: () => Array.from(instances.values()),
 
-    getInstances() {
-      return Array.from(instances.values());
-    },
-
-    constants: {
+    constants: Object.freeze({
       DEFAULT_PAGE_SIZE,
       DEFAULT_MAX_VISIBLE_PAGES,
-      DEFAULT_PAGE_SIZE_OPTIONS: DEFAULT_PAGE_SIZE_OPTIONS.slice()
-    }
-  };
+      DEFAULT_PAGE_SIZE_OPTIONS
+    })
+  });
 
   window.MedOrbitsPagination = api;
 
   window.MedOrbits = window.MedOrbits || {};
   window.MedOrbits.Pagination = api;
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initAll, { once: true });
-  } else {
+  function autoInit() {
     initAll();
   }
 
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", autoInit, { once: true });
+  } else {
+    autoInit();
+  }
 })(window, document);

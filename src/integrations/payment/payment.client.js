@@ -1,81 +1,203 @@
+
 'use strict';
 
 /**
-
-* MedOrbits -- Payment Client
-* Provides a provider-independent interface for checkout creation,
-* payment retrieval, and webhook verification.
-    */
+ * MedOrbits -- Payment Client
+ *
+ * File: src/integrations/payment/payment.client.js
+ * Runtime: Node.js >= 20
+ *
+ * Provides a provider-independent interface for:
+ * - Checkout creation.
+ * - Payment retrieval.
+ * - Webhook signature verification.
+ *
+ * Security:
+ * - Webhook verification requires original raw request bytes.
+ * - Provider credentials must remain server-side.
+ * - Payment status must be confirmed server-side.
+ * - Provider ownership is explicit; injected providers are not
+ *   closed unless ownership is transferred to this client.
+ */
 
 const REQUIRED_METHODS = Object.freeze([
-'createCheckout',
-'fetchPayment',
-'verifyWebhook',
+  'createCheckout',
+  'fetchPayment',
+  'verifyWebhook',
 ]);
 
-class PaymentClient {
-constructor(provider) {
-if (!provider || typeof provider !== 'object') {
-throw new TypeError('A payment provider is required.');
-}
-
-for (const method of REQUIRED_METHODS) {
-  if (typeof provider[method] !== 'function') {
+function validateProvider(provider) {
+  if (
+    !provider ||
+    typeof provider !== 'object' ||
+    Array.isArray(provider)
+  ) {
     throw new TypeError(
-      `Payment provider must implement ${method}().`
+      'A valid payment provider is required.',
     );
   }
-}
-Object.defineProperty(this, 'provider', {
-  value: provider,
-  enumerable: false,
-  writable: false,
-  configurable: false,
-});
 
-}
+  for (const method of REQUIRED_METHODS) {
+    if (typeof provider[method] !== 'function') {
+      throw new TypeError(
+        `Payment provider must implement ${method}().`,
+      );
+    }
+  }
 
-async createCheckout(request) {
-if (
-!request ||
-typeof request !== 'object' ||
-Array.isArray(request)
-) {
-throw new TypeError('Checkout request must be an object.');
-}
+  if (
+    provider.close !== undefined &&
+    typeof provider.close !== 'function'
+  ) {
+    throw new TypeError(
+      'Payment provider close, when provided, must be a function.',
+    );
+  }
 
-return this.provider.createCheckout(request);
-
+  return provider;
 }
 
-async fetchPayment(paymentId) {
-if (
-typeof paymentId !== 'string' ||
-!paymentId.trim()
-) {
-throw new TypeError('A valid payment ID is required.');
+function validateIdentifier(value, label) {
+  if (
+    typeof value !== 'string' ||
+    !value.trim() ||
+    value.length > 512 ||
+    /[\u0000-\u001F\u007F]/u.test(value)
+  ) {
+    throw new TypeError(`A valid ${label} is required.`);
+  }
+
+  return value.trim();
 }
 
-return this.provider.fetchPayment(paymentId);
+class PaymentClient {
+  #provider;
+  #ownsProvider;
+  #closed = false;
+  #closePromise = null;
 
-}
+  constructor(provider, options = {}) {
+    validateProvider(provider);
 
-async verifyWebhook(rawBody, headers) {
-if (!Buffer.isBuffer(rawBody) && !(rawBody instanceof Uint8Array)) {
-throw new TypeError(
-'Webhook verification requires the original raw request bytes.'
-);
-}
+    if (
+      !options ||
+      typeof options !== 'object' ||
+      Array.isArray(options)
+    ) {
+      throw new TypeError(
+        'Payment client options must be an object.',
+      );
+    }
 
-if (!headers || typeof headers !== 'object') {
-  throw new TypeError('Webhook headers are required.');
-}
-// Signature verification must be implemented by the provider adapter.
-return this.provider.verifyWebhook(rawBody, headers);
+    if (
+      options.ownsProvider !== undefined &&
+      typeof options.ownsProvider !== 'boolean'
+    ) {
+      throw new TypeError(
+        'ownsProvider must be a boolean.',
+      );
+    }
 
-}
+    this.#provider = provider;
+    this.#ownsProvider = options.ownsProvider === true;
+  }
+
+  #assertOpen() {
+    if (this.#closed) {
+      const error = new Error(
+        'Payment client is closed.',
+      );
+      error.code = 'PAYMENT_CLIENT_CLOSED';
+      throw error;
+    }
+  }
+
+  async createCheckout(request) {
+    this.#assertOpen();
+
+    if (
+      !request ||
+      typeof request !== 'object' ||
+      Array.isArray(request)
+    ) {
+      throw new TypeError(
+        'Checkout request must be an object.',
+      );
+    }
+
+    // Pass through the validated application request. The provider
+    // remains responsible for provider-specific field validation,
+    // amount/currency rules, and idempotency support.
+    return this.#provider.createCheckout(request);
+  }
+
+  async fetchPayment(paymentId) {
+    this.#assertOpen();
+
+    const id = validateIdentifier(
+      paymentId,
+      'payment ID',
+    );
+
+    return this.#provider.fetchPayment(id);
+  }
+
+  async verifyWebhook(rawBody, headers) {
+    this.#assertOpen();
+
+    if (
+      !Buffer.isBuffer(rawBody) &&
+      !(rawBody instanceof Uint8Array)
+    ) {
+      throw new TypeError(
+        'Webhook verification requires the original raw request bytes.',
+      );
+    }
+
+    if (
+      !headers ||
+      typeof headers !== 'object' ||
+      Array.isArray(headers)
+    ) {
+      throw new TypeError(
+        'Webhook headers are required.',
+      );
+    }
+
+    // Copy bytes to prevent later mutation of a caller-owned Uint8Array
+    // from changing the payload passed to the provider.
+    const body = Buffer.from(
+      rawBody.buffer,
+      rawBody.byteOffset,
+      rawBody.byteLength,
+    );
+
+    return this.#provider.verifyWebhook(body, headers);
+  }
+
+  async close() {
+    if (this.#closePromise) {
+      return this.#closePromise;
+    }
+
+    this.#closed = true;
+
+    this.#closePromise = (async () => {
+      if (
+        this.#ownsProvider &&
+        typeof this.#provider.close === 'function'
+      ) {
+        await this.#provider.close();
+      }
+    })();
+
+    return this.#closePromise;
+  }
 }
 
 module.exports = {
-PaymentClient,
+  PaymentClient,
+  REQUIRED_METHODS,
+  validateProvider,
+  validateIdentifier,
 };

@@ -1,4 +1,3 @@
-
 # MedOrbits — Service Unit Tests
 
 ## 1. Purpose
@@ -78,12 +77,12 @@ Add tests for other implemented services as the MedOrbits service inventory grow
 Use Node.js’s built-in test runner and strict assertions unless the project uses another established framework.
 
 ```javascript
-‘use strict’;
+“use strict”;
 
-const test = require(‘node:test’);
-const assert = require(‘node:assert/strict’);
+const test = require(“node:test”);
+const assert = require(“node:assert/strict”);
 
-test(‘rejects an invalid payment amount’, () => {
+test(“rejects an invalid payment amount”, () => {
   const amount = 0;
 
   assert.equal(
@@ -106,16 +105,19 @@ This is a minimal assertion example. Actual tests must import and exercise the c
 
 ## 6. Running Tests
 
-From the project root:
+Run commands from the project root.
 
 ```bash
-# Run service unit tests
+# Run all service unit tests
 node —test tests/unit/services/*.test.js
 
 # Run an individual service test
 node —test tests/unit/services/payment.service.test.js
 
-# Run the entire unit test directory
+# Run the unit test files directly under tests/unit
+node —test tests/unit/*.test.js
+
+# Run both top-level unit tests and service tests
 node —test tests/unit/*.test.js tests/unit/services/*.test.js
 ```
 

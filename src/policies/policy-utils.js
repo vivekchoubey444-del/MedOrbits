@@ -1,6 +1,21 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- Shared Policy Utilities
+ *
+ * File: src/policies/policy-utils.js
+ * Runtime: Node.js >= 20
+ *
+ * Shared identity, role, permission, ownership, and status helpers.
+ *
+ * Security requirements:
+ * - Actor roles and permissions must originate from trusted server-side
+ *   authentication/authorization data.
+ * - Never build an actor object directly from request-body fields.
+ * - Unknown identifiers and malformed inputs fail closed.
+ */
+
 const ROLE_ALIASES = Object.freeze({
   super_admin: 'superadmin',
   superadmin: 'superadmin',
@@ -17,8 +32,32 @@ const ROLE_ALIASES = Object.freeze({
   user: 'user',
 });
 
-function normalizeId(value) {
-  if (value === null || value === undefined) {
+const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
+const ROLE_LIST_FIELDS = Object.freeze([
+  'roles',
+]);
+
+const ROLE_SINGLE_FIELDS = Object.freeze([
+  'role',
+]);
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function normalizeId(value, depth = 0) {
+  if (
+    value === null ||
+    value === undefined ||
+    depth > 3
+  ) {
     return null;
   }
 
@@ -27,10 +66,7 @@ function normalizeId(value) {
     return normalized || null;
   }
 
-  if (
-    typeof value === 'number' &&
-    Number.isFinite(value)
-  ) {
+  if (typeof value === 'number' && Number.isSafeInteger(value)) {
     return String(value);
   }
 
@@ -38,35 +74,41 @@ function normalizeId(value) {
     return String(value);
   }
 
-  if (typeof value === 'object') {
-    if (value.id !== undefined && value.id !== value) {
-      return normalizeId(value.id);
-    }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
 
-    if (value._id !== undefined && value._id !== value) {
-      return normalizeId(value._id);
-    }
+  // Support common database identifier wrappers without invoking
+  // arbitrary toString/valueOf methods.
+  if (
+    value._bsontype === 'ObjectId' &&
+    typeof value.toHexString === 'function'
+  ) {
+    try {
+      const hex = value.toHexString();
 
-    // Supports database identifier objects such as ObjectId.
-    // Avoid invoking arbitrary custom coercion methods.
-    const rendered = Object.prototype.toString.call(value);
-
-    if (rendered === '[object Object]') {
-      if (
-        typeof value.toHexString === 'function' &&
-        value._bsontype === 'ObjectId'
-      ) {
-        const hex = value.toHexString();
-
-        return (
-          typeof hex === 'string' &&
-          /^[a-f\d]{24}$/i.test(hex)
-        )
-          ? hex.toLowerCase()
-          : null;
-      }
-
+      return (
+        typeof hex === 'string' &&
+        OBJECT_ID_PATTERN.test(hex)
+      )
+        ? hex.toLowerCase()
+        : null;
+    } catch {
       return null;
+    }
+  }
+
+  // Avoid recursive self-references and arbitrary coercion.
+  for (const key of ['id', '_id']) {
+    if (
+      Object.prototype.hasOwnProperty.call(value, key) &&
+      value[key] !== value
+    ) {
+      const normalized = normalizeId(value[key], depth + 1);
+
+      if (normalized !== null) {
+        return normalized;
+      }
     }
   }
 
@@ -74,16 +116,27 @@ function normalizeId(value) {
 }
 
 function actorId(actor) {
-  if (!actor || typeof actor !== 'object') {
+  if (!actor || typeof actor !== 'object' || Array.isArray(actor)) {
     return null;
   }
 
-  return normalizeId(
-    actor.id ??
-    actor.userId ??
-    actor.sub ??
-    actor._id
-  );
+  // Prefer the canonical authenticated account ID. If it exists but
+  // is malformed, do not silently fall back to a different identity.
+  const candidates = [
+    actor.id,
+    actor.userId,
+    actor.user_id,
+    actor.sub,
+    actor._id,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate !== null && candidate !== undefined && candidate !== '') {
+      return normalizeId(candidate);
+    }
+  }
+
+  return null;
 }
 
 function normalizeRole(role) {
@@ -93,7 +146,7 @@ function normalizeRole(role) {
 
   const normalized = role.trim().toLowerCase();
 
-  if (!normalized) {
+  if (!normalized || normalized.length > 64) {
     return null;
   }
 
@@ -101,14 +154,23 @@ function normalizeRole(role) {
 }
 
 function actorRoles(actor) {
-  if (!actor || typeof actor !== 'object') {
+  if (!actor || typeof actor !== 'object' || Array.isArray(actor)) {
     return [];
   }
 
-  const rawRoles = [
-    ...(Array.isArray(actor.roles) ? actor.roles : []),
-    ...(actor.role != null ? [actor.role] : []),
-  ];
+  const rawRoles = [];
+
+  for (const field of ROLE_LIST_FIELDS) {
+    if (Array.isArray(actor[field])) {
+      rawRoles.push(...actor[field]);
+    }
+  }
+
+  for (const field of ROLE_SINGLE_FIELDS) {
+    if (actor[field] != null) {
+      rawRoles.push(actor[field]);
+    }
+  }
 
   return [
     ...new Set(
@@ -120,11 +182,19 @@ function actorRoles(actor) {
 }
 
 function hasRole(actor, ...roles) {
-  if (!actor || roles.length === 0) {
+  if (
+    !actor ||
+    typeof actor !== 'object' ||
+    roles.length === 0
+  ) {
     return false;
   }
 
   const currentRoles = actorRoles(actor);
+
+  if (currentRoles.length === 0) {
+    return false;
+  }
 
   const expectedRoles = roles
     .map(normalizeRole)
@@ -138,31 +208,40 @@ function hasRole(actor, ...roles) {
 function hasPermission(actor, permission) {
   if (
     !actor ||
-    typeof permission !== 'string' ||
-    !permission.trim()
+    typeof actor !== 'object' ||
+    typeof permission !== 'string'
   ) {
     return false;
   }
 
-  // This role must only be assigned by trusted server-side
-  // authorization and identity-management code.
+  const requestedPermission = permission.trim();
+
+  if (
+    !requestedPermission ||
+    requestedPermission.length > 256
+  ) {
+    return false;
+  }
+
+  // Superadmin is a trusted, server-assigned role. Never accept this
+  // role directly from client-submitted profile or request data.
   if (hasRole(actor, 'superadmin')) {
     return true;
   }
 
-  const permissions = Array.isArray(actor.permissions)
-    ? actor.permissions
-    : [];
+  if (!Array.isArray(actor.permissions)) {
+    return false;
+  }
 
-  return permissions.some(
+  return actor.permissions.some(
     (item) =>
       typeof item === 'string' &&
-      item === permission
+      item === requestedPermission
   );
 }
 
 function isAdmin(actor) {
-  return (
+  return Boolean(
     hasRole(actor, 'admin', 'superadmin') ||
     hasPermission(actor, 'platform:admin')
   );
@@ -188,9 +267,13 @@ function resourceOwnerId(
   resource,
   keys = [
     'userId',
+    'user_id',
     'ownerId',
+    'owner_id',
     'createdBy',
+    'created_by',
     'candidateId',
+    'candidate_id',
   ]
 ) {
   if (
@@ -203,7 +286,11 @@ function resourceOwnerId(
   }
 
   for (const key of keys) {
-    if (typeof key !== 'string' || !key) {
+    if (
+      typeof key !== 'string' ||
+      !key ||
+      !Object.prototype.hasOwnProperty.call(resource, key)
+    ) {
       continue;
     }
 
@@ -218,7 +305,7 @@ function resourceOwnerId(
 }
 
 function hasAnyPermission(actor, permissions) {
-  if (!Array.isArray(permissions)) {
+  if (!Array.isArray(permissions) || permissions.length === 0) {
     return false;
   }
 
@@ -228,17 +315,23 @@ function hasAnyPermission(actor, permissions) {
 }
 
 function safeStatus(value) {
-  return typeof value === 'string'
-    ? value.trim().toLowerCase()
-    : '';
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  return normalized.length <= 64 ? normalized : '';
 }
 
 function denyUnless(condition) {
   return condition === true;
 }
 
-module.exports = {
+module.exports = Object.freeze({
+  normalizeId,
   actorId,
+  normalizeRole,
   actorRoles,
   hasRole,
   hasPermission,
@@ -249,4 +342,4 @@ module.exports = {
   hasAnyPermission,
   safeStatus,
   denyUnless,
-};
+});

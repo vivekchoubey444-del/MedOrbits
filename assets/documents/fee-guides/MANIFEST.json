@@ -1,3 +1,4 @@
+
 {
   "$schema": "../../schemas/fee-guides.schema.json",
   "package": "MedOrbits Fee Guides",
@@ -9,7 +10,7 @@
   "brand": {
     "name": "MedOrbits",
     "designDirection": "Royal Burgundy and Champagne Gold",
-    "documentStyle": "Premium, accessible, print-friendly"
+    "designSystem": "Premium, accessible, print-friendly"
   },
   "metadata": {
     "title": "MedOrbits Fee Guides",
@@ -23,7 +24,7 @@
     "academicYear": null,
     "createdAt": null,
     "updatedAt": null,
-    "lastReviewed": null
+    "lastReviewedAt": null
   },
   "access": {
     "classification": "public-frontend-assets",

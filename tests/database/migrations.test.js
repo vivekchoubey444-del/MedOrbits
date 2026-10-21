@@ -1,66 +1,68 @@
 'use strict';
 /**
+ * MedOrbits -- Database Migration Tests
+ *
  * File: tests/database/migrations.test.js
+ * Framework: Node.js built-in node:test
+ * Requires: Node.js >= 20
  *
- * Purpose:
- * - Verify migration files exist and follow expected naming conventions.
- * - Verify migration tracking table can be queried.
- * - Verify applied migrations are recorded without duplicate versions.
- * - Verify migration execution is repeatable when the runner supports it.
- * - Verify rollback metadata is available when the project supports rollback.
+ * Run:
+ *   node --test tests/database/migrations.test.js
  *
- * Requirements:
- * - Node.js >= 20
- * - Run against a dedicated TEST database only.
+ * Required:
+ *   NODE_ENV=test
+ *   TEST_DATABASE_CLIENT=postgres|mysql
  *
- * Environment:
- *   TEST_DATABASE_CLIENT=postgres | mysql
- *   TEST_DATABASE_URL=postgres://...             (PostgreSQL)
- *   TEST_DATABASE_HOST=127.0.0.1                 (MySQL)
- *   TEST_DATABASE_PORT=3306                      (MySQL)
- *   TEST_DATABASE_NAME=medorbits_test            (MySQL)
+ * PostgreSQL:
+ *   TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/medorbits_test
+ *
+ * MySQL:
+ *   TEST_DATABASE_HOST=127.0.0.1
+ *   TEST_DATABASE_PORT=3306
+ *   TEST_DATABASE_NAME=medorbits_test
  *   TEST_DATABASE_USER=...
  *   TEST_DATABASE_PASSWORD=...
- *   MIGRATIONS_DIR=./database/migrations         (optional)
- *   MIGRATIONS_TABLE=migrations                  (optional)
  *
- * Important:
- * This test file does not automatically run migrations or modify application
- * tables. Migration-runner integration tests should call the project's actual
- * migration API in a dedicated disposable database.
+ * Optional:
+ *   MIGRATIONS_DIR=./database/migrations
+ *   MIGRATIONS_TABLE=migrations
+ *
+ * This suite inspects migration files and existing migration history.
+ * It does not execute migrations, modify application tables, or perform
+ * rollback tests. Those require integration with the actual migration runner.
  */
-const {
-  test,
-  describe,
-  before,
-  after,
-} = require('node:test');
+const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const CLIENT = String(
-  process.env.TEST_DATABASE_CLIENT || ''
+  process.env.TEST_DATABASE_CLIENT || '',
 ).trim().toLowerCase();
-const MIGRATIONS_TABLE =
-  process.env.MIGRATIONS_TABLE || 'migrations';
+const MIGRATIONS_TABLE = (
+  process.env.MIGRATIONS_TABLE || 'migrations'
+).trim();
 const MIGRATIONS_DIR = path.resolve(
   process.env.MIGRATIONS_DIR ||
-    path.join(process.cwd(), 'database', 'migrations')
+    path.join(process.cwd(), 'database', 'migrations'),
 );
-const DATABASE_URL = process.env.TEST_DATABASE_URL;
+const DATABASE_URL = process.env.TEST_DATABASE_URL || '';
 const MYSQL_CONFIG = {
   host: process.env.TEST_DATABASE_HOST || '127.0.0.1',
   port: Number(process.env.TEST_DATABASE_PORT || 3306),
-  database: process.env.TEST_DATABASE_NAME,
-  user: process.env.TEST_DATABASE_USER,
-  password: process.env.TEST_DATABASE_PASSWORD,
+  database: process.env.TEST_DATABASE_NAME || '',
+  user: process.env.TEST_DATABASE_USER || '',
+  password: process.env.TEST_DATABASE_PASSWORD || '',
   connectTimeout: 5000,
+  multipleStatements: false,
 };
-let db;
-let connection;
+let db = null;
 let migrationsTableExists = false;
+let setupError = null;
 function isProductionEnvironment() {
-  return String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+  return (
+    String(process.env.NODE_ENV || '').trim().toLowerCase() ===
+    'production'
+  );
 }
 function quoteIdentifier(identifier) {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) {
@@ -70,54 +72,66 @@ function quoteIdentifier(identifier) {
     ? `\`${identifier}\``
     : `"${identifier}"`;
 }
+function configuredDatabaseName() {
+  if (CLIENT === 'postgres') {
+    try {
+      return decodeURIComponent(
+        new URL(DATABASE_URL).pathname.replace(/^\/+/, ''),
+      );
+    } catch {
+      return '';
+    }
+  }
+  if (CLIENT === 'mysql') {
+    return MYSQL_CONFIG.database;
+  }
+  return '';
+}
 function assertTestDatabaseConfiguration() {
   assert.equal(
     isProductionEnvironment(),
     false,
-    'Refusing to run database migration tests with NODE_ENV=production.'
+    'Refusing to run migration tests with NODE_ENV=production.',
   );
   assert.ok(
     ['postgres', 'mysql'].includes(CLIENT),
-    'Set TEST_DATABASE_CLIENT to "postgres" or "mysql".'
+    'Set TEST_DATABASE_CLIENT to "postgres" or "mysql".',
   );
-  if (CLIENT === 'postgres') {
-    assert.ok(
-      DATABASE_URL,
-      'TEST_DATABASE_URL is required for PostgreSQL.'
-    );
-    let parsed;
-    try {
-      parsed = new URL(DATABASE_URL);
-    } catch {
-      throw new Error('TEST_DATABASE_URL must be a valid database URL.');
-    }
-    assert.ok(
-      /test/i.test(parsed.pathname) ||
-        /test/i.test(parsed.searchParams.get('application_name') || ''),
-      'Use a dedicated test database. Its name should contain "test", ' +
-        'or set application_name=test in TEST_DATABASE_URL.'
-    );
-  }
-  if (CLIENT === 'mysql') {
-    assert.ok(
-      MYSQL_CONFIG.database,
-      'TEST_DATABASE_NAME is required for MySQL.'
-    );
-    assert.match(
-      MYSQL_CONFIG.database,
-      /test/i,
-      'Use a dedicated MySQL test database whose name contains "test".'
-    );
-    assert.ok(
-      MYSQL_CONFIG.user,
-      'TEST_DATABASE_USER is required for MySQL.'
-    );
-  }
   assert.match(
     MIGRATIONS_TABLE,
     /^[A-Za-z_][A-Za-z0-9_]*$/,
-    'MIGRATIONS_TABLE must be a valid SQL identifier.'
+    'MIGRATIONS_TABLE must be a valid SQL identifier.',
   );
+  assert.ok(
+    Number.isInteger(MYSQL_CONFIG.port) &&
+      MYSQL_CONFIG.port >= 1 &&
+      MYSQL_CONFIG.port <= 65535,
+    'TEST_DATABASE_PORT must be a valid TCP port.',
+  );
+  const databaseName = configuredDatabaseName();
+  assert.ok(
+    databaseName,
+    CLIENT === 'postgres'
+      ? 'TEST_DATABASE_URL must include a database name.'
+      : 'TEST_DATABASE_NAME is required for MySQL.',
+  );
+  assert.match(
+    databaseName,
+    /test/i,
+    'Use a dedicated test database whose name contains "test".',
+  );
+  if (CLIENT === 'postgres') {
+    assert.match(
+      DATABASE_URL,
+      /^postgres(?:ql)?:\/\//i,
+      'TEST_DATABASE_URL must be a PostgreSQL URL.',
+    );
+  } else {
+    assert.ok(
+      MYSQL_CONFIG.host && MYSQL_CONFIG.user,
+      'TEST_DATABASE_HOST and TEST_DATABASE_USER are required.',
+    );
+  }
 }
 async function connectDatabase() {
   if (CLIENT === 'postgres') {
@@ -126,7 +140,7 @@ async function connectDatabase() {
       pg = require('pg');
     } catch {
       throw new Error(
-        'PostgreSQL driver not installed. Install the "pg" package.'
+        'PostgreSQL driver not installed. Install it with: npm install pg',
       );
     }
     const pool = new pg.Pool({
@@ -134,15 +148,30 @@ async function connectDatabase() {
       connectionTimeoutMillis: 5000,
       max: 1,
       application_name: 'medorbits-migration-tests',
+      ...(process.env.TEST_DATABASE_SSL === 'true'
+        ? {
+            ssl: {
+              rejectUnauthorized: true,
+            },
+          }
+        : {}),
     });
-    const client = await pool.connect();
-    return {
-      query: async (sql, params = []) => client.query(sql, params),
-      close: async () => {
-        client.release();
-        await pool.end();
-      },
-    };
+    try {
+      const client = await pool.connect();
+      return {
+        query: (sql, params = []) => client.query(sql, params),
+        close: async () => {
+          try {
+            client.release();
+          } finally {
+            await pool.end();
+          }
+        },
+      };
+    } catch (error) {
+      await pool.end().catch(() => {});
+      throw error;
+    }
   }
   if (CLIENT === 'mysql') {
     let mysql;
@@ -150,45 +179,95 @@ async function connectDatabase() {
       mysql = require('mysql2/promise');
     } catch {
       throw new Error(
-        'MySQL driver not installed. Install the "mysql2" package.'
+        'MySQL driver not installed. Install it with: npm install mysql2',
       );
     }
     const connection = await mysql.createConnection(MYSQL_CONFIG);
     return {
-      query: async (sql, params = []) =>
-        connection.execute(sql, params),
-      close: async () => connection.end(),
+      query: (sql, params = []) => connection.execute(sql, params),
+      close: () => connection.end(),
     };
   }
   throw new Error(`Unsupported database client: ${CLIENT}`);
 }
 async function queryRows(sql, params = []) {
-  const result = await db.query(sql, params);
-  if (CLIENT === 'postgres') {
-    return result.rows;
+  if (!db) {
+    throw new Error('Migration test database connection is unavailable.');
   }
-  // mysql2 returns [rows, fields].
-  return result[0];
+  const result = await db.query(sql, params);
+  return CLIENT === 'postgres' ? result.rows : result[0];
+}
+async function verifyDatabaseIdentity() {
+  const rows = CLIENT === 'postgres'
+    ? await queryRows(
+        'SELECT current_database() AS database_name',
+      )
+    : await queryRows(
+        'SELECT DATABASE() AS database_name',
+      );
+  assert.equal(rows.length, 1);
+  const actualName = rows[0].database_name;
+  const expectedName = configuredDatabaseName();
+  assert.equal(
+    actualName,
+    expectedName,
+    'Connected database does not match the configured test database.',
+  );
+  assert.match(
+    actualName,
+    /test/i,
+    'Refusing to inspect migration history outside a test-named database.',
+  );
 }
 async function tableExists(tableName) {
   if (CLIENT === 'postgres') {
     const rows = await queryRows(
-      `SELECT table_name
-       FROM information_schema.tables
-       WHERE table_schema = current_schema()
-         AND table_name = $1`,
-      [tableName]
+      `
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = current_schema()
+          AND table_name = $1
+      `,
+      [tableName],
     );
     return rows.length > 0;
   }
   const rows = await queryRows(
-    `SELECT table_name
-     FROM information_schema.tables
-     WHERE table_schema = DATABASE()
-       AND table_name = ?`,
-    [tableName]
+    `
+      SELECT TABLE_NAME AS table_name
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+    `,
+    [tableName],
   );
   return rows.length > 0;
+}
+async function getColumnNames(tableName) {
+  if (CLIENT === 'postgres') {
+    const rows = await queryRows(
+      `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = $1
+        ORDER BY ordinal_position
+      `,
+      [tableName],
+    );
+    return rows.map((row) => row.column_name);
+  }
+  const rows = await queryRows(
+    `
+      SELECT COLUMN_NAME AS column_name
+      FROM information_schema.columns
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+      ORDER BY ORDINAL_POSITION
+    `,
+    [tableName],
+  );
+  return rows.map((row) => row.column_name);
 }
 function discoverMigrationFiles() {
   if (!fs.existsSync(MIGRATIONS_DIR)) {
@@ -204,26 +283,24 @@ function discoverMigrationFiles() {
 function validateMigrationFileNames(files) {
   const versions = new Set();
   for (const file of files) {
-    const version = file.match(/^(\d{3,})[_-]/)?.[1];
+    const match = file.match(/^(\d{3,})[_-]/);
     assert.ok(
-      version,
-      `Migration "${file}" should begin with a numeric version ` +
-        'followed by "_" or "-". Example: 001_create_users.sql.'
+      match,
+      `Migration "${file}" must begin with a numeric version followed ` +
+        'by "_" or "-". Example: 001_create_users.sql.',
     );
+    const version = match[1];
     assert.equal(
       versions.has(version),
       false,
-      `Duplicate migration version "${version}".`
+      `Duplicate migration version "${version}".`,
     );
     versions.add(version);
   }
 }
 async function getMigrationHistory() {
   const table = quoteIdentifier(MIGRATIONS_TABLE);
-  const rows = await queryRows(
-    `SELECT * FROM ${table}`
-  );
-  return rows;
+  return queryRows(`SELECT * FROM ${table}`);
 }
 function getMigrationVersion(row) {
   return (
@@ -235,81 +312,106 @@ function getMigrationVersion(row) {
     null
   );
 }
+function getFileVersion(filename) {
+  return filename.match(/^(\d{3,})[_-]/)?.[1] || null;
+}
 describe('Database migrations', () => {
   before(async () => {
-    assertTestDatabaseConfiguration();
-    db = await connectDatabase();
-    migrationsTableExists = await tableExists(MIGRATIONS_TABLE);
+    try {
+      assertTestDatabaseConfiguration();
+      db = await connectDatabase();
+      await verifyDatabaseIdentity();
+      migrationsTableExists = await tableExists(MIGRATIONS_TABLE);
+    } catch (error) {
+      setupError = error;
+      if (db) {
+        try {
+          await db.close();
+        } catch (closeError) {
+          setupError = new AggregateError(
+            [error, closeError],
+            'Migration test setup and connection cleanup failed.',
+          );
+        } finally {
+          db = null;
+        }
+      }
+    }
   });
   after(async () => {
     if (db) {
-      await db.close();
-      db = undefined;
+      const current = db;
+      db = null;
+      await current.close();
     }
+  });
+  test('test database configuration and connection are valid', () => {
+    if (setupError) {
+      throw setupError;
+    }
+    assert.ok(db, 'Database connection should be initialized.');
   });
   test('migration directory exists', () => {
     assert.ok(
       fs.existsSync(MIGRATIONS_DIR),
       `Migration directory not found: ${MIGRATIONS_DIR}. ` +
-        'Set MIGRATIONS_DIR to the actual project migration directory.'
+        'Set MIGRATIONS_DIR to the actual project migration directory.',
     );
     assert.ok(
       fs.statSync(MIGRATIONS_DIR).isDirectory(),
-      `MIGRATIONS_DIR is not a directory: ${MIGRATIONS_DIR}`
+      `MIGRATIONS_DIR is not a directory: ${MIGRATIONS_DIR}`,
     );
   });
   test('migration directory contains migration files', () => {
     const files = discoverMigrationFiles();
     assert.ok(
       files.length > 0,
-      `No .js, .cjs, .mjs or .sql migration files found in ${MIGRATIONS_DIR}.`
+      `No .js, .cjs, .mjs, or .sql migration files found in ${MIGRATIONS_DIR}.`,
     );
   });
-  test('migration filenames use unique ordered numeric versions', () => {
+  test('migration filenames use unique numeric versions', () => {
     const files = discoverMigrationFiles();
     assert.ok(
       files.length > 0,
-      'Cannot validate migration filenames because no migration files were found.'
+      'Cannot validate migration filenames because no migration files were found.',
     );
     validateMigrationFileNames(files);
   });
-  test('migration files are sorted deterministically', () => {
+  test('migration files are returned in deterministic order', () => {
     const files = discoverMigrationFiles();
-    const sorted = [...files].sort((a, b) => a.localeCompare(b, 'en'));
     assert.deepEqual(
       files,
-      sorted,
-      'Migration files must be returned in deterministic order.'
+      [...files].sort((a, b) => a.localeCompare(b, 'en')),
     );
   });
-  test('migration history table exists when migrations have been initialized', async (t) => {
+  test('migration history table exists when initialized', async (t) => {
+    if (setupError) {
+      throw setupError;
+    }
     if (!migrationsTableExists) {
       t.skip(
         `The "${MIGRATIONS_TABLE}" table does not exist yet. ` +
-          'Run the project migration bootstrap before testing migration history.'
+          'Initialize the project migration history table to test its contents.',
       );
       return;
     }
-    assert.equal(
-      await tableExists(MIGRATIONS_TABLE),
-      true,
-      'Migration history table should exist.'
-    );
+    assert.equal(await tableExists(MIGRATIONS_TABLE), true);
   });
   test('migration history can be queried', async (t) => {
+    if (setupError) {
+      throw setupError;
+    }
     if (!migrationsTableExists) {
-      t.skip(
-        'Migration history table is not initialized; no history query performed.'
-      );
+      t.skip('Migration history table is not initialized.');
       return;
     }
     const rows = await getMigrationHistory();
-    assert.ok(
-      Array.isArray(rows),
-      'Migration history query should return an array of rows.'
-    );
+    assert.ok(Array.isArray(rows));
   });
   test('migration history contains no duplicate recorded versions', async (t) => {
+    if (setupError) {
+      throw setupError;
+    }
     if (!migrationsTableExists) {
       t.skip('Migration history table is not initialized.');
       return;
@@ -322,10 +424,13 @@ describe('Database migrations', () => {
     assert.equal(
       versions.length,
       new Set(versions).size,
-      'Migration history contains duplicate migration versions.'
+      'Migration history contains duplicate migration versions.',
     );
   });
-  test('recorded migration versions correspond to available migration files', async (t) => {
+  test('recorded migrations correspond to available files', async (t) => {
+    if (setupError) {
+      throw setupError;
+    }
     if (!migrationsTableExists) {
       t.skip('Migration history table is not initialized.');
       return;
@@ -333,7 +438,7 @@ describe('Database migrations', () => {
     const files = discoverMigrationFiles();
     const fileNames = new Set(files);
     const fileVersions = new Set(
-      files.map((file) => file.match(/^(\d{3,})[_-]/)?.[1])
+      files.map(getFileVersion).filter(Boolean),
     );
     const rows = await getMigrationHistory();
     for (const row of rows) {
@@ -344,43 +449,24 @@ describe('Database migrations', () => {
       const value = String(recorded);
       const basename = path.basename(value);
       const exactFileExists = fileNames.has(basename);
-      const version = basename.match(/^(\d{3,})[_-]/)?.[1];
+      const version = getFileVersion(basename);
       const versionExists = version && fileVersions.has(version);
       assert.ok(
         exactFileExists || versionExists,
         `Recorded migration "${value}" has no matching migration file. ` +
-          'If historical migrations are intentionally archived or renamed, ' +
-          'adjust this assertion to match the project migration policy.'
+          'Adjust this check if the project intentionally archives historical migrations.',
       );
     }
   });
-  test('migration history table has a recognizable version column', async (t) => {
+  test('migration history has a recognizable version column', async (t) => {
+    if (setupError) {
+      throw setupError;
+    }
     if (!migrationsTableExists) {
       t.skip('Migration history table is not initialized.');
       return;
     }
-    const rows = await getMigrationHistory();
-    // An empty table cannot reveal its row keys. Inspect metadata instead.
-    let columnNames = [];
-    if (CLIENT === 'postgres') {
-      const result = await queryRows(
-        `SELECT column_name
-         FROM information_schema.columns
-         WHERE table_schema = current_schema()
-           AND table_name = $1`,
-        [MIGRATIONS_TABLE]
-      );
-      columnNames = result.map((row) => row.column_name);
-    } else {
-      const result = await queryRows(
-        `SELECT column_name
-         FROM information_schema.columns
-         WHERE table_schema = DATABASE()
-           AND table_name = ?`,
-        [MIGRATIONS_TABLE]
-      );
-      columnNames = result.map((row) => row.COLUMN_NAME || row.column_name);
-    }
+    const columns = await getColumnNames(MIGRATIONS_TABLE);
     const recognizedColumns = [
       'version',
       'migration',
@@ -389,16 +475,21 @@ describe('Database migrations', () => {
       'file_name',
     ];
     assert.ok(
-      recognizedColumns.some((column) => columnNames.includes(column)),
-      `Migration history table must contain a recognized version column. ` +
-        `Found columns: ${columnNames.join(', ') || '(none)'}.`
+      recognizedColumns.some((column) => columns.includes(column)),
+      'Migration history table must have a recognized version column. ' +
+        `Found: ${columns.join(', ') || '(none)'}.`,
     );
-    // If records exist, each should expose a recognizable version field.
+    const rows = await getMigrationHistory();
     for (const row of rows) {
-      assert.ok(
-        getMigrationVersion(row) !== null &&
-          getMigrationVersion(row) !== undefined,
-        'A migration history row is missing its version identifier.'
+      assert.notEqual(
+        getMigrationVersion(row),
+        null,
+        'A migration history row is missing its version identifier.',
+      );
+      assert.notEqual(
+        getMigrationVersion(row),
+        undefined,
+        'A migration history row is missing its version identifier.',
       );
     }
   });

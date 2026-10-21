@@ -6,13 +6,13 @@ The database/seeds/ directory contains SQL seed scripts for initializing baselin
 
 All seed scripts must remain compatible with the MedOrbits database schema, applied migrations, and supported MySQL version.
 
-Database: MySQL 8.0.16+
-Storage engine: InnoDB
-Character set: utf8mb4
+* Database: MySQL 8.0.16+
+* Storage engine: InnoDB
+* Character set: utf8mb4
 
-Safety: Run these scripts only against an authorized development or test database. The institution and applicant records are fictional and must never be presented as verified real-world records.
+Safety: Run these scripts only against an authorized development or test database. Institution and applicant records are fictional and must never be presented as verified real-world records.
 
-Directory Structure
+Directory structure
 
 database/seeds/
 ├── README.md
@@ -21,46 +21,46 @@ database/seeds/
 ├── seed-colleges.sql
 └── seed-demo-data.sql
 
-Seed Files
+Seed files
 
 File	Purpose	Prerequisites
-seed-roles.sql	Inserts baseline roles, permissions, and role-permission assignments.	Required role and permission tables
-seed-courses.sql	Inserts illustrative education course catalogue records.	003_create_courses.sql
-seed-colleges.sql	Inserts fictional universities and colleges.	004_create_colleges_universities.sql
-seed-demo-data.sql	Inserts a synthetic demonstration application.	Migrations 001–010, course and college seeds, and a pre-existing synthetic user
+seed-roles.sql	Inserts baseline roles, permissions, and role-permission assignments.	Migrations 001 and 002
+seed-courses.sql	Inserts illustrative education course catalogue records.	Migration 003
+seed-colleges.sql	Inserts fictional universities and colleges.	Migration 004
+seed-demo-data.sql	Inserts a synthetic demonstration application.	Migrations 001, 003, 004, and 005; course and college seeds; pre-existing synthetic user
 
-The migration filenames above must match the actual migration files in the repository. Verify the complete migration sequence before running the seeds.
+The demonstration application requires the user demo-applicant@example.invalid to exist before the seed runs.
+
+The migration filenames must match the files actually maintained in the repository. Verify the migration sequence and schema before executing seeds.
 
 Prerequisites
 
-Before executing the seed scripts, confirm that:
+Before running the seed scripts, confirm that:
 
-* MySQL 8.0.16 or later is installed.
-* The intended database exists and is configured for MedOrbits.
+* MySQL 8.0.16 or later is available.
+* The intended development or test database exists.
 * Required migrations have been applied successfully.
 * Required tables, columns, unique indexes, and foreign-key constraints exist.
 * Transactional tables use InnoDB.
-* The database uses utf8mb4 where required by the schema.
-* A dedicated development or test database is being used.
-* The synthetic user required by seed-demo-data.sql already exists.
-* The database account has only the permissions needed to execute the seeds.
+* The schema uses the expected character set and collation.
+* The synthetic user required by seed-demo-data.sql exists.
+* The database account has only the permissions required for the operation.
+* A backup or disposable database is available if existing data could be affected.
 
-Execution Order
+Execution order
 
-Run the scripts in the following order:
+Run the scripts in this order:
 
 1. seed-roles.sql
 2. seed-courses.sql
 3. seed-colleges.sql
 4. seed-demo-data.sql
 
-The demonstration application depends on the course, college, and synthetic user records being available.
+The role seed requires the roles and permissions tables. The course and institution seeds require their respective migrations. The demonstration application depends on the course, college, and synthetic user records.
 
-The role seed requires its corresponding role and permission tables. The course and institution seeds require their respective migrations to be applied before execution.
+Important: seed-demo-data.sql does not create a user account. It expects the synthetic user demo-applicant@example.invalid to exist already.
 
-Important: The demonstration seed does not create a user account. It expects the synthetic user demo-applicant@example.invalid to exist already.
-
-Database Configuration
+Database configuration
 
 Configure the database connection using the environment variables expected by the MedOrbits application.
 
@@ -73,53 +73,27 @@ DB_NAME=medorbits_dev
 DB_USER=medorbits_app
 DB_PASSWORD=replace_with_a_secure_password
 
-These values are examples. Use the actual variable names defined in the project’s database configuration, such as src/config/database.js and src/config/env.js.
+These values are examples only. Use the actual variable names defined by the repository’s database configuration, such as src/config/database.js or src/config/env.js, if those files exist.
 
-Never commit real credentials to source control. Keep .env files containing secrets out of Git and maintain safe placeholders in .env.example.
+Never commit real credentials to source control. Keep secret-bearing .env files out of Git and use safe placeholders in .env.example.
 
-Executing the Seeds
+Executing the seeds
 
-Run commands from the repository root.
+Run the scripts from the repository root using your approved local database workflow.
 
-1. Verify the target database
+Before execution, confirm that the selected database is the intended development or test database. Do not put database passwords directly into command-line arguments or commit them to scripts.
 
-The MySQL client will prompt for the password.
+Execute the four seed files in the order listed above. If a statement fails, stop and investigate before proceeding to the next file.
 
-mysql -h “$DB_HOST” \
-  -P “${DB_PORT:-3306}” \
-  -u “$DB_USER” \
-  -p \
-  -D “$DB_NAME” \
-  -e “SELECT DATABASE() AS database_name, VERSION() AS mysql_version;”
+Execution behavior: A sequence of separate seed files is not one atomic transaction. Earlier scripts may have committed successfully even if a later script fails.
 
-Confirm that the returned database name identifies the intended development or test database.
+The course, college, role, and demo seeds use duplicate-key handling. The college, course, role, and demo scripts discussed for this repository also use stored procedures for verification and rollback. Confirm that the actual files contain these implementations and that your SQL client supports DELIMITER and stored procedures before relying on them.
 
-2. Execute the seed scripts
-
-mysql -h “$DB_HOST” -P “${DB_PORT:-3306}” \
-  -u “$DB_USER” -p “$DB_NAME” \
-  < database/seeds/seed-roles.sql
-mysql -h “$DB_HOST” -P “${DB_PORT:-3306}” \
-  -u “$DB_USER” -p “$DB_NAME” \
-  < database/seeds/seed-courses.sql
-mysql -h “$DB_HOST” -P “${DB_PORT:-3306}” \
-  -u “$DB_USER” -p “$DB_NAME” \
-  < database/seeds/seed-colleges.sql
-mysql -h “$DB_HOST” -P “${DB_PORT:-3306}” \
-  -u “$DB_USER” -p “$DB_NAME” \
-  < database/seeds/seed-demo-data.sql
-
-These commands assume the environment variables have been exported into the current shell. If they exist only in a .env file, load them using your approved local environment workflow first.
-
-Do not put database passwords directly into command-line arguments or commit them to scripts.
-
-Execution behavior: If a statement fails, stop and investigate before running subsequent scripts. Do not assume that a seed sequence is atomic across multiple files.
-
-Data Safety
+Data safety
 
 * Never run demonstration seeds against production without explicit review and authorization.
 * Use fictional demonstration records only.
-* Do not place real student information, credentials, or sensitive personal data in seed files.
+* Do not put real student information, credentials, or sensitive personal data in seed files.
 * Never store plaintext passwords, API keys, access tokens, or payment credentials in seed files.
 * Do not create fake payment records that could be mistaken for completed transactions.
 * Preserve existing user-generated data when rerunning seeds.
@@ -132,30 +106,31 @@ Idempotency
 
 Seed scripts should be safe to execute repeatedly wherever practical.
 
-For MySQL, INSERT ... ON DUPLICATE KEY UPDATE can prevent duplicate insertions when an applicable unique constraint exists.
+MySQL’s INSERT ... ON DUPLICATE KEY UPDATE can prevent duplicate insertions when an applicable unique constraint exists.
 
 For example:
 
 ON DUPLICATE KEY UPDATE
     id = id;
 
-This no-op update leaves the existing row unchanged when a duplicate-key conflict occurs.
+This no-op update leaves the conflicting row unchanged.
 
 However:
 
-* The behavior depends on the actual unique indexes defined in the schema.
-* The conflict may be triggered by a unique index other than the intended natural key.
+* The behavior depends on the unique indexes defined in the actual schema.
+* A conflict may be triggered by a unique index other than the intended natural key.
 * A no-op update does not repair incorrect existing data.
-* A seed may insert zero rows if prerequisite records are missing.
-* A successful SQL statement does not necessarily prove that all expected records exist.
+* An INSERT ... SELECT may insert zero rows if its prerequisites are missing.
+* A successful SQL statement does not prove that every expected record exists.
+* A seed may fail verification if a pre-existing record has different relationships or identifiers.
 
-Use stable unique identifiers such as course slugs, institution slugs, and application numbers where appropriate. Confirm that the corresponding columns have unique constraints.
+Use stable identifiers such as course slugs, institution slugs, and application numbers where appropriate. Confirm that the corresponding columns have unique constraints.
 
 Do not silently overwrite existing permissions, institutional relationships, or user-generated data. Use an explicit migration or reviewed maintenance operation when existing records need to change.
 
 Validation
 
-After executing the seed scripts, verify the expected records and relationships.
+After running the seed scripts, verify the expected records and relationships.
 
 1. Verify roles
 
@@ -197,6 +172,14 @@ SELECT
     duration_months,
     is_active
 FROM courses
+WHERE slug IN (
+    ‘mbbs’,
+    ‘bds’,
+    ‘bams’,
+    ‘b-pharm’,
+    ‘bsc-nursing’,
+    ‘btech-computer-science’
+)
 ORDER BY slug;
 
 5. Verify fictional universities
@@ -212,7 +195,7 @@ WHERE slug IN (
 )
 ORDER BY slug;
 
-6. Verify fictional colleges
+6. Verify fictional colleges and relationships
 
 SELECT
     c.slug AS college_slug,
@@ -240,39 +223,71 @@ SELECT
 FROM applications
 WHERE application_number = ‘DEMO-APPLICATION-0001’;
 
-8. Verify foreign-key integrity
+8. Verify foreign-key relationships
 
-Check that the seeded college records reference existing universities and that the demonstration application references the intended user, course, and college.
+Confirm that:
 
-Finally, run the project’s automated test suite and any available database integration tests.
+* The seeded colleges reference their intended universities.
+* The demonstration application references the expected user.
+* The application references the expected course and college.
+* Role-permission assignments reference existing roles and permissions.
+* No seed has unintentionally assigned the administrator role to a user.
 
-Validation note: The queries above inspect database state; they do not automatically assert that the expected number of rows exists. Automated validation should explicitly fail when required records or relationships are missing.
+Run the project’s automated test suite and any available database integration tests after validation.
+
+Validation note: These queries inspect database state; they do not automatically assert that the expected number of rows exists. Automated validation should fail explicitly when required records or relationships are missing.
+
+Important schema compatibility notes
+
+Keep the seed files aligned with the migrations and backend models.
+
+Roles and permissions
+
+The role seed uses permission names such as applications.read_assigned, documents.read_assigned, and jobs.manage_own. Confirm that these names exist in the final seed and are enforced consistently by the backend authorization middleware.
+
+Counsellor permissions must be restricted to assigned applications and documents by trusted backend logic. Permission names alone do not enforce record-level access.
+
+The seed grants permissions to the administrator role; it does not assign that role to any user. Administrative role assignment must remain a separately authorized operation.
+
+Courses
+
+The course seed targets the columns defined in 003_create_courses.sql. If the JSON course fixtures contain additional fields such as durationYears, institutionType, or counsellingRequired, map those fields explicitly in the import process or introduce a reviewed schema migration.
+
+Colleges and universities
+
+The college seed assumes unique slugs and the columns defined in 004_create_colleges_universities.sql. Verify that the university references are correct before using these records in application demonstrations.
+
+Additional fixture fields such as ownership, admission details, course relationships, or contact information require explicit mapping if the SQL schema does not contain corresponding fields.
+
+Demonstration applications
+
+The demo seed requires the columns and status values supported by 005_create_applications.sql. It must not overwrite an existing application with the same application number, and it must verify the user’s, course’s, and college’s relationships before committing.
 
 Troubleshooting
 
 Duplicate-key errors
 
-Check the relevant unique indexes and determine which constraint triggered the conflict. Verify that the existing row is correct before rerunning the seed.
+Check the unique indexes and identify which constraint triggered the conflict. Inspect the existing row before rerunning the seed.
 
 Foreign-key errors
 
-Confirm that prerequisite migrations and seed scripts have run successfully. Verify that referenced users, courses, universities, and colleges exist and that their identifiers match the expected records.
+Confirm that prerequisite migrations and seeds completed successfully. Verify that referenced users, courses, universities, and colleges exist and that their identifiers match the expected records.
 
 Missing columns or tables
 
-Check the applied migrations and confirm that the SQL scripts match the current schema. Do not resolve schema mismatches by arbitrarily removing required columns from a seed.
+Check the applied migrations and compare the seed SQL with the current schema. Do not resolve schema mismatches by arbitrarily removing required columns from a seed.
 
 No rows inserted
 
-Check whether the required synthetic user, course slug, or institution slug exists. INSERT ... SELECT statements can complete without inserting a row when their selection criteria match nothing.
+Check whether the required synthetic user, course slug, or institution slug exists. An INSERT ... SELECT statement can complete without inserting a row if its selection criteria match nothing.
 
 Transaction errors
 
-Confirm that the affected tables use InnoDB. Remember that MySQL DDL statements can implicitly commit transactions; do not assume schema changes can be rolled back with a seed transaction.
+Confirm that the affected tables use InnoDB. MySQL DDL statements may implicitly commit transactions; do not assume schema changes can be rolled back by a seed transaction.
 
-Repeated execution changes unexpected records
+Unexpected changes after repeated execution
 
-Inspect the table’s unique indexes and the behavior of its duplicate-key clause. No-op duplicate handling prevents an update to the conflicting row but does not guarantee that the intended natural key caused the conflict.
+Inspect the unique indexes and duplicate-key clauses. A no-op update prevents modification of the conflicting row, but it does not guarantee that the intended natural key caused the conflict.
 
 Maintenance
 
@@ -284,8 +299,8 @@ Whenever database migrations or seed scripts change:
 * Confirm compatibility with the supported MySQL version.
 * Test the full seed sequence against a clean development database.
 * Test repeated execution for duplicate creation and unintended updates.
-* Verify that fictional data remains clearly distinguishable from production data.
-* Update the execution order and prerequisites when dependencies change.
+* Verify that fictional data remains distinguishable from production data.
+* Update execution order and prerequisites when dependencies change.
 * Review security-sensitive permission changes before merging.
 
 Disclaimer

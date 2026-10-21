@@ -1,87 +1,83 @@
 
 /**
  * MedOrbits -- Authentication & Session Manager
- * File: assets/js/auth.js
+ * File: /assets/js/auth.js
+ * Version: 1.1.0
  *
  * Responsibilities:
  * - Login and registration
- * - Logout and server-side session management
+ * - Server-side session management
  * - Session restoration
- * - Email verification
- * - Password reset and change
- * - Authentication state
- * - Role-based UI access helpers
- * - Authentication events and error handling
+ * - Email verification and password recovery
+ * - Password changes
+ * - Authentication state and role helpers
+ * - Authentication events and accessible form integration
  *
  * Security:
- * - The server is the source of truth for identity and roles.
- * - Uses secure, same-origin cookie sessions by default.
+ * - The server is the source of truth for identity and permissions.
+ * - Uses same-origin cookie sessions by default.
  * - Never stores passwords or authentication tokens in localStorage.
- * - All protected API endpoints must enforce authorization server-side.
+ * - Protected endpoints must enforce authorization server-side.
  */
 
 (() => {
   "use strict";
 
+  if (window.MedOrbitsAuth) return;
+
   // --------------------------------------------------
-  // Dependencies
+  // Dependencies and configuration
   // --------------------------------------------------
 
   const CONSTANTS = window.MedOrbitsConstants || {};
-
-  const API = CONSTANTS.API || {
-    PREFIX: "/api",
-    DEFAULT_TIMEOUT_MS: 15000,
-    ENDPOINTS: {
-      AUTH: "/auth",
-      SESSION: "/session",
-      VERIFICATION: "/verification",
-      PASSWORD: "/password"
-    }
-  };
-
-  const ROUTES = CONSTANTS.ROUTES || {
-    HOME: "/index.html",
-    ACCOUNT: {
-      LOGIN: "/account/login.html",
-      REGISTER: "/account/register.html",
-      DASHBOARD: "/account/dashboard.html",
-      FORGOT_PASSWORD: "/account/forgot-password.html"
-    }
-  };
-
-  const AUTH = CONSTANTS.AUTH || {
-    ROLES: {
-      GUEST: "guest",
-      STUDENT: "student",
-      CANDIDATE: "candidate",
-      EMPLOYER: "employer",
-      COUNSELLOR: "counsellor",
-      RECRUITER: "recruiter",
-      ADMIN: "admin",
-      SUPER_ADMIN: "super_admin"
-    }
-  };
-
-  const EVENTS = CONSTANTS.EVENTS || {
-    AUTH_CHANGE: "medorbits:auth-change"
-  };
-
+  const API = CONSTANTS.API || {};
+  const ROUTES = CONSTANTS.ROUTES || {};
+  const AUTH = CONSTANTS.AUTH || {};
   const CONFIG = window.MedOrbitsConfig || {};
 
   const API_BASE_URL = String(
     CONFIG.API_BASE_URL || API.PREFIX || "/api"
   ).replace(/\/+$/, "");
 
-  const REQUEST_TIMEOUT_MS = Number(
-    CONFIG.AUTH_TIMEOUT_MS ||
-    API.DEFAULT_TIMEOUT_MS ||
-    15000
+  const REQUEST_TIMEOUT_MS = Math.max(
+    1000,
+    Math.min(
+      Number(CONFIG.AUTH_TIMEOUT_MS || API.DEFAULT_TIMEOUT_MS || 15000),
+      120000
+    )
   );
 
-  // --------------------------------------------------
-  // Private state
-  // --------------------------------------------------
+  const DEFAULT_ENDPOINTS = Object.freeze({
+    login: "/auth/login",
+    register: "/auth/register",
+    logout: "/auth/logout",
+    session: "/session",
+    verifyEmail: "/verification/verify-email",
+    resendVerification: "/verification/resend",
+    forgotPassword: "/password/forgot",
+    resetPassword: "/password/reset",
+    changePassword: "/password/change"
+  });
+
+  const ENDPOINTS = Object.freeze({
+    ...DEFAULT_ENDPOINTS,
+    ...(CONFIG.AUTH_ENDPOINTS || {})
+  });
+
+  const ROLES = Object.freeze({
+    GUEST: "guest",
+    STUDENT: "student",
+    CANDIDATE: "candidate",
+    EMPLOYER: "employer",
+    COUNSELLOR: "counsellor",
+    RECRUITER: "recruiter",
+    ADMIN: "admin",
+    SUPER_ADMIN: "super_admin",
+    ...(AUTH.ROLES || {})
+  });
+
+  const EVENT_AUTH_CHANGE =
+    CONSTANTS.EVENTS?.AUTH_CHANGE || "medorbits:auth-change";
 
   const state = {
     initialized: false,
@@ -90,10 +86,27 @@
     user: null,
     sessionChecked: false,
     lastError: null,
-    activeController: null
+    sessionRequest: null,
+    sessionController: null
   };
 
   const listeners = new Set();
+  const boundLoginForms = new WeakSet();
+  const boundLogoutButtons = new WeakSet();
+
+  // --------------------------------------------------
+  // Errors
+  // --------------------------------------------------
+
+  class AuthError extends Error {
+    constructor(message, options = {}) {
+      super(message);
+      this.name = "AuthError";
+      this.code = options.code || "AUTH_ERROR";
+      this.status = Number(options.status) || 0;
+      this.details = options.details ?? null;
+    }
+  }
 
   // --------------------------------------------------
   // Utilities
@@ -108,8 +121,8 @@
       );
     },
 
-    normalizeEmail(email) {
-      return String(email || "").trim().toLowerCase();
+    normalizeEmail(value) {
+      return String(value ?? "").trim().toLowerCase();
     },
 
     safeString(value) {
@@ -117,27 +130,25 @@
     },
 
     getCsrfToken() {
-      const meta = document.querySelector(
-        'meta[name="csrf-token"]'
-      );
-
-      return meta?.getAttribute("content") || "";
+      return document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content") || "";
     },
 
     getRole(user) {
-      if (!user || typeof user !== "object") return null;
+      if (!utils.isObject(user)) return null;
 
-      // Support common API response shapes.
-      return (
-        user.role ||
-        user.role_name ||
-        user.account_role ||
-        null
-      );
+      const role =
+        user.role ??
+        user.role_name ??
+        user.account_role ??
+        null;
+
+      return typeof role === "string" ? role.trim().toLowerCase() : null;
     },
 
     getUserId(user) {
-      if (!user || typeof user !== "object") return null;
+      if (!utils.isObject(user)) return null;
 
       return user.id ?? user.userId ?? user.user_id ?? null;
     },
@@ -145,9 +156,6 @@
     sanitizeUser(user) {
       if (!utils.isObject(user)) return null;
 
-      // Allowlist fields exposed to application UI code.
-      // Never retain passwords, access tokens, refresh tokens,
-      // reset tokens, or raw authentication credentials.
       const allowedFields = [
         "id",
         "userId",
@@ -182,10 +190,13 @@
         const value = user[key];
 
         if (
-          value === null ||
-          ["string", "number", "boolean"].includes(typeof value)
+          value !== undefined &&
+          (
+            value === null ||
+            ["string", "number", "boolean"].includes(typeof value)
+          )
         ) {
-          if (value !== undefined) clean[key] = value;
+          clean[key] = value;
         }
       }
 
@@ -193,24 +204,25 @@
     },
 
     getSafeReturnUrl(candidate) {
-      if (!candidate) return null;
+      if (typeof candidate !== "string" || !candidate.trim()) {
+        return null;
+      }
 
       try {
         const url = new URL(candidate, window.location.origin);
 
         if (url.origin !== window.location.origin) return null;
-
         if (!["http:", "https:"].includes(url.protocol)) return null;
 
-        // Prevent redirects to authentication loops.
-        const pathname = url.pathname;
+        const forbiddenPaths = [
+          ROUTES.ACCOUNT?.LOGIN || "/account/login.html",
+          ROUTES.ACCOUNT?.REGISTER || "/account/register.html",
+          ROUTES.ACCOUNT?.LOGOUT || "/account/logout.html",
+          "/account/forgot-password.html",
+          "/account/reset-password.html"
+        ];
 
-        if (
-          pathname === ROUTES.ACCOUNT?.LOGIN ||
-          pathname === ROUTES.ACCOUNT?.LOGOUT
-        ) {
-          return null;
-        }
+        if (forbiddenPaths.includes(url.pathname)) return null;
 
         return `${url.pathname}${url.search}${url.hash}`;
       } catch {
@@ -220,61 +232,49 @@
   };
 
   // --------------------------------------------------
-  // Errors
+  // Endpoint handling
   // --------------------------------------------------
-
-  class AuthError extends Error {
-    constructor(message, options = {}) {
-      super(message);
-
-      this.name = "AuthError";
-      this.code = options.code || "AUTH_ERROR";
-      this.status = options.status || 0;
-      this.details = options.details || null;
-    }
-  }
-
-  // --------------------------------------------------
-  // Endpoint configuration
-  //
-  // Adjust these paths to match src/routes/index.js
-  // and your actual Express route/controller contracts.
-  // --------------------------------------------------
-
-  const DEFAULT_ENDPOINTS = Object.freeze({
-    login: "/auth/login",
-    register: "/auth/register",
-    logout: "/auth/logout",
-    session: "/session",
-    verifyEmail: "/verification/verify-email",
-    resendVerification: "/verification/resend",
-    forgotPassword: "/password/forgot",
-    resetPassword: "/password/reset",
-    changePassword: "/password/change"
-  });
-
-  const ENDPOINTS = Object.freeze({
-    ...DEFAULT_ENDPOINTS,
-    ...(CONFIG.AUTH_ENDPOINTS || {})
-  });
 
   function endpointUrl(path) {
-    const normalized = String(path || "");
+    if (typeof path !== "string" || !path.trim()) {
+      throw new AuthError("Invalid authentication endpoint.", {
+        code: "INVALID_ENDPOINT"
+      });
+    }
 
     if (
-      !normalized ||
-      normalized.startsWith("//") ||
-      /^[a-z][a-z\d+.-]*:/i.test(normalized)
+      /^[a-z][a-z\d+.-]*:/i.test(path) ||
+      path.startsWith("//") ||
+      path.includes("\\")
     ) {
+      throw new AuthError("Invalid authentication endpoint.", {
+        code: "INVALID_ENDPOINT"
+      });
+    }
+
+    const base = new URL(API_BASE_URL, window.location.origin);
+
+    if (base.origin !== window.location.origin) {
       throw new AuthError(
-        "Invalid authentication endpoint configuration.",
-        { code: "INVALID_ENDPOINT" }
+        "Authentication must use the configured same-origin API.",
+        { code: "INVALID_API_ORIGIN" }
       );
     }
 
-    const joined = `${API_BASE_URL}/${normalized.replace(/^\/+/, "")}`;
+    const basePath = base.pathname.replace(/\/+$/, "");
+    const relativePath = path.replace(/^\/+/, "");
+    const url = new URL(`${basePath}/${relativePath}`, base.origin);
 
-    return joined;
+    if (
+      url.origin !== base.origin ||
+      !url.pathname.startsWith(`${basePath}/`)
+    ) {
+      throw new AuthError("Invalid authentication endpoint path.", {
+        code: "INVALID_ENDPOINT"
+      });
+    }
+
+    return url.href;
   }
 
   // --------------------------------------------------
@@ -282,69 +282,94 @@
   // --------------------------------------------------
 
   async function request(path, options = {}) {
-    const {
-      method = "POST",
-      body,
-      signal,
-      timeoutMs = REQUEST_TIMEOUT_MS,
-      includeCsrf = true
-    } = options;
+    const method = String(options.method || "POST").toUpperCase();
+    const allowedMethods = new Set([
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD"
+    ]);
+
+    if (!allowedMethods.has(method)) {
+      throw new AuthError("Unsupported request method.", {
+        code: "INVALID_METHOD"
+      });
+    }
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(
-      () => controller.abort(),
-      timeoutMs
+    const timeoutMs = Math.max(
+      1000,
+      Math.min(Number(options.timeoutMs || REQUEST_TIMEOUT_MS), 120000)
     );
+
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
 
     let abortHandler;
 
-    if (signal) {
-      if (signal.aborted) {
-        controller.abort();
+    if (options.signal) {
+      if (options.signal.aborted) {
+        controller.abort(options.signal.reason);
       } else {
-        abortHandler = () => controller.abort();
-        signal.addEventListener("abort", abortHandler, {
+        abortHandler = () => controller.abort(options.signal.reason);
+        options.signal.addEventListener("abort", abortHandler, {
           once: true
         });
       }
     }
 
-    const headers = {
-      Accept: "application/json"
-    };
-
-    if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
-    }
-
-    if (includeCsrf) {
-      const csrfToken = utils.getCsrfToken();
-
-      if (csrfToken) {
-        headers["X-CSRF-Token"] = csrfToken;
-      }
-    }
-
     try {
+      if (controller.signal.aborted) {
+        throw new AuthError("The request was cancelled.", {
+          code: "REQUEST_ABORTED"
+        });
+      }
+
+      const headers = new Headers(options.headers || {});
+      headers.set("Accept", "application/json");
+
+      let body;
+
+      if (options.body !== undefined) {
+        body = JSON.stringify(options.body);
+        headers.set("Content-Type", "application/json");
+      }
+
+      if (
+        options.includeCsrf !== false &&
+        !["GET", "HEAD"].includes(method)
+      ) {
+        const csrfToken = utils.getCsrfToken();
+
+        if (csrfToken) {
+          headers.set("X-CSRF-Token", csrfToken);
+        }
+      }
+
       const response = await fetch(endpointUrl(path), {
         method,
         headers,
         credentials: "same-origin",
         cache: "no-store",
         redirect: "error",
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: ["GET", "HEAD"].includes(method) ? undefined : body,
         signal: controller.signal
       });
 
       const contentType = response.headers.get("content-type") || "";
-
       let payload = null;
 
-      if (response.status !== 204) {
+      if (response.status !== 204 && response.status !== 205) {
         if (contentType.includes("application/json")) {
           payload = await response.json().catch(() => null);
         } else {
-          await response.text().catch(() => "");
+          const text = await response.text().catch(() => "");
+          payload = text ? { message: text.slice(0, 1000) } : null;
         }
       }
 
@@ -352,29 +377,29 @@
         const message =
           payload?.message ||
           payload?.error?.message ||
-          payload?.error ||
+          (typeof payload?.error === "string" ? payload.error : null) ||
           `Authentication request failed (${response.status}).`;
 
-        throw new AuthError(
-          typeof message === "string"
-            ? message
-            : "Authentication request failed.",
-          {
-            code: payload?.code || "REQUEST_FAILED",
-            status: response.status,
-            details: payload?.details || null
-          }
-        );
+        throw new AuthError(message, {
+          code: payload?.code || payload?.error?.code || "REQUEST_FAILED",
+          status: response.status,
+          details: payload?.details ?? payload?.error?.details ?? null
+        });
       }
 
       return payload;
     } catch (error) {
       if (error instanceof AuthError) throw error;
 
-      if (error?.name === "AbortError") {
-        throw new AuthError("The request timed out or was cancelled.", {
-          code: "REQUEST_ABORTED"
-        });
+      if (controller.signal.aborted || error?.name === "AbortError") {
+        throw new AuthError(
+          timedOut
+            ? "The authentication request timed out."
+            : "The authentication request was cancelled.",
+          {
+            code: timedOut ? "REQUEST_TIMEOUT" : "REQUEST_ABORTED"
+          }
+        );
       }
 
       throw new AuthError(
@@ -386,8 +411,8 @@
     } finally {
       window.clearTimeout(timeoutId);
 
-      if (signal && abortHandler) {
-        signal.removeEventListener("abort", abortHandler);
+      if (options.signal && abortHandler) {
+        options.signal.removeEventListener("abort", abortHandler);
       }
     }
   }
@@ -412,9 +437,7 @@
       }
     }
 
-    // A response containing only {data: {...}} is not assumed
-    // to be a user unless the object has recognizable user fields.
-    const direct = payload.data || payload;
+    const direct = payload.data ?? payload;
 
     if (
       utils.isObject(direct) &&
@@ -452,9 +475,7 @@
     });
 
     document.dispatchEvent(
-      new CustomEvent(EVENTS.AUTH_CHANGE, {
-        detail
-      })
+      new CustomEvent(EVENT_AUTH_CHANGE, { detail })
     );
 
     listeners.forEach((listener) => {
@@ -473,7 +494,6 @@
     state.lastError = null;
 
     emitAuthChange(reason);
-
     return state.user;
   }
 
@@ -490,22 +510,14 @@
   // Login
   // --------------------------------------------------
 
-  async function login(credentials = {}) {
+  async function login(credentials = {}, options = {}) {
     const email = utils.normalizeEmail(credentials.email);
     const password = credentials.password;
 
-    if (!email || !password) {
-      throw new AuthError(
-        "Enter your email address and password.",
-        { code: "MISSING_CREDENTIALS" }
-      );
-    }
-
-    if (typeof password !== "string") {
-      throw new AuthError(
-        "Enter a valid password.",
-        { code: "INVALID_PASSWORD" }
-      );
+    if (!email || typeof password !== "string" || !password) {
+      throw new AuthError("Enter your email address and password.", {
+        code: "MISSING_CREDENTIALS"
+      });
     }
 
     state.loading = true;
@@ -513,7 +525,8 @@
 
     try {
       const payload = await request(ENDPOINTS.login, {
-        body: { email, password }
+        body: { email, password },
+        signal: options.signal
       });
 
       const user = extractUser(payload);
@@ -544,43 +557,39 @@
   // Registration
   // --------------------------------------------------
 
-  async function register(details = {}) {
+  async function register(details = {}, options = {}) {
+    if (!utils.isObject(details)) {
+      throw new AuthError("Valid registration details are required.", {
+        code: "INVALID_REGISTRATION_DETAILS"
+      });
+    }
+
     const email = utils.normalizeEmail(details.email);
     const password = details.password;
 
-    if (!email || !password) {
-      throw new AuthError(
-        "Email address and password are required.",
-        { code: "MISSING_REGISTRATION_FIELDS" }
-      );
+    if (!email || typeof password !== "string") {
+      throw new AuthError("Email address and password are required.", {
+        code: "MISSING_REGISTRATION_FIELDS"
+      });
     }
 
     const minLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MIN_LENGTH || 12
     );
-
     const maxLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MAX_LENGTH || 128
     );
 
-    if (
-      typeof password !== "string" ||
-      password.length < minLength ||
-      password.length > maxLength
-    ) {
+    if (password.length < minLength || password.length > maxLength) {
       throw new AuthError(
         `Password must contain between ${minLength} and ${maxLength} characters.`,
         { code: "PASSWORD_POLICY" }
       );
     }
 
-    const body = {
-      ...details,
-      email,
-      password
-    };
+    const body = { ...details, email, password };
 
-    // Never permit the browser to assign privileged roles.
+    // Never accept a client-selected privileged role.
     delete body.role;
     delete body.role_name;
     delete body.account_role;
@@ -589,16 +598,16 @@
     delete body.permissions;
 
     state.loading = true;
+    state.lastError = null;
 
     try {
       const payload = await request(ENDPOINTS.register, {
-        body
+        body,
+        signal: options.signal
       });
 
       const user = extractUser(payload);
 
-      // Registration does not automatically mean a verified
-      // authenticated session exists.
       if (user && extractAuthenticated(payload)) {
         setAuthenticatedUser(user, "register");
       }
@@ -620,50 +629,71 @@
   }
 
   // --------------------------------------------------
-  // Restore current server-side session
+  // Session restoration
   // --------------------------------------------------
 
   async function getSession(options = {}) {
-    const { force = false } = options;
+    if (state.sessionRequest && !options.force) {
+      return state.sessionRequest;
+    }
 
-    if (state.sessionChecked && !force) {
+    if (state.sessionChecked && !options.force) {
       return state.user;
     }
 
+    if (state.sessionController) {
+      state.sessionController.abort();
+    }
+
+    const controller = new AbortController();
+    state.sessionController = controller;
     state.loading = true;
 
-    try {
-      const payload = await request(ENDPOINTS.session, {
-        method: "GET",
-        includeCsrf: false
-      });
+    const sessionRequest = (async () => {
+      try {
+        const payload = await request(ENDPOINTS.session, {
+          method: "GET",
+          includeCsrf: false,
+          signal: controller.signal
+        });
 
-      if (!extractAuthenticated(payload)) {
-        clearSession("session-anonymous");
+        if (!extractAuthenticated(payload)) {
+          clearSession("session-anonymous");
+          return null;
+        }
+
+        const user = extractUser(payload);
+
+        if (!user) {
+          clearSession("session-invalid");
+          return null;
+        }
+
+        return setAuthenticatedUser(user, "session-restored");
+      } catch (error) {
+        if (error.status === 401 || error.status === 403) {
+          clearSession("session-expired");
+          return null;
+        }
+
+        state.lastError = error;
+
+        if (error.code !== "REQUEST_ABORTED") {
+          throw error;
+        }
+
         return null;
+      } finally {
+        if (state.sessionController === controller) {
+          state.sessionController = null;
+          state.sessionRequest = null;
+          state.loading = false;
+        }
       }
+    })();
 
-      const user = extractUser(payload);
-
-      if (!user) {
-        clearSession("session-invalid");
-        return null;
-      }
-
-      return setAuthenticatedUser(user, "session-restored");
-    } catch (error) {
-      if (error.status === 401 || error.status === 403) {
-        clearSession("session-expired");
-        return null;
-      }
-
-      // Network failures are not proof that the server session
-      // has expired. Preserve existing in-memory state.
-      state.lastError = error;
-      throw error;
-    } finally {
-      state.loading = false;
-    }
+    state.sessionRequest = sessionRequest;
+    return sessionRequest;
   }
 
   async function restoreSession() {
@@ -680,19 +710,28 @@
   // --------------------------------------------------
 
   async function logout(options = {}) {
-    const { redirect = false } = options;
+    const redirect = options.redirect === true;
+    let requestError = null;
 
     try {
-      // Ask the server to invalidate its session cookie.
       await request(ENDPOINTS.logout, {
-        body: {}
+        body: {},
+        signal: options.signal
       });
-    } finally {
-      // Clear local in-memory state even when the request fails.
-      clearSession("logout");
 
-      if (redirect) {
-        window.location.assign(ROUTES.ACCOUNT?.LOGIN || "/account/login.html");
+      clearSession("logout");
+    } catch (error) {
+      requestError = error;
+      state.lastError = error;
+
+      // A failed request does not prove that the server session
+      // has been invalidated. Do not report confirmed server logout.
+      throw error;
+    } finally {
+      if (redirect && !requestError) {
+        window.location.assign(
+          ROUTES.ACCOUNT?.LOGIN || "/account/login.html"
+        );
       }
     }
 
@@ -703,18 +742,18 @@
   // Email verification
   // --------------------------------------------------
 
-  async function verifyEmail(token) {
+  async function verifyEmail(token, options = {}) {
     const safeToken = utils.safeString(token);
 
     if (!safeToken) {
-      throw new AuthError(
-        "A verification token is required.",
-        { code: "MISSING_VERIFICATION_TOKEN" }
-      );
+      throw new AuthError("A verification token is required.", {
+        code: "MISSING_VERIFICATION_TOKEN"
+      });
     }
 
     const payload = await request(ENDPOINTS.verifyEmail, {
-      body: { token: safeToken }
+      body: { token: safeToken },
+      signal: options.signal
     });
 
     return {
@@ -723,22 +762,20 @@
     };
   }
 
-  async function resendVerification(email) {
+  async function resendVerification(email, options = {}) {
     const normalizedEmail = utils.normalizeEmail(email);
 
     if (!normalizedEmail) {
-      throw new AuthError(
-        "Enter your email address.",
-        { code: "MISSING_EMAIL" }
-      );
+      throw new AuthError("Enter your email address.", {
+        code: "MISSING_EMAIL"
+      });
     }
 
     const payload = await request(ENDPOINTS.resendVerification, {
-      body: { email: normalizedEmail }
+      body: { email: normalizedEmail },
+      signal: options.signal
     });
 
-    // The server should use a generic response to avoid exposing
-    // whether an email address has an account.
     return {
       success: true,
       message:
@@ -751,18 +788,18 @@
   // Password reset
   // --------------------------------------------------
 
-  async function requestPasswordReset(email) {
+  async function requestPasswordReset(email, options = {}) {
     const normalizedEmail = utils.normalizeEmail(email);
 
     if (!normalizedEmail) {
-      throw new AuthError(
-        "Enter your email address.",
-        { code: "MISSING_EMAIL" }
-      );
+      throw new AuthError("Enter your email address.", {
+        code: "MISSING_EMAIL"
+      });
     }
 
     const payload = await request(ENDPOINTS.forgotPassword, {
-      body: { email: normalizedEmail }
+      body: { email: normalizedEmail },
+      signal: options.signal
     });
 
     return {
@@ -773,38 +810,31 @@
     };
   }
 
-  async function resetPassword(details = {}) {
+  async function resetPassword(details = {}, options = {}) {
     const token = utils.safeString(details.token);
     const password = details.password;
     const confirmPassword = details.confirmPassword;
 
     if (!token) {
-      throw new AuthError(
-        "A password reset token is required.",
-        { code: "MISSING_RESET_TOKEN" }
-      );
+      throw new AuthError("A password reset token is required.", {
+        code: "MISSING_RESET_TOKEN"
+      });
     }
 
-    if (password !== confirmPassword) {
-      throw new AuthError(
-        "The passwords do not match.",
-        { code: "PASSWORD_MISMATCH" }
-      );
+    if (typeof password !== "string" || password !== confirmPassword) {
+      throw new AuthError("The passwords do not match.", {
+        code: "PASSWORD_MISMATCH"
+      });
     }
 
     const minLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MIN_LENGTH || 12
     );
-
     const maxLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MAX_LENGTH || 128
     );
 
-    if (
-      typeof password !== "string" ||
-      password.length < minLength ||
-      password.length > maxLength
-    ) {
+    if (password.length < minLength || password.length > maxLength) {
       throw new AuthError(
         `Password must contain between ${minLength} and ${maxLength} characters.`,
         { code: "PASSWORD_POLICY" }
@@ -812,11 +842,8 @@
     }
 
     const payload = await request(ENDPOINTS.resetPassword, {
-      body: {
-        token,
-        password,
-        confirmPassword
-      }
+      body: { token, password, confirmPassword },
+      signal: options.signal
     });
 
     return {
@@ -826,15 +853,15 @@
   }
 
   // --------------------------------------------------
-  // Change password for an authenticated user
+  // Change password
   // --------------------------------------------------
 
-  async function changePassword(details = {}) {
-    if (!state.authenticated) {
-      throw new AuthError(
-        "Sign in before changing your password.",
-        { code: "AUTHENTICATION_REQUIRED", status: 401 }
-      );
+  async function changePassword(details = {}, options = {}) {
+    if (!isAuthenticated()) {
+      throw new AuthError("Sign in before changing your password.", {
+        code: "AUTHENTICATION_REQUIRED",
+        status: 401
+      });
     }
 
     const {
@@ -843,7 +870,7 @@
       confirmPassword
     } = details;
 
-    if (!currentPassword || !newPassword) {
+    if (!currentPassword || typeof newPassword !== "string") {
       throw new AuthError(
         "Enter your current password and new password.",
         { code: "MISSING_PASSWORD_FIELDS" }
@@ -851,25 +878,19 @@
     }
 
     if (newPassword !== confirmPassword) {
-      throw new AuthError(
-        "The passwords do not match.",
-        { code: "PASSWORD_MISMATCH" }
-      );
+      throw new AuthError("The passwords do not match.", {
+        code: "PASSWORD_MISMATCH"
+      });
     }
 
     const minLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MIN_LENGTH || 12
     );
-
     const maxLength = Number(
       CONSTANTS.VALIDATION?.PASSWORD_MAX_LENGTH || 128
     );
 
-    if (
-      typeof newPassword !== "string" ||
-      newPassword.length < minLength ||
-      newPassword.length > maxLength
-    ) {
+    if (newPassword.length < minLength || newPassword.length > maxLength) {
       throw new AuthError(
         `Password must contain between ${minLength} and ${maxLength} characters.`,
         { code: "PASSWORD_POLICY" }
@@ -877,11 +898,8 @@
     }
 
     const payload = await request(ENDPOINTS.changePassword, {
-      body: {
-        currentPassword,
-        newPassword,
-        confirmPassword
-      }
+      body: { currentPassword, newPassword, confirmPassword },
+      signal: options.signal
     });
 
     return {
@@ -892,8 +910,7 @@
 
   // --------------------------------------------------
   // Authorization helpers
-  // These helpers control UI flow only.
-  // Server routes must independently authorize requests.
+  // UI helpers do not replace server-side authorization.
   // --------------------------------------------------
 
   function isAuthenticated() {
@@ -905,69 +922,61 @@
   }
 
   function hasRole(role) {
-    if (!isAuthenticated()) return false;
+    if (!isAuthenticated() || typeof role !== "string") return false;
 
     const actualRole = utils.getRole(state.user);
-
-    if (!actualRole || !role) return false;
-
-    return actualRole === role;
+    return Boolean(actualRole) && actualRole === role.trim().toLowerCase();
   }
 
   function hasAnyRole(roles = []) {
     if (!Array.isArray(roles)) return false;
-
     return roles.some((role) => hasRole(role));
   }
 
   function isAdmin() {
-    return hasAnyRole([
-      AUTH.ROLES?.ADMIN || "admin",
-      AUTH.ROLES?.SUPER_ADMIN || "super_admin"
-    ]);
+    return hasAnyRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
 
   async function requireAuth(options = {}) {
-    const {
-      redirect = true,
-      returnTo = window.location.pathname +
-        window.location.search +
-        window.location.hash
-    } = options;
+    const redirect = options.redirect !== false;
+    const returnTo = options.returnTo ??
+      `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
-    let user = null;
+    let user;
 
     try {
       user = await getSession();
     } catch {
-      // Do not claim a valid session when the server cannot
-      // confirm it. The caller can display a retry message.
+      if (!redirect) return null;
+
+      if (window.MedOrbits?.toast) {
+        window.MedOrbits.toast.error(
+          "Unable to verify your session. Please try again."
+        );
+      }
+
+      return null;
     }
 
     if (user) return user;
+    if (!redirect) return null;
 
-    if (redirect) {
-      const safeReturnTo = utils.getSafeReturnUrl(returnTo);
-      const loginUrl = new URL(
-        ROUTES.ACCOUNT?.LOGIN || "/account/login.html",
-        window.location.origin
-      );
+    const safeReturnTo = utils.getSafeReturnUrl(returnTo);
+    const loginUrl = new URL(
+      ROUTES.ACCOUNT?.LOGIN || "/account/login.html",
+      window.location.origin
+    );
 
-      if (safeReturnTo) {
-        loginUrl.searchParams.set("returnTo", safeReturnTo);
-      }
-
-      window.location.assign(
-        `${loginUrl.pathname}${loginUrl.search}`
-      );
+    if (safeReturnTo) {
+      loginUrl.searchParams.set("returnTo", safeReturnTo);
     }
 
+    window.location.assign(`${loginUrl.pathname}${loginUrl.search}`);
     return null;
   }
 
   async function requireRole(roles, options = {}) {
     const user = await requireAuth(options);
-
     if (!user) return null;
 
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
@@ -998,7 +1007,6 @@
     }
 
     listeners.add(callback);
-
     return () => listeners.delete(callback);
   }
 
@@ -1007,21 +1015,24 @@
   // --------------------------------------------------
 
   function bindLoginForm(form, options = {}) {
+    if (typeof form === "string") {
+      form = document.querySelector(form);
+    }
+
     if (!(form instanceof HTMLFormElement)) {
       throw new TypeError("A valid login form is required.");
     }
 
-    const {
-      emailSelector = '[name="email"]',
-      passwordSelector = '[name="password"]',
-      submitSelector = '[type="submit"]',
-      onSuccess,
-      onError
-    } = options;
+    if (boundLoginForms.has(form)) return;
+
+    boundLoginForms.add(form);
+
+    const emailSelector = options.emailSelector || '[name="email"]';
+    const passwordSelector = options.passwordSelector || '[name="password"]';
+    const submitSelector = options.submitSelector || '[type="submit"]';
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-
       if (!form.reportValidity()) return;
 
       const emailField = form.querySelector(emailSelector);
@@ -1029,11 +1040,13 @@
       const submitButton = form.querySelector(submitSelector);
 
       if (!emailField || !passwordField) {
-        throw new AuthError(
-          "Login form fields are missing.",
-          { code: "INVALID_LOGIN_FORM" }
-        );
+        if (window.MedOrbits?.toast) {
+          window.MedOrbits.toast.error("Login form fields are missing.");
+        }
+        return;
       }
+
+      if (submitButton?.disabled) return;
 
       const originalText = submitButton?.textContent;
 
@@ -1053,17 +1066,18 @@
           new URLSearchParams(window.location.search).get("returnTo")
         );
 
-        if (typeof onSuccess === "function") {
-          await onSuccess(result);
+        if (typeof options.onSuccess === "function") {
+          await options.onSuccess(result);
         } else {
           window.location.assign(
-            returnTo || ROUTES.ACCOUNT?.DASHBOARD ||
+            returnTo ||
+            ROUTES.ACCOUNT?.DASHBOARD ||
             "/account/dashboard.html"
           );
         }
       } catch (error) {
-        if (typeof onError === "function") {
-          onError(error);
+        if (typeof options.onError === "function") {
+          options.onError(error);
         } else if (window.MedOrbits?.toast) {
           window.MedOrbits.toast.error(
             error.message || "Unable to sign in."
@@ -1085,14 +1099,16 @@
   }
 
   // --------------------------------------------------
-  // Logout form integration
+  // Logout buttons
   // --------------------------------------------------
 
   function bindLogoutButtons(selector = "[data-auth-logout]") {
     document.querySelectorAll(selector).forEach((button) => {
+      if (boundLogoutButtons.has(button)) return;
+      boundLogoutButtons.add(button);
+
       button.addEventListener("click", async (event) => {
         event.preventDefault();
-
         if (button.disabled) return;
 
         button.disabled = true;
@@ -1100,11 +1116,8 @@
         try {
           await logout({ redirect: true });
         } catch (error) {
-          console.error("[MedOrbits Auth] Logout request failed.", error);
+          console.error("[MedOrbits Auth] Logout failed.", error);
 
-          // The server may still have an active session if the
-          // logout request failed. Inform the user instead of
-          // claiming that server-side logout was confirmed.
           if (window.MedOrbits?.toast) {
             window.MedOrbits.toast.error(
               "Unable to confirm sign out. Please try again."
@@ -1123,30 +1136,33 @@
 
   function init() {
     if (state.initialized) return;
-
     state.initialized = true;
 
     bindLogoutButtons();
 
     document.querySelectorAll("[data-auth-login-form]").forEach((form) => {
-      bindLoginForm(form);
+      try {
+        bindLoginForm(form);
+      } catch (error) {
+        console.error("[MedOrbits Auth] Login form initialization failed.", error);
+      }
     });
 
-    // Restore session without blocking page rendering.
+    // Restore the server-side session without blocking page rendering.
     void restoreSession();
 
     document.dispatchEvent(
       new CustomEvent("medorbits:auth-module-ready", {
-        detail: { version: "1.0.0" }
+        detail: { version: "1.1.0" }
       })
     );
   }
 
   // --------------------------------------------------
-  // Public interface
+  // Public API
   // --------------------------------------------------
 
-  const MedOrbitsAuth = Object.freeze({
+  const publicAPI = Object.freeze({
     login,
     register,
     logout,
@@ -1188,24 +1204,15 @@
     AuthError
   });
 
-  if (window.MedOrbitsAuth) {
-    console.warn(
-      "[MedOrbits Auth] Authentication module already exists."
-    );
-    return;
-  }
-
   Object.defineProperty(window, "MedOrbitsAuth", {
-    value: MedOrbitsAuth,
+    value: publicAPI,
     writable: false,
     configurable: false,
     enumerable: true
   });
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, {
-      once: true
-    });
+    document.addEventListener("DOMContentLoaded", init, { once: true });
   } else {
     init();
   }

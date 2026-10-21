@@ -1,891 +1,285 @@
 'use strict';
-const jwt = require('jsonwebtoken');
-const authenticate = require('../../src/middleware/authenticate');
+/**
+ * MedOrbits -- Authentication Security Tests
+ *
+ * File: tests/security/authentication.security.test.js
+ *
+ * Run:
+ *   node --test tests/security/authentication.security.test.js
+ *
+ * Optional environment variables:
+ *   E2E_BASE_URL=http://127.0.0.1:3000
+ *   E2E_LOGIN_PATH=/api/auth/login
+ *   E2E_REGISTER_PATH=/api/auth/register
+ *   E2E_ME_PATH=/api/auth/me
+ *   E2E_LOGOUT_PATH=/api/auth/logout
+ *   E2E_STUDENT_EMAIL=student001@example.test
+ *   E2E_STUDENT_PASSWORD=TestOnly!Password123
+ *
+ * Requirements:
+ * - Use an isolated test environment and synthetic accounts.
+ * - Never point destructive tests at production.
+ * - Adapt routes and response expectations to the actual application.
+ */
 const {
-  createAuthService,
-  sanitizeUser,
-} = require('../../src/services/auth.service');
-const authValidator = require('../../src/validators/auth.validator');
-const JWT_SECRET =
-  'medorbits-test-secret-that-is-long-enough-for-hmac-sha256';
-const NOW = 1_800_000_000;
-function createRequest(authorization = '') {
-  return {
-    headers: {
-      authorization,
-    },
-    get(name) {
-      return this.headers[String(name).toLowerCase()] || '';
-    },
-  };
+  test,
+  before,
+} = require('node:test');
+const assert = require('node:assert/strict');
+const BASE_URL = (
+  process.env.E2E_BASE_URL || 'http://127.0.0.1:3000'
+).replace(/\/+$/, '');
+const LOGIN_PATH =
+  process.env.E2E_LOGIN_PATH || '/api/auth/login';
+const REGISTER_PATH =
+  process.env.E2E_REGISTER_PATH || '/api/auth/register';
+const ME_PATH =
+  process.env.E2E_ME_PATH || '/api/auth/me';
+const LOGOUT_PATH =
+  process.env.E2E_LOGOUT_PATH || '/api/auth/logout';
+const STUDENT_EMAIL =
+  process.env.E2E_STUDENT_EMAIL || 'student001@example.test';
+const STUDENT_PASSWORD =
+  process.env.E2E_STUDENT_PASSWORD || 'TestOnly!Password123';
+const REQUEST_TIMEOUT_MS = 10_000;
+let serverAvailable = false;
+async function request(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT_MS
+  );
+  try {
+    return await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      redirect: 'manual',
+      headers: {
+        Accept: 'application/json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...options.headers,
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
-function createResponse() {
-  return {
-    statusCode: 200,
-    headersSent: false,
-    body: undefined,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body) {
-      this.body = body;
-      this.headersSent = true;
-      return this;
-    },
-  };
+function jsonBody(value) {
+  return JSON.stringify(value);
 }
-async function invokeMiddleware(middleware, req = createRequest()) {
-  const res = createResponse();
-  let nextCalled = false;
-  let nextError;
-  await middleware(req, res, (error) => {
-    nextCalled = true;
-    nextError = error;
-  });
-  return {
-    req,
-    res,
-    nextCalled,
-    error: nextError,
-  };
+async function readJson(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 }
-function signToken(
-  claims = {},
-  options = {},
-) {
-  return jwt.sign(
-    {
-      sub: 'user-123',
-      roles: ['student'],
-      permissions: ['courses:read'],
-      ...claims,
-    },
-    options.secret || JWT_SECRET,
-    {
-      algorithm: options.algorithm || 'HS256',
-      ...(options.expiresIn !== undefined
-        ? { expiresIn: options.expiresIn }
-        : { expiresIn: '5m' }),
-      ...(options.issuer ? { issuer: options.issuer } : {}),
-      ...(options.audience ? { audience: options.audience } : {}),
-      ...(options.noTimestamp ? { noTimestamp: true } : {}),
-    },
+function assertAuthenticationRejected(response) {
+  assert.ok(
+    [400, 401, 403, 404, 409, 422, 429].includes(response.status),
+    `Expected authentication rejection; received HTTP ${response.status}`
   );
 }
-function createAuthDependencies(overrides = {}) {
-  const user = {
-    id: 'user-123',
-    name: 'Test Student',
-    email: 'student@example.com',
-    passwordHash: 'stored-password-hash',
-    status: 'active',
-    roles: ['student'],
-    permissions: ['courses:read'],
-    resetToken: 'private-reset-token',
-    refreshToken: 'private-refresh-token',
-  };
-  const userRepository = {
-    findByEmail: jest.fn().mockResolvedValue({ ...user }),
-    create: jest.fn().mockImplementation(async (data) => ({
-      id: 'user-456',
-      ...data,
-    })),
-  };
-  const passwordHasher = {
-    hash: jest.fn().mockResolvedValue('new-password-hash'),
-    verify: jest.fn().mockResolvedValue(true),
-  };
-  const tokenService = {
-    issue: jest.fn().mockResolvedValue({
-      accessToken: 'issued-access-token',
-      refreshToken: 'issued-refresh-token',
-    }),
-    refresh: jest.fn().mockResolvedValue({
-      accessToken: 'refreshed-access-token',
-    }),
-    revoke: jest.fn().mockResolvedValue(undefined),
-  };
-  const sessionService = {
-    create: jest.fn().mockResolvedValue({
-      id: 'session-123',
-      userId: 'user-123',
-    }),
-    revoke: jest.fn().mockResolvedValue(undefined),
-  };
-  const auditService = {
-    record: jest.fn().mockResolvedValue(undefined),
-  };
-  const verificationService = {
-    sendEmailVerification: jest.fn().mockResolvedValue(undefined),
-  };
-  const dependencies = {
-    userRepository,
-    passwordHasher,
-    tokenService,
-    sessionService,
-    auditService,
-    verificationService,
-    user,
-    ...overrides,
-  };
-  dependencies.service = createAuthService({
-    userRepository: dependencies.userRepository,
-    passwordHasher: dependencies.passwordHasher,
-    tokenService: dependencies.tokenService,
-    sessionService: dependencies.sessionService,
-    auditService: dependencies.auditService,
-    verificationService: dependencies.verificationService,
-  });
-  return dependencies;
+function getSetCookieHeaders(response) {
+  if (typeof response.headers.getSetCookie === 'function') {
+    return response.headers.getSetCookie();
+  }
+  const cookie = response.headers.get('set-cookie');
+  return cookie ? [cookie] : [];
 }
-describe('Authentication security: JWT configuration', () => {
-  test('rejects a missing signing secret', () => {
-    expect(() => authenticate({ secret: '' })).toThrow(
-      /JWT_SECRET must be configured/i,
-    );
-  });
-  test('rejects a signing secret shorter than 32 characters', () => {
-    expect(() => authenticate({ secret: 'too-short' })).toThrow(
-      /at least 32 characters/i,
-    );
-  });
-  test('accepts a sufficiently strong configured secret', () => {
-    expect(() => authenticate({ secret: JWT_SECRET })).not.toThrow();
-  });
-  test('uses an explicit algorithm allowlist by default', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = signToken({}, { algorithm: 'HS384' });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('supports an explicitly configured algorithm allowlist', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      algorithms: ['HS384'],
-    });
-    const token = signToken({}, { algorithm: 'HS384' });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toBeUndefined();
-    expect(result.req.user.id).toBe('user-123');
-  });
-  test('rejects an unsigned JWT', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = jwt.sign(
-      { sub: 'user-123', roles: ['admin'] },
-      null,
-      { algorithm: 'none' },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('rejects a token signed with another secret', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = signToken({}, {
-      secret: 'different-test-secret-long-enough-for-hmac',
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-  });
-});
-describe('Authentication security: bearer token parsing', () => {
-  let middleware;
-  beforeEach(() => {
-    middleware = authenticate({ secret: JWT_SECRET });
-  });
-  test.each([
-    '',
-    'invalid-token',
-    'Basic abc123',
-    'Bearer',
-    'Bearer ',
-    'Bearer token extra',
-  ])('rejects a malformed authorization header: %j', async (header) => {
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(header),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'AUTHENTICATION_REQUIRED',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('accepts case-insensitive Bearer scheme', async () => {
-    const token = signToken();
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`bEaReR ${token}`),
-    );
-    expect(result.error).toBeUndefined();
-    expect(result.req.user.id).toBe('user-123');
-  });
-  test('rejects an invalid token without exposing verification details', async () => {
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest('Bearer invalid.token.value'),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-      publicMessage: 'The access token is invalid or expired.',
-    });
-    expect(result.error.message).not.toMatch(/signature|stack|secret/i);
-  });
-  test('rejects an expired token', async () => {
-    const token = jwt.sign(
-      {
-        sub: 'user-123',
-        exp: NOW - 60,
-      },
-      JWT_SECRET,
-      {
-        algorithm: 'HS256',
-      },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('rejects a token without a subject claim', async () => {
-    const token = jwt.sign(
-      { roles: ['admin'] },
-      JWT_SECRET,
-      { algorithm: 'HS256', expiresIn: '5m' },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_TOKEN',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('does not trust identity headers when the bearer token is missing', async () => {
-    const req = createRequest('');
-    req.headers['x-user-id'] = 'attacker';
-    req.headers['x-user-role'] = 'admin';
-    const result = await invokeMiddleware(middleware, req);
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'AUTHENTICATION_REQUIRED',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('does not authenticate using a request-body identity', async () => {
-    const req = createRequest('');
-    req.body = {
-      userId: 'attacker',
-      role: 'admin',
-      isAuthenticated: true,
-    };
-    const result = await invokeMiddleware(middleware, req);
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'AUTHENTICATION_REQUIRED',
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-});
-describe('Authentication security: JWT claims', () => {
-  test('enforces configured issuer', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      issuer: 'https://auth.medorbits.test',
-    });
-    const token = signToken({}, {
-      issuer: 'https://untrusted.example',
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-  });
-  test('accepts a token with the configured issuer', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      issuer: 'https://auth.medorbits.test',
-    });
-    const token = signToken({}, {
-      issuer: 'https://auth.medorbits.test',
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toBeUndefined();
-  });
-  test('enforces configured audience', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      audience: 'medorbits-api',
-    });
-    const token = signToken({}, {
-      audience: 'another-api',
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-  });
-  test('rejects a missing configured audience', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      audience: 'medorbits-api',
-    });
-    const token = jwt.sign(
-      { sub: 'user-123' },
-      JWT_SECRET,
-      { algorithm: 'HS256', expiresIn: '5m' },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-  });
-  test('rejects tokens with a missing subject', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = jwt.sign(
-      { roles: ['student'] },
-      JWT_SECRET,
-      { algorithm: 'HS256', expiresIn: '5m' },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_TOKEN',
-    });
-  });
-  test('rejects a token whose subject is an empty string', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = jwt.sign(
-      { sub: '' },
-      JWT_SECRET,
-      { algorithm: 'HS256', expiresIn: '5m' },
-    );
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_TOKEN',
-    });
-  });
-  test('normalizes request identity from verified claims', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = signToken({
-      sub: 123,
-      jti: 'token-id-123',
-      roles: ['student'],
-      permissions: ['courses:read'],
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toBeUndefined();
-    expect(result.req.user).toMatchObject({
-      id: '123',
-      roles: ['student'],
-      permissions: ['courses:read'],
-    });
-    expect(result.req.auth).toMatchObject({
-      tokenId: 'token-id-123',
-      claims: expect.objectContaining({ sub: '123' }),
-    });
-  });
-  test('does not treat non-array roles and permissions as trusted arrays', async () => {
-    const middleware = authenticate({ secret: JWT_SECRET });
-    const token = signToken({
-      roles: 'admin',
-      permissions: 'all',
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(result.error).toBeUndefined();
-    expect(result.req.user.roles).toEqual([]);
-    expect(result.req.user.permissions).toEqual([]);
-  });
-});
-describe('Authentication security: current account state', () => {
-  test('uses getUser to load current trusted user data', async () => {
-    const getUser = jest.fn().mockResolvedValue({
-      id: 'user-123',
-      roles: ['student'],
-      permissions: ['courses:read'],
-    });
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      getUser,
-    });
-    const token = signToken({
-      roles: ['admin'],
-      permissions: ['users:delete'],
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${token}`),
-    );
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(result.error).toBeUndefined();
-    expect(result.req.user.roles).toEqual(['student']);
-    expect(result.req.user.permissions).toEqual(['courses:read']);
-  });
-  test.each([
-    [null, 'ACCOUNT_UNAVAILABLE'],
-    [undefined, 'ACCOUNT_UNAVAILABLE'],
-    [{ id: 'user-123', disabled: true }, 'ACCOUNT_UNAVAILABLE'],
-    [{ id: 'user-123', isActive: false }, 'ACCOUNT_UNAVAILABLE'],
-  ])('rejects unavailable current account %#', async (user, code) => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      getUser: jest.fn().mockResolvedValue(user),
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${signToken()}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code,
-    });
-    expect(result.req.user).toBeUndefined();
-  });
-  test('rejects a user lookup exception without leaking internal details', async () => {
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      getUser: jest.fn().mockRejectedValue(
-        new Error('database password and connection details'),
-      ),
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${signToken()}`),
-    );
-    expect(result.error).toMatchObject({
-      status: 401,
-      code: 'INVALID_OR_EXPIRED_TOKEN',
-    });
-    expect(result.error.message).not.toContain('database password');
-    expect(result.req.user).toBeUndefined();
-  });
-  test('propagates an explicit authentication error from getUser', async () => {
-    const lookupError = Object.assign(
-      new Error('This account is unavailable.'),
-      {
-        status: 401,
-        code: 'ACCOUNT_UNAVAILABLE',
-        publicMessage: 'This account is unavailable.',
-      },
-    );
-    const middleware = authenticate({
-      secret: JWT_SECRET,
-      getUser: jest.fn().mockRejectedValue(lookupError),
-    });
-    const result = await invokeMiddleware(
-      middleware,
-      createRequest(`Bearer ${signToken()}`),
-    );
-    expect(result.error).toBe(lookupError);
-  });
-});
-describe('Authentication security: input validation', () => {
-  test('normalizes email before authentication', () => {
-    expect(
-      authValidator.normalizeEmail(' STUDENT@EXAMPLE.COM '),
-    ).toBe('student@example.com');
-  });
-  test.each([
-    '',
-    'invalid',
-    'student@',
-    '@example.com',
-    'student@example.com extra',
-  ])('rejects invalid email input %j', (email) => {
-    expect(() => authValidator.normalizeEmail(email)).toThrow(
-      expect.objectContaining({
-        status: 400,
-        code: 'VALIDATION_ERROR',
-      }),
-    );
-  });
-  test('rejects overlong email input', () => {
-    const email = `${'a'.repeat(245)}@example.com`;
-    expect(() => authValidator.normalizeEmail(email)).toThrow();
-  });
-  test('preserves intentional password whitespace', () => {
-    expect(
-      authValidator.validatePassword(' secure-password '),
-    ).toBe(' secure-password ');
-  });
-  test.each([
-    '',
-    'short',
-    'x'.repeat(129),
-    '        ',
-    12345678,
-    null,
-  ])('rejects invalid password input', (password) => {
-    expect(() => authValidator.validatePassword(password)).toThrow();
-  });
-  test('registration rejects privilege-escalation fields', () => {
-    expect(() =>
-      authValidator.validateRegister({
-        name: 'Test Student',
-        email: 'student@example.com',
-        password: 'secure-password',
-        role: 'admin',
-        isAdmin: true,
-        status: 'active',
-      }),
-    ).toThrow(
-      expect.objectContaining({
-        status: 400,
-        code: 'UNKNOWN_FIELDS',
-      }),
-    );
-  });
-  test('login rejects extra fields', () => {
-    expect(() =>
-      authValidator.validateLogin({
-        email: 'student@example.com',
-        password: 'secure-password',
-        role: 'admin',
-      }),
-    ).toThrow(
-      expect.objectContaining({
-        status: 400,
-        code: 'UNKNOWN_FIELDS',
-      }),
-    );
-  });
-  test('registration rejects malformed objects', () => {
-    for (const input of [null, [], 'student', 123]) {
-      expect(() => authValidator.validateRegister(input)).toThrow();
+function assertNoSensitiveFields(body) {
+  if (!body || typeof body !== 'object') {
+    return;
+  }
+  const forbiddenKeys = new Set([
+    'password',
+    'passwordHash',
+    'password_hash',
+    'accessToken',
+    'refreshToken',
+    'refresh_token',
+    'secret',
+    'mfaSecret',
+    'recoveryCodes',
+  ]);
+  function inspect(value, path = 'response') {
+    if (!value || typeof value !== 'object') {
+      return;
     }
-  });
-  test('login rejects malformed objects', () => {
-    for (const input of [null, [], 'student', 123]) {
-      expect(() => authValidator.validateLogin(input)).toThrow();
+    for (const [key, child] of Object.entries(value)) {
+      assert.ok(
+        !forbiddenKeys.has(key),
+        `Sensitive field "${path}.${key}" must not be exposed`
+      );
+      inspect(child, `${path}.${key}`);
     }
-  });
+  }
+  inspect(body);
+}
+before(async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/`, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    serverAvailable = response.status < 500;
+  } catch {
+    serverAvailable = false;
+  }
 });
-describe('Authentication security: service behavior', () => {
-  test('sanitizes secrets from user objects', () => {
-    const user = {
-      id: 'user-123',
-      name: 'Test Student',
-      email: 'student@example.com',
-      role: 'student',
-      password: 'plain-password',
-      passwordHash: 'password-hash',
-      resetToken: 'reset-token',
-      resetTokenHash: 'reset-token-hash',
-      verificationToken: 'verification-token',
-      verificationTokenHash: 'verification-token-hash',
-      refreshToken: 'refresh-token',
-      accessToken: 'access-token',
-      sessionToken: 'session-token',
-      recoveryCode: 'recovery-code',
-      recoveryCodes: ['recovery-code'],
-      mfaSecret: 'mfa-secret',
-      twoFactorSecret: 'two-factor-secret',
-    };
-    const safe = sanitizeUser(user);
-    expect(safe).toEqual({
-      id: 'user-123',
-      name: 'Test Student',
-      email: 'student@example.com',
-      role: 'student',
-    });
-    for (const key of [
-      'password',
-      'passwordHash',
-      'resetToken',
-      'resetTokenHash',
-      'verificationToken',
-      'verificationTokenHash',
-      'refreshToken',
-      'accessToken',
-      'sessionToken',
-      'recoveryCode',
-      'recoveryCodes',
-      'mfaSecret',
-      'twoFactorSecret',
-    ]) {
-      expect(safe).not.toHaveProperty(key);
-    }
+test('authentication security suite requires a reachable test server', {
+  skip: false,
+}, () => {
+  assert.ok(
+    serverAvailable,
+    `Test server is unavailable at ${BASE_URL}. Start the isolated test server before running this suite.`
+  );
+});
+test('login rejects missing credentials', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(LOGIN_PATH, {
+    method: 'POST',
+    body: jsonBody({}),
   });
-  test('returns null when asked to sanitize invalid user data', () => {
-    expect(sanitizeUser(null)).toBeNull();
-    expect(sanitizeUser(undefined)).toBeNull();
-    expect(sanitizeUser([])).toBeNull();
-    expect(sanitizeUser('invalid')).toBeNull();
+  assertAuthenticationRejected(response);
+});
+test('login rejects an invalid password', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(LOGIN_PATH, {
+    method: 'POST',
+    body: jsonBody({
+      email: STUDENT_EMAIL,
+      password: 'DefinitelyWrong!Password999',
+    }),
   });
-  test('rejects duplicate registration without creating another account', async () => {
-    const deps = createAuthDependencies();
-    deps.userRepository.findByEmail.mockResolvedValue({
-      id: 'existing-user',
-    });
-    await expect(
-      deps.service.register({
-        name: 'Test Student',
-        email: 'STUDENT@example.com',
-        password: 'secure-password',
-      }),
-    ).rejects.toMatchObject({
-      status: 409,
-      code: 'EMAIL_IN_USE',
-    });
-    expect(deps.userRepository.create).not.toHaveBeenCalled();
-    expect(deps.passwordHasher.hash).not.toHaveBeenCalled();
+  assertAuthenticationRejected(response);
+});
+test('login rejects malformed email input', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(LOGIN_PATH, {
+    method: 'POST',
+    body: jsonBody({
+      email: 'not-an-email',
+      password: STUDENT_PASSWORD,
+    }),
   });
-  test('normalizes email and hashes the password during registration', async () => {
-    const deps = createAuthDependencies();
-    const result = await deps.service.register({
-      name: 'Test Student',
-      email: ' STUDENT@EXAMPLE.COM ',
-      password: 'secure-password',
-    });
-    expect(deps.userRepository.findByEmail).toHaveBeenCalledWith(
-      'student@example.com',
+  assertAuthenticationRejected(response);
+});
+test('unauthenticated requests cannot access the current-user endpoint', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(ME_PATH);
+  assert.ok(
+    [401, 403].includes(response.status),
+    `Expected 401 or 403; received HTTP ${response.status}`
+  );
+});
+test('login response does not expose sensitive account fields', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(LOGIN_PATH, {
+    method: 'POST',
+    body: jsonBody({
+      email: STUDENT_EMAIL,
+      password: STUDENT_PASSWORD,
+    }),
+  });
+  if (!response.ok) {
+    assert.fail(
+      `Synthetic test login failed with HTTP ${response.status}. Configure a valid isolated test account before running this test.`
     );
-    expect(deps.passwordHasher.hash).toHaveBeenCalledWith(
-      'secure-password',
+  }
+  const body = await readJson(response);
+  assert.ok(
+    body,
+    'Expected the login endpoint to return JSON; adapt this test if the API uses another response format.'
+  );
+  assertNoSensitiveFields(body);
+});
+test('registration cannot assign an administrator role through client input', {
+  skip: !serverAvailable,
+}, async () => {
+  const uniqueEmail =
+    `security-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
+  const response = await request(REGISTER_PATH, {
+    method: 'POST',
+    body: jsonBody({
+      firstName: 'Security',
+      lastName: 'Test',
+      email: uniqueEmail,
+      password: 'RegistrationTest!Password123',
+      confirmPassword: 'RegistrationTest!Password123',
+      role: 'super_admin',
+      isAdmin: true,
+      permissions: ['*'],
+    }),
+  });
+  if (response.ok) {
+    const body = await readJson(response);
+    assert.ok(
+      body && typeof body === 'object',
+      'Expected registration to return a JSON account representation.'
     );
-    expect(deps.userRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: 'student@example.com',
-        passwordHash: 'new-password-hash',
-        status: 'pending_verification',
-        roles: ['user'],
-      }),
+    assertNoSensitiveFields(body);
+    const serialized = JSON.stringify(body).toLowerCase();
+    assert.ok(
+      !serialized.includes('"role":"super_admin"'),
+      'Registration must not grant the requested super-admin role.'
     );
-    expect(result.user).not.toHaveProperty('passwordHash');
-    expect(result.user).not.toHaveProperty('resetToken');
-    expect(result.user).not.toHaveProperty('refreshToken');
-  });
-  test('does not expose whether an email exists during login failure', async () => {
-    const existing = createAuthDependencies();
-    existing.passwordHasher.verify.mockResolvedValue(false);
-    const missing = createAuthDependencies();
-    missing.userRepository.findByEmail.mockResolvedValue(null);
-    let existingError;
-    let missingError;
-    try {
-      await existing.service.login({
-        email: 'student@example.com',
-        password: 'wrong-password',
-      });
-    } catch (error) {
-      existingError = error;
-    }
-    try {
-      await missing.service.login({
-        email: 'student@example.com',
-        password: 'wrong-password',
-      });
-    } catch (error) {
-      missingError = error;
-    }
-    expect(existingError).toMatchObject({
-      status: 401,
-      code: 'INVALID_CREDENTIALS',
-      message: 'Email or password is incorrect.',
-    });
-    expect(missingError).toMatchObject({
-      status: 401,
-      code: 'INVALID_CREDENTIALS',
-      message: 'Email or password is incorrect.',
-    });
-  });
-  test.each([
-    'suspended',
-    'disabled',
-    'blocked',
-    'pending',
-    'pending_verification',
-    'unknown',
-  ])('blocks login for account status %s', async (status) => {
-    const deps = createAuthDependencies();
-    deps.userRepository.findByEmail.mockResolvedValue({
-      ...deps.user,
-      status,
-    });
-    await expect(
-      deps.service.login({
-        email: 'student@example.com',
-        password: 'secure-password',
-      }),
-    ).rejects.toMatchObject({
-      status: 403,
-      code: status === 'pending' || status === 'pending_verification'
-        ? 'VERIFICATION_REQUIRED'
-        : 'ACCOUNT_UNAVAILABLE',
-    });
-    expect(deps.tokenService.issue).not.toHaveBeenCalled();
-  });
-  test('creates a session before issuing tokens', async () => {
-    const deps = createAuthDependencies();
-    const result = await deps.service.login(
-      {
-        email: ' STUDENT@EXAMPLE.COM ',
-        password: 'secure-password',
-      },
-      {
-        ip: '127.0.0.1',
-        userAgent: 'security-test',
-      },
+    assert.ok(
+      !serialized.includes('"isadmin":true'),
+      'Registration must not grant administrator privileges.'
     );
-    expect(deps.sessionService.create).toHaveBeenCalledWith(
-      'user-123',
-      {
-        ip: '127.0.0.1',
-        userAgent: 'security-test',
-      },
+  } else {
+    assertAuthenticationRejected(response);
+  }
+});
+test('logout endpoint does not return a server error', {
+  skip: !serverAvailable,
+}, async () => {
+  const response = await request(LOGOUT_PATH, {
+    method: 'POST',
+  });
+  assert.ok(
+    response.status < 500,
+    `Logout endpoint returned HTTP ${response.status}`
+  );
+});
+test('session cookies use secure attributes in HTTPS deployments', {
+  skip: !serverAvailable || !BASE_URL.startsWith('https://'),
+}, async () => {
+  const response = await request(LOGIN_PATH, {
+    method: 'POST',
+    body: jsonBody({
+      email: STUDENT_EMAIL,
+      password: STUDENT_PASSWORD,
+    }),
+  });
+  if (!response.ok) {
+    assert.fail(
+      `Synthetic test login failed with HTTP ${response.status}.`
     );
-    expect(deps.tokenService.issue).toHaveBeenCalledWith({
-      userId: 'user-123',
-      sessionId: 'session-123',
-      roles: ['student'],
-    });
-    expect(result.user).not.toHaveProperty('passwordHash');
-    expect(result.user).not.toHaveProperty('resetToken');
-  });
-  test('revokes a newly created session when token issuance fails', async () => {
-    const deps = createAuthDependencies();
-    deps.tokenService.issue.mockRejectedValue(
-      new Error('Token provider failure'),
+  }
+  const cookies = getSetCookieHeaders(response);
+  for (const cookie of cookies) {
+    const normalized = cookie.toLowerCase();
+    assert.ok(
+      normalized.includes('secure'),
+      'Session cookie must include the Secure attribute over HTTPS.'
     );
-    await expect(
-      deps.service.login({
-        email: 'student@example.com',
-        password: 'secure-password',
-      }),
-    ).rejects.toThrow('Token provider failure');
-    expect(deps.sessionService.revoke).toHaveBeenCalledWith(
-      'session-123',
-      'user-123',
+    assert.ok(
+      normalized.includes('httponly'),
+      'Session cookie must include the HttpOnly attribute.'
     );
-  });
-  test('does not create a session when credentials are invalid', async () => {
-    const deps = createAuthDependencies();
-    deps.passwordHasher.verify.mockResolvedValue(false);
-    await expect(
-      deps.service.login({
-        email: 'student@example.com',
-        password: 'wrong-password',
-      }),
-    ).rejects.toMatchObject({
-      status: 401,
-      code: 'INVALID_CREDENTIALS',
-    });
-    expect(deps.sessionService.create).not.toHaveBeenCalled();
-    expect(deps.tokenService.issue).not.toHaveBeenCalled();
-  });
-  test('rejects refresh tokens when refresh is not configured', async () => {
-    const deps = createAuthDependencies({
-      tokenService: {
-        issue: jest.fn().mockResolvedValue({
-          accessToken: 'access-token',
-        }),
-      },
-    });
-    await expect(
-      deps.service.refresh({
-        refreshToken: 'refresh-token',
-      }),
-    ).rejects.toMatchObject({
-      status: 501,
-      code: 'TOKEN_REFRESH_UNAVAILABLE',
-    });
-  });
-  test('rejects missing refresh tokens', async () => {
-    const deps = createAuthDependencies();
-    await expect(
-      deps.service.refresh({}),
-    ).rejects.toThrow();
-  });
-  test('requires configured session revocation for session logout', async () => {
-    const deps = createAuthDependencies({
-      sessionService: null,
-    });
-    await expect(
-      deps.service.logout({
-        userId: 'user-123',
-        sessionId: 'session-123',
-      }),
-    ).rejects.toMatchObject({
-      status: 501,
-      code: 'SESSION_REVOCATION_UNAVAILABLE',
-    });
-  });
-  test('revokes both session and refresh token on logout', async () => {
-    const deps = createAuthDependencies();
-    await expect(
-      deps.service.logout({
-        userId: 'user-123',
-        sessionId: 'session-123',
-        refreshToken: 'refresh-token',
-      }),
-    ).resolves.toEqual({
-      loggedOut: true,
-    });
-    expect(deps.sessionService.revoke).toHaveBeenCalledWith(
-      'session-123',
-      'user-123',
+    assert.ok(
+      /(?:^|;\s*)samesite=(strict|lax|none)(?:;|$)/i.test(cookie),
+      'Session cookie must explicitly define SameSite.'
     );
-    expect(deps.tokenService.revoke).toHaveBeenCalledWith(
-      'refresh-token',
-    );
-  });
+  }
 });

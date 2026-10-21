@@ -1,5 +1,4 @@
-
-'use strict';
+ 'use strict';
 
 const crypto = require('node:crypto');
 
@@ -11,7 +10,9 @@ const {
 } = require('./service-utils');
 
 const DEFAULT_TOKEN_TTL_MS = 30 * 60 * 1000;
-const MAX_TOKEN_LENGTH = 256;
+const MAX_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const TOKEN_BYTES = 32;
+const TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 
 function createVerificationService({
   userRepository,
@@ -19,20 +20,64 @@ function createVerificationService({
   emailService,
   auditService,
   tokenTtlMs = DEFAULT_TOKEN_TTL_MS,
+  clock = () => new Date(),
 }) {
   requireDependency(userRepository, 'userRepository');
-  requireDependency(verificationRepository, 'verificationRepository');
+  requireDependency(
+    verificationRepository,
+    'verificationRepository',
+  );
 
-  if (!Number.isFinite(tokenTtlMs) || tokenTtlMs <= 0) {
-    throw new TypeError('tokenTtlMs must be a positive finite number.');
+  if (typeof userRepository.findByEmail !== 'function') {
+    throw new TypeError(
+      'userRepository must implement findByEmail().',
+    );
+  }
+
+  if (typeof verificationRepository.create !== 'function') {
+    throw new TypeError(
+      'verificationRepository must implement create().',
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(tokenTtlMs) ||
+    tokenTtlMs <= 0 ||
+    tokenTtlMs > MAX_TOKEN_TTL_MS
+  ) {
+    throw new TypeError(
+      'tokenTtlMs must be a positive integer no greater than 24 hours.',
+    );
+  }
+
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
+
+  function getNow() {
+    const value = clock();
+
+    if (
+      !(value instanceof Date) ||
+      Number.isNaN(value.getTime())
+    ) {
+      throw new TypeError(
+        'clock must return a valid Date.',
+      );
+    }
+
+    return new Date(value.getTime());
   }
 
   function createToken() {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(TOKEN_BYTES).toString('hex');
   }
 
   function hashToken(token) {
-    return crypto.createHash('sha256').update(token).digest('hex');
+    return crypto
+      .createHash('sha256')
+      .update(token, 'utf8')
+      .digest('hex');
   }
 
   function invalidTokenError() {
@@ -45,150 +90,217 @@ function createVerificationService({
     );
   }
 
-  return {
-    async sendEmailVerification(user) {
-      if (!user || !user.id || !user.email) {
-        throw new ServiceError('A valid user is required.', {
+  function assertValidUser(user) {
+    if (
+      !user ||
+      typeof user !== 'object' ||
+      user.id == null ||
+      typeof user.email !== 'string' ||
+      !user.email.trim()
+    ) {
+      throw new ServiceError(
+        'A valid user is required.',
+        {
           code: 'INVALID_USER',
           status: 400,
-        });
-      }
+        },
+      );
+    }
+  }
 
-      if (typeof emailService?.sendVerificationEmail !== 'function') {
-        throw new ServiceError('Email delivery is not configured.', {
+  async function sendEmailVerification(user) {
+    assertValidUser(user);
+
+    if (
+      typeof emailService?.sendVerificationEmail !== 'function'
+    ) {
+      throw new ServiceError(
+        'Email delivery is not configured.',
+        {
           code: 'EMAIL_NOT_CONFIGURED',
           status: 503,
-        });
-      }
+        },
+      );
+    }
 
-      if (user.status !== 'pending_verification') {
-        throw new ServiceError(
-          'This account is not awaiting email verification.',
-          {
-            code: 'VERIFICATION_NOT_REQUIRED',
-            status: 409,
-          },
-        );
-      }
+    if (user.status !== 'pending_verification') {
+      throw new ServiceError(
+        'This account is not awaiting email verification.',
+        {
+          code: 'VERIFICATION_NOT_REQUIRED',
+          status: 409,
+        },
+      );
+    }
 
-      const token = createToken();
-      const tokenHash = hashToken(token);
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + tokenTtlMs);
+    const token = createToken();
+    const tokenHash = hashToken(token);
+    const now = getNow();
+    const expiresAt = new Date(
+      now.getTime() + tokenTtlMs,
+    );
 
-      await verificationRepository.create({
-        userId: user.id,
-        tokenHash,
-        type: 'email',
+    // If supported, invalidate older outstanding tokens before
+    // issuing another one. Implement this operation atomically
+    // in the repository.
+    if (
+      typeof verificationRepository
+        .invalidateOutstandingTokens === 'function'
+    ) {
+      await verificationRepository.invalidateOutstandingTokens(
+        user.id,
+        'email',
+        now,
+      );
+    }
+
+    await verificationRepository.create({
+      userId: user.id,
+      tokenHash,
+      type: 'email',
+      expiresAt,
+      consumedAt: null,
+      createdAt: now,
+    });
+
+    try {
+      await emailService.sendVerificationEmail({
+        to: user.email,
+        name: typeof user.name === 'string' ? user.name : '',
+        token,
         expiresAt,
-        consumedAt: null,
+        expiryMinutes: Math.ceil(tokenTtlMs / 60000),
       });
-
-      try {
-        await emailService.sendVerificationEmail({
-          to: user.email,
-          name: user.name || '',
-          token,
-          expiresAt,
-          expiryMinutes: Math.ceil(tokenTtlMs / 60000),
-        });
-      } catch (error) {
-        // Do not expose internal delivery details to public callers.
-        // The stored token expires automatically; repositories may also
-        // invalidate it here if they support a dedicated operation.
-        throw new ServiceError(
-          'Unable to send the verification email. Please try again later.',
-          {
-            code: 'EMAIL_DELIVERY_FAILED',
-            status: 503,
-          },
-        );
-      }
-
-      return { sent: true };
-    },
-
-    async verifyEmail(input) {
-      const token = requiredString(input?.token, 'token', {
-        max: MAX_TOKEN_LENGTH,
-      });
-
-      const tokenHash = hashToken(token);
-      const now = new Date();
-
-      /*
-       * REQUIRED repository contract:
-       *
-       * consumeValidTokenAndActivateUser(tokenHash, now)
-       *
-       * It must atomically:
-       * 1. Find an unconsumed, unexpired email-verification token.
-       * 2. Mark that token consumed.
-       * 3. Activate the associated user and set emailVerifiedAt.
-       * 4. Commit all changes in one database transaction.
-       *
-       * Return the updated user, or null if the token is invalid,
-       * expired, already consumed, or otherwise unusable.
-       */
+    } catch {
+      // Do not log or expose the raw token or verification URL.
+      // If available, invalidate the token after delivery failure.
       if (
         typeof verificationRepository
-          .consumeValidTokenAndActivateUser !== 'function'
+          .invalidateByTokenHash === 'function'
       ) {
-        throw new ServiceError(
-          'Atomic email verification is not configured.',
-          {
-            code: 'VERIFICATION_REPOSITORY_MISCONFIGURED',
-            status: 500,
-          },
-        );
+        try {
+          await verificationRepository.invalidateByTokenHash(
+            tokenHash,
+            getNow(),
+          );
+        } catch {
+          // Monitor cleanup failures without logging secrets.
+        }
       }
 
-      const user = await verificationRepository
+      throw new ServiceError(
+        'Unable to send the verification email. Please try again later.',
+        {
+          code: 'EMAIL_DELIVERY_FAILED',
+          status: 503,
+        },
+      );
+    }
+
+    return { sent: true };
+  }
+
+  async function verifyEmail(input = {}) {
+    const token = requiredString(input.token, 'token', {
+      max: 256,
+    });
+
+    if (!TOKEN_PATTERN.test(token)) {
+      throw invalidTokenError();
+    }
+
+    const tokenHash = hashToken(token);
+    const now = getNow();
+
+    /*
+     * REQUIRED ATOMIC REPOSITORY CONTRACT
+     *
+     * consumeValidTokenAndActivateUser(tokenHash, now)
+     *
+     * Within one database transaction, this method must:
+     * 1. Find a token whose hash and type match.
+     * 2. Confirm it is unconsumed and has not expired.
+     * 3. Confirm the user is still pending verification.
+     * 4. Consume the token exactly once.
+     * 5. Activate the user and set emailVerifiedAt.
+     * 6. Commit all changes atomically.
+     *
+     * Return the updated user or null.
+     * Concurrent verification attempts must not both succeed.
+     */
+    if (
+      typeof verificationRepository
+        .consumeValidTokenAndActivateUser !== 'function'
+    ) {
+      throw new ServiceError(
+        'Atomic email verification is not configured.',
+        {
+          code: 'VERIFICATION_REPOSITORY_MISCONFIGURED',
+          status: 500,
+        },
+      );
+    }
+
+    const user =
+      await verificationRepository
         .consumeValidTokenAndActivateUser(tokenHash, now);
 
-      if (!user) {
-        throw invalidTokenError();
-      }
+    if (!user) {
+      throw invalidTokenError();
+    }
 
-      try {
-        await audit(auditService, {
-          action: 'verification.email_verified',
-          entity: 'User',
-          entityId: user.id,
-          actorId: user.id,
-        });
-      } catch (error) {
-        // Verification has already committed. Do not report it as failed
-        // merely because the audit service is temporarily unavailable.
-        // Configure operational monitoring for audit delivery failures.
-      }
+    // The shared audit helper intentionally swallows audit-provider
+    // errors. Operational monitoring should report audit failures.
+    await audit(auditService, {
+      action: 'verification.email_verified',
+      entity: 'User',
+      entityId: user.id,
+      actorId: user.id,
+      metadata: {
+        method: 'email_token',
+      },
+    });
 
-      return {
-        verified: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          status: user.status,
-          emailVerifiedAt: user.emailVerifiedAt,
-        },
-      };
-    },
+    return {
+      verified: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        status: user.status,
+        emailVerifiedAt: user.emailVerifiedAt,
+      },
+    };
+  }
 
-    async resendEmailVerification(email) {
-      const normalizedEmail = requiredString(email, 'email', {
-        max: 254,
-      }).trim().toLowerCase();
+  async function resendEmailVerification(email) {
+    const normalizedEmail = requiredString(
+      email,
+      'email',
+      { max: 254 },
+    ).toLowerCase();
 
-      const user = await userRepository.findByEmail(normalizedEmail);
+    // The controller should return the same public response for
+    // all eligible and ineligible addresses to reduce enumeration.
+    const user = await userRepository.findByEmail(
+      normalizedEmail,
+    );
 
-      // Keep the response identical for unknown and ineligible accounts.
-      if (user && user.status === 'pending_verification') {
-        await this.sendEmailVerification(user);
-      }
+    if (user && user.status === 'pending_verification') {
+      await sendEmailVerification(user);
+    }
 
-      return { accepted: true };
-    },
+    return { accepted: true };
+  }
+
+  return {
+    sendEmailVerification,
+    verifyEmail,
+    resendEmailVerification,
   };
 }
 
-module.exports = { createVerificationService };
+module.exports = {
+  createVerificationService,
+  DEFAULT_TOKEN_TTL_MS,
+  MAX_TOKEN_TTL_MS,
+};

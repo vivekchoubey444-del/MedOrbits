@@ -1,123 +1,1409 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#071629">
-  <meta name="description" content="View and manage your MedOrbits account notifications, admission updates, career alerts and important announcements.">
-  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#100A17">
+  <meta name="description" content="View and manage your MedOrbits notifications, including education updates, admissions reminders, career opportunities and platform announcements.">
+  <meta name="robots" content="index, follow">
   <meta name="author" content="MedOrbits">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Notifications | MedOrbits Account</title>
-  <link rel="canonical" href="https://medorbits.in/account/notifications.html">
+  <title>Notifications | MedOrbits</title>
+  <link rel="canonical" href="https://medorbits.in/pages/notifications.html">
   <link rel="icon" href="/assets/images/logo/medorbits-logo.png" type="image/png">
   <link rel="manifest" href="/manifest.json">
+  <meta name="color-scheme" content="dark">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/style.css">
+
   <style>
+    :root {
+      color-scheme: dark;
+      --bg: #100a17;
+      --bg-2: #191023;
+      --panel: #21172b;
+      --panel-2: #2b1d36;
+      --gold: #c9a96e;
+      --gold-light: #e4d0a1;
+      --lav: #d9cce4;
+      --muted: #b7acbf;
+      --line: rgba(201,169,110,.24);
+      --white: #f7f1fa;
+      --radius: 18px;
+      --shadow: 0 22px 65px rgba(0,0,0,.25);
+    }
 
-    :root{color-scheme:dark;--bg:#100a17;--bg-2:#191023;--panel:#21172b;--panel-2:#2b1d36;--gold:#c9a96e;--gold-light:#e4d0a1;--lav:#d9cce4;--muted:#b7acbf;--line:rgba(201,169,110,.24);--white:#f7f1fa;--radius:18px;--shadow:0 22px 65px rgba(0,0,0,.25)}
-    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:radial-gradient(ellipse at 12% 0%,rgba(87,57,105,.22),transparent 35%),radial-gradient(ellipse at 92% 32%,rgba(201,169,110,.07),transparent 28%),linear-gradient(135deg,#100a17,#1a1024 55%,#21172b);color:var(--white);font:400 15px/1.7 "DM Sans",sans-serif}img{display:block;max-width:100%}a{color:inherit;text-decoration:none}button,input,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}.container{width:min(1180px,calc(100% - 40px));margin-inline:auto}.skip-link{position:absolute;top:-60px;left:12px;z-index:9999;background:var(--gold-light);color:#170e1d;padding:10px 14px;border-radius:8px}.skip-link:focus{top:12px}
-    .announcement{display:flex;justify-content:center;align-items:center;gap:12px;padding:8px 16px;background:#0b0710;border-bottom:1px solid rgba(201,169,110,.13);color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.14em;text-align:center;text-transform:uppercase}.announcement .spark{color:var(--gold)}
-    .header{position:sticky;top:0;z-index:1000;background:rgba(16,10,23,.91);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);transition:box-shadow .25s,background .25s}.header.scrolled{background:rgba(12,7,17,.98);box-shadow:0 12px 35px rgba(0,0,0,.25)}.nav-wrap{min-height:82px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}.brand img{width:47px;height:47px;object-fit:contain}.brand strong{display:block;color:var(--gold-light);font-size:16px;letter-spacing:.12em;line-height:1.3}.brand small{display:block;color:var(--muted);font-size:8px;letter-spacing:.13em;text-transform:uppercase}.nav{display:flex;align-items:center;gap:19px;font-size:12px}.nav>a,.nav-trigger{color:#eee6f2;white-space:nowrap}.nav>a:hover,.nav-trigger:hover{color:var(--gold-light)}.nav-group{position:relative}.nav-trigger{border:0;background:none;padding:12px 0;cursor:pointer}.nav-trigger span{color:var(--gold);margin-left:5px}.dropdown{position:absolute;top:100%;left:-14px;width:260px;display:none;padding:9px;border:1px solid var(--line);border-radius:12px;background:#21172b;box-shadow:var(--shadow)}.nav-group.open .dropdown,.nav-group:hover .dropdown,.nav-group:focus-within .dropdown{display:grid}.dropdown a{padding:10px 12px;border-radius:8px;font-size:12px;color:var(--lav)}.dropdown a:hover{background:rgba(201,169,110,.1);color:var(--gold-light)}.nav-cta,.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--gold);border-radius:9px;padding:11px 16px;background:var(--gold);color:#170e1d;font-size:12px;font-weight:700;transition:transform .2s,filter .2s}.btn:hover,.nav-cta:hover{transform:translateY(-2px);filter:brightness(1.07)}.btn-outline{background:transparent;color:var(--gold-light);border-color:rgba(217,204,228,.35)}.menu-toggle{display:none;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--gold-light);padding:9px 12px;font-weight:700;font-size:11px}
-    .hero{position:relative;isolation:isolate;overflow:hidden;padding:78px 0 72px;background:linear-gradient(90deg,rgba(16,10,23,.97),rgba(26,16,36,.88) 58%,rgba(26,16,36,.56)),url('/assets/images/hero/hero-home.png') center/cover no-repeat,#100a17}.hero:after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 82% 18%,rgba(201,169,110,.14),transparent 36%),radial-gradient(ellipse at 90% 90%,rgba(84,30,50,.2),transparent 42%)}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:48px}.eyebrow,.kicker{display:inline-flex;align-items:center;gap:9px;color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}.eyebrow:before{content:"";width:26px;height:1px;background:var(--gold)}h1,h2,h3,p{margin-top:0}.hero h1{max-width:720px;margin:18px 0;font:600 clamp(39px,5.3vw,67px)/1.08 "Playfair Display",Georgia,serif;letter-spacing:-.035em}.hero h1 em{color:var(--gold-light);font-style:normal}.hero-copy{max-width:610px;color:#d0c5d8;font-size:15px;line-height:1.85}.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.hero-visual{position:relative;min-height:390px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:linear-gradient(145deg,#30203e,#171020);box-shadow:var(--shadow)}.hero-visual img{width:100%;height:390px;object-fit:cover}.hero-visual:after{content:"";position:absolute;inset:40% 0 0;background:linear-gradient(transparent,rgba(16,10,23,.96))}.visual-caption{position:absolute;z-index:1;left:22px;right:22px;bottom:19px}.visual-caption strong{display:block;color:var(--gold-light);font:600 21px "Playfair Display",serif}.visual-caption span{color:#e2d9e7;font-size:12px}.visual-stamp{position:absolute;z-index:2;top:17px;right:17px;padding:8px 11px;border:1px solid var(--line);border-radius:30px;background:rgba(16,10,23,.8);color:var(--gold-light);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
-    .pillars{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line);background:rgba(43,29,54,.38)}.pillar{padding:20px 14px;text-align:center;border-right:1px solid var(--line)}.pillar:last-child{border:0}.pillar strong{display:block;color:var(--gold-light);font:600 18px "Playfair Display",serif}.pillar span{color:var(--muted);font-size:10px}
-    .search-band{padding:23px 0;background:rgba(11,7,16,.65);border-bottom:1px solid var(--line)}.search-form{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px}.field{width:100%;min-width:0;border:1px solid rgba(201,169,110,.25);border-radius:9px;background:#21172b;color:var(--white);padding:13px 14px;outline:none}.field:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.1)}.field option{background:#21172b}
-    .section{padding:76px 0;scroll-margin-top:100px}.section.alt{background:radial-gradient(ellipse at 90% 10%,rgba(84,30,50,.13),transparent 40%),rgba(43,29,54,.18);border-block:1px solid rgba(217,204,228,.08)}.section-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:29px}.section-head h2,.about-title{margin:8px 0 10px;font:600 clamp(28px,3.3vw,42px)/1.18 "Playfair Display",Georgia,serif;letter-spacing:-.025em}.section-head h2 span,.about-title span{color:var(--gold-light)}.section-head p{max-width:650px;margin:0;color:var(--muted);font-size:12px}.text-link{color:var(--gold-light);font-size:11px;font-weight:700;white-space:nowrap}.text-link:hover{text-decoration:underline}
-    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}.card{min-width:0;overflow:hidden;border:1px solid rgba(201,169,110,.2);border-radius:14px;background:linear-gradient(145deg,#2b1d36,#191023);transition:transform .25s,border-color .25s,box-shadow .25s}.card:hover{transform:translateY(-5px);border-color:rgba(201,169,110,.68);box-shadow:0 18px 42px rgba(0,0,0,.26)}.card-media{position:relative;overflow:hidden;background:#2b1d36}.card-media img{width:100%;height:165px;object-fit:cover;transition:transform .45s}.card:hover .card-media img{transform:scale(1.045)}.tag{position:absolute;top:11px;left:11px;padding:5px 8px;border:1px solid rgba(201,169,110,.4);border-radius:5px;background:rgba(16,10,23,.88);color:var(--gold-light);font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.card-body{padding:16px}.card h3{margin:0 0 7px;color:#eee2f3;font:600 18px "Playfair Display",Georgia,serif}.card p{min-height:55px;margin:0 0 13px;color:var(--muted);font-size:11px;line-height:1.7}.card .card-link{color:var(--gold-light);font-size:10px;font-weight:700}
-    .about-grid{display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;gap:45px}.about-visual{overflow:hidden;border:1px solid var(--line);border-radius:17px;background:#21172b}.about-visual img{width:100%;height:380px;object-fit:cover}.body-copy{color:var(--muted);font-size:13px;line-height:1.9}.check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0 25px}.check-list span{color:var(--lav);font-size:12px}.check-list span:before{content:"✦";color:var(--gold);margin-right:8px}
-    .video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.video-card{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#21172b}.video-frame{aspect-ratio:16/9;background:#100a17}.video-frame video{width:100%;height:100%;object-fit:cover}.video-copy{padding:15px}.video-copy small{color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.video-copy h3{margin:6px 0;color:var(--lav);font:600 17px "Playfair Display",serif}.video-copy p{margin:0;color:var(--muted);font-size:11px}
-    .cta{padding:49px 0;border-block:1px solid var(--line);background:linear-gradient(100deg,rgba(16,10,23,.97),rgba(43,29,54,.91) 62%,rgba(84,30,50,.6)),url('/assets/images/education/education-global.jpg') center/cover}.cta-inner{display:flex;justify-content:space-between;align-items:center;gap:25px}.cta h2{margin:8px 0;font:600 clamp(27px,3vw,38px) "Playfair Display",serif}.cta p{margin:0;color:var(--muted);font-size:12px}.faq-list{display:grid;gap:10px}.faq{padding:17px 19px;border:1px solid var(--line);border-radius:10px;background:rgba(43,29,54,.45)}.faq summary{color:var(--lav);font-size:12px;font-weight:700;cursor:pointer}.faq p{margin:12px 0 0;color:var(--muted);font-size:12px}
-    .footer{padding:48px 0 0;background:#0b0710;border-top:1px solid var(--line)}.footer-grid{display:grid;grid-template-columns:1.45fr repeat(4,minmax(0,1fr));gap:25px;padding-bottom:34px}.footer-grid>div{min-width:0}.footer-brand p{max-width:270px;margin-top:13px;color:var(--muted);font-size:11px;line-height:1.9}.footer h3{margin:0 0 13px;padding-bottom:9px;border-bottom:1px solid rgba(201,169,110,.2);color:var(--gold-light);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.footer-grid>div:not(:first-child) a{display:block;margin:8px 0;color:var(--muted);font-size:10px}.footer a:hover{color:var(--gold-light)}.disclaimer{padding:13px 16px;margin:0 0 15px;border-left:2px solid var(--gold);border-radius:0 7px 7px 0;background:rgba(43,29,54,.32);color:#a79caf;font-size:10px;line-height:1.8}.footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:17px 0;border-top:1px solid rgba(201,169,110,.16);color:#a79caf;font-size:10px}
-    @media(max-width:1100px){.menu-toggle{display:inline-flex}.nav{display:none;position:absolute;top:100%;left:0;right:0;align-items:stretch;flex-direction:column;gap:4px;padding:15px 22px 20px;background:#160d20;border-bottom:1px solid var(--line)}.nav.open{display:flex}.nav>a,.nav-trigger{padding:11px 8px;text-align:left}.nav-group{width:100%}.dropdown{position:static;width:100%;box-shadow:none;margin-bottom:5px}.nav-cta{width:100%}.hero-grid{gap:28px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.footer-brand{grid-column:1/-1}}
-    @media(max-width:760px){.container{width:calc(100% - 28px)}.announcement{font-size:8px;letter-spacing:.06em;gap:7px}.nav-wrap{min-height:70px}.brand img{width:41px;height:41px}.brand strong{font-size:14px}.brand small{font-size:7px}.hero{padding:48px 0}.hero-grid,.about-grid{grid-template-columns:1fr}.hero h1{font-size:clamp(38px,10vw,54px)}.hero-visual,.hero-visual img{height:270px;min-height:270px}.pillars{grid-template-columns:repeat(2,1fr)}.pillar{border-bottom:1px solid var(--line)}.pillar:nth-child(2){border-right:0}.pillar:nth-child(n+3){border-bottom:0}.search-form{grid-template-columns:1fr}.section{padding:52px 0}.section-head{align-items:flex-start;flex-direction:column;gap:10px}.cards{gap:12px}.card-media img{height:135px}.card-body{padding:12px}.card h3{font-size:15px}.card p{min-height:66px;font-size:10px}.about-visual img{height:270px}.check-list{grid-template-columns:1fr}.video-grid{grid-template-columns:1fr}.cta-inner{align-items:flex-start;flex-direction:column}.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px}.footer-brand{grid-column:1/-1}.footer-bottom{flex-direction:column}}
-    @media(max-width:390px){.cards,.footer-grid{grid-template-columns:1fr}.card-media img{height:190px}.card p{min-height:0}.hero-actions .btn{width:100%}.brand small{letter-spacing:.07em}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    * { box-sizing: border-box; }
 
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 100px;
+    }
 
-    :root{color-scheme:dark;--bg:#071629;--bg-2:#0b203b;--panel:#102947;--panel-2:#153657;--gold:#8bbcff;--gold-light:#d9e9ff;--lav:#c7d8ee;--muted:#9db2cc;--line:rgba(139,188,255,.24);--white:#f2f7ff;--radius:18px;--shadow:0 24px 70px rgba(0,0,0,.38)}
-    body{background:radial-gradient(ellipse at 12% 0%,rgba(40,102,170,.23),transparent 35%),radial-gradient(ellipse at 92% 32%,rgba(98,155,221,.10),transparent 28%),linear-gradient(135deg,#050d1a,#091b31 55%,#102947);color:var(--white)}
-    .announcement{background:#040b15;border-color:rgba(139,188,255,.14);color:var(--gold-light)}
-    .announcement .spark,.nav-trigger span{color:var(--gold)}
-    .header{background:rgba(5,14,27,.93);border-color:var(--line)}.header.scrolled{background:rgba(4,11,21,.98)}
-    .brand strong,.footer h3{color:var(--gold-light)}.brand small,.footer-brand p{color:var(--muted)}
-    .nav>a:hover,.nav-trigger:hover,.text-link:hover,.footer a:hover{color:var(--gold-light)}
-    .dropdown{background:#102947;border-color:var(--line)}.dropdown a{color:var(--lav)}.dropdown a:hover{background:rgba(139,188,255,.1);color:var(--gold-light)}
-    .nav-cta,.btn{border-color:var(--gold);background:linear-gradient(135deg,#d9e9ff,#82b6f8);color:#071629}.btn-outline{background:transparent;color:var(--gold-light);border-color:rgba(199,216,238,.38)}
-    .menu-toggle{border-color:var(--line);color:var(--gold-light)}
-    .intro-screen{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(40,102,170,.42),transparent 42%),linear-gradient(145deg,#050d1a,#0b203b 58%,#040b15);opacity:1;visibility:visible;transition:opacity .75s ease,visibility .75s ease}
-    .intro-screen:before,.intro-screen:after{content:"";position:absolute;width:min(62vw,420px);aspect-ratio:1;border:1px solid rgba(139,188,255,.22);border-radius:50%;animation:intro-orbit 2.6s ease-out both}.intro-screen:after{width:min(48vw,320px);border-color:rgba(217,233,255,.35);animation-delay:.12s}.intro-screen.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
-    .intro-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;animation:intro-rise .9s cubic-bezier(.2,.75,.25,1) both}.intro-logo{width:76px;height:76px;object-fit:contain;margin-bottom:17px;filter:drop-shadow(0 0 22px rgba(139,188,255,.25));animation:intro-logo-in 1.1s cubic-bezier(.2,.75,.25,1) both}.intro-wordmark{color:#d9e9ff;font:600 clamp(22px,4vw,31px)/1.2 "Playfair Display",Georgia,serif;letter-spacing:.23em;text-indent:.23em}.intro-tagline{margin-top:12px;color:#9db2cc;font-size:9px;letter-spacing:.24em;text-indent:.24em;text-transform:uppercase;animation:intro-fade-in 1.2s .25s both}.intro-rule{width:0;height:1px;margin-top:22px;background:linear-gradient(90deg,transparent,#8bbcff,transparent);animation:intro-rule-in .8s .35s ease-out forwards}
-    @keyframes intro-orbit{from{transform:scale(.72) rotate(-25deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}@keyframes intro-rise{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes intro-logo-in{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}@keyframes intro-fade-in{from{opacity:0;letter-spacing:.42em}to{opacity:1;letter-spacing:.24em}}@keyframes intro-rule-in{to{width:150px}}
-    @media(prefers-reduced-motion:reduce){.intro-screen,.intro-screen:before,.intro-screen:after,.intro-content,.intro-logo,.intro-tagline,.intro-rule{animation:none!important;transition:none!important}.intro-rule{width:150px}}
-    .login-main{position:relative;isolation:isolate;min-height:calc(100vh - 230px);padding:62px 0 72px;overflow:hidden}.login-main:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 17% 32%,rgba(42,113,188,.16),transparent 34%),radial-gradient(ellipse at 85% 70%,rgba(93,151,219,.10),transparent 30%)}
-    .login-layout{display:grid;grid-template-columns:1fr minmax(330px,.82fr);gap:clamp(32px,6vw,82px);align-items:center;max-width:1030px;margin:0 auto}
-    .login-story{padding:12px 0}.login-eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}.login-eyebrow:before{content:"";width:28px;height:1px;background:var(--gold)}
-    .login-story h1{max-width:540px;margin:20px 0 18px;font:600 clamp(38px,5vw,61px)/1.08 "Playfair Display",Georgia,serif;letter-spacing:-.035em}.login-story h1 span{color:var(--gold-light)}.login-story>p{max-width:480px;color:#b8c9df;font-size:14px;line-height:1.9}
-    .trust-points{display:grid;gap:13px;margin-top:28px}.trust-point{display:flex;align-items:flex-start;gap:12px;color:#d5e3f5;font-size:12px}.trust-icon{display:grid;place-items:center;flex:0 0 30px;height:30px;border:1px solid var(--line);border-radius:9px;background:rgba(16,41,71,.72);color:var(--gold-light);font-size:14px}.trust-point strong{display:block;margin-bottom:2px;color:var(--white);font-size:12px}.trust-point span:last-child{color:var(--muted);font-size:11px}
-    .login-card{position:relative;padding:clamp(23px,3vw,36px);border:1px solid rgba(139,188,255,.3);border-radius:20px;background:linear-gradient(145deg,rgba(16,41,71,.96),rgba(7,22,41,.97));box-shadow:0 28px 90px rgba(0,0,0,.36)}.login-card:before{content:"";position:absolute;top:-1px;left:28px;right:28px;height:2px;background:linear-gradient(90deg,transparent,#d9e9ff,#5f9fe8,transparent)}
-    .login-card-head{margin-bottom:24px}.login-card-head .mini-label{color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}.login-card h2{margin:8px 0 6px;color:var(--white);font:600 29px/1.2 "Playfair Display",Georgia,serif}.login-card-head p{margin:0;color:var(--muted);font-size:11px}
-    .login-form{display:grid;gap:16px}.form-field{display:grid;gap:7px}.form-field label{color:#d7e4f5;font-size:11px;font-weight:600}.input-wrap{position:relative}.login-input{width:100%;min-height:47px;padding:12px 14px;border:1px solid rgba(139,188,255,.22);border-radius:9px;outline:none;background:#081a2e;color:var(--white);font:inherit;font-size:12px;transition:border-color .2s,box-shadow .2s}.login-input::placeholder{color:#7187a2}.login-input:focus{border-color:#8bbcff;box-shadow:0 0 0 3px rgba(139,188,255,.12)}.login-input.has-toggle{padding-right:76px}.password-toggle{position:absolute;top:50%;right:10px;transform:translateY(-50%);padding:5px 7px;border:0;border-radius:5px;background:transparent;color:var(--gold-light);font-size:10px;font-weight:700;cursor:pointer}.form-options{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-2px}.remember{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;cursor:pointer}.remember input{accent-color:#8bbcff;width:14px;height:14px}.forgot-link,.register-link{color:var(--gold-light);font-size:10px;font-weight:700}.forgot-link:hover,.register-link:hover{text-decoration:underline}.login-submit{width:100%;min-height:47px;margin-top:3px;border:1px solid #b7d7ff;border-radius:9px;background:linear-gradient(135deg,#d9e9ff,#82b6f8);color:#071629;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 9px 24px rgba(70,133,201,.16);transition:transform .2s,filter .2s}.login-submit:hover{transform:translateY(-1px);filter:brightness(1.04)}.login-submit:disabled{opacity:.65;cursor:wait;transform:none}.form-status{min-height:0;margin:0;font-size:11px;line-height:1.6}.form-status:not(:empty){padding:10px 12px;border:1px solid rgba(139,188,255,.22);border-radius:8px;background:rgba(5,13,26,.6);color:#d9e9ff}.form-status.error{border-color:rgba(255,133,151,.4);color:#ffc1ca}.form-status.success{border-color:rgba(118,219,181,.4);color:#a8f0d0}.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:#738aa6;font-size:9px}.login-divider:before,.login-divider:after{content:"";height:1px;flex:1;background:rgba(139,188,255,.15)}.account-prompt{text-align:center;margin:0;color:var(--muted);font-size:11px}.account-prompt a{color:var(--gold-light);font-weight:700}.security-note{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:17px;color:#8299b5;font-size:9px;text-align:center}.security-note span{color:var(--gold-light)}
-    .login-footer-note{max-width:1030px;margin:25px auto 0;color:#8196b0;font-size:10px;line-height:1.8;text-align:center}
-    .footer{background:#040b15;border-color:rgba(139,188,255,.16)}.footer h3{border-color:rgba(139,188,255,.18)}.disclaimer{border-left-color:var(--gold);background:rgba(16,41,71,.4);color:#8ea4bf}.footer-bottom{border-color:rgba(139,188,255,.14);color:#8196b0}
-    @media(max-width:1100px){.nav{background:#071629;border-color:var(--line)}}
-    @media(max-width:800px){.login-main{padding:42px 0 50px}.login-layout{grid-template-columns:1fr;max-width:530px;gap:28px}.login-story{padding:0}.login-story h1{font-size:clamp(36px,9vw,49px);margin:13px 0}.login-story>p{font-size:12px}.trust-points{grid-template-columns:1fr 1fr;gap:12px;margin-top:19px}.trust-point{gap:9px}.trust-point span:last-child{font-size:10px}.login-card{padding:24px}.login-footer-note{margin-top:20px}}
-    @media(max-width:420px){.trust-points{grid-template-columns:1fr}.login-card{padding:20px}.form-options{align-items:flex-start}.login-card h2{font-size:26px}}
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 12% 0%,rgba(87,57,105,.22),transparent 35%),
+        radial-gradient(ellipse at 92% 32%,rgba(201,169,110,.07),transparent 28%),
+        linear-gradient(135deg,#100a17,#1a1024 55%,#21172b);
+      color: var(--white);
+      font: 400 15px/1.7 "DM Sans",sans-serif;
+    }
 
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button,input,select,textarea { font: inherit; }
+    button,a { -webkit-tap-highlight-color: transparent; }
 
-    .notifications-main{position:relative;isolation:isolate;min-height:calc(100vh - 230px);padding:56px 0 70px;overflow:hidden}
-    .notifications-main:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(42,113,188,.17),transparent 35%),radial-gradient(ellipse at 88% 68%,rgba(93,151,219,.10),transparent 31%)}
-    .notifications-shell{max-width:1060px;margin:0 auto}
-    .notifications-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:26px}
-    .notifications-eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}
-    .notifications-eyebrow:before{content:"";width:28px;height:1px;background:var(--gold)}
-    .notifications-heading h1{margin:14px 0 9px;font:600 clamp(36px,5vw,56px)/1.1 "Playfair Display",Georgia,serif;letter-spacing:-.035em}
-    .notifications-heading h1 span{color:var(--gold-light)}
-    .notifications-heading p{max-width:620px;margin:0;color:#b8c9df;font-size:13px;line-height:1.8}
-    .notification-count{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;padding:11px 14px;border:1px solid rgba(139,188,255,.25);border-radius:10px;background:rgba(16,41,71,.65);color:#d9e9ff;font-size:11px}
-    .notification-count strong{display:grid;place-items:center;min-width:25px;height:25px;padding:0 6px;border-radius:8px;background:#d9e9ff;color:#071629;font-size:11px}
-    .notification-panel{overflow:hidden;border:1px solid rgba(139,188,255,.25);border-radius:18px;background:linear-gradient(145deg,rgba(16,41,71,.9),rgba(7,22,41,.96));box-shadow:0 28px 90px rgba(0,0,0,.25)}
-    .notification-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:19px 22px;border-bottom:1px solid rgba(139,188,255,.16)}
-    .notification-tabs{display:flex;flex-wrap:wrap;gap:7px}
-    .notification-tab{padding:9px 13px;border:1px solid transparent;border-radius:8px;background:transparent;color:#9fb4ce;font-size:11px;font-weight:700;cursor:pointer}
-    .notification-tab[aria-pressed="true"]{border-color:rgba(139,188,255,.3);background:rgba(139,188,255,.12);color:#e3efff}
-    .mark-read{padding:9px 12px;border:1px solid rgba(139,188,255,.27);border-radius:8px;background:transparent;color:#d9e9ff;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
-    .mark-read:hover{background:rgba(139,188,255,.1)}
-    .notification-list{display:grid}
-    .notification-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:start;gap:14px;padding:20px 22px;border-bottom:1px solid rgba(139,188,255,.12);transition:background .2s}
-    .notification-item:last-child{border-bottom:0}
-    .notification-item:hover{background:rgba(139,188,255,.045)}
-    .notification-item.is-unread{background:rgba(70,133,201,.075)}
-    .notification-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(139,188,255,.24);border-radius:12px;background:rgba(8,26,46,.85);color:#d9e9ff;font-size:17px}
-    .notification-item[data-kind="admissions"] .notification-icon{color:#d9e9ff}
-    .notification-item[data-kind="career"] .notification-icon{color:#a8f0d0;border-color:rgba(118,219,181,.25)}
-    .notification-item[data-kind="account"] .notification-icon{color:#f0d8a2;border-color:rgba(240,216,162,.25)}
-    .notification-copy{min-width:0}
-    .notification-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:5px}
-    .notification-category{color:#8bbcff;font-size:8px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
-    .notification-item[data-kind="career"] .notification-category{color:#a8f0d0}
-    .notification-item[data-kind="account"] .notification-category{color:#f0d8a2}
-    .unread-label{padding:3px 6px;border-radius:4px;background:rgba(139,188,255,.13);color:#cfe3ff;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-    .notification-copy h2{margin:0 0 5px;color:#edf5ff;font:600 17px/1.35 "Playfair Display",Georgia,serif}
-    .notification-copy p{margin:0;color:#a9bdd5;font-size:11px;line-height:1.75}
-    .notification-time{padding-top:2px;color:#7f97b5;font-size:9px;white-space:nowrap}
-    .notification-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
-    .notification-actions a,.notification-actions button{padding:0;border:0;background:transparent;color:#d9e9ff;font-size:10px;font-weight:700;cursor:pointer}
-    .notification-actions a:hover,.notification-actions button:hover{text-decoration:underline}
-    .notification-empty{display:none;padding:52px 22px;text-align:center}
-    .notification-empty.is-visible{display:block}
-    .empty-symbol{display:grid;place-items:center;width:60px;height:60px;margin:0 auto 15px;border:1px solid rgba(139,188,255,.25);border-radius:18px;background:rgba(139,188,255,.08);color:#d9e9ff;font-size:24px}
-    .notification-empty h2{margin:0 0 7px;color:#eaf3ff;font:600 23px "Playfair Display",Georgia,serif}
-    .notification-empty p{margin:0;color:#9fb4ce;font-size:11px}
-    .notifications-footnote{margin:18px 0 0;color:#8196b0;font-size:10px;line-height:1.8}
-    .notifications-footnote a{color:#d9e9ff;text-decoration:underline;text-underline-offset:3px}
-    @media(max-width:760px){.notifications-main{padding:39px 0 48px}.notifications-heading{align-items:flex-start;flex-direction:column;gap:15px}.notifications-heading h1{font-size:clamp(35px,9vw,47px)}.notification-toolbar{align-items:flex-start;flex-direction:column;padding:15px}.notification-item{grid-template-columns:36px minmax(0,1fr);gap:11px;padding:17px 15px}.notification-icon{width:36px;height:36px;border-radius:10px}.notification-time{grid-column:2;grid-row:2;padding:0}.notification-copy h2{font-size:16px}.notification-count{align-self:flex-start}}
-    @media(prefers-reduced-motion:reduce){.notification-item{transition:none}}
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--gold-light);
+      outline-offset: 4px;
+    }
 
+    .container {
+      width: min(1180px,calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -60px;
+      left: 12px;
+      z-index: 10001;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--gold-light);
+      color: #170e1d;
+    }
+
+    .skip-link:focus { top: 12px; }
+
+    /* Opening animation */
+
+    .intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 42%,rgba(84,30,50,.42),transparent 42%),
+        linear-gradient(145deg,#100a17,#1a1024 58%,#0b0710);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .75s ease,visibility .75s ease;
+    }
+
+    .intro-screen::before,
+    .intro-screen::after {
+      content: "";
+      position: absolute;
+      width: min(62vw,420px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(201,169,110,.2);
+      border-radius: 50%;
+      animation: intro-orbit 2.6s ease-out both;
+    }
+
+    .intro-screen::after {
+      width: min(48vw,320px);
+      border-color: rgba(201,169,110,.32);
+      animation-delay: .12s;
+    }
+
+    .intro-screen.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      animation: intro-rise .9s cubic-bezier(.2,.75,.25,1) both;
+    }
+
+    .intro-logo {
+      width: 76px;
+      height: 76px;
+      margin-bottom: 17px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 22px rgba(201,169,110,.24));
+      animation: intro-logo-in 1.1s cubic-bezier(.2,.75,.25,1) both;
+    }
+
+    .intro-wordmark {
+      color: var(--gold-light);
+      font: 600 clamp(22px,4vw,31px)/1.2 "Playfair Display",Georgia,serif;
+      letter-spacing: .23em;
+    }
+
+    .intro-tagline {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      animation: intro-fade-in 1.2s .25s both;
+    }
+
+    .intro-rule {
+      width: 0;
+      height: 1px;
+      margin-top: 22px;
+      background: linear-gradient(90deg,transparent,var(--gold),transparent);
+      animation: intro-rule-in .8s .35s ease-out forwards;
+    }
+
+    @keyframes intro-orbit {
+      from { transform: scale(.72) rotate(-25deg); opacity: 0; }
+      to { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    @keyframes intro-rise {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes intro-logo-in {
+      from { transform: scale(.72); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes intro-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes intro-rule-in {
+      to { width: 150px; }
+    }
+
+    /* Announcement and navigation */
+
+    .announcement {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 8px 16px;
+      background: #0b0710;
+      border-bottom: 1px solid rgba(201,169,110,.13);
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .announcement .spark { color: var(--gold); }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(16,10,23,.91);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+      transition: box-shadow .25s,background .25s;
+    }
+
+    .header.scrolled {
+      background: rgba(12,7,17,.98);
+      box-shadow: 0 12px 35px rgba(0,0,0,.25);
+    }
+
+    .nav-wrap {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .brand img {
+      width: 47px;
+      height: 47px;
+      object-fit: contain;
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--gold-light);
+      font-size: 16px;
+      letter-spacing: .12em;
+      line-height: 1.3;
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 19px;
+      font-size: 12px;
+    }
+
+    .nav > a,.nav-trigger {
+      color: #eee6f2;
+      white-space: nowrap;
+    }
+
+    .nav > a:hover,.nav-trigger:hover { color: var(--gold-light); }
+
+    .nav-group { position: relative; }
+
+    .nav-trigger {
+      padding: 12px 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .nav-trigger span {
+      margin-left: 5px;
+      color: var(--gold);
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: -14px;
+      display: none;
+      width: 260px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #21172b;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-group.open .dropdown,
+    .nav-group:focus-within .dropdown { display: grid; }
+
+    .dropdown a {
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--lav);
+      font-size: 12px;
+    }
+
+    .dropdown a:hover {
+      background: rgba(201,169,110,.1);
+      color: var(--gold-light);
+    }
+
+    .nav-cta,.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 11px 16px;
+      border: 1px solid var(--gold);
+      border-radius: 9px;
+      background: var(--gold);
+      color: #170e1d;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .2s,filter .2s;
+      cursor: pointer;
+    }
+
+    .btn:hover,.nav-cta:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.07);
+    }
+
+    .btn-outline {
+      border-color: rgba(217,204,228,.35);
+      background: transparent;
+      color: var(--gold-light);
+    }
+
+    .btn-danger {
+      border-color: rgba(255,130,130,.35);
+      background: rgba(140,45,65,.16);
+      color: #ffc0c0;
+    }
+
+    .menu-toggle {
+      display: none;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: transparent;
+      color: var(--gold-light);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Hero */
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      padding: 76px 0 68px;
+      background:
+        linear-gradient(90deg,rgba(16,10,23,.97),rgba(26,16,36,.89) 58%,rgba(26,16,36,.75)),
+        url('/assets/images/hero/hero-home.png') center/cover no-repeat,
+        #100a17;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 82% 18%,rgba(201,169,110,.14),transparent 36%),
+        radial-gradient(ellipse at 90% 90%,rgba(84,30,50,.2),transparent 42%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      align-items: center;
+      gap: 45px;
+    }
+
+    .eyebrow,.kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .17em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 26px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    h1,h2,h3,p { margin-top: 0; }
+
+    .hero h1 {
+      max-width: 720px;
+      margin: 18px 0;
+      font: 600 clamp(39px,5.3vw,65px)/1.08 "Playfair Display",Georgia,serif;
+      letter-spacing: -.035em;
+    }
+
+    .hero h1 em {
+      color: var(--gold-light);
+      font-style: normal;
+    }
+
+    .hero-copy {
+      max-width: 600px;
+      color: #d0c5d8;
+      font-size: 15px;
+      line-height: 1.85;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .hero-visual {
+      position: relative;
+      display: grid;
+      min-height: 350px;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background:
+        radial-gradient(ellipse at center,rgba(201,169,110,.1),transparent 55%),
+        linear-gradient(145deg,#30203e,#171020);
+      box-shadow: var(--shadow);
+    }
+
+    .notification-art {
+      position: relative;
+      display: grid;
+      width: 210px;
+      height: 210px;
+      place-items: center;
+      border: 1px solid rgba(201,169,110,.28);
+      border-radius: 50%;
+      background: rgba(16,10,23,.5);
+    }
+
+    .notification-art::before,
+    .notification-art::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(201,169,110,.25);
+      border-radius: 50%;
+    }
+
+    .notification-art::before { inset: -18px; }
+
+    .notification-art::after {
+      inset: -36px;
+      border-style: dashed;
+      animation: notification-spin 28s linear infinite;
+    }
+
+    .notification-art svg {
+      width: 90px;
+      height: 90px;
+      fill: none;
+      stroke: var(--gold-light);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @keyframes notification-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .visual-stamp {
+      position: absolute;
+      top: 17px;
+      right: 17px;
+      z-index: 2;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(16,10,23,.84);
+      color: var(--gold-light);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .visual-caption {
+      position: absolute;
+      right: 22px;
+      bottom: 20px;
+      left: 22px;
+      text-align: center;
+    }
+
+    .visual-caption strong {
+      display: block;
+      color: var(--gold-light);
+      font: 600 22px "Playfair Display",serif;
+    }
+
+    .visual-caption span {
+      color: #e2d9e7;
+      font-size: 12px;
+    }
+
+    /* Shared sections */
+
+    .section {
+      padding: 72px 0;
+      scroll-margin-top: 100px;
+    }
+
+    .section.alt {
+      border-block: 1px solid rgba(217,204,228,.08);
+      background:
+        radial-gradient(ellipse at 90% 10%,rgba(84,30,50,.13),transparent 40%),
+        rgba(43,29,54,.18);
+    }
+
+    .section-head { margin-bottom: 28px; }
+
+    .section-head h2,.section-title {
+      margin: 8px 0 10px;
+      font: 600 clamp(28px,3.3vw,42px)/1.18 "Playfair Display",Georgia,serif;
+      letter-spacing: -.025em;
+    }
+
+    .section-head h2 span,.section-title span { color: var(--gold-light); }
+
+    .section-head p {
+      max-width: 680px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Notification summary */
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .summary-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: linear-gradient(145deg,#2b1d36,#191023);
+    }
+
+    .summary-icon {
+      display: grid;
+      width: 49px;
+      height: 49px;
+      flex: 0 0 49px;
+      place-items: center;
+      border: 1px solid rgba(201,169,110,.4);
+      border-radius: 13px;
+      color: var(--gold-light);
+    }
+
+    .summary-icon svg {
+      width: 23px;
+      height: 23px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .summary-card strong {
+      display: block;
+      color: var(--gold-light);
+      font: 600 30px/1.2 "Playfair Display",Georgia,serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Notification controls and list */
+
+    .notifications-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(25,16,35,.78);
+      box-shadow: 0 18px 45px rgba(0,0,0,.13);
+    }
+
+    .notifications-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(43,29,54,.45);
+    }
+
+    .filter-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      padding: 9px 13px;
+      border: 1px solid rgba(217,204,228,.2);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--lav);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s,border-color .2s,color .2s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn[aria-pressed="true"] {
+      border-color: var(--gold);
+      background: rgba(201,169,110,.13);
+      color: var(--gold-light);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .small-btn {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16,10,23,.55);
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .small-btn:hover { background: rgba(201,169,110,.12); }
+
+    .notification-list {
+      display: grid;
+    }
+
+    .notification-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      align-items: start;
+      gap: 16px;
+      padding: 23px 22px;
+      border-bottom: 1px solid rgba(201,169,110,.12);
+      transition: background .2s;
+    }
+
+    .notification-item:last-child { border-bottom: 0; }
+
+    .notification-item:hover { background: rgba(201,169,110,.035); }
+
+    .notification-item.unread {
+      background: linear-gradient(90deg,rgba(201,169,110,.075),transparent 70%);
+    }
+
+    .notification-item.unread::before {
+      content: "";
+      position: absolute;
+      top: 25px;
+      left: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold-light);
+      box-shadow: 0 0 10px rgba(201,169,110,.5);
+    }
+
+    .notification-icon {
+      display: grid;
+      width: 45px;
+      height: 45px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(16,10,23,.45);
+      color: var(--gold-light);
+    }
+
+    .notification-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .notification-content { min-width: 0; }
+
+    .notification-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .notification-category {
+      color: var(--gold-light);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .notification-time {
+      color: #a99cb4;
+      font-size: 10px;
+    }
+
+    .unread-label {
+      padding: 3px 7px;
+      border: 1px solid rgba(201,169,110,.3);
+      border-radius: 20px;
+      color: var(--gold-light);
+      font-size: 9px;
+    }
+
+    .notification-content h3 {
+      margin: 0 0 6px;
+      color: #f2eaf6;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .notification-content p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+
+    .notification-actions {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .notification-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .notification-action:hover {
+      background: rgba(201,169,110,.12);
+    }
+
+    .notification-action:disabled {
+      opacity: .55;
+      cursor: default;
+    }
+
+    .notification-action.link-action {
+      border-color: transparent;
+      color: var(--lav);
+    }
+
+    .empty-state {
+      display: none;
+      padding: 52px 20px;
+      text-align: center;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 15px;
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 7px;
+      color: var(--gold-light);
+      font: 600 23px "Playfair Display",Georgia,serif;
+    }
+
+    .empty-state p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .notification-note {
+      margin-top: 15px;
+      color: #a99cb4;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    .notice {
+      display: none;
+      margin-bottom: 20px;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(43,29,54,.7);
+      color: var(--lav);
+      font-size: 12px;
+    }
+
+    .notice.visible { display: block; }
+
+    /* Notification preferences */
+
+    .preferences-grid {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 17px;
+    }
+
+    .preference-card {
+      padding: 25px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(145deg,#2b1d36,#191023);
+    }
+
+    .preference-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      margin-bottom: 15px;
+    }
+
+    .preference-heading .summary-icon {
+      width: 43px;
+      height: 43px;
+      flex-basis: 43px;
+    }
+
+    .preference-heading h3 {
+      margin: 0 0 5px;
+      color: var(--gold-light);
+      font: 600 20px "Playfair Display",Georgia,serif;
+    }
+
+    .preference-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.8;
+    }
+
+    .preference-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(201,169,110,.13);
+    }
+
+    .preference-row span {
+      color: var(--lav);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .preference-row small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 400;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      flex: 0 0 auto;
+      width: 46px;
+      height: 26px;
+    }
+
+    .switch input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(217,204,228,.25);
+      border-radius: 999px;
+      background: #160d20;
+      cursor: pointer;
+      transition: background .2s,border-color .2s;
+    }
+
+    .switch-track::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform .2s,background .2s;
+    }
+
+    .switch input:checked + .switch-track {
+      border-color: var(--gold);
+      background: rgba(201,169,110,.3);
+    }
+
+    .switch input:checked + .switch-track::before {
+      transform: translateX(20px);
+      background: var(--gold-light);
+    }
+
+    .switch input:focus-visible + .switch-track {
+      outline: 3px solid var(--gold-light);
+      outline-offset: 4px;
+    }
+
+    .switch input:disabled + .switch-track {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* FAQ */
+
+    .faq-list {
+      display: grid;
+      gap: 10px;
+      max-width: 900px;
+    }
+
+    .faq {
+      padding: 17px 19px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(43,29,54,.45);
+    }
+
+    .faq summary {
+      color: var(--lav);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .faq p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    /* CTA */
+
+    .cta {
+      padding: 48px 0;
+      border-block: 1px solid var(--line);
+      background:
+        linear-gradient(100deg,rgba(16,10,23,.97),rgba(43,29,54,.91) 62%,rgba(84,30,50,.6)),
+        url('/assets/images/education/education-global.jpg') center/cover;
+    }
+
+    .cta-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .cta h2 {
+      margin: 8px 0;
+      font: 600 clamp(27px,3vw,38px) "Playfair Display",Georgia,serif;
+    }
+
+    .cta p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Footer */
+
+    .footer {
+      padding: 48px 0 0;
+      background: #0b0710;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.45fr repeat(4,minmax(0,1fr));
+      gap: 25px;
+      padding-bottom: 30px;
+    }
+
+    .footer-grid > div { min-width: 0; }
+
+    .footer-brand p {
+      max-width: 270px;
+      margin-top: 13px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.9;
+    }
+
+    .footer h3 {
+      margin: 0 0 13px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid rgba(201,169,110,.2);
+      color: var(--gold-light);
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .footer-grid > div:not(:first-child) a {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    .footer a:hover { color: var(--gold-light); }
+
+    .footer-social-icons {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .footer-social-icons a,.footer-icon-bottom a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(43,29,54,.55);
+      color: var(--gold-light);
+      transition: color .2s,background .2s,transform .2s;
+    }
+
+    .footer-social-icons a:hover,.footer-icon-bottom a:hover {
+      transform: translateY(-2px);
+      background: var(--gold-light);
+      color: #170e1d;
+    }
+
+    .footer-social-icons svg,.footer-icon-bottom svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .footer-social-icons .icon-fill {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .social-caption {
+      margin: 8px 0 0 !important;
+      color: var(--muted);
+      font-size: 10px !important;
+    }
+
+    .disclaimer {
+      padding: 13px 16px;
+      margin: 0 0 15px;
+      border-left: 2px solid var(--gold);
+      border-radius: 0 7px 7px 0;
+      background: rgba(43,29,54,.32);
+      color: #a79caf;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 17px 0;
+      border-top: 1px solid rgba(201,169,110,.16);
+      color: #a79caf;
+      font-size: 10px;
+    }
+
+    .footer-icon-bottom {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 17px 0 20px;
+      border-top: 1px solid rgba(201,169,110,.13);
+    }
+
+    .footer-icon-bottom a {
+      width: 34px;
+      height: 34px;
+      flex-basis: 34px;
+    }
+
+    .footer-icon-bottom svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Floating WhatsApp */
+
+    .whatsapp-float {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 950;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 48px;
+      padding: 11px 17px;
+      border: 1px solid rgba(16,33,22,.2);
+      border-radius: 999px;
+      background: #b9e7c5;
+      color: #102116;
+      box-shadow: 0 8px 28px rgba(0,0,0,.3);
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .2s,background .2s;
+    }
+
+    .whatsapp-float:hover {
+      transform: translateY(-3px);
+      background: #d4f5dc;
+      color: #102116;
+    }
+
+    .whatsapp-float svg {
+      width: 21px;
+      height: 21px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Responsive */
+
+    @media (max-width:1100px) {
+      .menu-toggle { display: inline-flex; }
+
+      .nav {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        display: none;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 4px;
+        padding: 15px 22px 20px;
+        border-bottom: 1px solid var(--line);
+        background: #160d20;
+      }
+
+      .nav.open { display: flex; }
+
+      .nav > a,.nav-trigger {
+        display: block;
+        width: 100%;
+        padding: 11px 8px;
+        text-align: left;
+      }
+
+      .nav-group { width: 100%; }
+
+      .dropdown {
+        position: static;
+        width: 100%;
+        margin-bottom: 5px;
+        box-shadow: none;
+      }
+
+      .nav-cta { width: 100%; }
+      .hero-grid { gap: 28px; }
+
+      .summary-grid { grid-template-columns: 1fr; }
+      .preferences-grid { grid-template-columns: 1fr; }
+
+      .footer-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 24px 18px;
+      }
+
+      .footer-brand { grid-column: 1/-1; }
+    }
+
+    @media (max-width:760px) {
+      .container { width: calc(100% - 28px); }
+
+      .announcement {
+        gap: 7px;
+        font-size: 8px;
+        letter-spacing: .06em;
+      }
+
+      .nav-wrap { min-height: 70px; }
+      .brand img { width: 41px; height: 41px; }
+      .brand strong { font-size: 14px; }
+      .brand small { font-size: 7px; letter-spacing: .07em; }
+
+      .hero { padding: 48px 0; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: clamp(38px,10vw,54px); }
+      .hero-visual { min-height: 310px; }
+      .notification-art { transform: scale(.82); }
+
+      .section { padding: 52px 0; }
+
+      .notifications-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .toolbar-actions { width: 100%; }
+      .toolbar-actions .small-btn { flex: 1; }
+
+      .notification-item {
+        grid-template-columns: auto minmax(0,1fr);
+        gap: 12px;
+        padding: 20px 16px;
+      }
+
+      .notification-item.unread::before { left: 5px; }
+
+      .notification-actions {
+        grid-column: 2;
+        align-items: flex-start;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .notification-action { min-width: 0; }
+
+      .cta-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .footer-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 22px 16px;
+      }
+
+      .footer-brand { grid-column: 1/-1; }
+
+      .footer-grid > div:not(:first-child) {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .footer-grid > div:not(:first-child) a {
+        max-width: 100%;
+        line-height: 1.7;
+      }
+
+      .footer-bottom { flex-direction: column; }
+      .footer-social-icons { gap: 8px; }
+
+      .footer-social-icons a {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+      }
+
+      .whatsapp-float {
+        right: 12px;
+        bottom: 12px;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+      }
+
+      .whatsapp-float .whatsapp-label { display: none; }
+    }
+
+    @media (max-width:480px) {
+      .notification-item { grid-template-columns: 1fr; }
+      .notification-icon { width: 40px; height: 40px; }
+
+      .notification-actions {
+        grid-column: 1;
+      }
+
+      .footer-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        column-gap: 12px;
+        row-gap: 22px;
+      }
+
+      .footer-brand { grid-column: 1/-1; }
+      .hero-actions .btn { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      html { scroll-behavior: auto; }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="intro-screen" id="introScreen" role="status" aria-label="Loading MedOrbits">
     <div class="intro-content">
@@ -127,267 +1413,1105 @@
       <div class="intro-rule" aria-hidden="true"></div>
     </div>
   </div>
+
   <a class="skip-link" href="#main-content">Skip to main content</a>
-  <div class="announcement"><span>Your future, your direction</span><span class="spark" aria-hidden="true">✦</span><span>Study · Work · Grow — one connected destination</span></div>
+
+  <div class="announcement">
+    <span>Stay informed</span>
+    <span class="spark" aria-hidden="true">✦</span>
+    <span>Study · Work · Grow -- one connected destination</span>
+  </div>
 
   <header class="header" id="siteHeader">
     <div class="container nav-wrap">
       <a class="brand" href="/index.html" aria-label="MedOrbits home">
-        <img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo" width="48" height="48">
-        <span><strong>MEDORBITS</strong><small>Study · Career · Consultancy</small></span>
+        <img src="/assets/images/logo/medorbits-logo.png" alt="" width="48" height="48">
+        <span>
+          <strong>MEDORBITS</strong>
+          <small>Study · Career · Consultancy</small>
+        </span>
       </a>
-      <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mainNav">☰ MENU</button>
+
+      <button class="menu-toggle" id="menuToggle" type="button"
+        aria-expanded="false" aria-controls="mainNav">☰ MENU</button>
+
       <nav class="nav" id="mainNav" aria-label="Main navigation">
         <a href="/index.html">Home</a>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Education <span>⌄</span></button><div class="dropdown">
-          <a href="/education/index.html">Education hub</a><a href="/education/courses.html">Courses</a><a href="/education/colleges.html">Colleges</a><a href="/education/universities.html">Universities</a><a href="/education/study-in-india/mbbs.html">MBBS in India</a><a href="/education/study-abroad/mbbs-abroad.html">MBBS abroad</a>
-        </div></div>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Admissions <span>⌄</span></button><div class="dropdown">
-          <a href="/education/admissions/index.html">Admission guidance</a><a href="/education/admissions/eligibility.html">Eligibility</a><a href="/education/admissions/exams.html">Entrance exams</a><a href="/education/admissions/counselling.html">Counselling</a><a href="/education/resources/fees.html">Fees & funding</a><a href="/education/resources/scholarships.html">Scholarships</a>
-        </div></div>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Careers <span>⌄</span></button><div class="dropdown">
-          <a href="/career/index.html">Career hub</a><a href="/career/jobs.html">Find jobs</a><a href="/career/internships.html">Internships</a><a href="/career/resume-support.html">Resume support</a><a href="/career/recruitment.html">Recruitment services</a><a href="/career/employer-services.html">Employer services</a>
-        </div></div>
-        <a href="/pages/about.html">About</a><a href="/pages/contact.html">Contact</a>
-        <a class="nav-cta" href="/pages/apply.html">Get Guidance ↗</a>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">Education <span>⌄</span></button>
+          <div class="dropdown">
+            <a href="/education/index.html">Education hub</a>
+            <a href="/education/courses.html">Courses</a>
+            <a href="/education/colleges.html">Colleges</a>
+            <a href="/education/universities.html">Universities</a>
+            <a href="/education/study-in-india/mbbs.html">MBBS in India</a>
+            <a href="/education/study-abroad/mbbs-abroad.html">MBBS abroad</a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">Admissions <span>⌄</span></button>
+          <div class="dropdown">
+            <a href="/education/admissions/index.html">Admission guidance</a>
+            <a href="/education/admissions/eligibility.html">Eligibility</a>
+            <a href="/education/admissions/exams.html">Entrance exams</a>
+            <a href="/education/admissions/counselling.html">Counselling</a>
+            <a href="/education/resources/fees.html">Fees &amp; funding</a>
+            <a href="/education/resources/scholarships.html">Scholarships</a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">Careers <span>⌄</span></button>
+          <div class="dropdown">
+            <a href="/career/index.html">Career hub</a>
+            <a href="/career/jobs.html">Find jobs</a>
+            <a href="/career/internships.html">Internships</a>
+            <a href="/career/resume-support.html">Resume support</a>
+            <a href="/career/recruitment.html">Recruitment services</a>
+            <a href="/career/employer-services.html">Employer services</a>
+          </div>
+        </div>
+
+        <a href="/pages/about.html">About</a>
+        <a href="/pages/contact.html">Contact</a>
+        <a href="/pages/notifications.html" aria-current="page">Notifications</a>
+        <a class="nav-cta" href="/pages/contact.html">Get Support ↗</a>
       </nav>
     </div>
   </header>
 
-  <main id="main-content" class="notifications-main">
-    <div class="container">
-      <div class="notifications-shell">
-        <div class="notifications-heading">
-          <div>
-            <span class="notifications-eyebrow">Your account activity</span>
-            <h1>Notifications &amp; <span>updates.</span></h1>
-            <p>Keep up with important account notices, education guidance and career updates in one place.</p>
+  <main id="main-content" tabindex="-1">
+    <section class="hero" id="notifications-intro">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">Your updates, all in one place</span>
+          <h1>Stay informed. <em>Stay ahead.</em></h1>
+          <p class="hero-copy">
+            Keep track of education updates, admissions reminders, career
+            opportunities and important MedOrbits announcements. Review your
+            notifications, manage their read status and choose whether to
+            request browser notifications on this device.
+          </p>
+          <div class="hero-actions">
+            <a class="btn" href="#notification-center">View Notifications ↓</a>
+            <a class="btn btn-outline" href="#notification-preferences">Notification Settings ↗</a>
           </div>
-          <div class="notification-count" aria-live="polite"><strong id="unreadCount">3</strong><span>unread notifications</span></div>
         </div>
 
-        <section class="notification-panel" aria-label="Your notifications">
-          <div class="notification-toolbar">
-            <div class="notification-tabs" role="group" aria-label="Filter notifications">
-              <button class="notification-tab" type="button" data-filter="all" aria-pressed="true">All updates</button>
-              <button class="notification-tab" type="button" data-filter="unread" aria-pressed="false">Unread</button>
-              <button class="notification-tab" type="button" data-filter="admissions" aria-pressed="false">Admissions</button>
-              <button class="notification-tab" type="button" data-filter="career" aria-pressed="false">Careers</button>
-              <button class="notification-tab" type="button" data-filter="account" aria-pressed="false">Account</button>
-            </div>
-            <button class="mark-read" id="markAllRead" type="button">Mark all as read ✓</button>
+        <div class="hero-visual" aria-label="Illustration representing notifications">
+          <span class="visual-stamp">Notification center</span>
+          <div class="notification-art" aria-hidden="true">
+            <svg viewBox="0 0 100 100">
+              <path d="M22 68h56l-7-9V42a21 21 0 0 0-42 0v17z"/>
+              <path d="M41 78a9 9 0 0 0 18 0"/>
+              <path d="M50 12v7"/>
+              <circle cx="77" cy="23" r="10"/>
+              <path d="M77 18v6M77 28h.01"/>
+            </svg>
           </div>
-
-          <div class="notification-list" id="notificationList">
-            <article class="notification-item is-unread" data-kind="admissions" data-unread="true">
-              <div class="notification-icon" aria-hidden="true">✦</div>
-              <div class="notification-copy">
-                <div class="notification-meta"><span class="notification-category">Admissions</span><span class="unread-label">New</span></div>
-                <h2>Keep your admission documents ready</h2>
-                <p>Before submitting an application, review the official checklist for identity documents, academic records and any course-specific requirements.</p>
-                <div class="notification-actions"><a href="/education/admissions/documents.html">Review document guidance ↗</a><button type="button" class="mark-one">Mark as read</button></div>
-              </div>
-              <time class="notification-time" datetime="2026-10-15">Today</time>
-            </article>
-
-            <article class="notification-item is-unread" data-kind="career" data-unread="true">
-              <div class="notification-icon" aria-hidden="true">↗</div>
-              <div class="notification-copy">
-                <div class="notification-meta"><span class="notification-category">Career support</span><span class="unread-label">New</span></div>
-                <h2>Give your resume a quick review</h2>
-                <p>A clear, role-focused resume can help employers understand your skills and experience. Check formatting, contact details and relevant achievements before applying.</p>
-                <div class="notification-actions"><a href="/career/resume-support.html">Explore resume support ↗</a><button type="button" class="mark-one">Mark as read</button></div>
-              </div>
-              <time class="notification-time" datetime="2026-10-14">Yesterday</time>
-            </article>
-
-            <article class="notification-item is-unread" data-kind="account" data-unread="true">
-              <div class="notification-icon" aria-hidden="true">◇</div>
-              <div class="notification-copy">
-                <div class="notification-meta"><span class="notification-category">Account notice</span><span class="unread-label">New</span></div>
-                <h2>Keep your account information current</h2>
-                <p>Make sure your contact information is accurate so you can receive relevant updates about your enquiries and account activity.</p>
-                <div class="notification-actions"><a href="/account/settings.html">Review account details ↗</a><button type="button" class="mark-one">Mark as read</button></div>
-              </div>
-              <time class="notification-time" datetime="2026-10-13">2 days ago</time>
-            </article>
-
-            <article class="notification-item" data-kind="admissions" data-unread="false">
-              <div class="notification-icon" aria-hidden="true">⌂</div>
-              <div class="notification-copy">
-                <div class="notification-meta"><span class="notification-category">Education resources</span></div>
-                <h2>Compare course pathways before deciding</h2>
-                <p>Review course duration, eligibility, institution recognition and total costs using official institution and regulator information.</p>
-                <div class="notification-actions"><a href="/education/courses.html">Explore course options ↗</a></div>
-              </div>
-              <time class="notification-time" datetime="2026-10-10">5 days ago</time>
-            </article>
-
-            <article class="notification-item" data-kind="career" data-unread="false">
-              <div class="notification-icon" aria-hidden="true">◎</div>
-              <div class="notification-copy">
-                <div class="notification-meta"><span class="notification-category">Career resources</span></div>
-                <h2>Explore internships and early-career roles</h2>
-                <p>Check role descriptions carefully and verify the employer, eligibility criteria and application deadline before sharing personal information.</p>
-                <div class="notification-actions"><a href="/career/internships.html">Browse internship resources ↗</a></div>
-              </div>
-              <time class="notification-time" datetime="2026-10-08">7 days ago</time>
-            </article>
+          <div class="visual-caption">
+            <strong>Your MedOrbits updates.</strong>
+            <span>Education · Admissions · Careers · Platform</span>
           </div>
-
-          <div class="notification-empty" id="notificationEmpty" aria-live="polite">
-            <div class="empty-symbol" aria-hidden="true">✓</div>
-            <h2>You’re all caught up</h2>
-            <p>There are no notifications in this view right now.</p>
-          </div>
-        </section>
-        <p class="notifications-footnote">These are illustrative notification examples for the page layout. Live account-specific notifications require a connected backend. Visit the <a href="/pages/contact.html">Contact page</a> if you need assistance.</p>
+        </div>
       </div>
-    </div>
-    <section class="section alt" aria-labelledby="bulletins-heading">
+    </section>
+
+    <section class="section" id="notification-center">
       <div class="container">
         <div class="section-head">
-          <div><span class="kicker">Public information</span><h2 id="bulletins-heading">Published <span>bulletins</span></h2></div>
+          <span class="kicker">Notification center</span>
+          <h2>Your latest <span>updates</span></h2>
+          <p>Filter the notification list, mark individual items as read, or mark all displayed notifications as read.</p>
         </div>
-        <p class="notifications-footnote" data-bulletin-status role="status" aria-live="polite" hidden></p>
-        <div class="cards bulletin-list" data-bulletin-list></div>
+
+        <div class="summary-grid" aria-label="Notification summary">
+          <article class="summary-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                <path d="M10 21h4"/>
+              </svg>
+            </div>
+            <div>
+              <span>Total notifications</span>
+              <strong id="totalCount">0</strong>
+            </div>
+          </article>
+
+          <article class="summary-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v5l3 2"/>
+              </svg>
+            </div>
+            <div>
+              <span>Unread notifications</span>
+              <strong id="unreadCount" aria-live="polite">0</strong>
+            </div>
+          </article>
+
+          <article class="summary-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m5 12 4 4L19 6"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+            </div>
+            <div>
+              <span>Read notifications</span>
+              <strong id="readCount">0</strong>
+            </div>
+          </article>
+        </div>
+
+        <div class="notice" id="notificationNotice" role="status" aria-live="polite"></div>
+
+        <div class="notifications-panel">
+          <div class="notifications-toolbar">
+            <div class="filter-list" role="group" aria-label="Filter notifications">
+              <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">All</button>
+              <button class="filter-btn" type="button" data-filter="unread" aria-pressed="false">Unread</button>
+              <button class="filter-btn" type="button" data-filter="education" aria-pressed="false">Education</button>
+              <button class="filter-btn" type="button" data-filter="admissions" aria-pressed="false">Admissions</button>
+              <button class="filter-btn" type="button" data-filter="careers" aria-pressed="false">Careers</button>
+              <button class="filter-btn" type="button" data-filter="platform" aria-pressed="false">Platform</button>
+            </div>
+
+            <div class="toolbar-actions">
+              <button class="small-btn" id="markAllRead" type="button">Mark all read</button>
+              <button class="small-btn" id="refreshNotifications" type="button">Refresh list ↻</button>
+              <button class="small-btn" id="clearNotifications" type="button">Clear all</button>
+            </div>
+          </div>
+
+          <div class="notification-list" id="notificationList" aria-live="polite">
+            <article class="notification-item unread" data-id="welcome" data-category="platform" data-read="false">
+              <div class="notification-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3 14.8 9.2 21 12l-6.2 2.8L12 21l-2.8-6.2L3 12l6.2-2.8z"/>
+                </svg>
+              </div>
+              <div class="notification-content">
+                <div class="notification-meta">
+                  <span class="notification-category">Platform</span>
+                  <span class="notification-time" data-time="welcome">Welcome</span>
+                  <span class="unread-label">Unread</span>
+                </div>
+                <h3>Welcome to the MedOrbits notification center</h3>
+                <p>This page provides a place to review updates. Live account-specific notifications require a connected MedOrbits notification service.</p>
+              </div>
+              <div class="notification-actions">
+                <button class="notification-action" type="button" data-action="read">Mark as read</button>
+                <a class="notification-action link-action" href="/pages/contact.html">Get support ↗</a>
+              </div>
+            </article>
+
+            <article class="notification-item unread" data-id="education-resources" data-category="education" data-read="false">
+              <div class="notification-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="m2 9 10-5 10 5-10 5z"/>
+                  <path d="M6 11v5c4 3 8 3 12 0v-5M22 9v7"/>
+                </svg>
+              </div>
+              <div class="notification-content">
+                <div class="notification-meta">
+                  <span class="notification-category">Education</span>
+                  <span class="notification-time">Explore resources</span>
+                  <span class="unread-label">Unread</span>
+                </div>
+                <h3>Explore education resources</h3>
+                <p>Browse courses, colleges, universities and study pathways. Verify current eligibility and requirements with official institutions.</p>
+              </div>
+              <div class="notification-actions">
+                <button class="notification-action" type="button" data-action="read">Mark as read</button>
+                <a class="notification-action link-action" href="/education/index.html">Explore ↗</a>
+              </div>
+            </article>
+
+            <article class="notification-item unread" data-id="admissions-guidance" data-category="admissions" data-read="false">
+              <div class="notification-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="5" y="3" width="14" height="18" rx="2"/>
+                  <path d="M9 8h6M9 12h6M9 16h3"/>
+                </svg>
+              </div>
+              <div class="notification-content">
+                <div class="notification-meta">
+                  <span class="notification-category">Admissions</span>
+                  <span class="notification-time">Guidance</span>
+                  <span class="unread-label">Unread</span>
+                </div>
+                <h3>Prepare for your admissions journey</h3>
+                <p>Review eligibility, entrance exam information, counselling resources and document requirements before making an application.</p>
+              </div>
+              <div class="notification-actions">
+                <button class="notification-action" type="button" data-action="read">Mark as read</button>
+                <a class="notification-action link-action" href="/education/admissions/index.html">View guidance ↗</a>
+              </div>
+            </article>
+
+            <article class="notification-item unread" data-id="career-resources" data-category="careers" data-read="false">
+              <div class="notification-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="7" width="18" height="14" rx="2"/>
+                  <path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/>
+                </svg>
+              </div>
+              <div class="notification-content">
+                <div class="notification-meta">
+                  <span class="notification-category">Careers</span>
+                  <span class="notification-time">Career resources</span>
+                  <span class="unread-label">Unread</span>
+                </div>
+                <h3>Explore career and internship resources</h3>
+                <p>Visit the career hub to explore available job and internship resources, career guidance and resume support.</p>
+              </div>
+              <div class="notification-actions">
+                <button class="notification-action" type="button" data-action="read">Mark as read</button>
+                <a class="notification-action link-action" href="/career/index.html">Career hub ↗</a>
+              </div>
+            </article>
+
+            <article class="notification-item" data-id="security-reminder" data-category="platform" data-read="true">
+              <div class="notification-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="5" y="10" width="14" height="11" rx="2"/>
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>
+                </svg>
+              </div>
+              <div class="notification-content">
+                <div class="notification-meta">
+                  <span class="notification-category">Platform</span>
+                  <span class="notification-time">Security reminder</span>
+                </div>
+                <h3>Keep your account information secure</h3>
+                <p>Never share passwords or OTPs. Use official MedOrbits channels for support and verify website addresses before entering personal information.</p>
+              </div>
+              <div class="notification-actions">
+                <button class="notification-action" type="button" data-action="read" disabled>Already read</button>
+                <a class="notification-action link-action" href="/legal/privacy-policy.html">Privacy ↗</a>
+              </div>
+            </article>
+          </div>
+
+          <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+              <path d="M10 21h4"/>
+              <path d="m4 4 16 16"/>
+            </svg>
+            <h3 id="emptyTitle">You're all caught up.</h3>
+            <p id="emptyMessage">There are no notifications in this view.</p>
+          </div>
+        </div>
+
+        <p class="notification-note">
+          Demo notice: the items above are illustrative website notices, not live admissions deadlines, job alerts, application updates or account messages. Read-status changes are stored locally in this browser only.
+        </p>
+      </div>
+    </section>
+
+    <section class="section alt" id="notification-preferences">
+      <div class="container">
+        <div class="section-head">
+          <span class="kicker">Personalise your experience</span>
+          <h2>Notification <span>preferences</span></h2>
+          <p>Control the local preferences available on this device. These settings do not change email or account notification preferences on the MedOrbits server.</p>
+        </div>
+
+        <div class="preferences-grid">
+          <article class="preference-card">
+            <div class="preference-heading">
+              <div class="summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                  <path d="M10 21h4"/>
+                </svg>
+              </div>
+              <div>
+                <h3>Browser notifications</h3>
+                <p>Request permission for browser notifications from this site where supported.</p>
+              </div>
+            </div>
+
+            <div class="preference-row">
+              <div>
+                <span id="browserPermissionLabel">Browser permission</span>
+                <small id="browserPermissionStatus">Checking browser support…</small>
+              </div>
+              <button class="small-btn" id="enableBrowserNotifications" type="button">Enable</button>
+            </div>
+          </article>
+
+          <article class="preference-card">
+            <div class="preference-heading">
+              <div class="summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="5" width="18" height="14" rx="2"/>
+                  <path d="m4 7 8 6 8-6"/>
+                </svg>
+              </div>
+              <div>
+                <h3>Email updates</h3>
+                <p>Email notification preferences must be managed by the connected account or server service.</p>
+              </div>
+            </div>
+
+            <div class="preference-row">
+              <div>
+                <span>Email preferences</span>
+                <small>Open the official contact page to request help.</small>
+              </div>
+              <a class="small-btn" href="/pages/contact.html">Contact support ↗</a>
+            </div>
+          </article>
+
+          <article class="preference-card">
+            <div class="preference-heading">
+              <div class="summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3 20 6v5c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/>
+                  <path d="m8 12 3 3 5-6"/>
+                </svg>
+              </div>
+              <div>
+                <h3>Security updates</h3>
+                <p>Review account security guidance and the privacy information published by MedOrbits.</p>
+              </div>
+            </div>
+
+            <div class="preference-row">
+              <div>
+                <span>Security information</span>
+                <small>Review the published privacy policy.</small>
+              </div>
+              <a class="small-btn" href="/legal/privacy-policy.html">View policy ↗</a>
+            </div>
+          </article>
+
+          <article class="preference-card">
+            <div class="preference-heading">
+              <div class="summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 5h16M7 5v14m10-14v14M4 19h16"/>
+                  <path d="M10 9h4M10 13h4"/>
+                </svg>
+              </div>
+              <div>
+                <h3>Save local read status</h3>
+                <p>Keep the read/unread status of these demo notifications in this browser.</p>
+              </div>
+            </div>
+
+            <div class="preference-row">
+              <div>
+                <span>Remember read status</span>
+                <small>Uses local browser storage on this device.</small>
+              </div>
+              <label class="switch">
+                <input id="rememberReadStatus" type="checkbox" checked>
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="notifications-faq">
+      <div class="container">
+        <div class="section-head">
+          <span class="kicker">Helpful information</span>
+          <h2>Frequently asked <span>questions</span></h2>
+          <p>Understand how this notification page works and what it can manage.</p>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq">
+            <summary>Are these live account notifications?</summary>
+            <p>No. The items included in this page are illustrative examples. Real account-specific notifications require a backend API, authenticated user identity and notification data source.</p>
+          </details>
+
+          <details class="faq">
+            <summary>Why does my unread count change?</summary>
+            <p>The count updates when you mark an item as read or unread, change the filter, or clear the list. The demo state can be saved in this browser if local read-status storage is enabled.</p>
+          </details>
+
+          <details class="faq">
+            <summary>Will notifications sync across my devices?</summary>
+            <p>No. Browser-local read status does not synchronise across devices or accounts. Cross-device synchronisation requires a server-side notification service and an authenticated account.</p>
+          </details>
+
+          <details class="faq">
+            <summary>How do browser notifications work?</summary>
+            <p>Supported browsers may ask for permission. Permission alone does not create live alerts: the site must also implement a notification delivery mechanism, such as a service worker and push subscription connected to a server.</p>
+          </details>
+
+          <details class="faq">
+            <summary>Can I manage email alerts here?</summary>
+            <p>Not yet. This page does not update server-side email subscriptions. Contact MedOrbits support to request help with email preferences.</p>
+          </details>
+
+          <details class="faq">
+            <summary>What if a notification is missing or incorrect?</summary>
+            <p>Contact support with the relevant page or issue details. Do not include passwords, OTPs or complete payment-card information in your message.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container cta-inner">
+        <div>
+          <span class="kicker">Need assistance?</span>
+          <h2>We're here to help.</h2>
+          <p>Contact MedOrbits if you need help with your enquiries or website experience.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="btn" href="https://wa.me/916205889064?text=Hello%20MedOrbits%2C%20I%20need%20help%20with%20notifications."
+            target="_blank" rel="noopener noreferrer">Chat on WhatsApp ↗</a>
+          <a class="btn btn-outline" href="mailto:support@medorbits.in?subject=MedOrbits%20Notifications">Email Support</a>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" id="site-footer">
     <div class="container">
       <div class="footer-grid">
-        <div class="footer-brand"><a class="brand" href="/index.html"><img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo" width="48" height="48" loading="lazy"><span><strong>MEDORBITS</strong><small>Study · Career · Consultancy</small></span></a><p>Explore education pathways, admission resources and career opportunities with MedOrbits.</p></div>
-        <div><h3>Education</h3><a href="/education/courses.html">Courses</a><a href="/education/colleges.html">Colleges</a><a href="/education/universities.html">Universities</a><a href="/education/study-in-india/index.html">Study in India</a><a href="/education/study-abroad/index.html">Study Abroad</a></div>
-        <div><h3>Student Resources</h3><a href="/education/admissions/eligibility.html">Eligibility</a><a href="/education/admissions/exams.html">Entrance Exams</a><a href="/education/resources/fees.html">Fees</a><a href="/education/resources/scholarships.html">Scholarships</a><a href="/education/admissions/documents.html">Documents</a></div>
-        <div><h3>Career Services</h3><a href="/career/jobs.html">Jobs</a><a href="/career/internships.html">Internships</a><a href="/career/guidance.html">Career Guidance</a><a href="/career/resume-support.html">Resume Support</a><a href="/career/recruitment.html">Recruitment</a></div>
-        <div><h3>MedOrbits</h3><a href="/pages/about.html">About Us</a><a href="/pages/services.html">Services</a><a href="/pages/contact.html">Contact</a><a href="/education/resources/faqs.html">FAQs</a><a href="/legal/privacy-policy.html">Privacy Policy</a><a href="/legal/terms.html">Terms &amp; Conditions</a><a href="/legal/refund-policy.html">Refund Policy</a><a href="/legal/disclaimer.html">Disclaimer</a></div>
+        <div class="footer-brand">
+          <a class="brand" href="/index.html" aria-label="MedOrbits home">
+            <img src="/assets/images/logo/medorbits-logo.png"
+              alt="MedOrbits logo" width="48" height="48" loading="lazy">
+            <span>
+              <strong>MEDORBITS</strong>
+              <small>Study · Career · Consultancy</small>
+            </span>
+          </a>
+
+          <p>
+            Explore education pathways, admission resources, career opportunities
+            and recruitment services with MedOrbits.
+          </p>
+
+          <div class="footer-social-icons" aria-label="Social media and messaging">
+            <a href="https://www.instagram.com/"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="Instagram" title="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.8" r="1" class="icon-fill"/>
+              </svg>
+            </a>
+
+            <a href="https://www.facebook.com/"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="Facebook" title="Facebook">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 21v-8h3l.5-4H14V7c0-1.2.4-2 2-2h2V1.4C17.2 1.2 16.1 1 15 1c-3.4 0-5.5 2-5.5 5.7V9H6v4h3.5v8"/>
+              </svg>
+            </a>
+
+            <a href="https://www.linkedin.com/"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="LinkedIn" title="LinkedIn">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 9v10M5 5v.1M10 19v-6a4 4 0 0 1 8 0v6M10 9v10"/>
+                <circle cx="5" cy="5" r="1" class="icon-fill"/>
+              </svg>
+            </a>
+
+            <a href="https://www.youtube.com/"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="YouTube" title="YouTube">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="4"/>
+                <path d="m10 9 5 3-5 3z" class="icon-fill"/>
+              </svg>
+            </a>
+
+            <a href="https://wa.me/916205889064"
+              target="_blank" rel="noopener noreferrer"
+              aria-label="WhatsApp MedOrbits" title="WhatsApp">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 11.8a8.2 8.2 0 0 1-12.1 7.1L3 20l1.2-4.9a8.2 8.2 0 1 1 16-3.3Z"/>
+                <path d="M8.2 7.8c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.9c.1.2.1.4-.1.6l-.6.8c-.2.2-.2.4 0 .6.5.9 1.3 1.6 2.2 2.1.2.1.4.1.6-.1l.8-1c.2-.2.4-.2.7-.1l1.8.9c.3.1.4.3.4.5 0 .4-.2 1.3-.8 1.7-.5.5-1.2.7-2 .5-1.1-.2-2.5-.9-3.8-2.1-1.6-1.4-2.5-3.1-2.7-4.2-.2-.9.1-1.6.5-2Z"/>
+              </svg>
+            </a>
+          </div>
+          <p class="social-caption">Connect with MedOrbits</p>
+        </div>
+
+        <div>
+          <h3>Education</h3>
+          <a href="/education/courses.html">Courses</a>
+          <a href="/education/colleges.html">Colleges</a>
+          <a href="/education/universities.html">Universities</a>
+          <a href="/education/study-in-india/index.html">Study in India</a>
+          <a href="/education/study-abroad/index.html">Study Abroad</a>
+        </div>
+
+        <div>
+          <h3>Student Resources</h3>
+          <a href="/education/admissions/eligibility.html">Eligibility</a>
+          <a href="/education/admissions/exams.html">Entrance Exams</a>
+          <a href="/education/resources/fees.html">Fees &amp; Funding</a>
+          <a href="/education/resources/scholarships.html">Scholarships</a>
+          <a href="/education/admissions/documents.html">Documents</a>
+          <a href="/education/resources/faqs.html">FAQs</a>
+        </div>
+
+        <div>
+          <h3>Career Services</h3>
+          <a href="/career/jobs.html">Jobs</a>
+          <a href="/career/internships.html">Internships</a>
+          <a href="/career/guidance.html">Career Guidance</a>
+          <a href="/career/resume-support.html">Resume Support</a>
+          <a href="/career/recruitment.html">Recruitment</a>
+          <a href="/career/employer-services.html">Employer Services</a>
+        </div>
+
+        <div>
+          <h3>MedOrbits</h3>
+          <a href="/pages/about.html">About Us</a>
+          <a href="/pages/services.html">Services</a>
+          <a href="/pages/contact.html">Contact</a>
+          <a href="/pages/notifications.html" aria-current="page">Notifications</a>
+          <a href="/pages/maintenance.html">Maintenance</a>
+          <a href="/pages/accessibility.html">Accessibility</a>
+          <a href="/legal/privacy-policy.html">Privacy Policy</a>
+          <a href="/legal/terms.html">Terms &amp; Conditions</a>
+          <a href="/legal/refund-policy.html">Refund Policy</a>
+          <a href="/legal/disclaimer.html">Disclaimer</a>
+        </div>
       </div>
-      <p class="disclaimer">Information on this website is for general guidance and does not replace official advice from institutions, regulators or licensing authorities. Admission, recognition, eligibility, fees, employment and outcomes are not guaranteed. Verify current requirements directly with the relevant official source before making decisions.</p>
-      <div class="footer-bottom"><span>© <span id="currentYear"></span> MedOrbits. All rights reserved.</span><span>STUDY · WORK · GROW</span></div>
+
+      <p class="disclaimer">
+        Information on this website is for general guidance and does not replace
+        official advice from institutions, regulators or licensing authorities.
+        Admission, recognition, eligibility, fees, employment and other outcomes
+        are not guaranteed. Verify current requirements directly with the relevant
+        official source before making decisions.
+      </p>
+
+      <div class="footer-bottom">
+        <span>© <span id="currentYear"></span> MedOrbits. All rights reserved.</span>
+        <span>STUDY · WORK · GROW</span>
+      </div>
+
+      <div class="footer-icon-bottom" aria-label="Quick links">
+        <a href="/index.html" aria-label="Home" title="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/>
+          </svg>
+        </a>
+
+        <a href="/pages/about.html" aria-label="About MedOrbits" title="About">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 11v5M12 8h.01"/>
+          </svg>
+        </a>
+
+        <a href="/pages/contact.html" aria-label="Contact" title="Contact">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="m4 7 8 6 8-6"/>
+          </svg>
+        </a>
+
+        <a href="/pages/notifications.html" aria-label="Notifications" title="Notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+            <path d="M10 21h4"/>
+          </svg>
+        </a>
+
+        <a href="/pages/accessibility.html" aria-label="Accessibility" title="Accessibility">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="4" r="2"/>
+            <path d="M4 8h16M12 8v5m0 0-5 8m5-8 5 8"/>
+          </svg>
+        </a>
+
+        <a href="https://wa.me/916205889064"
+          target="_blank" rel="noopener noreferrer"
+          aria-label="WhatsApp MedOrbits" title="WhatsApp">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.2 11.8a8.2 8.2 0 0 1-12.1 7.1L3 20l1.2-4.9a8.2 8.2 0 1 1 16-3.3Z"/>
+            <path d="M8.2 7.8c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.9c.1.2.1.4-.1.6l-.6.8c-.2.2-.2.4 0 .6.5.9 1.3 1.6 2.2 2.1.2.1.4.1.6-.1l.8-1c.2-.2.4-.2.7-.1l1.8.9c.3.1.4.3.4.5 0 .4-.2 1.3-.8 1.7-.5.5-1.2.7-2 .5-1.1-.2-2.5-.9-3.8-2.1-1.6-1.4-2.5-3.1-2.7-4.2-.2-.9.1-1.6.5-2Z"/>
+          </svg>
+        </a>
+      </div>
     </div>
   </footer>
+
+  <a class="whatsapp-float"
+    href="https://wa.me/916205889064?text=Hello%20MedOrbits%2C%20I%20need%20help%20with%20notifications."
+    target="_blank" rel="noopener noreferrer"
+    aria-label="Chat with MedOrbits on WhatsApp"
+    title="Chat with MedOrbits on WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20.2 11.8a8.2 8.2 0 0 1-12.1 7.1L3 20l1.2-4.9a8.2 8.2 0 1 1 16-3.3Z"/>
+      <path d="M8.2 7.8c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.9c.1.2.1.4-.1.6l-.6.8c-.2.2-.2.4 0 .6.5.9 1.3 1.6 2.2 2.1.2.1.4.1.6-.1l.8-1c.2-.2.4-.2.7-.1l1.8.9c.3.1.4.3.4.5 0 .4-.2 1.3-.8 1.7-.5.5-1.2.7-2 .5-1.1-.2-2.5-.9-3.8-2.1-1.6-1.4-2.5-3.1-2.7-4.2-.2-.9.1-1.6.5-2Z"/>
+    </svg>
+    <span class="whatsapp-label">Chat on WhatsApp</span>
+  </a>
 
   <script>
     (() => {
       "use strict";
-      const introScreen = document.getElementById("introScreen");
-      if (introScreen) {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) introScreen.classList.add("is-hidden");
-        else {
-          window.setTimeout(() => introScreen.classList.add("is-hidden"), 1900);
-          introScreen.addEventListener("transitionend", event => {
-            if (event.target === introScreen && introScreen.classList.contains("is-hidden")) introScreen.remove();
-          }, { once: true });
-        }
-      }
 
+      const introScreen = document.getElementById("introScreen");
       const header = document.getElementById("siteHeader");
       const menuToggle = document.getElementById("menuToggle");
       const nav = document.getElementById("mainNav");
       const groups = [...document.querySelectorAll(".nav-group")];
       const year = document.getElementById("currentYear");
-      if (year) year.textContent = String(new Date().getFullYear());
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      if (year) {
+        year.textContent = String(new Date().getFullYear());
+      }
+
+      if (introScreen) {
+        if (reducedMotion.matches) {
+          introScreen.remove();
+        } else {
+          window.setTimeout(() => {
+            introScreen.classList.add("is-hidden");
+          }, 1900);
+
+          introScreen.addEventListener("transitionend", event => {
+            if (
+              event.target === introScreen &&
+              introScreen.classList.contains("is-hidden")
+            ) {
+              introScreen.remove();
+            }
+          });
+        }
+      }
 
       function closeMenu() {
         nav?.classList.remove("open");
         menuToggle?.setAttribute("aria-expanded", "false");
-        if (menuToggle) menuToggle.textContent = "☰ MENU";
+
+        if (menuToggle) {
+          menuToggle.textContent = "☰ MENU";
+        }
+
         groups.forEach(group => {
           group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
+          group.querySelector(".nav-trigger")
+            ?.setAttribute("aria-expanded", "false");
         });
       }
+
       menuToggle?.addEventListener("click", () => {
         const open = nav.classList.toggle("open");
+
         menuToggle.setAttribute("aria-expanded", String(open));
         menuToggle.textContent = open ? "× CLOSE" : "☰ MENU";
-        if (!open) groups.forEach(group => {
-          group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-        });
+
+        if (!open) {
+          groups.forEach(group => {
+            group.classList.remove("open");
+            group.querySelector(".nav-trigger")
+              ?.setAttribute("aria-expanded", "false");
+          });
+        }
       });
+
       groups.forEach(group => {
         const trigger = group.querySelector(".nav-trigger");
+
         trigger?.addEventListener("click", event => {
           event.stopPropagation();
+
           const open = !group.classList.contains("open");
+
           groups.forEach(item => {
             item.classList.remove("open");
-            item.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
+            item.querySelector(".nav-trigger")
+              ?.setAttribute("aria-expanded", "false");
           });
+
           if (open) {
             group.classList.add("open");
             trigger.setAttribute("aria-expanded", "true");
           }
         });
       });
-      nav?.querySelectorAll("a").forEach(link => link.addEventListener("click", closeMenu));
+
+      nav?.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", closeMenu);
+      });
+
       document.addEventListener("click", event => {
         if (!(event.target instanceof Element)) return;
-        if (!event.target.closest(".nav-group")) groups.forEach(group => {
-          group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-        });
-        if (nav?.classList.contains("open") && !event.target.closest("#mainNav") && !event.target.closest("#menuToggle")) closeMenu();
+
+        if (!event.target.closest(".nav-group")) {
+          groups.forEach(group => {
+            group.classList.remove("open");
+            group.querySelector(".nav-trigger")
+              ?.setAttribute("aria-expanded", "false");
+          });
+        }
+
+        if (
+          nav?.classList.contains("open") &&
+          !event.target.closest("#mainNav") &&
+          !event.target.closest("#menuToggle")
+        ) {
+          closeMenu();
+        }
       });
+
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape") { closeMenu(); menuToggle?.focus(); }
+        if (event.key === "Escape") {
+          closeMenu();
+          menuToggle?.focus();
+        }
       });
-      window.addEventListener("scroll", () => header?.classList.toggle("scrolled", window.scrollY > 20), { passive: true });
-      window.matchMedia("(min-width: 1101px)").addEventListener?.("change", event => { if (event.matches) closeMenu(); });
-      document.querySelectorAll('img[src^="/assets/images/"]').forEach(img => {
-        img.addEventListener("error", function () {
-          if (this.dataset.fallbackUsed === "true") return;
-          this.dataset.fallbackUsed = "true";
-          this.src = "/assets/images/placeholders/image-placeholder.svg";
+
+      function updateHeader() {
+        header?.classList.toggle("scrolled", window.scrollY > 20);
+      }
+
+      window.addEventListener("scroll", updateHeader, { passive: true });
+      updateHeader();
+
+      const desktopQuery = window.matchMedia("(min-width: 1101px)");
+
+      if (desktopQuery.addEventListener) {
+        desktopQuery.addEventListener("change", event => {
+          if (event.matches) closeMenu();
+        });
+      } else if (desktopQuery.addListener) {
+        desktopQuery.addListener(event => {
+          if (event.matches) closeMenu();
+        });
+      }
+
+      /* Notification center */
+
+      const list = document.getElementById("notificationList");
+      const emptyState = document.getElementById("emptyState");
+      const emptyTitle = document.getElementById("emptyTitle");
+      const emptyMessage = document.getElementById("emptyMessage");
+      const totalCount = document.getElementById("totalCount");
+      const unreadCount = document.getElementById("unreadCount");
+      const readCount = document.getElementById("readCount");
+      const notice = document.getElementById("notificationNotice");
+      const filterButtons = [...document.querySelectorAll("[data-filter]")];
+      const markAllReadButton = document.getElementById("markAllRead");
+      const refreshButton = document.getElementById("refreshNotifications");
+      const clearButton = document.getElementById("clearNotifications");
+      const rememberToggle = document.getElementById("rememberReadStatus");
+      const enableBrowserButton = document.getElementById("enableBrowserNotifications");
+      const browserPermissionStatus = document.getElementById("browserPermissionStatus");
+
+      const STORAGE_KEY = "medorbits.notifications.read.v1";
+      let activeFilter = "all";
+      let noticeTimeout;
+
+      function showNotice(message) {
+        if (!notice) return;
+
+        notice.textContent = message;
+        notice.classList.add("visible");
+
+        if (noticeTimeout) {
+          window.clearTimeout(noticeTimeout);
+        }
+
+        noticeTimeout = window.setTimeout(() => {
+          notice.classList.remove("visible");
+        }, 4500);
+      }
+
+      function getItems() {
+        return list ? [...list.querySelectorAll(".notification-item")] : [];
+      }
+
+      function readSavedState() {
+        if (!rememberToggle?.checked) return null;
+
+        try {
+          const raw = window.localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+            ? parsed
+            : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function saveState() {
+        if (!rememberToggle?.checked) return;
+
+        try {
+          const state = {};
+
+          getItems().forEach(item => {
+            state[item.dataset.id] = item.dataset.read === "true";
+          });
+
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {
+          showNotice("Read status could not be saved in this browser. You can still manage notifications for this visit.");
+        }
+      }
+
+      function applySavedState() {
+        const saved = readSavedState();
+        if (!saved) return;
+
+        getItems().forEach(item => {
+          const id = item.dataset.id;
+          if (Object.prototype.hasOwnProperty.call(saved, id)) {
+            setRead(item, saved[id] === true, false);
+          }
+        });
+      }
+
+      function setRead(item, isRead, shouldSave = true) {
+        item.dataset.read = String(isRead);
+        item.classList.toggle("unread", !isRead);
+
+        const meta = item.querySelector(".notification-meta");
+        const action = item.querySelector('[data-action="read"]');
+        let unreadLabel = item.querySelector(".unread-label");
+
+        if (!isRead && !unreadLabel && meta) {
+          unreadLabel = document.createElement("span");
+          unreadLabel.className = "unread-label";
+          unreadLabel.textContent = "Unread";
+          meta.append(unreadLabel);
+        } else if (isRead && unreadLabel) {
+          unreadLabel.remove();
+        }
+
+        if (action) {
+          action.textContent = isRead ? "Already read" : "Mark as read";
+          action.disabled = isRead;
+        }
+
+        if (shouldSave) saveState();
+        render();
+      }
+
+      function render() {
+        const items = getItems();
+        let visibleCount = 0;
+        let unread = 0;
+        let read = 0;
+
+        items.forEach(item => {
+          const isRead = item.dataset.read === "true";
+          const category = item.dataset.category;
+          const matchesFilter =
+            activeFilter === "all" ||
+            (activeFilter === "unread" && !isRead) ||
+            category === activeFilter;
+
+          item.hidden = !matchesFilter;
+
+          if (isRead) {
+            read += 1;
+          } else {
+            unread += 1;
+          }
+
+          if (matchesFilter) visibleCount += 1;
+        });
+
+        if (totalCount) totalCount.textContent = String(items.length);
+        if (unreadCount) unreadCount.textContent = String(unread);
+        if (readCount) readCount.textContent = String(read);
+
+        if (emptyState) {
+          emptyState.classList.toggle("visible", visibleCount === 0);
+        }
+
+        if (visibleCount === 0 && emptyTitle && emptyMessage) {
+          if (items.length === 0) {
+            emptyTitle.textContent = "No notifications yet.";
+            emptyMessage.textContent = "New notifications will appear here when the notification service is connected.";
+          } else if (activeFilter === "unread") {
+            emptyTitle.textContent = "You're all caught up.";
+            emptyMessage.textContent = "There are no unread notifications in this view.";
+          } else {
+            emptyTitle.textContent = "Nothing to display.";
+            emptyMessage.textContent = "No notifications match the selected filter.";
+          }
+        }
+
+        if (markAllReadButton) {
+          markAllReadButton.disabled = unread === 0;
+        }
+
+        if (clearButton) {
+          clearButton.disabled = items.length === 0;
+        }
+      }
+
+      filterButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.filter || "all";
+
+          filterButtons.forEach(filterButton => {
+            filterButton.setAttribute(
+              "aria-pressed",
+              String(filterButton === button)
+            );
+          });
+
+          render();
         });
       });
 
-      const items = [...document.querySelectorAll(".notification-item")];
-      const filterButtons = [...document.querySelectorAll(".notification-tab")];
-      const emptyState = document.getElementById("notificationEmpty");
-      const unreadCount = document.getElementById("unreadCount");
-      let activeFilter = "all";
-      function updateUnreadCount() {
-        const count = items.filter(item => item.dataset.unread === "true").length;
-        if (unreadCount) unreadCount.textContent = String(count);
-        const label = document.querySelector(".notification-count span");
-        if (label) label.textContent = count === 1 ? "unread notification" : "unread notifications";
-      }
-      function renderNotifications() {
-        let visible = 0;
-        items.forEach(item => {
-          const matches = activeFilter === "all" || (activeFilter === "unread" ? item.dataset.unread === "true" : item.dataset.kind === activeFilter);
-          item.hidden = !matches;
-          if (matches) visible++;
-          const unread = item.dataset.unread === "true";
-          item.classList.toggle("is-unread", unread);
-          const badge = item.querySelector(".unread-label");
-          if (badge) badge.hidden = !unread;
-          const markButton = item.querySelector(".mark-one");
-          if (markButton) markButton.hidden = !unread;
-        });
-        if (emptyState) emptyState.classList.toggle("is-visible", visible === 0);
-        updateUnreadCount();
-      }
-      filterButtons.forEach(button => button.addEventListener("click", () => {
-        activeFilter = button.dataset.filter || "all";
-        filterButtons.forEach(item => item.setAttribute("aria-pressed", String(item === button)));
-        renderNotifications();
-      }));
-      items.forEach(item => item.querySelector(".mark-one")?.addEventListener("click", () => {
-        item.dataset.unread = "false";
-        renderNotifications();
-      }));
-      document.getElementById("markAllRead")?.addEventListener("click", () => {
-        items.forEach(item => item.dataset.unread = "false");
-        renderNotifications();
+      list?.addEventListener("click", event => {
+        if (!(event.target instanceof Element)) return;
+
+        const action = event.target.closest('[data-action="read"]');
+        if (!action || action.disabled) return;
+
+        const item = action.closest(".notification-item");
+        if (!item) return;
+
+        setRead(item, true);
+        showNotice("Notification marked as read.");
       });
-      renderNotifications();
+
+      markAllReadButton?.addEventListener("click", () => {
+        getItems().forEach(item => {
+          setRead(item, true, false);
+        });
+
+        saveState();
+        render();
+        showNotice("All notifications marked as read.");
+      });
+
+      refreshButton?.addEventListener("click", () => {
+        applySavedState();
+        render();
+        showNotice("The local notification list has been refreshed. Live updates require a connected notification API.");
+      });
+
+      clearButton?.addEventListener("click", () => {
+        const items = getItems();
+
+        if (!items.length) {
+          showNotice("There are no notifications to clear.");
+          return;
+        }
+
+        const confirmed = window.confirm(
+          "Clear all notifications from this local demo list? This cannot be undone on this page."
+        );
+
+        if (!confirmed) return;
+
+        items.forEach(item => item.remove());
+
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          // Clearing the page list still works when local storage is unavailable.
+        }
+
+        render();
+        showNotice("Notifications cleared from this page.");
+      });
+
+      rememberToggle?.addEventListener("change", () => {
+        if (rememberToggle.checked) {
+          saveState();
+          showNotice("Local read-status saving is enabled on this device.");
+        } else {
+          try {
+            window.localStorage.removeItem(STORAGE_KEY);
+          } catch {
+            // Local storage may be blocked by browser settings.
+          }
+
+          showNotice("Local read-status saving is disabled. Changes will not be saved after you leave this page.");
+        }
+      });
+
+      function updateBrowserPermission() {
+        if (!browserPermissionStatus || !enableBrowserButton) return;
+
+        if (!("Notification" in window)) {
+          browserPermissionStatus.textContent = "Not supported by this browser.";
+          enableBrowserButton.disabled = true;
+          enableBrowserButton.textContent = "Unavailable";
+          return;
+        }
+
+        const permission = Notification.permission;
+
+        if (permission === "granted") {
+          browserPermissionStatus.textContent = "Permission granted on this device.";
+          enableBrowserButton.disabled = true;
+          enableBrowserButton.textContent = "Enabled";
+        } else if (permission === "denied") {
+          browserPermissionStatus.textContent = "Blocked in browser settings.";
+          enableBrowserButton.disabled = true;
+          enableBrowserButton.textContent = "Blocked";
+        } else {
+          browserPermissionStatus.textContent = "Permission has not been granted.";
+          enableBrowserButton.disabled = false;
+          enableBrowserButton.textContent = "Enable";
+        }
+      }
+
+      enableBrowserButton?.addEventListener("click", async () => {
+        if (!("Notification" in window)) {
+          showNotice("Browser notifications are not supported here.");
+          updateBrowserPermission();
+          return;
+        }
+
+        if (!window.isSecureContext) {
+          showNotice("Browser notifications generally require HTTPS or localhost.");
+          return;
+        }
+
+        try {
+          const permission = await Notification.requestPermission();
+          updateBrowserPermission();
+
+          if (permission === "granted") {
+            showNotice("Browser permission granted. Live alerts still require a configured push-notification service.");
+          } else if (permission === "denied") {
+            showNotice("Permission was denied. You can review notification permissions in your browser settings.");
+          } else {
+            showNotice("No browser notification permission was granted.");
+          }
+        } catch {
+          showNotice("The browser could not complete the notification permission request.");
+          updateBrowserPermission();
+        }
+      });
+
+      applySavedState();
+      render();
+      updateBrowserPermission();
     })();
   </script>
+
   <script defer src="/assets/js/constants.js"></script>
   <script defer src="/assets/js/config.js"></script>
   <script defer src="/assets/js/utils.js"></script>

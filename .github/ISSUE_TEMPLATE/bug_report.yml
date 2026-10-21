@@ -1,7 +1,10 @@
+
 name: Bug report
 description: Report a reproducible bug in MedOrbits
-title: '[Bug]: '
-labels: [bug, triage]
+title: "[Bug]: "
+labels:
+  - bug
+  - triage
 assignees: []
 
 body:
@@ -9,7 +12,8 @@ body:
     attributes:
       value: |
         Thank you for helping improve MedOrbits.
-        Provide enough detail to reproduce the issue. Do not include passwords, access tokens, payment-card details, identity documents, or other confidential information.
+
+        Provide enough detail to reproduce the issue. Do not include passwords, access tokens, payment-card details, identity documents, personal data, or other confidential information.
 
   - type: textarea
     id: summary
@@ -24,7 +28,7 @@ body:
     id: affected_area
     attributes:
       label: Affected area
-      description: Select the area most closely related to this issue.
+      description: Select all areas relevant to this issue.
       multiple: true
       options:
         - Website / user interface
@@ -102,7 +106,7 @@ body:
     id: page_endpoint
     attributes:
       label: Page or API endpoint
-      description: Provide the affected page path or API route. Do not include private query parameters.
+      description: Provide the affected page path or API route. Remove private query parameters.
       placeholder: /education/example.html or /api/...
     validations:
       required: false
@@ -111,7 +115,7 @@ body:
     id: browser
     attributes:
       label: Browser and version
-      placeholder: Chrome, Safari, or not applicable
+      placeholder: Chrome, Safari, Firefox, or not applicable
     validations:
       required: false
 
@@ -136,7 +140,7 @@ body:
     id: logs
     attributes:
       label: Error messages and logs
-      description: Remove credentials, tokens, personal data, and other secrets before sharing logs.
+      description: Remove credentials, tokens, personal data, and secrets before sharing logs.
       placeholder: Paste sanitized error messages or stack traces here.
       render: text
     validations:
@@ -146,7 +150,7 @@ body:
     id: impact_details
     attributes:
       label: Impact and workaround
-      description: Explain who or what is affected and whether a critical workflow is blocked. Include a safe workaround if known.
+      description: Explain who or what is affected, whether a critical workflow is blocked, and any safe workaround.
       placeholder: Describe the practical consequences or enter Unknown.
     validations:
       required: true
@@ -155,7 +159,7 @@ body:
     id: additional_context
     attributes:
       label: Additional context
-      description: Include relevant details that have not been covered above.
+      description: Include relevant details not covered above.
       placeholder: Add related issues, recent changes, or other useful context.
     validations:
       required: false
@@ -175,4 +179,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Do not report security vulnerabilities in a public issue. Follow the private reporting instructions in the root `SECURITY.md` file. If no private reporting channel is available, request one from a maintainer through a non-public channel before sharing sensitive technical details.
+        **Security reporting**
+
+        Do not report security vulnerabilities in a public issue.
+
+        Follow the private reporting instructions in the root `SECURITY.md` file. If no private reporting channel is available, contact a maintainer through a non-public channel before sharing sensitive technical details.

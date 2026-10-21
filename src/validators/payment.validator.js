@@ -1,4 +1,3 @@
-
 'use strict';
 
 const ALLOWED_CREATE_FIELDS = Object.freeze([
@@ -60,40 +59,78 @@ const SUPPORTED_CURRENCIES = Object.freeze([
 
 const MAX_AMOUNT_MINOR_UNITS = 100000000000;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_ORDER_ID_LENGTH = 128;
+const MAX_RETURN_URL_LENGTH = 2048;
+const MAX_WEBHOOK_EVENT_LENGTH = 200;
+const MAX_WEBHOOK_ID_LENGTH = 255;
+const MAX_QUERY_PAGE = 1000000;
+const MAX_QUERY_LIMIT = 100;
 
-function validationError(message, field, code = 'VALIDATION_ERROR') {
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function validationError(
+  message,
+  field,
+  code = 'VALIDATION_ERROR'
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
   error.statusCode = 400;
   error.code = code;
+  error.publicMessage = message;
 
-  if (field) error.field = field;
+  if (field) {
+    error.field = field;
+  }
 
   return error;
 }
 
+function isPlainObject(input) {
+  if (input === null || typeof input !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(input);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 function requireObject(input, label = 'Request body') {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
-    throw validationError(`${label} must be a JSON object.`);
+  if (!isPlainObject(input)) {
+    throw validationError(
+      `${label} must be a plain JSON object.`,
+      'body',
+      'INVALID_TYPE'
+    );
   }
 
   return input;
 }
 
 function rejectUnknownFields(input, allowedFields) {
+  requireObject(input);
+
+  if (!Array.isArray(allowedFields)) {
+    throw new TypeError('allowedFields must be an array.');
+  }
+
+  const allowed = new Set(allowedFields);
   const unknownFields = Object.keys(input).filter(
-    (field) => !allowedFields.includes(field)
+    (field) => !allowed.has(field)
   );
 
-  if (unknownFields.length) {
+  if (unknownFields.length > 0) {
     throw validationError(
-      `Unsupported field(s): ${unknownFields.join(', ')}.`
+      `Unsupported field(s): ${unknownFields.join(', ')}.`,
+      undefined,
+      'UNKNOWN_FIELD'
     );
   }
+
+  return input;
 }
 
 function requireString(value, field, options = {}) {
@@ -104,38 +141,57 @@ function requireString(value, field, options = {}) {
   } = options;
 
   if (typeof value !== 'string') {
-    throw validationError(`${field} must be a string.`, field);
+    throw validationError(
+      `${field} must be a string.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
   }
 
   const result = trim ? value.trim() : value;
 
   if (result.length < minLength || result.length > maxLength) {
     throw validationError(
-      `${field} must contain ${minLength} to ${maxLength} characters.`,
-      field
+      `${field} must contain between ${minLength} and ${maxLength} characters.`,
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
   return result;
 }
 
-function optionalString(value, field, options = {}) {
-  if (value === undefined) return undefined;
-
-  if (value === null && options.allowNull) return null;
-
-  return requireString(value, field, options);
-}
-
 function positiveId(value, field) {
-  const id = typeof value === 'string' && /^\d+$/.test(value)
-    ? Number(value)
-    : value;
+  let id = value;
+
+  if (typeof value === 'string') {
+    const text = value.trim();
+
+    if (!/^[1-9]\d*$/.test(text)) {
+      throw validationError(
+        `${field} must be a positive integer.`,
+        field,
+        'INVALID_FORMAT'
+      );
+    }
+
+    id = Number(text);
+  }
 
   if (!Number.isSafeInteger(id) || id < 1) {
     throw validationError(
       `${field} must be a positive integer.`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -143,30 +199,37 @@ function positiveId(value, field) {
 }
 
 function validateAmount(value) {
-  if (
-    typeof value !== 'number' ||
-    !Number.isFinite(value) ||
-    value <= 0
-  ) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
     throw validationError(
       'amount must be a positive number.',
-      'amount'
+      'amount',
+      'INVALID_AMOUNT'
     );
   }
 
-  // Reject fractional precision beyond two decimal places.
-  if (Math.abs(value * 100 - Math.round(value * 100)) > 1e-7) {
+  // Use a tolerance for ordinary floating-point representation errors.
+  const minorUnits = Math.round(value * 100);
+
+  if (
+    !Number.isSafeInteger(minorUnits) ||
+    Math.abs(value * 100 - minorUnits) > 1e-7
+  ) {
     throw validationError(
       'amount must have no more than two decimal places.',
-      'amount'
+      'amount',
+      'INVALID_AMOUNT'
     );
   }
 
-  if (Math.round(value * 100) > MAX_AMOUNT_MINOR_UNITS) {
-    throw validationError('amount exceeds the allowed limit.', 'amount');
+  if (minorUnits > MAX_AMOUNT_MINOR_UNITS) {
+    throw validationError(
+      'amount exceeds the allowed limit.',
+      'amount',
+      'OUT_OF_RANGE'
+    );
   }
 
-  return Number(value.toFixed(2));
+  return minorUnits / 100;
 }
 
 function validateCurrency(value) {
@@ -178,7 +241,8 @@ function validateCurrency(value) {
   if (!SUPPORTED_CURRENCIES.includes(currency)) {
     throw validationError(
       `currency must be one of: ${SUPPORTED_CURRENCIES.join(', ')}.`,
-      'currency'
+      'currency',
+      'INVALID_CURRENCY'
     );
   }
 
@@ -188,7 +252,7 @@ function validateCurrency(value) {
 function validateReturnUrl(value) {
   const raw = requireString(value, 'return_url', {
     minLength: 1,
-    maxLength: 2048,
+    maxLength: MAX_RETURN_URL_LENGTH,
   });
 
   let url;
@@ -196,47 +260,79 @@ function validateReturnUrl(value) {
   try {
     url = new URL(raw);
   } catch {
-    throw validationError('return_url must be a valid URL.', 'return_url');
+    throw validationError(
+      'return_url must be a valid URL.',
+      'return_url',
+      'INVALID_URL'
+    );
   }
 
   if (!['https:', 'http:'].includes(url.protocol)) {
     throw validationError(
       'return_url must use HTTP or HTTPS.',
-      'return_url'
+      'return_url',
+      'INVALID_URL'
     );
   }
 
-  if (url.username || url.password) {
+  if (!url.hostname || url.username || url.password) {
     throw validationError(
-      'return_url must not contain embedded credentials.',
-      'return_url'
+      'return_url must have a hostname and must not contain embedded credentials.',
+      'return_url',
+      'INVALID_URL'
     );
   }
 
+  // Production systems should use an explicit allowlist of trusted return URLs.
   return url.toString();
+}
+
+function validatePaymentMethod(value) {
+  const method = requireString(value, 'payment_method', {
+    minLength: 1,
+    maxLength: 40,
+  }).toLowerCase();
+
+  if (!PAYMENT_METHODS.includes(method)) {
+    throw validationError(
+      `payment_method must be one of: ${PAYMENT_METHODS.join(', ')}.`,
+      'payment_method',
+      'INVALID_ENUM'
+    );
+  }
+
+  return method;
 }
 
 function validateCreate(input) {
   const body = requireObject(input);
   rejectUnknownFields(body, ALLOWED_CREATE_FIELDS);
 
-  // A payment must be associated with a server-authorized billable record.
   const hasSubscription = body.subscription_id !== undefined;
   const hasApplication = body.application_id !== undefined;
 
   if (hasSubscription === hasApplication) {
     throw validationError(
       'Provide exactly one of subscription_id or application_id.',
-      'subscription_id'
+      'subscription_id',
+      'INVALID_BILLABLE_REFERENCE'
     );
   }
 
   if (body.amount === undefined) {
-    throw validationError('amount is required.', 'amount');
+    throw validationError(
+      'amount is required.',
+      'amount',
+      'REQUIRED_FIELD'
+    );
   }
 
   if (body.currency === undefined) {
-    throw validationError('currency is required.', 'currency');
+    throw validationError(
+      'currency is required.',
+      'currency',
+      'REQUIRED_FIELD'
+    );
   }
 
   const result = {
@@ -261,24 +357,12 @@ function validateCreate(input) {
   if (body.order_id !== undefined) {
     result.order_id = requireString(body.order_id, 'order_id', {
       minLength: 1,
-      maxLength: 128,
+      maxLength: MAX_ORDER_ID_LENGTH,
     });
   }
 
   if (body.payment_method !== undefined) {
-    const method = requireString(body.payment_method, 'payment_method', {
-      minLength: 1,
-      maxLength: 40,
-    }).toLowerCase();
-
-    if (!PAYMENT_METHODS.includes(method)) {
-      throw validationError(
-        `payment_method must be one of: ${PAYMENT_METHODS.join(', ')}.`,
-        'payment_method'
-      );
-    }
-
-    result.payment_method = method;
+    result.payment_method = validatePaymentMethod(body.payment_method);
   }
 
   if (body.description !== undefined) {
@@ -295,6 +379,84 @@ function validateCreate(input) {
   return result;
 }
 
+function parseBoundedInteger(value, field, min, max) {
+  let text;
+
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      throw validationError(
+        `${field} must be a safe integer.`,
+        field,
+        'INVALID_TYPE'
+      );
+    }
+
+    text = String(value);
+  } else if (typeof value === 'string') {
+    text = value;
+  } else {
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  if (!/^\d+$/.test(text)) {
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_FORMAT'
+    );
+  }
+
+  const number = Number(text);
+
+  if (
+    !Number.isSafeInteger(number) ||
+    number < min ||
+    number > max
+  ) {
+    throw validationError(
+      `${field} must be between ${min} and ${max}.`,
+      field,
+      'OUT_OF_RANGE'
+    );
+  }
+
+  return number;
+}
+
+function validateDate(value, field) {
+  const date = requireString(value, field, {
+    minLength: 10,
+    maxLength: 10,
+  });
+
+  if (!DATE_ONLY_REGEX.test(date)) {
+    throw validationError(
+      `${field} must use YYYY-MM-DD format.`,
+      field,
+      'INVALID_DATE'
+    );
+  }
+
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== date
+  ) {
+    throw validationError(
+      `${field} must be a valid calendar date.`,
+      field,
+      'INVALID_DATE'
+    );
+  }
+
+  return date;
+}
+
 function validateQuery(input) {
   const query = requireObject(input, 'Query parameters');
   rejectUnknownFields(query, ALLOWED_QUERY_FIELDS);
@@ -302,11 +464,21 @@ function validateQuery(input) {
   const result = {};
 
   if (query.page !== undefined) {
-    result.page = parseBoundedInteger(query.page, 'page', 1, 1000000);
+    result.page = parseBoundedInteger(
+      query.page,
+      'page',
+      1,
+      MAX_QUERY_PAGE
+    );
   }
 
   if (query.limit !== undefined) {
-    result.limit = parseBoundedInteger(query.limit, 'limit', 1, 100);
+    result.limit = parseBoundedInteger(
+      query.limit,
+      'limit',
+      1,
+      MAX_QUERY_LIMIT
+    );
   }
 
   if (query.status !== undefined) {
@@ -318,7 +490,8 @@ function validateQuery(input) {
     if (!PAYMENT_STATUSES.includes(status)) {
       throw validationError(
         `status must be one of: ${PAYMENT_STATUSES.join(', ')}.`,
-        'status'
+        'status',
+        'INVALID_ENUM'
       );
     }
 
@@ -337,78 +510,57 @@ function validateQuery(input) {
     result.to = validateDate(query.to, 'to');
   }
 
-  if (result.from && result.to && result.from > result.to) {
+  if (
+    result.from !== undefined &&
+    result.to !== undefined &&
+    result.from > result.to
+  ) {
     throw validationError(
       'from must be on or before to.',
-      'from'
+      'from',
+      'INVALID_DATE_RANGE'
     );
   }
 
   return result;
 }
 
-function parseBoundedInteger(value, field, min, max) {
-  const text = String(value);
-
-  if (!/^\d+$/.test(text)) {
-    throw validationError(`${field} must be an integer.`, field);
-  }
-
-  const number = Number(text);
-
-  if (!Number.isSafeInteger(number) || number < min || number > max) {
-    throw validationError(
-      `${field} must be between ${min} and ${max}.`,
-      field
-    );
-  }
-
-  return number;
-}
-
-function validateDate(value, field) {
-  const date = requireString(value, field, {
-    minLength: 10,
-    maxLength: 10,
-  });
-
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw validationError(`${field} must use YYYY-MM-DD format.`, field);
-  }
-
-  const parsed = new Date(`${date}T00:00:00.000Z`);
-
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.toISOString().slice(0, 10) !== date
-  ) {
-    throw validationError(`${field} must be a valid date.`, field);
-  }
-
-  return date;
-}
-
 /**
- * Performs structural validation only.
- * Always verify the provider signature against the original raw request body
- * before trusting or processing a webhook.
+ * Structural validation only.
+ *
+ * Verify the provider signature against the ORIGINAL RAW request body
+ * before trusting or processing webhook data. Do not use this function
+ * as a substitute for signature verification or event idempotency.
  */
 function validateWebhookPayload(input) {
   const body = requireObject(input, 'Webhook payload');
   rejectUnknownFields(body, ALLOWED_WEBHOOK_FIELDS);
+
+  if (
+    body.event !== undefined &&
+    body.type !== undefined &&
+    body.event !== body.type
+  ) {
+    throw validationError(
+      'Webhook event and type fields must match when both are provided.',
+      'event',
+      'INVALID_WEBHOOK_EVENT'
+    );
+  }
 
   const event = body.event !== undefined ? body.event : body.type;
 
   if (event === undefined) {
     throw validationError(
       'Webhook event or type is required.',
-      'event'
+      'event',
+      'REQUIRED_FIELD'
     );
   }
 
   const normalizedEvent = requireString(event, 'event', {
     minLength: 1,
-    maxLength: 200,
+    maxLength: MAX_WEBHOOK_EVENT_LENGTH,
   });
 
   const result = {
@@ -418,7 +570,7 @@ function validateWebhookPayload(input) {
   if (body.id !== undefined) {
     result.id = requireString(body.id, 'id', {
       minLength: 1,
-      maxLength: 255,
+      maxLength: MAX_WEBHOOK_ID_LENGTH,
     });
   }
 
@@ -457,10 +609,14 @@ module.exports = {
   validateAmount,
   validateCurrency,
   validateReturnUrl,
+  validatePaymentMethod,
+  validateDate,
+  positiveId,
   ALLOWED_CREATE_FIELDS,
   ALLOWED_QUERY_FIELDS,
   ALLOWED_WEBHOOK_FIELDS,
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
   SUPPORTED_CURRENCIES,
+  MAX_AMOUNT_MINOR_UNITS,
 };

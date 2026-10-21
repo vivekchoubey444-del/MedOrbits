@@ -5,28 +5,14 @@
  * File: tests/fixtures/employers.js
  *
  * Purpose:
- *   Provide reusable synthetic employer records for unit, integration,
- *   recruitment, API, authentication, authorization, and security tests.
+ *   Reusable synthetic employer records for unit, integration, recruitment,
+ *   API, authentication, authorization, and security tests.
  *
  * Security:
  *   - Uses synthetic organization data only.
  *   - Does not represent verified real-world employers.
- *   - Separates client-submittable fields from server-managed properties.
- *   - Does not imply that a user is authorized to act for an employer.
- *   - Verification, membership, and role assignments must be validated
- *     by the application's trusted server-side logic.
- *
- * Usage:
- *   const {
- *     EMPLOYER_STATUSES,
- *     EMPLOYER_TYPES,
- *     createEmployer,
- *     createEmployerPayload,
- *     createEmployerSet,
- *     createForeignEmployer,
- *     createMassAssignmentPayload,
- *     createEmployerWithStatus,
- *   } = require('../fixtures/employers');
+ *   - Does not establish membership, permissions, or account ownership.
+ *   - Verification and publication decisions belong to trusted server logic.
  */
 const EMPLOYER_STATUSES = Object.freeze({
   DRAFT: 'draft',
@@ -95,7 +81,37 @@ const DEFAULT_EMPLOYER = Object.freeze({
   updatedAt: '2026-10-01T09:00:00.000Z',
 });
 /**
- * Recursively clones arrays and plain objects.
+ * Validate a plain object.
+ *
+ * @param {*} value
+ * @param {string} label
+ */
+function assertPlainObject(value, label) {
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+}
+/**
+ * Validate a non-empty string.
+ *
+ * @param {*} value
+ * @param {string} label
+ */
+function assertNonEmptyString(value, label) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new TypeError(`${label} must be a non-empty string`);
+  }
+}
+/**
+ * Recursively clone arrays and plain objects.
  *
  * @param {*} value
  * @returns {*}
@@ -104,50 +120,33 @@ function clone(value) {
   if (Array.isArray(value)) {
     return value.map(clone);
   }
-  if (value && typeof value === 'object') {
-    const prototype = Object.getPrototypeOf(value);
-    if (
-      prototype !== Object.prototype &&
-      prototype !== null
-    ) {
-      throw new TypeError(
-        'Fixture values must contain plain objects only'
-      );
-    }
+  if (value !== null && typeof value === 'object') {
+    assertPlainObject(value, 'Fixture values');
     return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        clone(item),
-      ])
+      Object.entries(value).map(([key, item]) => [key, clone(item)])
     );
   }
   return value;
 }
-function assertPlainObject(value, label) {
-  if (
-    value === null ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    (
-      Object.getPrototypeOf(value) !== Object.prototype &&
-      Object.getPrototypeOf(value) !== null
-    )
-  ) {
-    throw new TypeError(`${label} must be a plain object`);
-  }
-}
-function assertNonEmptyString(value, label) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new TypeError(`${label} must be a non-empty string`);
-  }
+/**
+ * Merge a nested object with its defaults.
+ *
+ * @param {object} base
+ * @param {*} overrides
+ * @param {string} label
+ * @returns {object}
+ */
+function mergeObject(base, overrides, label) {
+  assertPlainObject(overrides, label);
+  return {
+    ...clone(base),
+    ...clone(overrides),
+  };
 }
 /**
- * Creates a fresh synthetic employer record.
+ * Create a fresh synthetic employer record.
  *
- * Nested organization, contact, address, and verification objects are
- * merged with defaults when overridden.
- *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEmployer(overrides = {}) {
@@ -162,140 +161,145 @@ function createEmployer(overrides = {}) {
     'address',
     'verification',
   ]) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(
-        overrides[field],
-        `${field} overrides`
-      );
-      employer[field] = {
-        ...clone(DEFAULT_EMPLOYER[field]),
-        ...clone(overrides[field]),
-      };
-    }
+    employer[field] = overrides[field] === undefined
+      ? clone(DEFAULT_EMPLOYER[field])
+      : mergeObject(
+          DEFAULT_EMPLOYER[field],
+          overrides[field],
+          `${field} overrides`
+        );
   }
-  if (
-    overrides.verification &&
-    overrides.verification.documents !== undefined
-  ) {
-    if (!Array.isArray(overrides.verification.documents)) {
-      throw new TypeError(
-        'verification.documents must be an array'
-      );
-    }
-    employer.verification.documents = clone(
-      overrides.verification.documents
-    );
-  }
+  employer.verification.documents = cloneArray(
+    employer.verification.documents,
+    'verification.documents'
+  );
   return employer;
 }
 /**
- * Creates a client-submittable employer registration payload.
+ * Validate and clone an array.
  *
- * Server-managed fields are intentionally excluded:
- *   id, employerNumber, ownerUserId, status, verification,
- *   isPublished, createdAt, updatedAt.
+ * @param {*} value
+ * @param {string} label
+ * @returns {Array}
+ */
+function cloneArray(value, label) {
+  if (!Array.isArray(value)) {
+    throw new TypeError(`${label} must be an array`);
+  }
+  return clone(value);
+}
+/**
+ * Create a client-submittable employer registration payload.
  *
- * The server should derive ownerUserId from authenticated context.
- * Verification and publication decisions must be made by trusted
- * server-side workflows.
+ * Server-managed fields are excluded by default:
+ * id, employerNumber, ownerUserId, status, verification,
+ * isPublished, createdAt, updatedAt.
  *
- * @param {object} [overrides]
+ * Explicit overrides remain available for negative security tests.
+ * The server must enforce its own request-field allowlist.
+ *
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEmployerPayload(overrides = {}) {
   assertPlainObject(overrides, 'Employer payload overrides');
   const payload = {
-    organization: {
-      ...clone(DEFAULT_EMPLOYER.organization),
-    },
-    contact: {
-      ...clone(DEFAULT_EMPLOYER.contact),
-    },
-    address: {
-      ...clone(DEFAULT_EMPLOYER.address),
-    },
+    organization: clone(DEFAULT_EMPLOYER.organization),
+    contact: clone(DEFAULT_EMPLOYER.contact),
+    address: clone(DEFAULT_EMPLOYER.address),
     ...clone(overrides),
   };
-  for (const field of [
-    'organization',
-    'contact',
-    'address',
-  ]) {
-    if (overrides[field] !== undefined) {
-      assertPlainObject(
-        overrides[field],
-        `${field} payload overrides`
-      );
-      payload[field] = {
-        ...clone(DEFAULT_EMPLOYER[field]),
-        ...clone(overrides[field]),
-      };
-    }
+  for (const field of ['organization', 'contact', 'address']) {
+    payload[field] = overrides[field] === undefined
+      ? clone(DEFAULT_EMPLOYER[field])
+      : mergeObject(
+          DEFAULT_EMPLOYER[field],
+          overrides[field],
+          `${field} payload overrides`
+        );
   }
   return payload;
 }
 /**
- * Creates several employer records with distinct synthetic identities.
+ * Create several employers with unique generated identities.
+ *
+ * Generated IDs, employer numbers, owner IDs, default names, slugs,
+ * and default contact emails remain unique despite common overrides.
  *
  * @param {number} [count=3]
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object[]}
  */
 function createEmployerSet(count = 3, overrides = {}) {
-  if (
-    !Number.isInteger(count) ||
-    count < 0 ||
-    count > 1000
-  ) {
+  if (!Number.isInteger(count) || count < 0 || count > 1000) {
     throw new RangeError(
       'Employer count must be an integer from 0 to 1000'
     );
   }
   assertPlainObject(overrides, 'Employer set overrides');
+  for (const field of ['organization', 'contact']) {
+    if (overrides[field] !== undefined) {
+      assertPlainObject(
+        overrides[field],
+        `Employer set ${field} overrides`
+      );
+    }
+  }
+  const commonOverrides = clone(overrides);
+  const organizationOverrides = commonOverrides.organization || {};
+  const contactOverrides = commonOverrides.contact || {};
+  delete commonOverrides.id;
+  delete commonOverrides.employerNumber;
+  delete commonOverrides.ownerUserId;
+  delete commonOverrides.organization;
+  delete commonOverrides.contact;
   return Array.from({ length: count }, (_, index) => {
     const sequence = String(index + 1).padStart(4, '0');
-    const employer = createEmployer({
-      ...clone(overrides),
+    const organization = {
+      name: `Example Test Employer ${index + 1}`,
+      slug: `example-test-employer-${sequence}`,
+      legalName: `Example Test Employer ${index + 1} Limited`,
+      employerType: EMPLOYER_TYPES.HEALTHCARE_PROVIDER,
+      description: 'Synthetic employer profile for automated testing.',
+      website: null,
+      industry: 'healthcare',
+      companySize: '11-50',
+      yearEstablished: null,
+      ...clone(organizationOverrides),
+    };
+    if (organizationOverrides.name === undefined) {
+      organization.name = `Example Test Employer ${index + 1}`;
+    }
+    if (organizationOverrides.slug === undefined) {
+      organization.slug = `example-test-employer-${sequence}`;
+    }
+    const contact = {
+      contactName: `Test Employer Contact ${index + 1}`,
+      email: `employer${index + 1}@example.test`,
+      phone: `+91000000${String(index + 101).padStart(4, '0')}`,
+      jobTitle: 'Recruitment Manager',
+      ...clone(contactOverrides),
+    };
+    if (contactOverrides.email === undefined) {
+      contact.email = `employer${index + 1}@example.test`;
+    }
+    return createEmployer({
+      ...commonOverrides,
       id: `employer_test_${sequence}`,
       employerNumber: `MO-EMP-TEST-${sequence}`,
       ownerUserId: `user_test_employer_${sequence}`,
-      organization: {
-        name: `Example Test Employer ${index + 1}`,
-        slug: `example-test-employer-${sequence}`,
-        legalName: `Example Test Employer ${index + 1} Limited`,
-        ...clone(overrides.organization || {}),
-      },
-      contact: {
-        contactName: `Test Employer Contact ${index + 1}`,
-        email: `employer${index + 1}@example.test`,
-        phone: `+91000000${String(index + 101).padStart(4, '0')}`,
-        jobTitle: 'Recruitment Manager',
-        ...clone(overrides.contact || {}),
-      },
+      organization,
+      contact,
     });
-    // Keep generated identities unique when common overrides are supplied.
-    employer.id = `employer_test_${sequence}`;
-    employer.employerNumber = `MO-EMP-TEST-${sequence}`;
-    employer.ownerUserId = `user_test_employer_${sequence}`;
-    if (!overrides.organization || overrides.organization.name === undefined) {
-      employer.organization.name = `Example Test Employer ${index + 1}`;
-    }
-    if (!overrides.organization || overrides.organization.slug === undefined) {
-      employer.organization.slug = `example-test-employer-${sequence}`;
-    }
-    if (!overrides.contact || overrides.contact.email === undefined) {
-      employer.contact.email = `employer${index + 1}@example.test`;
-    }
-    return employer;
   });
 }
 /**
- * Creates an employer owned by a different synthetic user.
+ * Create an employer owned by another synthetic user.
  *
  * Useful for testing cross-tenant access restrictions and IDOR protections.
  *
- * @param {string} [ownerUserId]
- * @param {object} [overrides]
+ * @param {string} [ownerUserId='user_test_foreign_employer']
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createForeignEmployer(
@@ -304,37 +308,56 @@ function createForeignEmployer(
 ) {
   assertNonEmptyString(ownerUserId, 'Foreign employer owner ID');
   assertPlainObject(overrides, 'Foreign employer overrides');
+  const organization = {
+    name: 'Example Foreign Test Employer',
+    slug: 'example-foreign-test-employer',
+    legalName: 'Example Foreign Test Employer Limited',
+    employerType: EMPLOYER_TYPES.COMPANY,
+    description: 'Synthetic foreign employer for security tests.',
+    website: null,
+    industry: 'healthcare',
+    companySize: '1-10',
+    yearEstablished: null,
+    ...(overrides.organization === undefined
+      ? {}
+      : clone(assertObject(overrides.organization, 'Foreign organization overrides'))),
+  };
+  const contact = {
+    contactName: 'Foreign Test Contact',
+    email: 'foreign.employer@example.test',
+    phone: '+910000000199',
+    jobTitle: 'Recruitment Manager',
+    ...(overrides.contact === undefined
+      ? {}
+      : clone(assertObject(overrides.contact, 'Foreign contact overrides'))),
+  };
+  const remainingOverrides = { ...clone(overrides) };
+  delete remainingOverrides.organization;
+  delete remainingOverrides.contact;
   return createEmployer({
+    ...remainingOverrides,
     id: 'employer_test_foreign_0001',
     employerNumber: 'MO-EMP-TEST-FOREIGN-0001',
     ownerUserId,
-    organization: {
-      name: 'Example Foreign Test Employer',
-      slug: 'example-foreign-test-employer',
-      legalName: 'Example Foreign Test Employer Limited',
-      employerType: EMPLOYER_TYPES.COMPANY,
-      description: 'Synthetic foreign employer for security tests.',
-      website: null,
-      industry: 'healthcare',
-      companySize: '1-10',
-      yearEstablished: null,
-    },
-    contact: {
-      contactName: 'Foreign Test Contact',
-      email: 'foreign.employer@example.test',
-      phone: '+910000000199',
-      jobTitle: 'Recruitment Manager',
-    },
-    ...clone(overrides),
-    ownerUserId,
+    organization,
+    contact,
   });
 }
 /**
- * Creates a deliberately hostile payload for mass-assignment tests.
+ * Validate a nested object.
  *
- * Tests should assert that unauthorized fields are rejected or ignored.
+ * @param {*} value
+ * @param {string} label
+ * @returns {object}
+ */
+function assertObject(value, label) {
+  assertPlainObject(value, label);
+  return value;
+}
+/**
+ * Create a deliberately hostile payload for mass-assignment tests.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createMassAssignmentPayload(overrides = {}) {
@@ -361,12 +384,12 @@ function createMassAssignmentPayload(overrides = {}) {
   };
 }
 /**
- * Creates an employer with a selected account status.
+ * Create an employer with a selected account status.
  *
- * This factory does not validate permitted status transitions.
+ * This helper does not validate permitted status transitions.
  *
  * @param {string} status
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEmployerWithStatus(status, overrides = {}) {
@@ -375,22 +398,30 @@ function createEmployerWithStatus(status, overrides = {}) {
   }
   assertPlainObject(overrides, 'Employer status overrides');
   return createEmployer({
-    status,
     ...clone(overrides),
+    status,
   });
 }
 /**
- * Creates a synthetic employer with active status and verified metadata.
+ * Create synthetic verified-employer metadata.
  *
- * This fixture represents a test state only; it is not evidence of real
- * employer verification.
+ * This is a test state, not evidence of real-world verification.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createVerifiedEmployer(overrides = {}) {
   assertPlainObject(overrides, 'Verified employer overrides');
+  const verificationOverrides = overrides.verification === undefined
+    ? {}
+    : assertObject(
+        overrides.verification,
+        'Verified employer verification overrides'
+      );
+  const remainingOverrides = { ...clone(overrides) };
+  delete remainingOverrides.verification;
   return createEmployer({
+    ...remainingOverrides,
     status: EMPLOYER_STATUSES.ACTIVE,
     isPublished: true,
     verification: {
@@ -399,41 +430,32 @@ function createVerifiedEmployer(overrides = {}) {
       verifiedAt: '2026-10-02T10:00:00.000Z',
       rejectionReason: null,
       documents: [],
-    },
-    ...clone(overrides),
-    verification: {
-      status: 'verified',
-      verifiedBy: 'user_test_reviewer',
-      verifiedAt: '2026-10-02T10:00:00.000Z',
-      rejectionReason: null,
-      documents: [],
-      ...(overrides.verification || {}),
+      ...clone(verificationOverrides),
     },
   });
 }
 /**
- * Creates a synthetic suspended employer.
+ * Create a synthetic suspended employer.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createSuspendedEmployer(overrides = {}) {
   assertPlainObject(overrides, 'Suspended employer overrides');
   return createEmployer({
+    ...clone(overrides),
     id: 'employer_test_suspended_0001',
     employerNumber: 'MO-EMP-TEST-SUSPENDED-0001',
     status: EMPLOYER_STATUSES.SUSPENDED,
     isPublished: false,
-    ...clone(overrides),
   });
 }
 /**
- * Creates synthetic employer membership metadata.
+ * Create synthetic employer membership metadata.
  *
- * This is test data only. The application must enforce membership and
- * role assignments using trusted server-side records.
+ * This fixture does not establish actual membership or permissions.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEmployerMembership(overrides = {}) {
@@ -450,14 +472,14 @@ function createEmployerMembership(overrides = {}) {
   };
 }
 /**
- * Creates synthetic employer verification metadata.
+ * Create synthetic employer verification metadata.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createEmployerVerification(overrides = {}) {
   assertPlainObject(overrides, 'Employer verification overrides');
-  return {
+  const verification = {
     status: 'pending',
     verifiedBy: null,
     verifiedAt: null,
@@ -465,6 +487,11 @@ function createEmployerVerification(overrides = {}) {
     documents: [],
     ...clone(overrides),
   };
+  verification.documents = cloneArray(
+    verification.documents,
+    'Employer verification documents'
+  );
+  return verification;
 }
 module.exports = {
   EMPLOYER_STATUSES,

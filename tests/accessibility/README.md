@@ -1,20 +1,29 @@
-# MedOrbits Accessibility Tests
-## 1. Purpose
-The `tests/accessibility/` directory contains automated tests for the accessibility of the MedOrbits platform.
+MedOrbits Accessibility Tests
+
+1. Purpose
+
+The tests/accessibility/ directory contains automated tests for the accessibility of the MedOrbits platform.
+
 The objective is to identify accessibility barriers affecting users with disabilities, including users who rely on screen readers, keyboard navigation, magnification, or assistive technologies.
+
 The test suite focuses on:
-- WCAG 2.2 Level AA requirements.
-- Semantic HTML and accessible names.
-- Keyboard accessibility and focus management.
-- Form labels, instructions, and validation feedback.
-- Color contrast and non-color visual indicators.
-- Navigation landmarks and heading hierarchy.
-- Screen-reader compatibility.
-- Homepage accessibility and primary user journeys.
-- Responsive layouts and accessible interactive components.
-Automated tests help identify common accessibility defects. They do not replace manual testing with assistive technologies or a complete WCAG conformance evaluation.
-## 2. Directory structure
-```text
+
+* WCAG 2.2 Level AA requirements.
+* Semantic HTML and accessible names.
+* Keyboard accessibility and focus management.
+* Form labels, instructions, and validation feedback.
+* Color contrast and non-color visual indicators.
+* Navigation landmarks and heading hierarchy.
+* Screen-reader compatibility.
+* Homepage accessibility and primary user journeys.
+* Responsive layouts and accessible interactive components.
+
+Automated tests help identify common accessibility defects. They do not replace manual assistive-technology testing or a complete WCAG conformance evaluation.
+
+2. Directory structure
+
+Expected test files:
+
 tests/
 └── accessibility/
     ├── README.md
@@ -27,6 +36,8 @@ tests/
 
 Keep this inventory synchronized with the actual repository.
 
+The current test implementations use Node.js’s built-in test runner (node:test). Some files optionally use Playwright and axe-core for browser-based checks.
+
 3. Test responsibilities
 
 File	Responsibility
@@ -37,7 +48,7 @@ keyboard-navigation.test.js	Keyboard access, focus visibility, logical focus ord
 navigation.accessibility.test.js	Navigation landmarks, menus, accessible names, and current-page indicators
 screen-reader.test.js	Semantic structure, accessible names, ARIA usage, and announcements
 
-These files define testing responsibilities; actual coverage depends on their implemented assertions and the pages they inspect.
+These files define testing responsibilities; actual coverage depends on their implemented assertions, configured fixtures, and the pages they inspect.
 
 4. Accessibility standards
 
@@ -60,71 +71,77 @@ Important requirements include:
 
 Relevant references:
 
-* WCAG 2.2: https://www.w3.org/TR/WCAG22/
-* WAI-ARIA 1.2: https://www.w3.org/TR/wai-aria-1.2/
-* ARIA Authoring Practices Guide: https://www.w3.org/WAI/ARIA/apg/
-* WAI Forms Tutorial: https://www.w3.org/WAI/tutorials/forms/
-* WAI Images Tutorial: https://www.w3.org/WAI/tutorials/images/
+* WCAG 2.2
+* WAI-ARIA 1.2
+* ARIA Authoring Practices Guide
+* WAI Forms Tutorial
+* WAI Images Tutorial
 
 5. Dependencies and tooling
 
-Use the accessibility tools already established in the project’s package configuration.
+Use the accessibility tools already established in the project’s package.json and lockfile.
 
-Common options include:
+The current test files use:
 
-* Jest for test execution.
-* jest-axe and axe-core for automated accessibility rules.
-* Testing Library for semantic DOM queries and accessible interactions.
-* @testing-library/user-event for keyboard and user interaction simulation.
-* Playwright or another browser automation framework for browser-level accessibility testing.
+* Node.js built-in node:test and node:assert/strict for test execution.
+* Playwright for optional browser automation.
+* @axe-core/playwright for optional automated browser accessibility audits.
 
-Do not add or replace dependencies without checking the existing package.json and test configuration.
+Do not add or replace dependencies without checking the existing package configuration.
 
-Example installation, if the project uses Jest and Testing Library but does not yet have these accessibility dependencies:
+Install browser dependencies if they are not already available:
 
-npm install —save-dev jest-axe axe-core
+npm install —save-dev playwright @axe-core/playwright
+npx playwright install chromium
 
-Browser-based testing may require additional packages and browser installation.
+These commands are optional when running static tests only. Check the existing dependency configuration before installing anything.
+
+The Jest and Testing Library example below is illustrative only. The current Node.js test files cannot be run directly using Jest without adapting their test framework and imports.
 
 6. Running accessibility tests
 
-Run the entire accessibility suite:
+Run the complete accessibility suite with the built-in Node.js test runner:
 
-npx jest tests/accessibility —runInBand
+node —test tests/accessibility/*.test.js
 
 Run an individual test file:
 
-npx jest tests/accessibility/color-contrast.test.js —runInBand
+node —test tests/accessibility/color-contrast.test.js
 
 Run form accessibility tests:
 
-npx jest tests/accessibility/forms.accessibility.test.js —runInBand
+node —test tests/accessibility/forms.accessibility.test.js
 
 Run homepage accessibility tests:
 
-npx jest tests/accessibility/homepage.accessibility.test.js —runInBand
+node —test tests/accessibility/homepage.accessibility.test.js
 
 Run keyboard navigation tests:
 
-npx jest tests/accessibility/keyboard-navigation.test.js —runInBand
+node —test tests/accessibility/keyboard-navigation.test.js
 
 Run navigation accessibility tests:
 
-npx jest tests/accessibility/navigation.accessibility.test.js —runInBand
+node —test tests/accessibility/navigation.accessibility.test.js
 
 Run screen-reader-oriented tests:
 
-npx jest tests/accessibility/screen-reader.test.js —runInBand
+node —test tests/accessibility/screen-reader.test.js
 
-Run with coverage:
+For browser tests, start the application in a dedicated test environment and configure its base URL and routes. For example, on a POSIX-compatible shell:
 
-npx jest tests/accessibility —coverage —runInBand
+ACCESSIBILITY_BASE_URL=http://127.0.0.1:3000 \
+ACCESSIBILITY_ROUTES=/,/about,/courses,/contact \
+ACCESSIBILITY_REQUIRE_BROWSER=true \
+node —test tests/accessibility/*.test.js
 
 Use the repository’s existing npm scripts if they provide equivalent commands.
 
+Coverage reporting is not provided automatically by node:test through the commands above. Use the project’s configured coverage tool if one exists.
+
 7. Automated accessibility assertions
 
-Where the project uses jest-axe, a typical test may look like this:
+If MedOrbits uses Jest and Testing Library for a particular component, a typical jest-axe test may look like this:
 
 ‘use strict’;
 const { render } = require(‘@testing-library/react’);
@@ -135,13 +152,15 @@ test(‘renders without detectable accessibility violations’, async () => {
     <main>
       <h1>MedOrbits</h1>
       <p>Education and admissions guidance.</p>
-    </main>
+    </main>,
   );
   const results = await axe(container);
   expect(results).toHaveNoViolations();
 });
 
-This is an illustrative React example. Adapt it to the actual MedOrbits architecture, whether the application uses React, server-rendered HTML, or static pages.
+This is an illustrative React/Jest example, not a command that can be assumed to work with the current Node.js test files.
+
+Adapt testing to the actual MedOrbits architecture, whether the application uses server-rendered HTML, static pages, or React components.
 
 Automated checks should be supplemented with explicit assertions for important application behavior.
 

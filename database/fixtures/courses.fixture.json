@@ -1,5 +1,7 @@
+
 {
-  "description": "Synthetic MedOrbits course fixtures for local development and automated tests. These are not official course listings or admission requirements.",
+  "$schema": "../../schemas/course-fixture.schema.json",
+  "description": "Synthetic MedOrbits course fixtures for local development and automated tests only. These are not official course listings or admission requirements and must not be presented as verified information.",
   "courses": [
     {
       "id": "COURSE-TEST-MBBS-001",
@@ -17,7 +19,9 @@
       "status": "active",
       "metadata": {
         "source": "fixture",
-        "testCase": "active_medical_course"
+        "testCase": "active_medical_course",
+        "synthetic": true,
+        "verified": false
       }
     },
     {
@@ -36,7 +40,9 @@
       "status": "active",
       "metadata": {
         "source": "fixture",
-        "testCase": "active_dental_course"
+        "testCase": "active_dental_course",
+        "synthetic": true,
+        "verified": false
       }
     },
     {
@@ -55,7 +61,9 @@
       "status": "active",
       "metadata": {
         "source": "fixture",
-        "testCase": "active_pharmacy_course"
+        "testCase": "active_pharmacy_course",
+        "synthetic": true,
+        "verified": false
       }
     },
     {
@@ -74,7 +82,9 @@
       "status": "active",
       "metadata": {
         "source": "fixture",
-        "testCase": "active_ayush_course"
+        "testCase": "active_ayush_course",
+        "synthetic": true,
+        "verified": false
       }
     },
     {
@@ -93,8 +103,166 @@
       "status": "inactive",
       "metadata": {
         "source": "fixture",
-        "testCase": "inactive_course"
+        "testCase": "inactive_course",
+        "synthetic": true,
+        "verified": false
       }
     }
   ]
+}
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MedOrbits Course Fixture",
+  "description": "Validates synthetic MedOrbits course fixtures for development and automated testing. These records are not official or verified course listings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "courses"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "courses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/course"
+      }
+    }
+  },
+  "$defs": {
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slug",
+        "code",
+        "name",
+        "shortName",
+        "category",
+        "qualificationLevel",
+        "durationMonths",
+        "durationYears",
+        "institutionType",
+        "entranceExam",
+        "counsellingRequired",
+        "status",
+        "metadata"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^COURSE-TEST-[A-Z0-9-]+$"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shortName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "qualificationLevel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "durationMonths": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "durationYears": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "institutionType": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "medical",
+            "dental",
+            "pharmacy",
+            "ayush",
+            "nursing",
+            "paramedical",
+            "other",
+            null
+          ]
+        },
+        "entranceExam": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "counsellingRequired": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "inactive",
+            "draft",
+            "archived"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "testCase",
+        "synthetic",
+        "verified"
+      ],
+      "properties": {
+        "source": {
+          "const": "fixture"
+        },
+        "testCase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "synthetic": {
+          "const": true
+        },
+        "verified": {
+          "const": false
+        }
+      }
+    }
+  }
 }

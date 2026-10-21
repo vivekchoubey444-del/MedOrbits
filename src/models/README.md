@@ -1,160 +1,313 @@
-  MedOrbits Database Models
 
-Directory: src/models/
+# MedOrbits Database Models
 
-1. Purpose
+**Directory:** `src/models/`
 
-The models directory defines the database entity metadata and field allowlists used by MedOrbits repositories.
+**Runtime:** Node.js >= 20  
+**Module system:** CommonJS  
+**Database:** MySQL 8+
 
-These model definitions use plain CommonJS modules rather than an ORM. They provide a consistent reference for permitted table names, column names, primary keys, and database field conventions.
+## 1. Purpose
 
-Models describe the intended database structure; they do not independently create tables, enforce application authorization, or guarantee that the production schema matches the definitions.
+The models directory defines trusted database entity metadata and field allowlists used by the MedOrbits repository layer.
 
-2. Database Standards
+MedOrbits uses plain CommonJS model-definition modules rather than requiring an ORM. These modules identify database tables, permitted columns, searchable fields, and default ordering. Where necessary, they also document field restrictions, validation limits, status values, and sensitive-data policies.
 
-Setting	Convention
-Database engine	MySQL 8+
-Character set	utf8mb4
-Primary keys	Auto-incrementing integer IDs
-Creation timestamp	created_at
-Update timestamp	updated_at
-JSON payload columns	Names ending in _json
-Module format	CommonJS
+Model definitions describe the intended database contract. They do not independently create tables, validate incoming requests, enforce authorization, or guarantee that the deployed MySQL schema matches the application.
 
-Repository implementations must follow the actual database schema. If an existing table uses a different primary key, timestamp convention, or column type, document and handle that difference explicitly rather than assuming every entity follows the defaults.
+## 2. Directory Structure
 
-3. Model Responsibilities
+The following is the intended model inventory. Confirm each file exists and matches its repository and database migration.
 
-Model definitions should specify the fields and identifiers permitted for repository operations.
+```text
+src/models/
+├── user.model.js
+├── session.model.js
+├── role.model.js
+├── course.model.js
+├── college.model.js
+├── university.model.js
+├── application.model.js
+├── admission.model.js
+├── document.model.js
+├── candidate.model.js
+├── employer.model.js
+├── job.model.js
+├── internship.model.js
+├── notification.model.js
+├── payment.model.js
+└── subscription.model.js
+```
 
-Depending on the project’s existing model contract, definitions may include:
+## 3. Database Standards
 
-* Trusted database table names.
-* Primary key columns.
-* Permitted database columns.
-* Insertable and updateable field allowlists.
-* Field metadata required by repository operations.
-* JSON column conventions.
-* Timestamp and database type information, where supported.
+| Setting | Convention |
+|—|—|
+| Database engine | MySQL 8+ |
+| Character set | `utf8mb4` |
+| Module format | CommonJS |
+| Primary keys | Auto-incrementing integer IDs, where appropriate |
+| Creation timestamp | `created_at` |
+| Update timestamp | `updated_at` |
+| JSON column naming | Suffix `_json` |
+| Query interface | Parameterized SQL through the database layer |
 
-Keep table and column identifiers under server-side control. Never construct SQL identifiers directly from request parameters.
+These are project conventions, not universal assumptions. Existing tables may use different primary keys, data types, or timestamp behavior. Follow the verified schema for each entity.
 
-4. Repository Integration
+## 4. Model Responsibilities
+
+A model definition may specify:
+
+- `TABLE`: the trusted database table name.
+- `COLUMNS`: the permitted column identifiers.
+- `SEARCHABLE`: the columns permitted in repository search.
+- `DEFAULT_ORDER`: the default sorting column.
+- `STATUSES`: application-level status values, where relevant.
+- `IMMUTABLE_FIELDS`: fields that should not be changed through ordinary update operations.
+- `SENSITIVE_FIELDS`: fields requiring restricted access.
+- `SERVER_MANAGED_FIELDS`: fields that should be changed only by trusted application workflows.
+- `VALIDATION_LIMITS`: documented constraints for service-layer validation.
+
+Optional constants are useful only when the application actually consumes or tests them. They must remain consistent with service logic and database constraints.
+
+## 5. Standard Model Contract
+
+The standard repository factory currently expects `TABLE`, `COLUMNS`, `SEARCHABLE`, and `DEFAULT_ORDER`.
+
+Example: `src/models/user.model.js`
+
+```javascript
+‘use strict’;
+
+const TABLE = ‘users’;
+
+const COLUMNS = Object.freeze([
+  ‘id’,
+  ‘name’,
+  ‘email’,
+  ‘password_hash’,
+  ‘phone’,
+  ‘status’,
+  ‘email_verified_at’,
+  ‘created_at’,
+  ‘updated_at’,
+]);
+
+const SEARCHABLE = Object.freeze([
+  ‘name’,
+  ‘email’,
+  ‘phone’,
+]);
+
+const DEFAULT_ORDER = ‘id’;
+
+module.exports = Object.freeze({
+  TABLE,
+  COLUMNS,
+  SEARCHABLE,
+  DEFAULT_ORDER,
+});
+```
+
+Preserve this export contract unless `base.repository.js` and all dependent repositories are deliberately updated together.
+
+`Object.freeze()` prevents accidental modification of the exported arrays and objects at runtime, but it does not validate the database schema or enforce access permissions.
+
+## 6. Repository Integration
 
 The intended data-access flow is:
 
-Controller → Service → Repository → Model allowlist → MySQL
+```text
+Controller
+    |
+    v
+Service
+    |
+    v
+Repository
+    |
+    v
+Model allowlists
+    |
+    v
+MySQL
+```
 
-Repositories use model definitions to determine which database identifiers are valid for an operation. Services apply business rules, while controllers and services enforce the relevant authorization requirements.
+Repositories should consume trusted model definitions instead of accepting table names, column names, or SQL fragments from requests.
 
-The generic CRUD repository must not permit callers to bypass model allowlists by supplying arbitrary table names, column names, sort expressions, or SQL fragments.
+For example:
 
-Example CommonJS convention:
+```javascript
+‘use strict’;
 
-const userModel = require(‘../models/user.model’);
-// Use only if these exports exist in the actual model contract.
-const tableName = userModel.tableName;
-const allowedColumns = userModel.allowedColumns;
+const { createRepository } = require(‘./base.repository’);
+const model = require(‘../models/user.model’);
 
-This is an illustrative integration pattern, not a guarantee that the current model files export these exact properties. Preserve the established export shape when implementing or modifying individual models.
+module.exports = createRepository({
+  table: model.TABLE,
+  columns: model.COLUMNS,
+  searchable: model.SEARCHABLE,
+  defaultOrder: model.DEFAULT_ORDER,
+});
+```
 
-5. JSON Column Handling
+The generic repository must validate identifiers and bind values using parameterized queries. Sort directions must be restricted to supported values, and sorting must use an explicit column allowlist.
 
-JSON payload columns use names ending in _json.
+**Important:** A column being present in `COLUMNS` means the generic repository may accept it; it does not mean every caller should be allowed to read or modify it.
 
-Unless the database driver and repository explicitly support another approach, pass serialized JSON strings when writing JSON payloads.
+## 7. Insert and Update Field Policies
 
-Example:
+A production repository should distinguish between:
+
+- Columns that may be read.
+- Columns that may be inserted.
+- Columns that may be updated.
+- Columns that require privileged service operations.
+- Columns that must never be exposed through public responses.
+
+These policies should be enforced by the repository or the relevant service, not merely documented in model constants.
+
+Examples:
+
+| Field | Required policy |
+|—|—|
+| `id` | Generated or managed by the database |
+| `password_hash` | Written only through trusted authentication workflows |
+| `token_hash` | Restricted to authentication services |
+| `storage_key` | Restricted to document-storage workflows |
+| `status` | Updated through validated state transitions |
+| `permissions_json` | Restricted to privileged role-management operations |
+| `amount_minor` | Set from trusted billing data |
+| `verified_at` | Set only after successful server-side verification |
+
+Do not expose unrestricted generic create, update, or delete operations directly to public API callers.
+
+## 8. JSON Column Handling
+
+JSON fields use the `_json` suffix as a naming convention. Examples include `form_data_json`, `skills_json`, `metadata_json`, and `permissions_json`.
+
+The database driver and actual column type determine how values should be written and read. Do not assume every JSON column requires manual serialization.
+
+Example when the repository contract expects a serialized string:
+
+```javascript
+‘use strict’;
 
 const preferences = {
   language: ‘en’,
   notifications: true,
 };
+
 const preferencesJson = JSON.stringify(preferences);
+```
 
-When reading JSON data, handle parsing errors and unexpected database values safely. Validate the structure of incoming JSON before persistence, and do not assume that syntactically valid JSON is valid application data.
+Before persistence:
 
-Where supported by the actual schema and driver, native MySQL JSON columns may be preferable to unvalidated text storage.
+- Validate the input against an explicit schema.
+- Reject unsupported fields and unexpected structures.
+- Apply size and nesting limits where appropriate.
+- Avoid storing passwords, authentication tokens, or unnecessary sensitive data.
+- Handle malformed JSON and unexpected database values safely.
 
-6. Sensitive Fields and Data Exposure
+For MySQL `JSON` columns, confirm the behavior of the installed driver and binding configuration before choosing whether to pass an object or a serialized string.
 
-Model allowlists are not public API response schemas. A field being available to a repository does not mean it is safe to return to a client.
+## 9. Sensitive Data and API Responses
 
-Never expose the following through public APIs or ordinary serialized model responses:
+Model allowlists are not public response schemas. Sensitive fields must not be exposed merely because they are included in a model.
 
-* password_hash
-* Access-token hashes, refresh-token hashes, or other authentication secrets.
-* Private document contents, private storage keys, or internal file paths.
-* Payment provider secrets or sensitive provider metadata.
-* Session secrets and other confidential authentication data.
+Examples include:
 
-Use explicit response serializers or DTOs that return only the fields required by the caller. Apply field-level authorization where sensitive information is conditionally accessible.
+- `password_hash`
+- Session and access-token hashes
+- Private document storage keys
+- Internal file paths
+- Payment credentials or confidential provider metadata
+- Private application data
+- Internal authorization metadata
 
-Do not rely on removing sensitive fields only in the frontend.
+Use explicit response serializers or DTOs to return only the fields required for a specific endpoint. Apply field-level authorization when access depends on the caller’s role or relationship to the resource.
 
-7. Schema Integrity
+Never rely on frontend filtering to protect confidential fields.
 
-Model definitions must remain consistent with the actual MySQL schema.
+## 10. Status and Workflow Consistency
 
-Review and document:
+When models define status constants, those constants must agree with the relevant service and database schema.
 
-* Column names and data types.
-* Nullability and default values.
-* Primary and foreign keys.
-* Unique constraints.
-* Indexes for frequently queried fields.
-* Timestamp behavior.
-* JSON column types and serialization requirements.
-* Referential integrity and deletion behavior.
+Examples include:
 
-Add foreign keys and indexes based on verified relationships and query patterns. For high-volume tables, review query plans and index selectivity rather than adding indexes indiscriminately.
+- User account status.
+- College and university publication status.
+- Application review status.
+- Document approval status.
+- Job and internship publication status.
+- Employer verification status.
+- Payment status.
+- Subscription lifecycle status.
 
-8. Migrations and Deployment
+Do not automatically share status lists between unrelated entities. A `verified` employer and a `published` job represent different business states and require different transition rules.
 
-Use version-controlled database migrations to create and modify production schemas.
+Status changes should be validated in services and protected against concurrent updates where necessary. Database constraints should reinforce critical invariants.
 
-Do not blindly execute a development schema file against a production database.
+## 11. Schema Integrity and Migrations
 
-A production migration process should include:
+Model definitions must remain consistent with the deployed MySQL schema.
 
-1. Review the proposed schema change.
-2. Test the migration against a representative database.
-3. Back up critical data and verify the recovery procedure.
-4. Apply changes through a controlled deployment process.
-5. Verify schema compatibility with the deployed application.
-6. Define rollback or forward-recovery procedures.
-7. Monitor database errors after deployment.
+Verify:
 
-Avoid destructive schema changes until dependent code and data migration requirements have been reviewed.
+- Column names and data types.
+- Nullability and default values.
+- Primary and foreign keys.
+- Unique constraints.
+- Indexes for frequently queried fields.
+- Timestamp defaults and update behavior.
+- JSON column types.
+- Referential integrity and deletion behavior.
+- Monetary precision and currency conventions.
+- Status constraints and migration compatibility.
 
-9. Testing Requirements
+Use version-controlled migrations for schema changes. Do not blindly apply development schema files to production databases.
+
+A controlled deployment should review and test migrations, verify backups and recovery procedures, apply changes through a defined process, and check application compatibility after deployment.
+
+## 12. Testing Requirements
 
 Model and repository tests should cover:
 
-* Valid and invalid table and column identifiers.
-* Insert and update field allowlists.
-* Attempts to inject SQL through identifiers or values.
-* JSON serialization and parsing behavior.
-* Missing and nullable fields.
-* Primary-key and unique-constraint behavior.
-* Foreign-key relationships and deletion rules.
-* Compatibility between model definitions and migrations.
-* Exclusion of sensitive fields from public response serializers.
+- Valid and invalid table and column identifiers.
+- Searchable-column allowlists.
+- Insertable and updateable field restrictions.
+- SQL injection attempts through values and identifiers.
+- JSON serialization and schema validation.
+- Missing and nullable fields.
+- Primary-key and unique-constraint behavior.
+- Foreign-key relationships and deletion rules.
+- Sensitive-field exclusion from public serializers.
+- Consistency between models and migrations.
+- Repository compatibility with the actual MySQL schema.
 
-Integration tests should use a controlled MySQL environment to verify actual schema and query behavior.
+Use unit tests for isolated logic and integration tests against a controlled MySQL environment for real query, constraint, and transaction behavior.
 
-10. Production Readiness Checklist
+Mock-only tests cannot prove compatibility with the deployed schema.
 
-* [ ]	Model definitions match the approved database schema.
-* [ ]	Table and column identifiers use trusted allowlists.
-* [ ]	Insertable and updateable fields are explicitly restricted.
-* [ ]	JSON fields follow documented serialization rules.
-* [ ]	Foreign keys, unique constraints, and indexes are reviewed.
-* [ ]	Database migrations are version-controlled and tested.
-* [ ]	Sensitive fields are excluded from public API responses.
-* [ ]	Repositories use parameterized queries.
-* [ ]	Services and controllers enforce resource-level authorization.
-* [ ]	Integration tests verify model, repository, and schema compatibility.
-* [ ]	Backup, recovery, and deployment procedures are documented.
+## 13. Production Readiness Checklist
 
-Important: Model definitions describe permitted database access; they are not a substitute for migrations, database constraints, repository validation, authorization policies, or API response filtering.
+- [ ] Model definitions match the approved MySQL schema.
+- [ ] The established CommonJS export contract is preserved.
+- [ ] Table and column identifiers use trusted allowlists.
+- [ ] Read, insert, and update permissions are appropriately separated.
+- [ ] Sensitive fields are excluded from public API responses.
+- [ ] JSON fields follow documented driver and serialization behavior.
+- [ ] Foreign keys, unique constraints, and indexes are reviewed.
+- [ ] Database migrations are version-controlled and tested.
+- [ ] Services enforce ownership and workflow authorization.
+- [ ] Concurrent state transitions are handled safely.
+- [ ] Unit and integration tests cover critical database behavior.
+- [ ] Backup, recovery, and deployment procedures are documented.
+
+## 14. Implementation Status
+
+This document describes the intended model architecture. It does not certify that every model file, database table, migration, repository operation, validation rule, or test is implemented or verified.
+
+Before production deployment, verify the actual source files, repository contracts, MySQL schema, migration history, service integrations, and automated test results.
+
+**MedOrbits — Study · Work · Grow**

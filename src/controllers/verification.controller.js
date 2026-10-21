@@ -10,68 +10,144 @@ const {
 const validator = require('../validators/verification.validator');
 const { unavailable } = require('./controller.helpers');
 
-const controller = {};
+const verificationService = require('../services/verification.service');
+
+const controller = Object.create(null);
+
+function requireServiceMethod(name) {
+  if (
+    !verificationService ||
+    typeof verificationService[name] !== 'function'
+  ) {
+    unavailable(`Verification service operation "${name}"`);
+  }
+
+  return verificationService[name].bind(verificationService);
+}
+
+function requireAuthenticatedUser(req) {
+  if (!req.user) {
+    throw httpError(
+      401,
+      'UNAUTHENTICATED',
+      'Authentication is required.'
+    );
+  }
+
+  const userId = req.user.id ?? req.user.userId;
+
+  if (
+    (typeof userId !== 'string' && typeof userId !== 'number') ||
+    String(userId).trim() === ''
+  ) {
+    throw httpError(
+      401,
+      'UNAUTHENTICATED',
+      'Authentication is required.'
+    );
+  }
+
+  return userId;
+}
+
+async function validateRequest(methodName, body, errorCode, label) {
+  if (!validator || typeof validator[methodName] !== 'function') {
+    unavailable(`${label} validation`);
+  }
+
+  const result = await validator[methodName](body);
+
+  if (!result || result.error) {
+    throw httpError(
+      400,
+      errorCode,
+      result?.error?.message || `The ${label} is invalid.`
+    );
+  }
+
+  // Support validators that return { value } while retaining compatibility
+  // with validators that return the validated data directly.
+  return result.value !== undefined ? result.value : result;
+}
 
 /**
  * POST /verification/request
  *
- * Validates and initiates a verification request.
- * The verification service must generate, store and deliver
- * the verification code using the configured channel.
+ * Expected service contract:
+ *   verificationService.request(validatedData, { userId, request })
+ *
+ * The service must generate a cryptographically secure code, store only
+ * a protected representation, deliver it through the configured provider,
+ * expire it, rate-limit requests, and prevent account enumeration.
  */
 controller.request = asyncHandler(async (req, res) => {
-  if (!validator || typeof validator.validateRequest !== 'function') {
-    unavailable('Verification request validation');
-  }
+  const userId = requireAuthenticatedUser(req);
 
-  const validation = await validator.validateRequest(req.body);
+  const data = await validateRequest(
+    'validateRequest',
+    req.body,
+    'INVALID_VERIFICATION_REQUEST',
+    'verification request'
+  );
 
-  if (!validation || validation.error) {
-    throw httpError(
-      400,
-      'INVALID_VERIFICATION_REQUEST',
-      validation?.error?.message ||
-        'The verification request is invalid.'
-    );
-  }
+  const requestVerification = requireServiceMethod('request');
 
-  // Connect this controller to your verification service.
-  unavailable('Verification request service');
+  await requestVerification(data, {
+    userId,
+    request: req,
+  });
 
-  return sendSuccess(res, {
-    message: 'Verification request accepted.',
-  }, 202);
+  return sendSuccess(
+    res,
+    {
+      message: 'If the details are eligible, verification instructions will be sent.',
+    },
+    202
+  );
 });
 
 /**
  * POST /verification/confirm
  *
- * Validates and confirms a verification code.
- * The verification service must check expiry, attempts,
- * ownership and one-time use before marking the target verified.
+ * Expected service contract:
+ *   verificationService.confirm(validatedData, { userId, request })
+ *
+ * The service must enforce expiry, attempt limits, ownership, one-time use,
+ * and atomic state transitions before marking a target as verified.
  */
 controller.confirm = asyncHandler(async (req, res) => {
-  if (!validator || typeof validator.validateConfirm !== 'function') {
-    unavailable('Verification confirmation validation');
-  }
+  const userId = requireAuthenticatedUser(req);
 
-  const validation = await validator.validateConfirm(req.body);
+  const data = await validateRequest(
+    'validateConfirm',
+    req.body,
+    'INVALID_VERIFICATION_CONFIRMATION',
+    'verification confirmation'
+  );
 
-  if (!validation || validation.error) {
+  const confirmVerification = requireServiceMethod('confirm');
+
+  const result = await confirmVerification(data, {
+    userId,
+    request: req,
+  });
+
+  if (!result || result.verified !== true) {
     throw httpError(
       400,
-      'INVALID_VERIFICATION_CONFIRMATION',
-      validation?.error?.message ||
-        'The verification confirmation is invalid.'
+      'VERIFICATION_FAILED',
+      'The verification code is invalid or expired.'
     );
   }
 
-  // Connect this controller to your verification service.
-  unavailable('Verification confirmation service');
-
-  return sendSuccess(res, {
-    message: 'Verification confirmed.',
-  });
+  return sendSuccess(
+    res,
+    {
+      verified: true,
+      message: 'Verification confirmed successfully.',
+    },
+    200
+  );
 });
 
 module.exports = controller;

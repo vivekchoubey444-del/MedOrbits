@@ -1,4 +1,3 @@
-
 'use strict';
 
 const ALLOWED_CREATE_FIELDS = Object.freeze([
@@ -59,40 +58,77 @@ const SUPPORTED_CURRENCIES = Object.freeze([
 
 const MAX_TRIAL_DAYS = 90;
 const MAX_METADATA_BYTES = 8192;
+const MAX_METADATA_DEPTH = 8;
+const MAX_METADATA_ARRAY_LENGTH = 100;
+const MAX_METADATA_STRING_LENGTH = 4096;
+const MAX_QUERY_PAGE = 1000000;
+const MAX_QUERY_LIMIT = 100;
 
-function validationError(message, field, code = 'VALIDATION_ERROR') {
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function validationError(
+  message,
+  field,
+  code = 'VALIDATION_ERROR'
+) {
   const error = new Error(message);
+
+  error.name = 'ValidationError';
   error.status = 400;
   error.statusCode = 400;
   error.code = code;
+  error.publicMessage = message;
 
-  if (field) error.field = field;
+  if (field) {
+    error.field = field;
+  }
 
   return error;
 }
 
+function isPlainObject(value) {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 function requireObject(input, label = 'Request body') {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
-    throw validationError(`${label} must be a JSON object.`);
+  if (!isPlainObject(input)) {
+    throw validationError(
+      `${label} must be a plain JSON object.`,
+      label === 'Query parameters' ? 'query' : 'body',
+      'INVALID_TYPE'
+    );
   }
 
   return input;
 }
 
 function rejectUnknownFields(input, allowedFields) {
+  requireObject(input);
+
+  if (!Array.isArray(allowedFields)) {
+    throw new TypeError('allowedFields must be an array.');
+  }
+
+  const allowed = new Set(allowedFields);
   const unknownFields = Object.keys(input).filter(
-    (field) => !allowedFields.includes(field)
+    (field) => !allowed.has(field)
   );
 
   if (unknownFields.length > 0) {
     throw validationError(
-      `Unsupported field(s): ${unknownFields.join(', ')}.`
+      `Unsupported field(s): ${unknownFields.join(', ')}.`,
+      undefined,
+      'UNKNOWN_FIELD'
     );
   }
+
+  return input;
 }
 
 function requireString(value, field, options = {}) {
@@ -103,15 +139,29 @@ function requireString(value, field, options = {}) {
   } = options;
 
   if (typeof value !== 'string') {
-    throw validationError(`${field} must be a string.`, field);
+    throw validationError(
+      `${field} must be a string.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(minLength) ||
+    !Number.isSafeInteger(maxLength) ||
+    minLength < 0 ||
+    maxLength < minLength
+  ) {
+    throw new TypeError('Invalid string length constraints.');
   }
 
   const result = trim ? value.trim() : value;
 
   if (result.length < minLength || result.length > maxLength) {
     throw validationError(
-      `${field} must contain ${minLength} to ${maxLength} characters.`,
-      field
+      `${field} must contain between ${minLength} and ${maxLength} characters.`,
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -119,15 +169,27 @@ function requireString(value, field, options = {}) {
 }
 
 function positiveId(value, field) {
-  const id =
-    typeof value === 'string' && /^\d+$/.test(value)
-      ? Number(value)
-      : value;
+  let id = value;
+
+  if (typeof value === 'string') {
+    const text = value.trim();
+
+    if (!/^[1-9]\d*$/.test(text)) {
+      throw validationError(
+        `${field} must be a positive integer.`,
+        field,
+        'INVALID_FORMAT'
+      );
+    }
+
+    id = Number(text);
+  }
 
   if (!Number.isSafeInteger(id) || id < 1) {
     throw validationError(
       `${field} must be a positive integer.`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -143,7 +205,8 @@ function validateEnum(value, field, allowedValues) {
   if (!allowedValues.includes(normalized)) {
     throw validationError(
       `${field} must be one of: ${allowedValues.join(', ')}.`,
-      field
+      field,
+      'INVALID_ENUM'
     );
   }
 
@@ -159,7 +222,8 @@ function validateCurrency(value) {
   if (!SUPPORTED_CURRENCIES.includes(currency)) {
     throw validationError(
       `currency must be one of: ${SUPPORTED_CURRENCIES.join(', ')}.`,
-      'currency'
+      'currency',
+      'INVALID_CURRENCY'
     );
   }
 
@@ -172,8 +236,12 @@ function validateDate(value, field) {
     maxLength: 10,
   });
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw validationError(`${field} must use YYYY-MM-DD format.`, field);
+  if (!DATE_ONLY_REGEX.test(date)) {
+    throw validationError(
+      `${field} must use YYYY-MM-DD format.`,
+      field,
+      'INVALID_DATE'
+    );
   }
 
   const parsed = new Date(`${date}T00:00:00.000Z`);
@@ -182,7 +250,11 @@ function validateDate(value, field) {
     Number.isNaN(parsed.getTime()) ||
     parsed.toISOString().slice(0, 10) !== date
   ) {
-    throw validationError(`${field} must be a valid date.`, field);
+    throw validationError(
+      `${field} must be a valid calendar date.`,
+      field,
+      'INVALID_DATE'
+    );
   }
 
   return date;
@@ -190,23 +262,123 @@ function validateDate(value, field) {
 
 function validateBoolean(value, field) {
   if (typeof value !== 'boolean') {
-    throw validationError(`${field} must be a boolean.`, field);
+    throw validationError(
+      `${field} must be a boolean.`,
+      field,
+      'INVALID_TYPE'
+    );
   }
 
   return value;
 }
 
 function validateMetadata(value) {
-  if (
-    value === null ||
-    typeof value !== 'object' ||
-    Array.isArray(value)
-  ) {
+  if (!isPlainObject(value)) {
     throw validationError(
-      'metadata must be a JSON object.',
-      'metadata'
+      'metadata must be a plain JSON object.',
+      'metadata',
+      'INVALID_TYPE'
     );
   }
+
+  const visited = new WeakSet();
+
+  function inspect(current, depth, path) {
+    if (depth > MAX_METADATA_DEPTH) {
+      throw validationError(
+        'metadata exceeds the maximum nesting depth.',
+        path,
+        'OUT_OF_RANGE'
+      );
+    }
+
+    if (
+      current === null ||
+      typeof current === 'boolean'
+    ) {
+      return;
+    }
+
+    if (typeof current === 'string') {
+      if (current.length > MAX_METADATA_STRING_LENGTH) {
+        throw validationError(
+          'metadata contains a string that is too long.',
+          path,
+          'OUT_OF_RANGE'
+        );
+      }
+
+      return;
+    }
+
+    if (typeof current === 'number') {
+      if (!Number.isFinite(current)) {
+        throw validationError(
+          'metadata must not contain non-finite numbers.',
+          path,
+          'INVALID_TYPE'
+        );
+      }
+
+      return;
+    }
+
+    if (typeof current !== 'object') {
+      throw validationError(
+        'metadata contains an unsupported value.',
+        path,
+        'INVALID_TYPE'
+      );
+    }
+
+    if (visited.has(current)) {
+      throw validationError(
+        'metadata must not contain circular references.',
+        path,
+        'INVALID_FORMAT'
+      );
+    }
+
+    if (Array.isArray(current)) {
+      if (current.length > MAX_METADATA_ARRAY_LENGTH) {
+        throw validationError(
+          `metadata arrays must not exceed ${MAX_METADATA_ARRAY_LENGTH} items.`,
+          path,
+          'OUT_OF_RANGE'
+        );
+      }
+    } else if (!isPlainObject(current)) {
+      throw validationError(
+        'metadata must contain only plain JSON objects.',
+        path,
+        'INVALID_TYPE'
+      );
+    }
+
+    visited.add(current);
+
+    if (Array.isArray(current)) {
+      for (let index = 0; index < current.length; index += 1) {
+        if (!Object.prototype.hasOwnProperty.call(current, index)) {
+          throw validationError(
+            'metadata must not contain sparse arrays.',
+            `${path}[${index}]`,
+            'INVALID_FORMAT'
+          );
+        }
+
+        inspect(current[index], depth + 1, `${path}[${index}]`);
+      }
+    } else {
+      for (const [key, child] of Object.entries(current)) {
+        inspect(child, depth + 1, `${path}.${key}`);
+      }
+    }
+
+    visited.delete(current);
+  }
+
+  inspect(value, 0, 'metadata');
 
   let serialized;
 
@@ -215,14 +387,16 @@ function validateMetadata(value) {
   } catch {
     throw validationError(
       'metadata must be JSON-serializable.',
-      'metadata'
+      'metadata',
+      'INVALID_FORMAT'
     );
   }
 
   if (Buffer.byteLength(serialized, 'utf8') > MAX_METADATA_BYTES) {
     throw validationError(
       `metadata must not exceed ${MAX_METADATA_BYTES} bytes.`,
-      'metadata'
+      'metadata',
+      'OUT_OF_RANGE'
     );
   }
 
@@ -234,21 +408,33 @@ function validateCreate(input) {
   rejectUnknownFields(body, ALLOWED_CREATE_FIELDS);
 
   if (body.plan_id === undefined) {
-    throw validationError('plan_id is required.', 'plan_id');
+    throw validationError(
+      'plan_id is required.',
+      'plan_id',
+      'REQUIRED_FIELD'
+    );
   }
 
   const result = {
     plan_id: positiveId(body.plan_id, 'plan_id'),
   };
 
-  // IDs supplied by clients must be authorized against the authenticated user.
-  // Prefer deriving user_id from req.user in the controller/service.
+  // Derive user identity from the authenticated session whenever possible.
+  // Never trust client-supplied IDs without authorization checks.
   if (body.user_id !== undefined) {
     result.user_id = positiveId(body.user_id, 'user_id');
   }
 
   if (body.employer_id !== undefined) {
     result.employer_id = positiveId(body.employer_id, 'employer_id');
+  }
+
+  if (body.user_id !== undefined && body.employer_id !== undefined) {
+    throw validationError(
+      'Provide user_id or employer_id, not both.',
+      'user_id',
+      'INVALID_SUBSCRIBER'
+    );
   }
 
   if (body.billing_cycle !== undefined) {
@@ -272,31 +458,31 @@ function validateCreate(input) {
   }
 
   if (
-    result.start_date &&
-    result.end_date &&
+    result.start_date !== undefined &&
+    result.end_date !== undefined &&
     result.end_date < result.start_date
   ) {
     throw validationError(
       'end_date must be on or after start_date.',
-      'end_date'
+      'end_date',
+      'INVALID_DATE_RANGE'
     );
   }
 
   if (body.trial_days !== undefined) {
-    const trialDays = body.trial_days;
-
     if (
-      !Number.isSafeInteger(trialDays) ||
-      trialDays < 0 ||
-      trialDays > MAX_TRIAL_DAYS
+      !Number.isSafeInteger(body.trial_days) ||
+      body.trial_days < 0 ||
+      body.trial_days > MAX_TRIAL_DAYS
     ) {
       throw validationError(
         `trial_days must be an integer between 0 and ${MAX_TRIAL_DAYS}.`,
-        'trial_days'
+        'trial_days',
+        'OUT_OF_RANGE'
       );
     }
 
-    result.trial_days = trialDays;
+    result.trial_days = body.trial_days;
   }
 
   if (body.metadata !== undefined) {
@@ -312,7 +498,9 @@ function validateUpdate(input) {
 
   if (Object.keys(body).length === 0) {
     throw validationError(
-      'Provide at least one supported field to update.'
+      'Provide at least one supported field to update.',
+      undefined,
+      'EMPTY_UPDATE'
     );
   }
 
@@ -348,18 +536,47 @@ function validateUpdate(input) {
 }
 
 function parseBoundedInteger(value, field, min, max) {
-  const text = String(value);
+  let text;
+
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      throw validationError(
+        `${field} must be a safe integer.`,
+        field,
+        'INVALID_TYPE'
+      );
+    }
+
+    text = String(value);
+  } else if (typeof value === 'string') {
+    text = value;
+  } else {
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_TYPE'
+    );
+  }
 
   if (!/^\d+$/.test(text)) {
-    throw validationError(`${field} must be an integer.`, field);
+    throw validationError(
+      `${field} must be an integer.`,
+      field,
+      'INVALID_FORMAT'
+    );
   }
 
   const number = Number(text);
 
-  if (!Number.isSafeInteger(number) || number < min || number > max) {
+  if (
+    !Number.isSafeInteger(number) ||
+    number < min ||
+    number > max
+  ) {
     throw validationError(
       `${field} must be between ${min} and ${max}.`,
-      field
+      field,
+      'OUT_OF_RANGE'
     );
   }
 
@@ -377,7 +594,7 @@ function validateQuery(input) {
       query.page,
       'page',
       1,
-      1000000
+      MAX_QUERY_PAGE
     );
   }
 
@@ -386,7 +603,7 @@ function validateQuery(input) {
       query.limit,
       'limit',
       1,
-      100
+      MAX_QUERY_LIMIT
     );
   }
 
@@ -421,6 +638,14 @@ function validateQuery(input) {
     );
   }
 
+  if (result.user_id !== undefined && result.employer_id !== undefined) {
+    throw validationError(
+      'Filter by user_id or employer_id, not both.',
+      'user_id',
+      'INVALID_QUERY'
+    );
+  }
+
   return result;
 }
 
@@ -452,10 +677,13 @@ module.exports = {
   validateDate,
   validateCurrency,
   validateMetadata,
+  positiveId,
   BILLING_CYCLES,
   SUBSCRIPTION_STATUSES,
   SUPPORTED_CURRENCIES,
   ALLOWED_CREATE_FIELDS,
   ALLOWED_UPDATE_FIELDS,
   ALLOWED_QUERY_FIELDS,
+  MAX_TRIAL_DAYS,
+  MAX_METADATA_BYTES,
 };

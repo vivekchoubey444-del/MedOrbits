@@ -1,26 +1,30 @@
 'use strict';
-
 const js = require('@eslint/js');
 const globals = require('globals');
 const prettier = require('eslint-config-prettier');
-
 module.exports = [
+  // Files and directories excluded from linting.
   {
     ignores: [
       'node_modules/**',
       'coverage/**',
       'dist/**',
+      'build/**',
       'assets/**',
-      'tests/**',
+      'vendor/**',
     ],
   },
+  // Recommended ESLint rules.
   js.configs.recommended,
+  // CommonJS JavaScript configuration.
   {
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
-      globals: { ...globals.node },
+      globals: {
+        ...globals.node,
+      },
     },
     rules: {
       'no-unused-vars': 'off',
@@ -28,9 +32,20 @@ module.exports = [
       'no-console': 'off',
     },
   },
+  // Jest globals for test files.
   {
-    files: ['tests/**/*.js'],
-    languageOptions: { globals: { ...globals.jest } },
+    files: [
+      '**/*.test.js',
+      '**/*.spec.js',
+      'tests/**/*.js',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+      },
+    },
   },
+  // Disable rules that conflict with Prettier.
   prettier,
 ];

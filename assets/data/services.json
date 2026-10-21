@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "updatedAt": null,
+  "updatedAt": "2026-10-20T00:00:00Z",
   "metadata": {
     "title": "MedOrbits Services Catalogue",
     "description": "What MedOrbits offers: informational guidance and tools for health-course aspirants. The seed entries are proposed drafts that must be confirmed by the business before publication.",
@@ -202,13 +202,13 @@
       ],
       "whatItIncludes": [
         "Plain-language course comparisons",
-        "Links to the relevant regulator and exam authority",
+        "Links to relevant regulators and exam authorities",
         "Questions to ask institutions"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -233,7 +233,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -242,18 +242,18 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
         "url": null
       },
-      "icon": null,
+      "icon": "book-open",
       "sortOrder": 1,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -263,8 +263,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-exam-information",
@@ -272,7 +272,7 @@
       "name": "Entrance exam information",
       "slug": "exam-information",
       "category": "information",
-      "shortDescription": "Overview of entrance examinations, the conducting authority and where to find the current official notice.",
+      "shortDescription": "Overview of entrance examinations, conducting authorities and where to find current official notices.",
       "audience": [
         "aspirants",
         "students"
@@ -281,14 +281,14 @@
         "self_serve_content"
       ],
       "whatItIncludes": [
-        "Exam overviews from the entrance-exams catalogue",
-        "Pointers to the official exam portal",
+        "Exam overviews",
+        "Pointers to official exam portals",
         "Reminders to verify the current cycle"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -309,7 +309,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -318,18 +318,18 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
         "url": null
       },
-      "icon": null,
+      "icon": "graduation-cap",
       "sortOrder": 2,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -339,8 +339,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-admission-information",
@@ -348,7 +348,7 @@
       "name": "Admission information",
       "slug": "admission-information",
       "category": "information",
-      "shortDescription": "Track admission cycles, eligibility summaries and deadlines, each linked to its official source and verification status.",
+      "shortDescription": "Track admission cycles, eligibility summaries and deadlines, each linked to official sources and verification status.",
       "audience": [
         "aspirants",
         "parents_or_guardians"
@@ -358,13 +358,13 @@
       ],
       "whatItIncludes": [
         "Admission records with source links",
-        "Verification status shown on every record",
+        "Verification status on records",
         "Stale-deadline warnings"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -380,7 +380,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -389,8 +389,8 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
@@ -400,7 +400,7 @@
       "sortOrder": 3,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -410,8 +410,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-counselling-guidance",
@@ -419,7 +419,7 @@
       "name": "Counselling process guidance",
       "slug": "counselling-guidance",
       "category": "guidance",
-      "shortDescription": "Explain how counselling rounds typically work and what to check on the official counselling portal.",
+      "shortDescription": "Explain how counselling rounds typically work and what to check on official counselling portals.",
       "audience": [
         "aspirants",
         "parents_or_guardians"
@@ -428,14 +428,14 @@
         "self_serve_content"
       ],
       "whatItIncludes": [
-        "Step overviews of counselling stages",
+        "Step-by-step counselling overviews",
         "Reminders to confirm round dates officially",
-        "Links to official counselling portals once verified"
+        "Links to verified official counselling portals"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -451,7 +451,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -460,8 +460,8 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
@@ -471,7 +471,7 @@
       "sortOrder": 4,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -481,8 +481,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-document-help",
@@ -490,23 +490,24 @@
       "name": "Document checklist",
       "slug": "document-help",
       "category": "tool",
-      "shortDescription": "Checklist of commonly requested documents, to be matched against each official notice.",
+      "shortDescription": "Checklist of commonly requested documents to compare against each official notice.",
       "audience": [
         "aspirants",
         "students"
       ],
       "deliveryMode": [
-        "self_serve_content"
+        "self_serve_content",
+        "interactive_tool"
       ],
       "whatItIncludes": [
-        "Catalogue of common admission documents",
-        "Checklist to compare with the official notice",
-        "Reminders about formats and attestation, only when verified"
+        "Common admission document catalogue",
+        "Checklist to compare with official notices",
+        "Format and attestation reminders only when verified"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -522,7 +523,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -531,18 +532,18 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
         "url": null
       },
-      "icon": null,
+      "icon": "clipboard-check",
       "sortOrder": 5,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -552,8 +553,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-study-abroad-information",
@@ -570,14 +571,14 @@
         "self_serve_content"
       ],
       "whatItIncludes": [
-        "Verification checklist",
+        "Recognition and licensing checklist",
         "Pointers to official regulators and embassies",
         "Cost and refund questions to ask"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -597,7 +598,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -606,8 +607,8 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
@@ -617,7 +618,7 @@
       "sortOrder": 6,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -627,8 +628,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-scholarship-information",
@@ -636,7 +637,7 @@
       "name": "Scholarship information",
       "slug": "scholarship-information",
       "category": "information",
-      "shortDescription": "Learn how to find scholarships and check eligibility, deadlines and conditions with the provider.",
+      "shortDescription": "Find scholarship sources and check eligibility, deadlines and conditions with the provider.",
       "audience": [
         "aspirants",
         "students"
@@ -645,14 +646,14 @@
         "self_serve_content"
       ],
       "whatItIncludes": [
-        "Where to look for official scholarships",
+        "Where to find official scholarships",
         "How to read eligibility conditions",
-        "Reminders that scholarships are not guaranteed"
+        "Reminders that funding is not guaranteed"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -670,7 +671,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -679,8 +680,8 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
@@ -690,7 +691,7 @@
       "sortOrder": 7,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -700,8 +701,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     },
     {
       "id": "service-career-information",
@@ -709,7 +710,7 @@
       "name": "Career information",
       "slug": "career-information",
       "category": "information",
-      "shortDescription": "Overview of career paths, internships and jobs linked to health courses, with pointers to official notices.",
+      "shortDescription": "Explore career paths, internships and jobs linked to health courses, with official vacancy links.",
       "audience": [
         "students",
         "graduates"
@@ -718,14 +719,14 @@
         "self_serve_content"
       ],
       "whatItIncludes": [
-        "Internship and job schema-backed listings once verified",
-        "Registration and licensing pointers to regulators",
+        "Career-pathway overviews",
+        "Registration and licensing pointers",
         "Official-notice links for vacancies"
       ],
       "whatItDoesNotInclude": [
         "Does not guarantee admission, employment, funding or any outcome.",
-        "Does not replace official notices or authorities.",
-        "Does not submit applications on behalf of users unless explicitly stated and verified."
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
       ],
       "howItWorks": [],
       "requirements": [],
@@ -744,7 +745,7 @@
         "currency": null,
         "billingFrequency": null,
         "pricingUrl": null,
-        "note": "Set only if the service is paid and confirmed by the business."
+        "note": "Pricing must be confirmed by the business before publication."
       },
       "availability": {
         "countries": [
@@ -753,8 +754,8 @@
         "languages": [
           "en"
         ],
-        "status": null,
-        "note": null
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
       },
       "cta": {
         "label": null,
@@ -764,7 +765,7 @@
       "sortOrder": 8,
       "featured": false,
       "disclosures": [
-        "Informational guidance only. Confirm details with official sources."
+        "Proposed service only. Informational content; verify details with official sources."
       ],
       "publicationStatus": "draft",
       "businessConfirmedBy": null,
@@ -774,8 +775,1891 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": null,
-      "updatedAt": null
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-fee-comparison",
+      "key": "fee_comparison",
+      "name": "Fee comparison tool",
+      "slug": "fee-comparison",
+      "category": "tool",
+      "shortDescription": "Compare published course fee information and identify what must be confirmed directly with an institution.",
+      "audience": [
+        "aspirants",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Side-by-side comparison of available fee records",
+        "Source and verification status display",
+        "Checklist of additional costs to ask about"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "fees",
+        "colleges"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 9,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-college-discovery",
+      "key": "college_discovery",
+      "name": "College discovery",
+      "slug": "college-discovery",
+      "category": "tool",
+      "shortDescription": "Search and compare health colleges using available course, location and source information.",
+      "audience": [
+        "aspirants",
+        "students",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Search and filtering by course and location",
+        "College profile links",
+        "Prompts to confirm recognition and current intake"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "colleges",
+        "courses"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 10,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-eligibility-checklist",
+      "key": "eligibility_checklist",
+      "name": "Eligibility checklist",
+      "slug": "eligibility-checklist",
+      "category": "tool",
+      "shortDescription": "Use a checklist to compare your details with published course or exam eligibility criteria.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Criteria checklist based on configured records",
+        "Links to the official eligibility notice",
+        "Warnings when source information is missing"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "exams",
+        "courses"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 11,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-admission-deadline-calendar",
+      "key": "admission_deadline_calendar",
+      "name": "Admission deadline calendar",
+      "slug": "admission-deadline-calendar",
+      "category": "tool",
+      "shortDescription": "View admission milestones and deadlines only when they are available from a cited official notice.",
+      "audience": [
+        "aspirants",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Calendar view of sourced dates",
+        "Deadline status labels",
+        "Links to official notices"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "admissions",
+        "news"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 12,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-entrance-exam-calendar",
+      "key": "entrance_exam_calendar",
+      "name": "Entrance exam calendar",
+      "slug": "entrance-exam-calendar",
+      "category": "tool",
+      "shortDescription": "Browse exam dates and milestones when they are supported by current official notices.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Exam schedule list or calendar",
+        "Official source links",
+        "Warnings for unverified dates"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "exams"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 13,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-document-organizer",
+      "key": "document_organizer",
+      "name": "Document organizer",
+      "slug": "document-organizer",
+      "category": "tool",
+      "shortDescription": "Organize a personal checklist of application documents without uploading sensitive documents to the catalogue.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Reusable document checklist",
+        "Completion tracking",
+        "Notice-specific checklist reminders"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "documents"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 14,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-career-pathway-explorer",
+      "key": "career_pathway_explorer",
+      "name": "Career pathway explorer",
+      "slug": "career-pathway-explorer",
+      "category": "tool",
+      "shortDescription": "Explore possible careers connected to health courses and the qualifications typically associated with them.",
+      "audience": [
+        "students",
+        "graduates"
+      ],
+      "deliveryMode": [
+        "interactive_tool",
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Career categories and pathway summaries",
+        "Qualification prompts",
+        "Links to licensing or professional bodies"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "career-options",
+        "courses"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 15,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-internship-discovery",
+      "key": "internship_discovery",
+      "name": "Internship discovery",
+      "slug": "internship-discovery",
+      "category": "information",
+      "shortDescription": "Browse internship opportunities and templates, distinguishing confirmed openings from unverified listings.",
+      "audience": [
+        "students",
+        "graduates"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Internship categories",
+        "Application preparation checklist",
+        "Source and verification labels"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "internships"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 16,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-job-discovery",
+      "key": "job_discovery",
+      "name": "Job discovery",
+      "slug": "job-discovery",
+      "category": "information",
+      "shortDescription": "Search health-sector job listings in India and overseas, with source links and status labels.",
+      "audience": [
+        "graduates",
+        "students"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Job category search",
+        "Country and role filters where data exists",
+        "Official employer or recruitment notice links"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "jobs",
+        "recruitment"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 17,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-gulf-job-safety",
+      "key": "gulf_job_safety",
+      "name": "Overseas job safety checklist",
+      "slug": "overseas-job-safety-checklist",
+      "category": "guidance",
+      "shortDescription": "Checklist for evaluating overseas job offers, recruitment fees, visa terms and employer authenticity.",
+      "audience": [
+        "graduates",
+        "students"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Employer verification prompts",
+        "Visa and contract questions",
+        "Warning signs for recruitment scams"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "jobs",
+        "recruitment"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": "shield-check",
+      "sortOrder": 18,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-resume-builder",
+      "key": "resume_builder",
+      "name": "Resume builder",
+      "slug": "resume-builder",
+      "category": "tool",
+      "shortDescription": "Create a structured CV or resume draft using information entered by the user.",
+      "audience": [
+        "students",
+        "graduates"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Editable resume sections",
+        "Role-focused wording prompts",
+        "Export-ready content where supported"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "jobs",
+        "career-options"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 19,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-job-application-tracker",
+      "key": "job_application_tracker",
+      "name": "Job application tracker",
+      "slug": "job-application-tracker",
+      "category": "tool",
+      "shortDescription": "Track job applications, interview stages and follow-up dates in a personal checklist.",
+      "audience": [
+        "graduates",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Application status fields",
+        "Interview and follow-up reminders",
+        "Personal organization tools"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "jobs"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 20,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-study-planner",
+      "key": "study_planner",
+      "name": "Study planner",
+      "slug": "study-planner",
+      "category": "tool",
+      "shortDescription": "Build a study schedule and track preparation tasks for a selected entrance exam.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Topic and task planning",
+        "Study-session checklist",
+        "Progress overview"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "exams",
+        "courses"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 21,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-exam-practice",
+      "key": "exam_practice",
+      "name": "Exam practice resources",
+      "slug": "exam-practice",
+      "category": "tool",
+      "shortDescription": "Access practice questions or revision resources where the site has the necessary content and usage rights.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "self_serve_content",
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Practice and revision organization",
+        "Topic-wise practice when available",
+        "Links to official exam guidance"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "exams"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 22,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-fee-calculator",
+      "key": "fee_calculator",
+      "name": "Education cost calculator",
+      "slug": "education-cost-calculator",
+      "category": "tool",
+      "shortDescription": "Estimate a study budget from user-entered tuition, accommodation, travel and other costs.",
+      "audience": [
+        "aspirants",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "User-entered cost categories",
+        "Estimated total calculation",
+        "Editable assumptions and exclusions"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "fees",
+        "hostels"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 23,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-scholarship-checklist",
+      "key": "scholarship_checklist",
+      "name": "Scholarship application checklist",
+      "slug": "scholarship-application-checklist",
+      "category": "tool",
+      "shortDescription": "Organize scholarship application tasks against the provider's published requirements.",
+      "audience": [
+        "aspirants",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Eligibility review checklist",
+        "Document task list",
+        "Deadline field only when officially sourced"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "scholarships"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 24,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-admission-document-review",
+      "key": "admission_document_review",
+      "name": "Admission document checklist review",
+      "slug": "admission-document-review",
+      "category": "support",
+      "shortDescription": "Help users compare a document checklist with an official admission notice, if this support is confirmed by the business.",
+      "audience": [
+        "aspirants",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "email_support",
+        "one_to_one"
+      ],
+      "whatItIncludes": [
+        "Notice-based checklist review proposal",
+        "Missing-item checklist proposal",
+        "Guidance to confirm requirements with the authority"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "documents",
+        "admissions"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 25,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-parent-information-hub",
+      "key": "parent_information_hub",
+      "name": "Parent and guardian information hub",
+      "slug": "parent-information-hub",
+      "category": "information",
+      "shortDescription": "Explain common questions about course choices, costs and official admission processes for families.",
+      "audience": [
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Plain-language explainers",
+        "Questions to ask colleges",
+        "Links to official sources"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "courses",
+        "fees",
+        "admissions"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 26,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-institution-information-listing",
+      "key": "institution_information_listing",
+      "name": "Institution information listing",
+      "slug": "institution-information-listing",
+      "category": "support",
+      "shortDescription": "Proposed listing support for institutions, subject to business confirmation and a documented listing policy.",
+      "audience": [
+        "institutions"
+      ],
+      "deliveryMode": [
+        "email_support",
+        "other"
+      ],
+      "whatItIncludes": [
+        "Proposed profile fields",
+        "Source and update policy",
+        "Clear distinction between paid placement and editorial information"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "colleges"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 27,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-data-correction-request",
+      "key": "data_correction_request",
+      "name": "Data correction request",
+      "slug": "data-correction-request",
+      "category": "support",
+      "shortDescription": "Submit a correction request for potentially outdated or inaccurate catalogue information.",
+      "audience": [
+        "aspirants",
+        "students",
+        "graduates",
+        "institutions",
+        "other"
+      ],
+      "deliveryMode": [
+        "email_support"
+      ],
+      "whatItIncludes": [
+        "Correction request workflow proposal",
+        "Reference URL or record identifier",
+        "Review status where implemented"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "courses",
+        "colleges",
+        "exams",
+        "jobs",
+        "admissions"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 28,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-notice-explainer",
+      "key": "notice_explainer",
+      "name": "Official notice explainer",
+      "slug": "official-notice-explainer",
+      "category": "guidance",
+      "shortDescription": "Plain-language summaries of official notices with links to the original source and a reminder to read the notice.",
+      "audience": [
+        "aspirants",
+        "students",
+        "graduates",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Structured summaries",
+        "Key dates and eligibility only when sourced",
+        "Direct official notice link"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "news",
+        "admissions",
+        "exams"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 29,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-health-course-glossary",
+      "key": "health_course_glossary",
+      "name": "Health course glossary",
+      "slug": "health-course-glossary",
+      "category": "information",
+      "shortDescription": "Explain common health-course names, abbreviations and qualification terms.",
+      "audience": [
+        "aspirants",
+        "students",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Definitions and abbreviations",
+        "Related course links",
+        "Prompts to verify regulator terminology"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "courses"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 30,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-global-study-destination-comparison",
+      "key": "global_study_destination_comparison",
+      "name": "Study destination comparison",
+      "slug": "study-destination-comparison",
+      "category": "tool",
+      "shortDescription": "Compare study destinations using available data on recognition, estimated costs and licensing checks.",
+      "audience": [
+        "aspirants",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Destination comparison criteria",
+        "Recognition and licensing checklist",
+        "Source dates and uncertainty labels"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "countries",
+        "study-abroad"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 31,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-recruitment-notice-tracker",
+      "key": "recruitment_notice_tracker",
+      "name": "Recruitment notice tracker",
+      "slug": "recruitment-notice-tracker",
+      "category": "tool",
+      "shortDescription": "Browse recruitment notices and separate confirmed official notices from listings awaiting review.",
+      "audience": [
+        "graduates",
+        "students"
+      ],
+      "deliveryMode": [
+        "interactive_tool",
+        "self_serve_content"
+      ],
+      "whatItIncludes": [
+        "Recruiting body and notice links",
+        "Application status labels",
+        "Closed and outdated notice warnings"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "recruitment",
+        "jobs"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 32,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-notification-preferences",
+      "key": "notification_preferences",
+      "name": "Notification preferences",
+      "slug": "notification-preferences",
+      "category": "tool",
+      "shortDescription": "Configure site notification preferences where supported, with opt-out controls for direct messaging.",
+      "audience": [
+        "aspirants",
+        "students",
+        "graduates",
+        "parents_or_guardians"
+      ],
+      "deliveryMode": [
+        "interactive_tool"
+      ],
+      "whatItIncludes": [
+        "Channel preference controls proposal",
+        "Topic preferences proposal",
+        "Opt-out and consent handling requirements"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "notifications"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 33,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
+    },
+    {
+      "id": "service-accessibility-language-support",
+      "key": "accessibility_language_support",
+      "name": "Language and accessibility support",
+      "slug": "language-accessibility-support",
+      "category": "support",
+      "shortDescription": "Help users navigate available language and accessibility options on the website.",
+      "audience": [
+        "aspirants",
+        "students",
+        "graduates",
+        "parents_or_guardians",
+        "other"
+      ],
+      "deliveryMode": [
+        "self_serve_content",
+        "other"
+      ],
+      "whatItIncludes": [
+        "Language selector guidance",
+        "Accessible-content feedback route",
+        "Clear note when a translation is not official"
+      ],
+      "whatItDoesNotInclude": [
+        "Does not guarantee admission, employment, funding or any outcome.",
+        "Does not replace official notices, regulators or authorities.",
+        "Does not submit applications or provide a paid service unless explicitly confirmed by the business."
+      ],
+      "howItWorks": [],
+      "requirements": [],
+      "relatedExamIds": [],
+      "relatedCourseIds": [],
+      "relatedCategories": [
+        "other"
+      ],
+      "relatedFaqIds": [],
+      "pricing": {
+        "model": null,
+        "amount": null,
+        "currency": null,
+        "billingFrequency": null,
+        "pricingUrl": null,
+        "note": "Pricing must be confirmed by the business before publication."
+      },
+      "availability": {
+        "countries": [
+          "IN"
+        ],
+        "languages": [
+          "en"
+        ],
+        "status": "coming_soon",
+        "note": "Proposed catalogue entry; availability is not confirmed."
+      },
+      "cta": {
+        "label": null,
+        "url": null
+      },
+      "icon": null,
+      "sortOrder": 34,
+      "featured": false,
+      "disclosures": [
+        "Proposed service only. Informational content; verify details with official sources."
+      ],
+      "publicationStatus": "draft",
+      "businessConfirmedBy": null,
+      "businessConfirmedAt": null,
+      "verificationStatus": "unverified",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "reviewDueAt": null,
+      "active": false,
+      "createdAt": "2026-10-20T00:00:00Z",
+      "updatedAt": "2026-10-20T00:00:00Z"
     }
   ]
 }

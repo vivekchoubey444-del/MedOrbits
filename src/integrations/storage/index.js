@@ -1,91 +1,174 @@
+
 'use strict';
 
+/**
+ * MedOrbits -- Storage Integration Factory
+ *
+ * File: src/integrations/storage/index.js
+ * Runtime: Node.js >= 20
+ *
+ * Supports local filesystem and S3-compatible storage.
+ * Supports dependency injection for unit tests and custom providers.
+ */
+
 const {
-StorageClient,
+  StorageClient,
 } = require('./storage.client');
 
 const {
-LocalStorageProvider,
+  LocalStorageProvider,
 } = require('./local.provider');
 
 const {
-S3StorageProvider,
+  S3StorageProvider,
 } = require('./s3.provider');
 
 const {
-loadStorageConfig,
+  loadStorageConfig,
 } = require('./storage.config');
 
-const SUPPORTED_DRIVERS = new Set(['local', 's3']);
+const SUPPORTED_DRIVERS = Object.freeze(['local', 's3']);
+const SUPPORTED_DRIVER_SET = new Set(SUPPORTED_DRIVERS);
+
+function assertOptions(options) {
+  if (
+    !options ||
+    typeof options !== 'object' ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError(
+      'Storage options must be an object.',
+    );
+  }
+}
 
 function assertStorageProvider(provider) {
-if (!provider || typeof provider !== 'object') {
-throw new TypeError('A valid storage provider is required.');
+  if (
+    !provider ||
+    typeof provider !== 'object' ||
+    Array.isArray(provider)
+  ) {
+    throw new TypeError(
+      'A valid storage provider is required.',
+    );
+  }
+
+  for (const method of ['put', 'get', 'delete']) {
+    if (typeof provider[method] !== 'function') {
+      throw new TypeError(
+        `Storage provider must implement ${method}().`,
+      );
+    }
+  }
+
+  if (
+    provider.close !== undefined &&
+    typeof provider.close !== 'function'
+  ) {
+    throw new TypeError(
+      'Storage provider close, when provided, must be a function.',
+    );
+  }
+
+  return provider;
 }
 
-for (const method of ['put', 'get', 'delete']) {
-if (typeof provider[method] !== 'function') {
-throw new TypeError(
-`Storage provider must implement ${method}().`
-);
-}
-}
+function assertStorageConfig(config) {
+  if (
+    !config ||
+    typeof config !== 'object' ||
+    Array.isArray(config)
+  ) {
+    throw new TypeError(
+      'Storage configuration is invalid.',
+    );
+  }
 
-return provider;
+  if (!SUPPORTED_DRIVER_SET.has(config.driver)) {
+    throw new Error(
+      `Unsupported storage driver: ${String(config.driver)}`,
+    );
+  }
+
+  return config;
 }
 
 function createStorageClient(options = {}) {
-if (
-!options ||
-typeof options !== 'object' ||
-Array.isArray(options)
-) {
-throw new TypeError('Storage options must be an object.');
-}
+  assertOptions(options);
 
-// Dependency injection supports unit tests and custom providers.
-if (options.provider !== undefined) {
-return new StorageClient(
-assertStorageProvider(options.provider)
-);
-}
+  const {
+    provider: injectedProvider,
+    config: suppliedConfig,
+    env = process.env,
+    clientOptions = {},
+  } = options;
 
-const environment = options.env || process.env;
-const config = options.config || loadStorageConfig(environment);
+  if (
+    !clientOptions ||
+    typeof clientOptions !== 'object' ||
+    Array.isArray(clientOptions)
+  ) {
+    throw new TypeError(
+      'clientOptions must be an object.',
+    );
+  }
 
-if (!config || typeof config !== 'object') {
-throw new TypeError('Storage configuration is invalid.');
-}
+  if (injectedProvider !== undefined) {
+    const provider = assertStorageProvider(injectedProvider);
 
-if (!SUPPORTED_DRIVERS.has(config.driver)) {
-throw new Error(
-`Unsupported storage driver: ${String(config.driver)}`
-);
-}
+    return new StorageClient(provider, {
+      ...clientOptions,
+      // Injected providers remain caller-owned unless explicitly
+      // marked as owned by the client.
+      ownsProvider: clientOptions.ownsProvider === true,
+    });
+  }
 
-let provider;
+  if (!env || typeof env !== 'object' || Array.isArray(env)) {
+    throw new TypeError(
+      'Storage environment must be an object.',
+    );
+  }
 
-switch (config.driver) {
-case 'local':
-provider = new LocalStorageProvider(config);
-break;
+  const config = assertStorageConfig(
+    suppliedConfig || loadStorageConfig(env),
+  );
 
-case 's3':
-  provider = S3StorageProvider.fromEnv(environment);
-  break;
-default:
-  // Defensive fallback if supported drivers change later.
-  throw new Error('No storage provider is configured.');
+  let provider;
 
-}
+  switch (config.driver) {
+    case 'local':
+      provider = new LocalStorageProvider(config);
+      break;
 
-return new StorageClient(assertStorageProvider(provider));
+    case 's3':
+      // Use the supplied configuration when supported by the
+      // provider; otherwise build the provider from the same env.
+      provider = suppliedConfig
+        ? new S3StorageProvider(config)
+        : S3StorageProvider.fromEnv(env);
+      break;
+
+    default:
+      throw new Error(
+        'No supported storage provider is configured.',
+      );
+  }
+
+  return new StorageClient(provider, {
+    ...clientOptions,
+    // Providers constructed by this factory are owned by the client.
+    ownsProvider: true,
+  });
 }
 
 module.exports = {
-createStorageClient,
-StorageClient,
-LocalStorageProvider,
-S3StorageProvider,
-loadStorageConfig,
+  createStorageClient,
+  assertStorageProvider,
+  assertStorageConfig,
+  SUPPORTED_DRIVERS,
+  StorageClient,
+  LocalStorageProvider,
+  S3StorageProvider,
+  loadStorageConfig,
 };

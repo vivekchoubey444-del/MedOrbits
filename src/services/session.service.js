@@ -11,13 +11,30 @@ const {
 
 const MIN_TTL_SECONDS = 60;
 const MAX_TTL_SECONDS = 30 * 24 * 60 * 60;
+const MAX_USER_AGENT_LENGTH = 1024;
+const MAX_IP_ADDRESS_LENGTH = 64;
 
 function createSessionService({
   sessionRepository,
   auditService,
   ttlSeconds = 86400,
+  clock = () => new Date(),
 }) {
   requireDependency(sessionRepository, 'sessionRepository');
+
+  if (
+    typeof sessionRepository.create !== 'function' ||
+    typeof sessionRepository.findById !== 'function' ||
+    typeof sessionRepository.updateById !== 'function'
+  ) {
+    throw new ServiceError(
+      'Session repository is missing required methods.',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
 
   if (
     !Number.isSafeInteger(ttlSeconds) ||
@@ -29,13 +46,34 @@ function createSessionService({
     );
   }
 
-  function isExpired(session, now = new Date()) {
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
+
+  function getNow() {
+    const value = clock();
+    const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      throw new ServiceError('Invalid service clock value.', {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      });
+    }
+
+    return date;
+  }
+
+  function isExpired(session, now = getNow()) {
+    if (!session || session.expiresAt == null) {
+      return true;
+    }
+
     const expiry = new Date(session.expiresAt);
 
     return (
-      !session.expiresAt ||
       Number.isNaN(expiry.getTime()) ||
-      expiry <= now
+      expiry.getTime() <= now.getTime()
     );
   }
 
@@ -46,28 +84,58 @@ function createSessionService({
     });
   }
 
+  function normalizeContext(context) {
+    if (
+      context === null ||
+      typeof context !== 'object' ||
+      Array.isArray(context)
+    ) {
+      throw new ServiceError('Invalid session context.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    const ip =
+      typeof context.ip === 'string' &&
+      context.ip.length <= MAX_IP_ADDRESS_LENGTH &&
+      !/[\r\n\u0000-\u001f\u007f]/.test(context.ip)
+        ? context.ip
+        : null;
+
+    const userAgent =
+      typeof context.userAgent === 'string'
+        ? context.userAgent
+            .replace(/[\r\n\u0000-\u001f\u007f]/g, ' ')
+            .slice(0, MAX_USER_AGENT_LENGTH)
+        : null;
+
+    return { ip, userAgent };
+  }
+
   return {
     async create(userId, context = {}) {
       requiredId(userId, 'userId');
 
+      const now = getNow();
+      const { ip, userAgent } = normalizeContext(context);
       const expiresAt = new Date(
-        Date.now() + ttlSeconds * 1000,
+        now.getTime() + ttlSeconds * 1000,
       );
 
       const session = await sessionRepository.create({
         userId,
         expiresAt,
-        ipAddress:
-          typeof context.ip === 'string' ? context.ip : null,
-        userAgent:
-          typeof context.userAgent === 'string'
-            ? context.userAgent.slice(0, 1024)
-            : null,
+        ipAddress: ip,
+        userAgent,
         revokedAt: null,
+        createdAt: now,
       });
 
-      // Return the persisted session only to trusted internal callers.
-      // Never expose session secrets through public API responses.
+      assertFound(session, 'Session');
+
+      // This object is for trusted internal callers only.
+      // Public responses must use an explicit safe-field allowlist.
       return session;
     },
 
@@ -75,15 +143,13 @@ function createSessionService({
       requiredId(sessionId, 'sessionId');
       requiredId(userId, 'userId');
 
-      const session = assertFound(
-        await sessionRepository.findById(sessionId),
-        'Session',
-      );
+      const session = await sessionRepository.findById(sessionId);
 
       if (
+        !session ||
         String(session.userId) !== String(userId) ||
-        session.revokedAt ||
-        isExpired(session)
+        session.revokedAt != null ||
+        isExpired(session, getNow())
       ) {
         throw invalidSessionError();
       }
@@ -100,7 +166,7 @@ function createSessionService({
 
       const session = await sessionRepository.findById(sessionId);
 
-      // Idempotent response: do not disclose whether a session exists.
+      // Return the same result for missing sessions.
       if (!session) {
         return { revoked: true };
       }
@@ -116,18 +182,29 @@ function createSessionService({
         });
       }
 
-      if (session.revokedAt) {
+      if (session.revokedAt != null) {
         return { revoked: true };
       }
 
-      const revokedAt = new Date();
+      const revokedAt = getNow();
 
-      assertFound(
-        await sessionRepository.updateById(sessionId, {
+      // Prefer a repository-level conditional update to prevent
+      // concurrent requests from overwriting revocation state.
+      if (
+        typeof sessionRepository.revokeIfActive === 'function'
+      ) {
+        await sessionRepository.revokeIfActive(
+          sessionId,
           revokedAt,
-        }),
-        'Session',
-      );
+        );
+      } else {
+        assertFound(
+          await sessionRepository.updateById(sessionId, {
+            revokedAt,
+          }),
+          'Session',
+        );
+      }
 
       await audit(auditService, {
         action: 'session.revoked',
@@ -154,9 +231,11 @@ function createSessionService({
         );
       }
 
+      const revokedAt = getNow();
+
       const result = await sessionRepository.revokeAllForUser(
         userId,
-        new Date(),
+        revokedAt,
       );
 
       await audit(auditService, {
@@ -171,4 +250,8 @@ function createSessionService({
   };
 }
 
-module.exports = { createSessionService };
+module.exports = {
+  createSessionService,
+  MIN_TTL_SECONDS,
+  MAX_TTL_SECONDS,
+};

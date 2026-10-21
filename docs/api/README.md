@@ -1,185 +1,265 @@
-MedOrbits API Documentation
 
-Directory: docs/api/
-Primary specification: openapi.yaml
-Specification version: OpenAPI 3.1.0
+# MedOrbits API Documentation
 
-1. Purpose
+**Directory:** `docs/api/`  
+**Primary specification:** `docs/api/openapi.yaml`  
+**Specification standard:** OpenAPI 3.1.0
 
-This directory contains the API documentation for MedOrbits.
+## 1. Purpose
 
-The OpenAPI specification describes the intended HTTP API contract, including endpoints, request parameters, request and response schemas, authentication requirements, status codes, and error responses.
+This directory contains the authoritative documentation for the implemented MedOrbits HTTP API.
 
-The documentation must reflect the implemented backend. A proposed endpoint is not considered available merely because it appears in openapi.yaml.
+The documentation describes available endpoints, HTTP methods, authentication and authorization requirements, request validation, response schemas, status codes, pagination, error handling, and relevant security controls.
 
-2. Directory Structure
+An endpoint is not considered available merely because it appears in the OpenAPI specification. The documented contract must be supported by the backend implementation and its mounted routes.
 
+## 2. Directory Structure
+
+```text
 docs/
 └── api/
     ├── README.md
     └── openapi.yaml
+```
 
-Add supporting API documents or reusable schemas only when they provide clear value and remain consistent with the main specification.
+Add supplementary documents, reusable schema files, or generated API references only when they provide a clear maintenance or development benefit.
 
-3. Documentation Standards
+## 3. Documentation Standards
 
-Endpoint accuracy
+### 3.1 Endpoint accuracy
 
-* Document only endpoints that exist and are mounted in the backend.
-* Verify HTTP methods, route paths, middleware, and controller behavior.
-* Distinguish implemented operations from proposed or planned functionality.
-* Keep operation IDs unique and descriptive.
-* Use consistent naming conventions across paths, parameters, and schemas.
+For each documented operation:
 
-Request and response contracts
+- Confirm the route is registered and mounted by the application.
+- Match the HTTP method and full path, including router prefixes.
+- Inspect the controller, service, repository, and relevant middleware.
+- Verify authentication, authorization, validation, and response behavior.
+- Document only supported query parameters, filters, sorting, and pagination.
+- Assign a unique, descriptive `operationId`.
+- Use `x-implementation-status: verify` only as a temporary review marker, not as proof of availability.
 
-* Document required and optional parameters.
-* Define request-body and response schemas.
-* Specify field types, constraints, formats, and permitted values.
-* Document pagination, filtering, sorting, and default behavior where implemented.
-* Include realistic success and failure status codes.
-* Reuse shared schemas and response definitions where appropriate.
-* Keep error codes and response envelopes consistent with actual server behavior.
+Unverified operations must either be omitted from the available API contract or clearly separated from it as proposed functionality.
 
-Authentication and authorization
+### 3.2 Request and response contracts
 
-* Document which endpoints are public and which require authentication.
-* Specify the actual session-cookie or token mechanism.
-* Document authorization requirements without exposing credentials or secrets.
-* Confirm that protected operations enforce authorization on the server.
-* Describe CSRF requirements where relevant to cookie-based authentication.
+Every operation should document, where applicable:
 
-Examples and sensitive data
+- Required and optional path, query, and header parameters.
+- Accepted content types and request-body schemas.
+- Field types, lengths, formats, permitted values, and nullability.
+- Successful response bodies and actual HTTP status codes.
+- Validation, authentication, authorization, conflict, and server errors.
+- Pagination and filtering behavior.
+- Reusable response schemas and error definitions.
 
-* Use synthetic example data.
-* Never include real passwords, access tokens, session cookies, API keys, private user information, or payment credentials.
-* Avoid exposing internal stack traces or sensitive infrastructure details in documented error responses.
+Document the actual response envelope used by MedOrbits. Do not introduce a new `data`, `error`, or `pagination` structure unless the backend returns it or the implementation is deliberately changed to support it.
 
-4. OpenAPI Specification
+Use explicit `additionalProperties` policies where appropriate. Keep schemas strict for sensitive request objects and avoid documenting fields that clients must not control, such as account ownership, administrative roles, payment status, or calculated charges.
 
-The primary contract is:
+### 3.3 Authentication and authorization
 
-docs/api/openapi.yaml
+Document the authentication mechanism actually implemented by the application.
 
-The document should contain the following sections where applicable:
+For cookie-based sessions:
 
-Section	Responsibility
-openapi	OpenAPI specification version
-info	API title, version, description, and contact information
-servers	Actual API base URLs, with placeholders clearly identified
-tags	Logical endpoint groupings
-paths	Available HTTP endpoints and operations
-components.schemas	Reusable request, response, and data schemas
-components.parameters	Reusable query, path, and header parameters
-components.responses	Reusable error and common response definitions
-components.securitySchemes	Authentication mechanisms
-Operation-level security	Authentication requirements for individual operations
+- Specify the real cookie name and session behavior.
+- Document CSRF protection for state-changing requests where applicable.
+- Explain session expiration and logout behavior.
+- Distinguish authentication failures from authorization failures.
 
-Keep the specification compatible with the OpenAPI version declared at the top of the file.
+For token-based authentication, document the implemented token scheme and relevant expiration and renewal behavior.
 
-5. Backend Verification Workflow
+Public endpoints must explicitly declare public access when a global security requirement exists. Protected operations must reflect the backend’s actual middleware and access policy.
 
-Before documenting or changing an endpoint:
+Authentication documentation must never imply that a schema or OpenAPI security declaration independently enforces access control.
+
+### 3.4 Examples and sensitive data
+
+- Use synthetic example data.
+- Never include passwords, access tokens, session cookies, API keys, payment credentials, or real private user information.
+- Avoid exposing stack traces, database errors, filesystem paths, or infrastructure secrets.
+- Document sanitized error messages and stable error codes where implemented.
+
+## 4. OpenAPI Specification
+
+The primary specification is:
+
+`docs/api/openapi.yaml`
+
+Use OpenAPI 3.1.0 consistently unless the project deliberately adopts another version.
+
+Include the following sections as appropriate:
+
+| Section | Responsibility |
+|—|—|
+| `openapi` | OpenAPI specification version |
+| `info` | API title, version, description, and contact |
+| `servers` | Verified API base URLs or clearly identified placeholders |
+| `tags` | Logical endpoint groupings |
+| `paths` | Implemented HTTP operations |
+| `components.schemas` | Reusable request and response schemas |
+| `components.parameters` | Reusable path, query, and header parameters |
+| `components.responses` | Common response definitions |
+| `components.securitySchemes` | Actual authentication mechanisms |
+| Operation-level `security` | Public access or operation-specific security requirements |
+
+### 4.1 Versioning
+
+Maintain the OpenAPI document version independently from the API’s release version when appropriate.
+
+Update the specification version when the documented contract changes. Record breaking API changes in release notes and evaluate their impact on existing clients before deployment.
+
+### 4.2 Placeholders
+
+Mark unresolved server URLs, cookie names, provider-specific headers, and other implementation-dependent values clearly.
+
+Placeholders must be resolved before production publication. A placeholder must never be presented as a verified production endpoint or authentication mechanism.
+
+## 5. Backend Verification Workflow
+
+Before adding or modifying an operation:
 
 1. Locate its route definition.
-2. Confirm that the route is mounted by the application.
+2. Confirm the route is mounted by the application.
 3. Inspect the controller and associated service logic.
-4. Verify authentication and authorization middleware.
-5. Confirm request validation and accepted input formats.
-6. Check the actual response body and status codes.
-7. Confirm error handling and relevant business rules.
-8. Update the corresponding OpenAPI operation and schemas.
-9. Validate the specification and run relevant tests.
-10. Review the changes before merging.
+4. Verify authentication, authorization, and ownership checks.
+5. Inspect request validators and accepted input formats.
+6. Confirm actual response bodies and HTTP status codes.
+7. Verify error handling and business rules.
+8. Update `openapi.yaml` to match the implementation.
+9. Add or update relevant automated tests.
+10. Validate the specification and review the changes before merging.
 
-If the implementation cannot be verified, clearly mark the operation as proposed or omit it from the available API contract.
+If the behavior cannot be verified, do not claim the operation is implemented.
 
-6. Validation
+## 6. Specification Validation
 
-Validate openapi.yaml locally using the validator selected by the project.
+Use the validator selected by the project and pin its version in the development dependencies and lockfile.
 
-For example, if MedOrbits adopts Redocly CLI as a development dependency:
+For example, if MedOrbits adopts Redocly CLI:
 
-npx redocly lint docs/api/openapi.yaml
+```bash
+npm install —save-dev —save-exact @redocly/cli
+```
 
-This command is an example and requires the corresponding package to be installed or available through the project’s chosen toolchain.
+Add a validation script to `package.json`:
 
-For repeatable validation, prefer a pinned development dependency and a lockfile-backed installation over relying on an unpinned tool download.
+```json
+{
+  “scripts”: {
+    “api:lint”: “redocly lint docs/api/openapi.yaml”
+  }
+}
+```
+
+Run validation using the installed, lockfile-backed dependency:
+
+```bash
+npm ci
+npm run api:lint
+```
+
+Merge the script into the existing `scripts` object rather than replacing existing project scripts.
 
 Validation should check:
 
-* YAML syntax.
-* OpenAPI schema compliance.
-* Valid $ref references.
-* Unique operation IDs.
-* Consistent request and response definitions.
-* Correct authentication declarations.
-* Appropriate response documentation.
-* Unresolved placeholders and accidental secrets.
+- YAML syntax and OpenAPI 3.1.0 compliance.
+- Valid and resolvable `$ref` references.
+- Unique operation IDs.
+- Request and response schema consistency.
+- Authentication declarations and security overrides.
+- Documented status codes and response content.
+- Unresolved placeholders and accidental secrets.
+- Project-specific linting rules and naming conventions.
 
-A structurally valid OpenAPI document does not prove that the documented endpoints exist or behave as described. Backend verification and integration tests remain necessary.
+A passing lint result confirms specification-level validity only. It does not prove that routes exist, authorization is correct, or responses match the documented schemas.
 
-7. Continuous Integration
+## 7. Continuous Integration
 
-Run OpenAPI validation in the project’s CI pipeline whenever changes affect:
+Run API documentation validation in CI whenever changes affect:
 
-* docs/api/openapi.yaml
-* Backend route definitions or controllers
-* Request and response schemas
-* Authentication and authorization behavior
+- `docs/api/openapi.yaml`
+- Backend routes or router mounting
+- Controllers, services, or request validators
+- Request and response schemas
+- Authentication or authorization behavior
 
-A minimal GitHub Actions step, assuming the project has installed and pinned Redocly CLI, is:
+Example GitHub Actions step, assuming the project installs the pinned Redocly CLI dependency first:
+
+```yaml
+- name: Install locked dependencies
+  run: npm ci
 
 - name: Validate OpenAPI specification
-  run: npx —no-install redocly lint docs/api/openapi.yaml
+  run: npm run api:lint
+```
 
-Ensure the dependency is installed before this step. Adapt the command to the validator and package scripts actually configured in MedOrbits.
+Integrate these steps into the existing workflow rather than creating a competing dependency-installation process.
 
-Where practical, add automated contract tests that compare the documented behavior with the running API.
+Where practical, add contract tests that exercise the running application and compare actual responses with the documented schemas. Include tests for public access, authentication failures, authorization boundaries, invalid input, pagination, and error responses.
 
-8. Change Management
+Do not make production credentials or production payment operations prerequisites for ordinary documentation linting.
 
-Whenever an API endpoint changes:
+## 8. Change Management
+
+For every API change:
 
 1. Update the backend implementation.
-2. Update request validation and response handling.
-3. Update openapi.yaml.
-4. Update relevant automated tests.
-5. Run the OpenAPI validator.
-6. Verify authentication and authorization behavior.
-7. Review compatibility with existing frontend clients.
-8. Include breaking changes in release notes where appropriate.
+2. Update input validation and authorization controls.
+3. Update response handling and error mapping.
+4. Update `docs/api/openapi.yaml`.
+5. Update relevant unit, integration, and contract tests.
+6. Run OpenAPI validation.
+7. Verify compatibility with existing frontend clients.
+8. Review security implications.
+9. Document breaking changes and migration requirements.
+10. Merge only after the applicable checks pass.
 
-Avoid changing a documented response schema without considering the impact on existing clients.
+Treat changes to required fields, response envelopes, authentication, status codes, pagination, and permitted values as potential compatibility changes.
 
-9. Security Requirements
+## 9. Security Requirements
 
-* Never commit secrets to API documentation.
-* Keep production credentials and provider configuration in the appropriate secure environment.
-* Do not expose internal administrative endpoints as public operations.
-* Document sensitive operations accurately.
-* Verify payment-provider webhook signatures using the provider’s actual verification procedure.
-* Document rate limiting and idempotency where relevant and implemented.
-* Treat API documentation as a contract, not as a substitute for server-side security controls.
+- Never commit secrets to API documentation.
+- Keep provider credentials and production configuration in secure environment settings.
+- Do not expose internal administrative routes as public operations.
+- Enforce role and ownership checks on the server.
+- Validate input and reject unauthorized mass assignment.
+- Rate-limit authentication, recovery, search, and public submission endpoints where appropriate.
+- Verify payment webhooks using the payment provider’s documented signature-verification procedure and the exact raw request body.
+- Apply idempotency and concurrency controls to financial operations where supported.
+- Calculate payable amounts and subscription entitlements server-side.
+- Prevent cross-user access to applications, documents, notifications, and other private records.
+- Document CSRF protections for cookie-authenticated state-changing operations.
+- Return sanitized errors without exposing internal implementation details.
 
-10. Maintenance Checklist
+OpenAPI security declarations describe the intended contract. Actual security depends on backend enforcement.
 
-* [ ]	Every documented endpoint exists and is mounted.
-* [ ]	HTTP methods and paths match the implementation.
-* [ ]	Request and response schemas match actual payloads.
-* [ ]	Authentication and authorization requirements are correct.
-* [ ]	Status codes and error formats match server behavior.
-* [ ]	Examples use synthetic data.
-* [ ]	No secrets or sensitive personal data are present.
-* [ ]	OpenAPI validation passes locally and in CI.
-* [ ]	Relevant API tests pass.
-* [ ]	Breaking changes are reviewed and documented.
+## 10. Maintenance Checklist
 
-Important Notes
+- [ ] Every documented endpoint exists and is mounted.
+- [ ] HTTP methods and paths match the backend.
+- [ ] Request schemas match the actual validators.
+- [ ] Response schemas match actual controller and service output.
+- [ ] Authentication and authorization requirements are correct.
+- [ ] Resource ownership is enforced server-side.
+- [ ] Status codes and error envelopes are accurate.
+- [ ] Pagination and filtering match implemented behavior.
+- [ ] Examples contain synthetic data only.
+- [ ] No secrets or private personal data are exposed.
+- [ ] Placeholders are resolved or clearly marked.
+- [ ] OpenAPI linting passes locally and in CI.
+- [ ] Relevant automated tests pass.
+- [ ] Breaking changes are reviewed and documented.
 
-* openapi.yaml is authoritative only to the extent that it matches the implemented backend.
-* Placeholders must be replaced or clearly identified before release.
-* OpenAPI linting checks the specification’s structure and conventions; it does not establish backend correctness.
-* Keep documentation, backend implementation, frontend expectations, and automated tests aligned.
+## 11. Definition of Done
 
-Maintenance principle: MedOrbits API documentation must be accurate, secure, testable, and synchronized with the deployed implementation.
+An API documentation change is complete when:
+
+1. The specification accurately represents the implemented route and its behavior.
+2. Request validation, response schemas, and security requirements are verified.
+3. The OpenAPI validator passes.
+4. Relevant automated tests pass.
+5. Compatibility and security implications have been reviewed.
+6. Any unresolved implementation dependency is explicitly documented.
+
+**Maintenance principle:** MedOrbits API documentation must remain accurate, secure, testable, version-controlled, and synchronized with the deployed implementation.

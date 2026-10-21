@@ -1,116 +1,158 @@
+
 'use strict';
 
 /**
-
-* MedOrbits -- Payment Configuration
-* Reads provider selection, currency, and provider credentials.
-* Secrets must remain server-side and must never be returned to clients.
-    */
+ * MedOrbits -- Payment Configuration
+ *
+ * File: src/integrations/payment/payment.config.js
+ * Runtime: Node.js >= 20
+ *
+ * Loads and validates payment provider configuration.
+ *
+ * Security:
+ * - Provider secrets remain server-side.
+ * - Only the selected provider's credentials are required.
+ * - Webhook secrets are mandatory.
+ * - Configuration objects are immutable.
+ * - Never return this configuration from public API endpoints.
+ */
 
 const SUPPORTED_PROVIDERS = Object.freeze([
-'razorpay',
-'stripe',
+  'razorpay',
+  'stripe',
 ]);
 
-const SUPPORTED_CURRENCIES = new Set([
-'INR',
-'USD',
-'EUR',
-'GBP',
-'AUD',
-'CAD',
-'SGD',
+const SUPPORTED_CURRENCIES = Object.freeze([
+  'INR',
+  'USD',
+  'EUR',
+  'GBP',
+  'AUD',
+  'CAD',
+  'SGD',
 ]);
 
-function readSecret(env, name) {
-const value = env[name];
+const SUPPORTED_PROVIDER_SET = new Set(SUPPORTED_PROVIDERS);
+const SUPPORTED_CURRENCY_SET = new Set(SUPPORTED_CURRENCIES);
 
-if (value === undefined || value === null) {
-return '';
-}
+function readEnvString(env, name, { required = false } = {}) {
+  const value = env[name];
 
-if (typeof value !== 'string') {
-throw new TypeError(`${name} must be a string.`);
-}
+  if (value === undefined || value === null || value === '') {
+    if (required) {
+      throw new Error(`${name} is required.`);
+    }
 
-return value.trim();
+    return '';
+  }
+
+  if (typeof value !== 'string') {
+    throw new TypeError(`${name} must be a string.`);
+  }
+
+  const normalized = value.trim();
+
+  if (required && !normalized) {
+    throw new Error(`${name} is required.`);
+  }
+
+  if (/[\u0000-\u001F\u007F]/u.test(normalized)) {
+    throw new Error(`${name} contains invalid control characters.`);
+  }
+
+  return normalized;
 }
 
 function loadPaymentConfig(env = process.env) {
-if (!env || typeof env !== 'object') {
-throw new TypeError('Payment environment configuration is required.');
-}
+  if (
+    !env ||
+    typeof env !== 'object' ||
+    Array.isArray(env)
+  ) {
+    throw new TypeError(
+      'Payment environment configuration is required.',
+    );
+  }
 
-const provider = readSecret(env, 'PAYMENT_PROVIDER').toLowerCase();
+  const provider = readEnvString(
+    env,
+    'PAYMENT_PROVIDER',
+    { required: true },
+  ).toLowerCase();
 
-if (!SUPPORTED_PROVIDERS.includes(provider)) {
-throw new Error(
-'PAYMENT_PROVIDER must be razorpay or stripe.'
-);
-}
+  if (!SUPPORTED_PROVIDER_SET.has(provider)) {
+    throw new Error(
+      'PAYMENT_PROVIDER must be razorpay or stripe.',
+    );
+  }
 
-const currency = (
-readSecret(env, 'PAYMENT_CURRENCY') || 'INR'
-).toUpperCase();
+  const currency = (
+    readEnvString(env, 'PAYMENT_CURRENCY') || 'INR'
+  ).toUpperCase();
 
-if (!SUPPORTED_CURRENCIES.has(currency)) {
-throw new Error('PAYMENT_CURRENCY is not supported by this configuration.');
-}
+  if (!SUPPORTED_CURRENCY_SET.has(currency)) {
+    throw new Error(
+      'PAYMENT_CURRENCY is not supported by this configuration.',
+    );
+  }
 
-const config = {
-provider,
-currency,
+  const razorpay = {
+    keyId: '',
+    keySecret: '',
+    webhookSecret: '',
+  };
 
-razorpay: {
-  keyId: readSecret(env, 'RAZORPAY_KEY_ID'),
-  keySecret: readSecret(env, 'RAZORPAY_KEY_SECRET'),
-  webhookSecret: readSecret(env, 'RAZORPAY_WEBHOOK_SECRET'),
-},
-stripe: {
-  secretKey: readSecret(env, 'STRIPE_SECRET_KEY'),
-  webhookSecret: readSecret(env, 'STRIPE_WEBHOOK_SECRET'),
-},
+  const stripe = {
+    secretKey: '',
+    webhookSecret: '',
+  };
 
-};
+  if (provider === 'razorpay') {
+    razorpay.keyId = readEnvString(
+      env,
+      'RAZORPAY_KEY_ID',
+      { required: true },
+    );
 
-if (provider === 'razorpay') {
-if (!config.razorpay.keyId || !config.razorpay.keySecret) {
-throw new Error(
-'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required.'
-);
-}
+    razorpay.keySecret = readEnvString(
+      env,
+      'RAZORPAY_KEY_SECRET',
+      { required: true },
+    );
 
-if (!config.razorpay.webhookSecret) {
-  throw new Error(
-    'RAZORPAY_WEBHOOK_SECRET is required for webhook verification.'
-  );
-}
+    razorpay.webhookSecret = readEnvString(
+      env,
+      'RAZORPAY_WEBHOOK_SECRET',
+      { required: true },
+    );
+  }
 
-}
+  if (provider === 'stripe') {
+    stripe.secretKey = readEnvString(
+      env,
+      'STRIPE_SECRET_KEY',
+      { required: true },
+    );
 
-if (provider === 'stripe') {
-if (!config.stripe.secretKey) {
-throw new Error('STRIPE_SECRET_KEY is required.');
-}
+    stripe.webhookSecret = readEnvString(
+      env,
+      'STRIPE_WEBHOOK_SECRET',
+      { required: true },
+    );
+  }
 
-if (!config.stripe.webhookSecret) {
-  throw new Error(
-    'STRIPE_WEBHOOK_SECRET is required for webhook verification.'
-  );
-}
+  const config = {
+    provider,
+    currency,
+    razorpay: Object.freeze(razorpay),
+    stripe: Object.freeze(stripe),
+  };
 
-}
-
-for (const providerConfig of [
-config.razorpay,
-config.stripe,
-]) {
-Object.freeze(providerConfig);
-}
-
-return Object.freeze(config);
+  return Object.freeze(config);
 }
 
 module.exports = {
-loadPaymentConfig,
+  loadPaymentConfig,
+  SUPPORTED_PROVIDERS,
+  SUPPORTED_CURRENCIES,
 };

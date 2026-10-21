@@ -1,5 +1,24 @@
-  
+
 'use strict';
+
+/**
+ * MedOrbits -- Authentication Authorization Policies
+ *
+ * File: src/policies/auth.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Controls authentication eligibility, authenticated access, account
+ * management, session management, password operations, and privileged
+ * authentication configuration.
+ *
+ * Security requirements:
+ * - Actor identity, roles, and permissions must come from trusted
+ *   authentication middleware or a verified server-side session.
+ * - These policies do not validate credentials, tokens, sessions,
+ *   password-reset tokens, or database state.
+ * - Services must enforce atomic database updates and audit sensitive
+ *   administrative actions.
+ */
 
 const {
   isAdmin,
@@ -15,57 +34,95 @@ const DISABLED_STATUSES = new Set([
   'locked',
   'deleted',
   'banned',
+  'deactivated',
 ]);
 
-const PRIVILEGED_ACCOUNT_STATUSES = new Set([
-  'active',
-  'verified',
-]);
-
-const SESSION_OWNER_FIELDS = [
+const SESSION_OWNER_FIELDS = Object.freeze([
   'userId',
+  'user_id',
   'ownerId',
+  'owner_id',
   'accountId',
-];
+  'account_id',
+]);
 
-/**
- * Normalize a status without changing the source object.
- */
+const PASSWORD_RESET_EMAIL_MAX_LENGTH = 254;
+
 function normalizeStatus(value) {
   return typeof value === 'string'
     ? value.trim().toLowerCase()
     : '';
 }
 
-/**
- * Determine whether an account is allowed to authenticate.
- * Verification requirements should be configured for the actual
- * MedOrbits registration and verification workflow.
- */
-function canAuthenticate(account) {
-  if (!account || typeof account !== 'object') {
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
+}
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isDeleted(account) {
+  return (
+    account.deletedAt != null ||
+    account.deleted_at != null
+  );
+}
+
+function isAccountDisabled(account) {
+  if (!account || typeof account !== 'object') {
+    return true;
   }
 
   if (
     account.isDisabled === true ||
     account.isSuspended === true ||
     account.isLocked === true ||
-    account.deletedAt != null
+    account.isDeleted === true ||
+    account.is_deleted === true ||
+    isDeleted(account)
+  ) {
+    return true;
+  }
+
+  return DISABLED_STATUSES.has(normalizeStatus(account.status));
+}
+
+/**
+ * Determines whether a stored account may authenticate.
+ *
+ * Verification rules must match the actual registration workflow.
+ * This implementation blocks explicitly unverified/pending accounts
+ * but does not require a verification field when it is absent.
+ */
+function canAuthenticate(account) {
+  if (
+    !account ||
+    typeof account !== 'object' ||
+    Array.isArray(account) ||
+    isAccountDisabled(account)
   ) {
     return false;
   }
 
   const status = normalizeStatus(account.status);
 
-  if (DISABLED_STATUSES.has(status)) {
+  if (
+    status === 'pending_verification' ||
+    status === 'unverified' ||
+    status === 'pending'
+  ) {
     return false;
   }
 
-  // Explicitly pending accounts must verify before login.
   if (
-    status === 'pending_verification' ||
-    status === 'unverified'
+    account.emailVerified === false ||
+    account.email_verified === false
   ) {
     return false;
   }
@@ -74,35 +131,39 @@ function canAuthenticate(account) {
 }
 
 /**
- * Determine whether an account is allowed to access protected
- * authenticated routes.
- *
- * Token verification and session validation must happen before
- * this policy is called.
+ * Determines whether an authenticated actor may access protected
+ * routes. Token and session verification must already have succeeded.
  */
 function canAccessAuthenticatedResources(actor) {
-  if (!actor || typeof actor !== 'object') {
-    return false;
-  }
+  return Boolean(
+    actor &&
+    typeof actor === 'object' &&
+    !Array.isArray(actor) &&
+    !isAccountDisabled(actor) &&
+    !['pending_verification', 'unverified', 'pending'].includes(
+      normalizeStatus(actor.status)
+    ) &&
+    actor.emailVerified !== false &&
+    actor.email_verified !== false
+  );
+}
 
-  if (
-    actor.isDisabled === true ||
-    actor.isSuspended === true ||
-    actor.isLocked === true ||
-    actor.deletedAt != null
-  ) {
-    return false;
-  }
-
-  return !DISABLED_STATUSES.has(normalizeStatus(actor.status));
+function validTargetUserId(targetUserId) {
+  return (
+    targetUserId !== null &&
+    targetUserId !== undefined &&
+    targetUserId !== ''
+  );
 }
 
 /**
- * A user may access their own account-management operations.
- * Administrators require the explicit permission for other users.
+ * Controls account-management access.
  */
 function canManageAccount(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !validTargetUserId(targetUserId)
+  ) {
     return false;
   }
 
@@ -118,10 +179,14 @@ function canManageAccount(actor, targetUserId) {
 
 /**
  * Controls viewing authentication-related account information.
- * Sensitive secrets must never be returned, even to administrators.
+ * Callers must still redact password hashes, tokens, MFA secrets,
+ * recovery codes, and other authentication secrets.
  */
 function canViewAuthAccount(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !validTargetUserId(targetUserId)
+  ) {
     return false;
   }
 
@@ -136,15 +201,15 @@ function canViewAuthAccount(actor, targetUserId) {
 }
 
 /**
- * Controls changing another account's authentication status.
+ * Controls administrative changes to another account's status.
+ * The service must validate the target status and allowed transition.
  */
 function canChangeAccountStatus(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
-    return false;
-  }
-
-  // Users cannot elevate or disable accounts through self-service.
-  if (sameId(actorId(actor), targetUserId)) {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !validTargetUserId(targetUserId) ||
+    sameId(actorId(actor), targetUserId)
+  ) {
     return false;
   }
 
@@ -155,7 +220,7 @@ function canChangeAccountStatus(actor, targetUserId) {
 }
 
 /**
- * Resolve a session's owner from trusted stored session data.
+ * Resolves a session owner from trusted stored session data.
  */
 function sessionOwnerId(session) {
   if (!session || typeof session !== 'object') {
@@ -175,18 +240,51 @@ function sessionOwnerId(session) {
   return null;
 }
 
+function isSessionRevoked(session) {
+  return Boolean(
+    session.revoked === true ||
+    session.revokedAt != null ||
+    session.revoked_at != null
+  );
+}
+
+function isSessionExpired(session, now = Date.now()) {
+  const rawExpiry = session.expiresAt ?? session.expires_at;
+
+  if (rawExpiry == null) {
+    // Missing expiry is not proof that the session is valid.
+    return true;
+  }
+
+  const expiry =
+    rawExpiry instanceof Date
+      ? rawExpiry.getTime()
+      : typeof rawExpiry === 'number'
+        ? rawExpiry
+        : Date.parse(rawExpiry);
+
+  return !Number.isFinite(expiry) || expiry <= now;
+}
+
 /**
- * Controls whether an actor may view or revoke a session.
+ * Controls viewing or managing a live session.
+ * The service must additionally load the authoritative session record.
  */
 function canManageSession(actor, session) {
-  if (!actor || !session || typeof session !== 'object') {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    Array.isArray(session) ||
+    isSessionRevoked(session) ||
+    isSessionExpired(session)
+  ) {
     return false;
   }
 
-  if (
-    session.revokedAt != null ||
-    session.revoked === true
-  ) {
+  const ownerId = sessionOwnerId(session);
+
+  if (!validTargetUserId(ownerId)) {
     return false;
   }
 
@@ -197,16 +295,26 @@ function canManageSession(actor, session) {
     return true;
   }
 
-  return sameId(actorId(actor), sessionOwnerId(session));
+  return sameId(actorId(actor), ownerId);
 }
 
 /**
- * Controls revocation of sessions.
- * Revoking an already revoked session should be handled
- * idempotently by the session service.
+ * Controls revocation of a session, including idempotent service
+ * handling for already-revoked sessions.
  */
 function canRevokeSession(actor, session) {
-  if (!actor || !session || typeof session !== 'object') {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !session ||
+    typeof session !== 'object' ||
+    Array.isArray(session)
+  ) {
+    return false;
+  }
+
+  const ownerId = sessionOwnerId(session);
+
+  if (!validTargetUserId(ownerId)) {
     return false;
   }
 
@@ -217,14 +325,17 @@ function canRevokeSession(actor, session) {
     return true;
   }
 
-  return sameId(actorId(actor), sessionOwnerId(session));
+  return sameId(actorId(actor), ownerId);
 }
 
 /**
- * Controls revoking all sessions for a target account.
+ * Controls revoking all sessions belonging to a target account.
  */
 function canRevokeAllSessions(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !validTargetUserId(targetUserId)
+  ) {
     return false;
   }
 
@@ -239,44 +350,49 @@ function canRevokeAllSessions(actor, targetUserId) {
 }
 
 /**
- * Controls password changes for the authenticated user.
- * The service must still verify the current password.
+ * Controls changing the authenticated user's own password.
+ * The service must verify the current password or a valid reset token.
  */
 function canChangeOwnPassword(actor, targetUserId) {
   return Boolean(
-    actor &&
-    targetUserId != null &&
-    targetUserId !== '' &&
-    sameId(actorId(actor), targetUserId) &&
-    canAccessAuthenticatedResources(actor)
+    canAccessAuthenticatedResources(actor) &&
+    validTargetUserId(targetUserId) &&
+    sameId(actorId(actor), targetUserId)
   );
 }
 
 /**
- * Controls password-reset initiation.
- * Public reset requests should normally be accepted without
- * revealing whether the account exists.
+ * Validates the shape of a public password-reset request.
+ *
+ * Always return a generic response from the endpoint so callers
+ * cannot determine whether an email address has an account.
  */
 function canRequestPasswordReset(input) {
-  return Boolean(
-    input &&
-    typeof input === 'object' &&
-    !Array.isArray(input) &&
-    typeof input.email === 'string' &&
-    input.email.trim().length > 0
-  );
-}
-
-/**
- * Controls administrative password resets.
- * This does not authorize bypassing verification or audit controls.
- */
-function canResetAnotherUserPassword(actor, targetUserId) {
-  if (!actor || targetUserId == null || targetUserId === '') {
+  if (!isPlainObject(input) || typeof input.email !== 'string') {
     return false;
   }
 
-  if (sameId(actorId(actor), targetUserId)) {
+  const email = input.email.trim();
+
+  return (
+    email.length > 0 &&
+    email.length <= PASSWORD_RESET_EMAIL_MAX_LENGTH &&
+    !/[\r\n]/.test(email) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  );
+}
+
+/**
+ * Controls administrative password resets for another user.
+ * Password-reset tokens, notification delivery, rate limiting,
+ * and audit logging remain service responsibilities.
+ */
+function canResetAnotherUserPassword(actor, targetUserId) {
+  if (
+    !canAccessAuthenticatedResources(actor) ||
+    !validTargetUserId(targetUserId) ||
+    sameId(actorId(actor), targetUserId)
+  ) {
     return false;
   }
 
@@ -291,7 +407,7 @@ function canResetAnotherUserPassword(actor, targetUserId) {
  */
 function canManageAuthConfiguration(actor) {
   return Boolean(
-    actor &&
+    canAccessAuthenticatedResources(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'auth:configuration:manage')
@@ -300,39 +416,36 @@ function canManageAuthConfiguration(actor) {
 }
 
 /**
- * Controls whether an account may use privileged operations.
- * Account status is checked independently of role.
+ * Controls access to privileged authentication operations.
+ *
+ * Permission and role claims must be server-verified. Do not trust
+ * arbitrary permissions supplied by a request or unverified JWT.
  */
 function canUsePrivilegedAuthOperations(actor) {
-  if (!actor || !canAccessAuthenticatedResources(actor)) {
-    return false;
-  }
-
-  const status = normalizeStatus(actor.status);
-
-  if (
-    status &&
-    !PRIVILEGED_ACCOUNT_STATUSES.has(status) &&
-    status !== 'active'
-  ) {
+  if (!canAccessAuthenticatedResources(actor)) {
     return false;
   }
 
   return Boolean(
     isAdmin(actor) ||
     hasRole(actor, 'support', 'counsellor') ||
-    Array.isArray(actor.permissions) &&
-      actor.permissions.length > 0
+    hasPermission(actor, 'auth:operations:use')
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
+  DISABLED_STATUSES,
+  SESSION_OWNER_FIELDS,
+  normalizeStatus,
+  isAccountDisabled,
   canAuthenticate,
   canAccessAuthenticatedResources,
   canManageAccount,
   canViewAuthAccount,
   canChangeAccountStatus,
   sessionOwnerId,
+  isSessionRevoked,
+  isSessionExpired,
   canManageSession,
   canRevokeSession,
   canRevokeAllSessions,
@@ -341,4 +454,4 @@ module.exports = {
   canResetAnotherUserPassword,
   canManageAuthConfiguration,
   canUsePrivilegedAuthOperations,
-};
+});

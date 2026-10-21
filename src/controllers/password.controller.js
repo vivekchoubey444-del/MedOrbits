@@ -1,38 +1,64 @@
+
 'use strict';
 
-const { asyncHandler, sendSuccess, httpError } = require('../utils/http');
+const {
+  asyncHandler,
+  sendSuccess,
+  httpError,
+} = require('../utils/http');
+
 const { requireUser } = require('./controller.helpers');
 const validator = require('../validators/password.validator');
 const passwordService = require('../services/password.service');
 
-const controller = {};
+function requireValidator(methodName) {
+  if (!validator || typeof validator[methodName] !== 'function') {
+    throw httpError(
+      500,
+      'PASSWORD_VALIDATOR_MISCONFIGURED',
+      'Password validation is not configured.'
+    );
+  }
+
+  return validator[methodName].bind(validator);
+}
+
+function requireService(methodName) {
+  if (!passwordService || typeof passwordService[methodName] !== 'function') {
+    throw httpError(
+      503,
+      'PASSWORD_SERVICE_UNAVAILABLE',
+      'This password operation is temporarily unavailable.'
+    );
+  }
+
+  return passwordService[methodName].bind(passwordService);
+}
 
 /**
  * PATCH /auth/password/change
  * Change the password for the authenticated user.
  */
-controller.change = asyncHandler(async (req, res) => {
+const change = asyncHandler(async (req, res) => {
   const user = requireUser(req);
+  const validateChange = requireValidator('validateChange');
+  const data = validateChange(req.body);
 
-  if (!validator || typeof validator.validateChange !== 'function') {
+  if (
+    !data ||
+    typeof data.currentPassword !== 'string' ||
+    typeof data.newPassword !== 'string'
+  ) {
     throw httpError(
-      500,
-      'PASSWORD_VALIDATOR_MISCONFIGURED',
-      'Password change validation is not configured.'
+      400,
+      'INVALID_PASSWORD_DATA',
+      'Valid current and new passwords are required.'
     );
   }
 
-  const data = validator.validateChange(req.body);
+  const changePassword = requireService('changePassword');
 
-  if (typeof passwordService.changePassword !== 'function') {
-    throw httpError(
-      500,
-      'PASSWORD_SERVICE_MISCONFIGURED',
-      'Password change is not configured.'
-    );
-  }
-
-  await passwordService.changePassword({
+  await changePassword({
     userId: user.id,
     currentPassword: data.currentPassword,
     newPassword: data.newPassword,
@@ -45,34 +71,25 @@ controller.change = asyncHandler(async (req, res) => {
 
 /**
  * POST /auth/password/reset/request
- * Request a password-reset email.
+ * Request a password-reset email without revealing account existence.
  */
-controller.requestReset = asyncHandler(async (req, res) => {
-  if (!validator || typeof validator.validateResetRequest !== 'function') {
-    throw httpError(
-      500,
-      'PASSWORD_VALIDATOR_MISCONFIGURED',
-      'Password-reset validation is not configured.'
-    );
+const requestReset = asyncHandler(async (req, res) => {
+  const validateResetRequest = requireValidator('validateResetRequest');
+  const data = validateResetRequest(req.body);
+
+  if (!data || typeof data.email !== 'string') {
+    throw httpError(400, 'INVALID_EMAIL', 'A valid email address is required.');
   }
 
-  const data = validator.validateResetRequest(req.body);
+  const requestPasswordReset = requireService('requestPasswordReset');
 
-  if (typeof passwordService.requestPasswordReset !== 'function') {
-    throw httpError(
-      500,
-      'PASSWORD_SERVICE_MISCONFIGURED',
-      'Password-reset requests are not configured.'
-    );
-  }
-
-  await passwordService.requestPasswordReset({
-    email: data.email,
+  await requestPasswordReset({
+    email: data.email.trim().toLowerCase(),
   });
 
-  // Avoid revealing whether an account exists.
   return sendSuccess(res, {
-    message: 'If an account matches that email, password-reset instructions will be sent.',
+    message:
+      'If an account matches that email, password-reset instructions will be sent.',
   });
 });
 
@@ -80,26 +97,25 @@ controller.requestReset = asyncHandler(async (req, res) => {
  * POST /auth/password/reset
  * Reset a password using a single-use token.
  */
-controller.reset = asyncHandler(async (req, res) => {
-  if (!validator || typeof validator.validateReset !== 'function') {
+const reset = asyncHandler(async (req, res) => {
+  const validateReset = requireValidator('validateReset');
+  const data = validateReset(req.body);
+
+  if (
+    !data ||
+    typeof data.token !== 'string' ||
+    typeof data.newPassword !== 'string'
+  ) {
     throw httpError(
-      500,
-      'PASSWORD_VALIDATOR_MISCONFIGURED',
-      'Password-reset validation is not configured.'
+      400,
+      'INVALID_RESET_DATA',
+      'A valid reset token and new password are required.'
     );
   }
 
-  const data = validator.validateReset(req.body);
+  const resetPassword = requireService('resetPassword');
 
-  if (typeof passwordService.resetPassword !== 'function') {
-    throw httpError(
-      500,
-      'PASSWORD_SERVICE_MISCONFIGURED',
-      'Password reset is not configured.'
-    );
-  }
-
-  await passwordService.resetPassword({
+  await resetPassword({
     token: data.token,
     newPassword: data.newPassword,
   });
@@ -109,4 +125,8 @@ controller.reset = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = controller;
+module.exports = Object.freeze({
+  change,
+  requestReset,
+  reset,
+});

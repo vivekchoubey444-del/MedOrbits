@@ -1,36 +1,46 @@
+
 /* =========================================================
-   MedOrbits -- assets/js/forms.js
-   Form validation, submission, error handling, and UX helpers
+   MedOrbits -- Form Manager
+   File: /assets/js/forms.js
+   Purpose: Validation, secure submission, error handling,
+            accessibility and form UX helpers
    ========================================================= */
 
 (function (window, document) {
   "use strict";
 
+  if (window.MedOrbitsForms) return;
+
   const CONFIG = window.MedOrbitsConfig || {};
 
-  const DEFAULTS = {
+  const DEFAULTS = Object.freeze({
     formSelector: "[data-validate-form]",
     submittingText: "Submitting...",
     successMessage: "Form submitted successfully.",
     errorMessage: "Unable to submit the form. Please try again.",
     resetOnSuccess: false,
     focusFirstError: true
-  };
+  });
 
   const state = {
-    initialized: false,
     submitting: new WeakSet(),
-    originalButtonText: new WeakMap()
+    originalButtonState: new WeakMap(),
+    boundValidationForms: new WeakSet(),
+    boundAjaxForms: new WeakSet()
   };
 
   const VALIDATORS = {
-    required(value) {
+    required(value, parameter, field) {
+      if (field.type === "checkbox") return field.checked;
+      if (field.type === "radio") {
+        return Boolean(getCheckedRadio(field));
+      }
       return String(value ?? "").trim().length > 0;
     },
 
     email(value) {
       if (!value) return true;
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value).trim());
     },
 
     phone(value) {
@@ -43,9 +53,9 @@
       if (!value) return true;
 
       try {
-        const url = new URL(value);
+        const url = new URL(String(value));
         return ["http:", "https:"].includes(url.protocol);
-      } catch {
+      } catch (_) {
         return false;
       }
     },
@@ -83,23 +93,53 @@
 
       try {
         return new RegExp(pattern).test(String(value));
-      } catch {
+      } catch (_) {
         return false;
       }
     },
 
     match(value, selector, form) {
-      const target = form.querySelector(selector);
-      return Boolean(target) && value === target.value;
+      try {
+        const target = form.querySelector(selector);
+        return Boolean(target) && String(value) === String(getFieldValue(target));
+      } catch (_) {
+        return false;
+      }
     },
 
     accepted(value, field) {
       return field.type !== "checkbox" || field.checked;
+    },
+
+    fileType(value, acceptedTypes) {
+      if (!value || !value.length) return true;
+
+      const allowed = String(acceptedTypes)
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+
+      return value.every((file) => allowed.some((type) => {
+        if (type.startsWith(".")) {
+          return file.name.toLowerCase().endsWith(type);
+        }
+
+        if (type.endsWith("/*")) {
+          return file.type.startsWith(type.slice(0, -1));
+        }
+
+        return file.type.toLowerCase() === type;
+      }));
+    },
+
+    maxFileSize(value, maximumBytes) {
+      if (!value || !value.length) return true;
+      return value.every((file) => file.size <= Number(maximumBytes));
     }
   };
 
   function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
@@ -122,21 +162,27 @@
     );
   }
 
+  function getCheckedRadio(field) {
+    if (!field.name || !field.form) {
+      return field.checked ? field : null;
+    }
+
+    return Array.from(
+      field.form.querySelectorAll('input[type="radio"]')
+    ).find((radio) => radio.name === field.name && radio.checked) || null;
+  }
+
   function getFieldValue(field) {
     if (field.type === "checkbox") {
       return field.checked ? field.value || "on" : "";
     }
 
     if (field.type === "radio") {
-      const checked = field.form?.querySelector(
-        `input[type="radio"][name="${CSS.escape(field.name)}"]:checked`
-      );
-
-      return checked?.value ?? "";
+      return getCheckedRadio(field)?.value ?? "";
     }
 
     if (field.type === "file") {
-      return field.files?.length ? field.files : "";
+      return Array.from(field.files || []);
     }
 
     return String(field.value ?? "").trim();
@@ -152,6 +198,10 @@
     if (field.type === "email") rules.email = true;
     if (field.type === "url") rules.url = true;
     if (field.type === "number") rules.number = true;
+    if (field.type === "number" && field.step === "1") {
+      rules.integer = true;
+    }
+
     if (field.minLength > 0) rules.minLength = field.minLength;
     if (field.maxLength > 0) rules.maxLength = field.maxLength;
     if (field.min !== "") rules.min = field.min;
@@ -160,32 +210,45 @@
 
     if (field.dataset.rules) {
       try {
-        Object.assign(rules, JSON.parse(field.dataset.rules));
-      } catch {
-        console.warn("[MedOrbits Forms] Invalid data-rules JSON:", field.name);
+        const customRules = JSON.parse(field.dataset.rules);
+
+        if (
+          customRules &&
+          typeof customRules === "object" &&
+          !Array.isArray(customRules)
+        ) {
+          Object.assign(rules, customRules);
+        }
+      } catch (_) {
+        console.warn(
+          "[MedOrbits Forms] Invalid data-rules JSON:",
+          field.name || field.id
+        );
       }
     }
 
-    if (field.dataset.match) {
-      rules.match = field.dataset.match;
-    }
-
-    if (field.dataset.phone === "true") {
-      rules.phone = true;
-    }
-
-    if (field.dataset.integer === "true") {
-      rules.integer = true;
-    }
+    if (field.dataset.match) rules.match = field.dataset.match;
+    if (field.dataset.phone === "true") rules.phone = true;
+    if (field.dataset.integer === "true") rules.integer = true;
 
     if (field.type === "checkbox" && field.dataset.acceptance === "true") {
       rules.accepted = true;
     }
 
+    if (field.type === "file") {
+      if (field.dataset.fileTypes) {
+        rules.fileType = field.dataset.fileTypes;
+      }
+
+      if (field.dataset.maxFileSize) {
+        rules.maxFileSize = Number(field.dataset.maxFileSize);
+      }
+    }
+
     return rules;
   }
 
-  function getRuleMessage(rule, value, field, parameter) {
+  function getRuleMessage(rule, field, parameter) {
     const label = getFieldLabel(field);
 
     const messages = {
@@ -201,30 +264,39 @@
       max: `${label} must not exceed ${parameter}.`,
       pattern: `${label} has an invalid format.`,
       match: `${label} does not match the required field.`,
-      accepted: "You must accept this requirement to continue."
+      accepted: "You must accept this requirement to continue.",
+      fileType: `${label} has an unsupported file type.`,
+      maxFileSize: `${label} exceeds the permitted file size.`
     };
 
-    return field.dataset.errorMessage ||
+    return (
+      field.dataset.errorMessage ||
       field.dataset[`${rule}Message`] ||
       messages[rule] ||
-      `${label} is invalid.`;
+      `${label} is invalid.`
+    );
   }
 
   function validateField(field, form) {
     if (
       !field ||
       field.disabled ||
-      ["submit", "button", "reset"].includes(field.type)
+      field.type === "submit" ||
+      field.type === "button" ||
+      field.type === "reset"
     ) {
       return { valid: true, errors: [] };
     }
 
-    if (field.type === "radio" && form) {
-      const group = form.querySelectorAll(
-        `input[type="radio"][name="${CSS.escape(field.name)}"]`
-      );
+    // Validate radio groups once, using their first enabled member.
+    if (field.type === "radio" && form && field.name) {
+      const radios = Array.from(
+        form.querySelectorAll('input[type="radio"]')
+      ).filter((radio) => radio.name === field.name && !radio.disabled);
 
-      if ([...group].some(item => item !== field && item.dataset.validationChecked)) {
+      const first = radios[0];
+
+      if (first && field !== first) {
         return { valid: true, errors: [] };
       }
     }
@@ -236,7 +308,12 @@
     for (const [rule, parameter] of Object.entries(rules)) {
       if (!Object.prototype.hasOwnProperty.call(VALIDATORS, rule)) continue;
 
-      if (rule !== "required" && rule !== "accepted" && value === "") {
+      if (
+        rule !== "required" &&
+        rule !== "accepted" &&
+        value === "" &&
+        !(field.type === "file" && value.length)
+      ) {
         continue;
       }
 
@@ -244,14 +321,12 @@
 
       if (rule === "match") {
         valid = VALIDATORS.match(value, parameter, form);
-      } else if (rule === "accepted") {
-        valid = VALIDATORS.accepted(value, field);
       } else {
-        valid = VALIDATORS[rule](value, parameter);
+        valid = VALIDATORS[rule](value, parameter, field);
       }
 
       if (!valid) {
-        errors.push(getRuleMessage(rule, value, field, parameter));
+        errors.push(getRuleMessage(rule, field, parameter));
       }
     }
 
@@ -262,23 +337,18 @@
   }
 
   function getValidationFields(form) {
-    return [...form.querySelectorAll(
-      "input, select, textarea"
-    )].filter(field => {
-      if (field.type === "radio") {
-        const radios = form.querySelectorAll(
-          `input[type="radio"][name="${CSS.escape(field.name)}"]`
-        );
+    return Array.from(form.querySelectorAll("input, select, textarea"))
+      .filter((field) => {
+        if (field.type === "radio" && field.name) {
+          const radios = Array.from(
+            form.querySelectorAll('input[type="radio"]')
+          ).filter((radio) => radio.name === field.name && !radio.disabled);
 
-        const hasRequired = [...radios].some(
-          radio => radio.required || radio.dataset.required === "true"
-        );
+          return field === radios[0];
+        }
 
-        return hasRequired ? field === radios[0] : true;
-      }
-
-      return true;
-    });
+        return true;
+      });
   }
 
   function getErrorElement(field) {
@@ -286,13 +356,15 @@
 
     if (!id) return null;
 
-    let errorElement = document.getElementById(`${id}-error`);
+    const errorId = `${id}-error`;
+    let errorElement = document.getElementById(errorId);
 
     if (!errorElement) {
       errorElement = document.createElement("p");
-      errorElement.id = `${id}-error`;
+      errorElement.id = errorId;
       errorElement.className = "form-field-error";
       errorElement.setAttribute("aria-live", "polite");
+      errorElement.hidden = true;
 
       const container = field.closest(
         "[data-form-field], .form-group, .form-field"
@@ -315,26 +387,32 @@
     const errorElement = getErrorElement(field);
 
     if (errorElement) {
-      errorElement.textContent = message;
+      errorElement.textContent = message || "";
       errorElement.hidden = !message;
-    }
 
-    if (message) {
       const describedBy = new Set(
         (field.getAttribute("aria-describedby") || "")
           .split(/\s+/)
           .filter(Boolean)
       );
 
-      if (errorElement) describedBy.add(errorElement.id);
+      if (message) {
+        describedBy.add(errorElement.id);
+      } else {
+        describedBy.delete(errorElement.id);
+      }
 
       if (describedBy.size) {
         field.setAttribute("aria-describedby", [...describedBy].join(" "));
+      } else {
+        field.removeAttribute("aria-describedby");
       }
     }
   }
 
   function clearFieldError(field) {
+    if (!field) return;
+
     field.classList.remove("is-invalid");
     field.removeAttribute("aria-invalid");
 
@@ -346,24 +424,37 @@
     if (errorElement) {
       errorElement.textContent = "";
       errorElement.hidden = true;
+
+      const describedBy = new Set(
+        (field.getAttribute("aria-describedby") || "")
+          .split(/\s+/)
+          .filter(Boolean)
+      );
+
+      describedBy.delete(errorElement.id);
+
+      if (describedBy.size) {
+        field.setAttribute("aria-describedby", [...describedBy].join(" "));
+      } else {
+        field.removeAttribute("aria-describedby");
+      }
     }
   }
 
   function validateForm(form, options = {}) {
-    const fields = getValidationFields(form);
+    if (!(form instanceof HTMLFormElement)) {
+      throw new TypeError("A valid form element is required.");
+    }
+
     const errors = [];
 
-    fields.forEach(field => {
-      if (field.type === "radio") {
-        field.dataset.validationChecked = "true";
-      }
-
+    getValidationFields(form).forEach((field) => {
       clearFieldError(field);
 
       const result = validateField(field, form);
 
       if (!result.valid) {
-        result.errors.forEach(message => {
+        result.errors.forEach((message) => {
           setFieldError(field, message);
           errors.push({
             field,
@@ -375,18 +466,22 @@
     });
 
     if (options.focusFirstError !== false && errors.length) {
-      errors[0].field.focus({ preventScroll: false });
+      const first = errors[0].field;
+
+      try {
+        first.focus({ preventScroll: false });
+      } catch (_) {
+        first.focus();
+      }
     }
 
-    form.dispatchEvent(
-      new CustomEvent("medorbits:form-validated", {
-        bubbles: true,
-        detail: {
-          valid: errors.length === 0,
-          errors
-        }
-      })
-    );
+    form.dispatchEvent(new CustomEvent("medorbits:form-validated", {
+      bubbles: true,
+      detail: {
+        valid: errors.length === 0,
+        errors
+      }
+    }));
 
     return {
       valid: errors.length === 0,
@@ -411,17 +506,10 @@
     }
 
     if (options.includeUnchecked !== false) {
-      form.querySelectorAll('input[type="checkbox"][name]').forEach(field => {
+      form.querySelectorAll('input[type="checkbox"][name]').forEach((field) => {
         if (!field.checked && !(field.name in result)) {
           result[field.name] = false;
         }
-      });
-    }
-
-    if (options.asObjectURLs !== true) {
-      Object.keys(result).forEach(key => {
-        if (result[key] instanceof File) return;
-        if (Array.isArray(result[key])) return;
       });
     }
 
@@ -437,15 +525,15 @@
       'button[type="submit"], input[type="submit"], [data-submit-button]'
     );
 
-    buttons.forEach(button => {
+    buttons.forEach((button) => {
       if (submitting) {
-        if (!state.originalButtonText.has(button)) {
-          state.originalButtonText.set(
-            button,
-            button.tagName === "INPUT"
+        if (!state.originalButtonState.has(button)) {
+          state.originalButtonState.set(button, {
+            disabled: button.disabled,
+            text: button.tagName === "INPUT"
               ? button.value
               : button.textContent
-          );
+          });
         }
 
         button.disabled = true;
@@ -459,47 +547,55 @@
           button.textContent = text;
         }
       } else {
-        button.disabled = false;
-        button.removeAttribute("aria-busy");
+        const original = state.originalButtonState.get(button);
 
-        const original = state.originalButtonText.get(button);
+        if (original) {
+          button.disabled = original.disabled;
 
-        if (original !== undefined) {
           if (button.tagName === "INPUT") {
-            button.value = original;
+            button.value = original.text;
           } else {
-            button.textContent = original;
+            button.textContent = original.text;
           }
+
+          state.originalButtonState.delete(button);
         }
+
+        button.removeAttribute("aria-busy");
       }
     });
 
-    form.setAttribute("aria-busy", submitting ? "true" : "false");
+    if (submitting) {
+      form.setAttribute("aria-busy", "true");
+    } else {
+      form.removeAttribute("aria-busy");
+    }
   }
 
   function showMessage(message, type = "info", container) {
+    if (window.MedOrbitsToast?.show) {
+      window.MedOrbitsToast.show(String(message), type);
+      return;
+    }
+
     const target = typeof container === "string"
       ? document.querySelector(container)
       : container;
 
-    if (window.MedOrbitsToast?.show) {
-      window.MedOrbitsToast.show(message, type);
-      return;
-    }
-
     if (target) {
-      target.textContent = message;
+      target.textContent = String(message);
       target.className = `form-message form-message--${type}`;
       target.setAttribute("role", type === "error" ? "alert" : "status");
       target.hidden = false;
       return;
     }
 
-    document.dispatchEvent(
-      new CustomEvent("medorbits:toast", {
-        detail: { message, type }
-      })
-    );
+    document.dispatchEvent(new CustomEvent("medorbits:toast", {
+      detail: {
+        message: String(message),
+        type
+      }
+    }));
   }
 
   async function requestJSON(url, options = {}) {
@@ -508,22 +604,44 @@
       ...(options.headers || {})
     };
 
-    if (options.body && !(options.body instanceof FormData)) {
+    const requestOptions = { ...options };
+
+    if (
+      requestOptions.body &&
+      !(requestOptions.body instanceof FormData) &&
+      typeof requestOptions.body !== "string"
+    ) {
+      requestOptions.body = JSON.stringify(requestOptions.body);
       headers["Content-Type"] = "application/json";
+    } else if (
+      typeof requestOptions.body === "string" &&
+      !headers["Content-Type"]
+    ) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    // Do not set Content-Type manually for FormData: the browser supplies
+    // the multipart boundary.
+    if (requestOptions.body instanceof FormData) {
+      delete headers["Content-Type"];
     }
 
     const response = await fetch(url, {
       credentials: "same-origin",
-      ...options,
+      ...requestOptions,
       headers
     });
 
     if (response.status === 204) return null;
 
     const contentType = response.headers.get("content-type") || "";
-    const result = contentType.includes("application/json")
-      ? await response.json()
-      : await response.text();
+    let result;
+
+    if (contentType.includes("application/json")) {
+      result = await response.json();
+    } else {
+      result = await response.text();
+    }
 
     if (!response.ok) {
       const error = new Error(
@@ -542,6 +660,10 @@
   }
 
   async function submitForm(form, options = {}) {
+    if (!(form instanceof HTMLFormElement)) {
+      throw new TypeError("A valid form element is required.");
+    }
+
     if (state.submitting.has(form)) {
       throw new Error("This form is already being submitted.");
     }
@@ -561,18 +683,20 @@
 
     const url = options.url || form.action || window.location.href;
 
+    const hasFiles = Array.from(
+      form.querySelectorAll('input[type="file"]')
+    ).some((field) => field.files?.length);
+
     const useMultipart =
       options.multipart === true ||
       form.enctype === "multipart/form-data" ||
-      [...form.querySelectorAll('input[type="file"]')].some(
-        field => field.files?.length
-      );
+      hasFiles;
 
-    const body = useMultipart
+    const data = useMultipart
       ? serializeFormData(form)
-      : JSON.stringify(serializeForm(form, {
+      : serializeForm(form, {
           excludeEmpty: options.excludeEmpty
-        }));
+        });
 
     state.submitting.add(form);
     setSubmitting(form, true, options);
@@ -583,23 +707,22 @@
       if (typeof options.onSubmit === "function") {
         result = await options.onSubmit({
           form,
-          data: useMultipart ? body : JSON.parse(body),
+          data,
           validation
         });
       } else {
         result = await requestJSON(url, {
           method,
-          body,
-          headers: options.headers
+          body: useMultipart ? data : JSON.stringify(data),
+          headers: options.headers,
+          signal: options.signal
         });
       }
 
-      form.dispatchEvent(
-        new CustomEvent("medorbits:form-success", {
-          bubbles: true,
-          detail: { result }
-        })
-      );
+      form.dispatchEvent(new CustomEvent("medorbits:form-success", {
+        bubbles: true,
+        detail: { result }
+      }));
 
       showMessage(
         options.successMessage || DEFAULTS.successMessage,
@@ -609,8 +732,7 @@
 
       if (options.resetOnSuccess ?? DEFAULTS.resetOnSuccess) {
         form.reset();
-
-        form.querySelectorAll("input, select, textarea").forEach(clearFieldError);
+        getValidationFields(form).forEach(clearFieldError);
       }
 
       if (typeof options.onSuccess === "function") {
@@ -619,27 +741,32 @@
 
       return result;
     } catch (error) {
-      form.dispatchEvent(
-        new CustomEvent("medorbits:form-error", {
-          bubbles: true,
-          detail: { error }
-        })
-      );
+      form.dispatchEvent(new CustomEvent("medorbits:form-error", {
+        bubbles: true,
+        detail: { error }
+      }));
 
       if (error.code !== "VALIDATION_ERROR") {
         showMessage(
-          options.errorMessage || error.message || DEFAULTS.errorMessage,
+          options.errorMessage || DEFAULTS.errorMessage,
           "error",
           options.messageContainer
         );
       }
 
       if (window.MedOrbitsErrorHandler?.handle) {
-        window.MedOrbitsErrorHandler.handle(
-          error,
-          { source: "form-submit", formId: form.id || null },
-          { silent: true }
-        );
+        try {
+          window.MedOrbitsErrorHandler.handle(
+            error,
+            {
+              source: "form-submit",
+              formId: form.id || null
+            },
+            { silent: true }
+          );
+        } catch (_) {
+          // Preserve the original submission error.
+        }
       }
 
       if (typeof options.onError === "function") {
@@ -658,11 +785,18 @@
       ? document.querySelector(form)
       : form;
 
-    if (!target) return null;
+    if (!(target instanceof HTMLFormElement)) return null;
 
-    const validateOnInput = options.validateOnInput !== false;
+    if (state.boundValidationForms.has(target)) {
+      return {
+        validate: () => validateForm(target, options),
+        clear: () => getValidationFields(target).forEach(clearFieldError)
+      };
+    }
 
-    target.addEventListener("submit", event => {
+    state.boundValidationForms.add(target);
+
+    target.addEventListener("submit", (event) => {
       const result = validateForm(target, options);
 
       if (!result.valid) {
@@ -670,11 +804,14 @@
       }
     });
 
-    if (validateOnInput) {
-      target.addEventListener("input", event => {
+    if (options.validateOnInput !== false) {
+      target.addEventListener("input", (event) => {
         const field = event.target;
 
-        if (!field.matches("input, select, textarea")) return;
+        if (!(field instanceof HTMLElement) ||
+            !field.matches("input, select, textarea")) {
+          return;
+        }
 
         const result = validateField(field, target);
 
@@ -686,10 +823,13 @@
       });
     }
 
-    target.addEventListener("change", event => {
+    target.addEventListener("change", (event) => {
       const field = event.target;
 
-      if (!field.matches("input, select, textarea")) return;
+      if (!(field instanceof HTMLElement) ||
+          !field.matches("input, select, textarea")) {
+        return;
+      }
 
       const result = validateField(field, target);
 
@@ -702,9 +842,7 @@
 
     return {
       validate: () => validateForm(target, options),
-      clear: () => {
-        getValidationFields(target).forEach(clearFieldError);
-      }
+      clear: () => getValidationFields(target).forEach(clearFieldError)
     };
   }
 
@@ -713,17 +851,17 @@
       ? document.querySelector(form)
       : form;
 
-    if (!target) return null;
+    if (!(target instanceof HTMLFormElement)) return null;
 
-    if (target.dataset.ajaxFormBound === "true") return target;
+    if (state.boundAjaxForms.has(target)) return target;
 
-    target.dataset.ajaxFormBound = "true";
+    state.boundAjaxForms.add(target);
 
-    target.addEventListener("submit", event => {
+    target.addEventListener("submit", (event) => {
       event.preventDefault();
 
       submitForm(target, options).catch(() => {
-        // Errors are already surfaced through form events and feedback.
+        // Errors are surfaced through events and feedback.
       });
     });
 
@@ -733,14 +871,30 @@
   function init(root = document) {
     if (!root?.querySelectorAll) return api;
 
-    root.querySelectorAll(DEFAULTS.formSelector).forEach(form => {
-      if (form.dataset.validationBound === "true") return;
+    if (root instanceof HTMLFormElement) {
+      if (root.matches(DEFAULTS.formSelector)) {
+        bindValidation(root);
+      }
 
-      form.dataset.validationBound = "true";
+      if (root.matches("[data-ajax-form]")) {
+        bindAjaxForm(root, {
+          url: root.dataset.url || root.action,
+          method: root.dataset.method || root.method || "POST",
+          successMessage: root.dataset.successMessage,
+          errorMessage: root.dataset.errorMessage,
+          resetOnSuccess: root.dataset.resetOnSuccess === "true",
+          submittingText: root.dataset.submittingText
+        });
+      }
+
+      return api;
+    }
+
+    root.querySelectorAll(DEFAULTS.formSelector).forEach((form) => {
       bindValidation(form);
     });
 
-    root.querySelectorAll("[data-ajax-form]").forEach(form => {
+    root.querySelectorAll("[data-ajax-form]").forEach((form) => {
       bindAjaxForm(form, {
         url: form.dataset.url || form.action,
         method: form.dataset.method || form.method || "POST",
@@ -754,7 +908,7 @@
     return api;
   }
 
-  const api = {
+  const api = Object.freeze({
     VALIDATORS,
     validateField,
     validateForm,
@@ -768,10 +922,14 @@
     requestJSON,
     clearFieldError,
     setFieldError,
-    init
-  };
+    init,
+    defaults: DEFAULTS
+  });
 
   window.MedOrbitsForms = api;
+
+  window.MedOrbits = window.MedOrbits || {};
+  window.MedOrbits.Forms = api;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => init(), {
@@ -780,5 +938,4 @@
   } else {
     init();
   }
-
 })(window, document);

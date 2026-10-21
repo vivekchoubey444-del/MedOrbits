@@ -2,10 +2,10 @@ MedOrbits — Production Deployment Guide
 
 Document: README-PRODUCTION.md
 Project: MedOrbits
-Document type: Production deployment and operations runbook
-Status: Operational guidance — implementation must be verified
-Owner: MedOrbits maintainers
-Review frequency: Before major releases and whenever production architecture changes
+Document Type: Production Deployment and Operations Runbook
+Status: Operational Guidance — Implementation Must Be Verified
+Owner: MedOrbits Maintainers
+Review Frequency: Before major releases and whenever production architecture changes
 
 ⸻
 
@@ -58,11 +58,9 @@ docs/	Architecture, API, database, security, and operations documentation
 Dockerfile, docker-compose.yml	Container image construction and service orchestration
 .env.example, .nvmrc, package.json, package-lock.json	Configuration template, runtime expectations, package metadata, and dependency lockfile
 
-Application entry-point policy
+Application Entry-Point Policy
 
-The repository structure identifies both server.js and src/app.js, as well as index.html.
-
-Document their actual responsibilities before production deployment:
+The repository structure identifies server.js, src/app.js, and index.html. Document their actual responsibilities before production deployment.
 
 * server.js should be the designated production bootstrap if that is the chosen entry point.
 * src/app.js may construct and export the Express application, if that matches the implementation.
@@ -74,47 +72,21 @@ Select and document one production startup command. Do not assume that all three
 
 Maintain separate environments for development, testing, staging, and production.
 
-<box gap={2}>
-  <row align=“start” gap={3}>
-    <box background=“surface-secondary” radius=“lg” padding={2}>
-      <icon name=“laptop” size=“xl” />
-    </box>
-    <box flex=“1” gap={1}>
-      **Development**
-  <text color=“secondary” size=“sm”>Local implementation and debugging using synthetic data, local services, and development-only credentials.</text>
-</box>
-  </row>
-  <divider color=“subtle” />
-  <row align=“start” gap={3}>
-    <box background=“surface-secondary” radius=“lg” padding={2}>
-      <icon name=“flask-conical” size=“xl” />
-    </box>
-    <box flex=“1” gap={1}>
-      **Testing and CI**
-  <text color=“secondary” size=“sm”>Automated verification with isolated test databases, controlled fixtures, mocked or sandboxed external services, and repeatable builds.</text>
-</box>
-  </row>
-  <divider color=“subtle” />
-  <row align=“start” gap={3}>
-    <box background=“surface-secondary” radius=“lg” padding={2}>
-      <icon name=“clipboard-check” size=“xl” />
-    </box>
-    <box flex=“1” gap={1}>
-      **Staging**
-  <text color=“secondary” size=“sm”>Production-like deployment for migrations, end-to-end workflows, release approval, and recovery rehearsal using non-production data.</text>
-</box>
-  </row>
-  <divider color=“subtle” />
-  <row align=“start” gap={3}>
-    <box background=“surface-secondary” radius=“lg” padding={2}>
-      <icon name=“shield-check” size=“xl” />
-    </box>
-    <box flex=“1” gap={1}>
-      **Production**
-  <text color=“secondary” size=“sm”>Restricted credentials, HTTPS, private storage, least-privilege database access, monitored services, backups, and controlled releases.</text>
-</box>
-  </row>
-</box>
+Development
+
+Local implementation and debugging using synthetic data, local services, and development-only credentials.
+
+Testing and CI
+
+Automated verification with isolated test databases, controlled fixtures, mocked or sandboxed external services, and repeatable builds.
+
+Staging
+
+Production-like deployment for migrations, end-to-end workflows, release approval, and recovery rehearsal using non-production data.
+
+Production
+
+Restricted credentials, HTTPS, private storage, least-privilege database access, monitored services, backups, and controlled releases.
 
 Do not share production secrets, databases, or private user records with development, test, or staging environments unless a specifically approved process provides appropriate sanitization and access controls.
 
@@ -122,7 +94,7 @@ Do not share production secrets, databases, or private user records with develop
 
 Complete this checklist before the first production release.
 
-Application and runtime
+Application and Runtime
 
 * [ ]	Confirm the production entry point and startup command.
 * [ ]	Confirm the supported Node.js version in the runtime configuration, package metadata, Docker image, and hosting environment.
@@ -143,7 +115,7 @@ Infrastructure
 * [ ]	Confirm restart behavior and resource limits.
 * [ ]	Establish database and file-storage backup procedures.
 
-Security and privacy
+Security and Privacy
 
 * [ ]	Test authentication, session handling, and password recovery.
 * [ ]	Verify server-side authorization on private endpoints and individual resources.
@@ -186,7 +158,7 @@ Payments	Provider-specific credentials, webhook verification, and environment se
 Queues	Secure connections, retry limits, and failure-handling configuration where applicable
 Monitoring	Error-reporting and alert configuration with sensitive-data redaction
 
-Secret-management requirements
+Secret-Management Requirements
 
 1. Use different credentials for each environment.
 2. Apply least privilege to service accounts and database users.
@@ -221,15 +193,15 @@ Where implemented, also run the appropriate checks for:
 * Accessibility and responsive behavior.
 * Dependency vulnerabilities and accidental secret inclusion.
 
-Review the change set
+Review the Change Set
 
 git status —short
 git diff —check
 git diff
 
-Review staged changes before committing and ensure that .env, database dumps, private documents, logs, and local storage have not been included.
+Review staged changes before committing. Ensure that .env, database dumps, private documents, logs, and local storage have not been included.
 
-Dependency review
+Dependency Review
 
 * Review npm audit findings and assess their actual impact.
 * Update dependencies through reviewed changes rather than untested production modifications.
@@ -243,7 +215,7 @@ A successful dependency installation does not prove that the application is secu
 
 Use the following workflow for every release.
 
-Phase A — Prepare the release
+Phase A — Prepare the Release
 
 1. Merge reviewed changes into the designated release branch.
 2. Confirm required CI checks pass.
@@ -254,7 +226,7 @@ Phase A — Prepare the release
 7. Review database migrations and recovery implications.
 8. Record the commit hash, build identifier, and intended release version.
 
-Phase B — Deploy to staging
+Phase B — Deploy to Staging
 
 1. Deploy the candidate release to staging.
 2. Use separate credentials and non-production data.
@@ -265,7 +237,7 @@ Phase B — Deploy to staging
 7. Confirm the rollback procedure remains viable.
 8. Obtain release approval.
 
-Phase C — Deploy to production
+Phase C — Deploy to Production
 
 1. Confirm the latest backup completed successfully.
 2. Verify that the recovery procedure and rollback artifact are available.
@@ -276,9 +248,11 @@ Phase C — Deploy to production
 7. Monitor errors, latency, database connections, storage, queues, and critical workflows.
 8. Record the release, migration status, verification results, and any follow-up work.
 
-Hosting-specific instructions
+Hosting-Specific Instructions
 
-If the repository contains instructions for Render, Docker Compose, or another hosting platform, use the instructions matching the actual deployment target. A configuration file existing in the repository does not prove that the corresponding infrastructure is deployed or correctly configured.
+If the repository contains instructions for Render, Docker Compose, or another hosting platform, use the instructions matching the actual deployment target.
+
+A configuration file existing in the repository does not prove that the corresponding infrastructure is deployed or correctly configured.
 
 9. Docker and Container Deployment
 
@@ -313,7 +287,7 @@ Do not treat a running container as proof that the application is ready to serve
 
 First confirm which database engine the application actually uses. If MySQL is selected, keep connection settings, SQL syntax, migration tooling, backup procedures, and operational instructions consistent with MySQL.
 
-Database requirements
+Database Requirements
 
 * Use a dedicated production database and least-privilege application account.
 * Restrict database network access.
@@ -324,7 +298,7 @@ Database requirements
 * Avoid manual schema changes that cannot be reconciled with migration history.
 * Define retention, maintenance, indexing, and capacity policies.
 
-Migration release procedure
+Migration Release Procedure
 
 Before a migration:
 
@@ -382,7 +356,7 @@ Accounts and APIs
 * Do not trust client-supplied roles, ownership, payment status, or subscription status.
 * Avoid exposing stack traces or internal implementation details in client responses.
 
-Administrative access
+Administrative Access
 
 * Protect both administrative pages and their backing API routes.
 * Require strong authentication and use multi-factor authentication where available.
@@ -390,7 +364,7 @@ Administrative access
 * Record security-relevant administrative activity without unnecessarily logging personal information.
 * Revoke access promptly when it is no longer required.
 
-Payments and subscriptions
+Payments and Subscriptions
 
 If payment functionality is enabled:
 
@@ -452,12 +426,12 @@ Define recovery requirements before launch.
 
 Document:
 
-* Recovery Point Objective (RPO): the maximum acceptable amount of data loss, expressed as a time interval.
-* Recovery Time Objective (RTO): the target time to restore service after an incident.
+* Recovery Point Objective (RPO): The maximum acceptable amount of data loss, expressed as a time interval.
+* Recovery Time Objective (RTO): The target time to restore service after an incident.
 
 Back up the database and any required private file storage. Keep recovery copies protected from the primary environment and encrypt them where appropriate.
 
-Recovery requirements
+Recovery Requirements
 
 1. Monitor scheduled backup jobs.
 2. Alert on backup failures or excessive backup age.
@@ -487,7 +461,7 @@ For a failed release:
 7. Preserve relevant logs and release metadata.
 8. Document the incident, user impact, root cause, corrective actions, and follow-up owner.
 
-For suspected security incidents:
+Suspected Security Incidents
 
 * Contain the affected access or service.
 * Rotate exposed credentials and revoke compromised sessions where appropriate.
@@ -569,37 +543,28 @@ Document the actual people or teams responsible in the private operational runbo
 
 21. Final Production Approval
 
-Use the following release gate before declaring MedOrbits production-ready.
+Use this checklist before declaring MedOrbits production-ready.
 
-{@body const gateItems = [
-“Production configuration and secrets have been verified.”,
-“Authentication, authorization, and private document access have been tested.”,
-“Critical automated tests and release checks have passed.”,
-“Database migrations have been reviewed and staged.”,
-“Backup restoration has been demonstrated.”,
-“Health checks, logs, alerts, and ownership are in place.”,
-“A compatible rollback artifact and procedure are available.”,
-“Critical user journeys have passed production smoke tests.”,
-“Privacy, licensing, and public-facing claims have been reviewed.”,
-“Release identifier and verification results have been recorded.”
-]}
-{@body const [gateChecked, setGateChecked] = DIL.useState([])}
-Release readiness
-{gateChecked.length} of {gateItems.length}
-<box background=“surface-inverted” height=“6px” radius=“full” width={${gateChecked.length / gateItems.length * 100}%} />
-{#each gateItems as item, i}
-<checkbox key={item} checked={gateChecked.includes(i)} onChange={(checked) => setGateChecked(previous => checked ? […previous, i] : previous.filter(index => index !== i))}>{item}
-{/each}
-{#if gateChecked.length === gateItems.length}
-All checklist items have been marked. Verify supporting evidence before approving the release.
-{:else}
-This checklist tracks your selections only; it does not test the application or independently verify deployment readiness.
-{/if}
+Release Readiness Checklist
+
+* [ ]	Production configuration and secrets have been verified.
+* [ ]	Authentication, authorization, and private document access have been tested.
+* [ ]	Critical automated tests and release checks have passed.
+* [ ]	Database migrations have been reviewed and staged.
+* [ ]	Backup restoration has been demonstrated.
+* [ ]	Health checks, logs, alerts, and ownership are in place.
+* [ ]	A compatible rollback artifact and procedure are available.
+* [ ]	Critical user journeys have passed production smoke tests.
+* [ ]	Privacy, licensing, and public-facing claims have been reviewed.
+* [ ]	Release identifier and verification results have been recorded.
+
+Marking these items is an operational record, not an automated verification. Retain supporting evidence for each critical requirement.
+
 Do not declare MedOrbits production-ready until the deployed implementation has passed the required security, functional, recovery, monitoring, and operational checks. Any unresolved critical risk must have an explicit decision from the authorized release owner.
 
 22. Document Maintenance
 
-Review this guide whenever the following changes:
+Review this guide whenever the following changes occur:
 
 * Hosting platform or deployment architecture.
 * Node.js runtime or dependency management.
@@ -614,4 +579,8 @@ Keep this document consistent with the actual implementation. Remove obsolete in
 
 ⸻
 
-End of production deployment guide.
+End of Production Deployment Guide
+
+MedOrbits
+Education · Admissions · Careers · Recruitment
+Study · Work · Grow

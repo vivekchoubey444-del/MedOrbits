@@ -1,14 +1,17 @@
 
 /**
  * MedOrbits -- Permissions & Access Control
- * File: assets/js/permissions.js
+ * File: /assets/js/permissions.js
+ * Version: 1.1.0
  *
- * Frontend permission helpers.
+ * Frontend permission helpers only.
  * All permissions must also be enforced by the backend.
  */
 
 (() => {
   "use strict";
+
+  if (window.MedOrbitsPermissions) return;
 
   const CONSTANTS = window.MedOrbitsConstants || {};
 
@@ -201,74 +204,150 @@
     [ROLES.SUPER_ADMIN]: 4
   });
 
+  const permissionSets = new Map(
+    Object.entries(ROLE_PERMISSIONS).map(([role, permissions]) => [
+      role,
+      new Set(permissions)
+    ])
+  );
+
+  const knownRoles = new Set(Object.values(ROLES));
+  const knownPermissions = new Set(Object.values(PERMISSIONS));
+
+  let initialized = false;
+
+  function normalizeRole(role) {
+    if (typeof role !== "string") return ROLES.GUEST;
+
+    const normalized = role.trim().toLowerCase();
+
+    return knownRoles.has(normalized)
+      ? normalized
+      : ROLES.GUEST;
+  }
+
+  function normalizePermission(permission) {
+    return typeof permission === "string"
+      ? permission.trim().toLowerCase()
+      : "";
+  }
+
   function getAuth() {
     return window.MedOrbitsAuth || null;
   }
 
   function getCurrentUser() {
-    return getAuth()?.currentUser?.() || null;
+    try {
+      const auth = getAuth();
+
+      if (!auth || typeof auth.currentUser !== "function") {
+        return null;
+      }
+
+      const user = auth.currentUser();
+
+      return user && typeof user === "object" ? user : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   function isAuthenticated() {
-    return getAuth()?.isAuthenticated?.() === true;
+    try {
+      const auth = getAuth();
+
+      return Boolean(
+        auth &&
+        typeof auth.isAuthenticated === "function" &&
+        auth.isAuthenticated() === true &&
+        getCurrentUser()
+      );
+    } catch (_) {
+      return false;
+    }
   }
 
   function getRole() {
+    if (!isAuthenticated()) {
+      return ROLES.GUEST;
+    }
+
     const user = getCurrentUser();
 
-    if (!user) return ROLES.GUEST;
-
-    return (
-      user.role ||
-      user.role_name ||
-      user.account_role ||
-      ROLES.GUEST
+    return normalizeRole(
+      user?.role ||
+      user?.role_name ||
+      user?.account_role
     );
   }
 
   function hasRole(role) {
-    if (!isAuthenticated()) {
-      return role === ROLES.GUEST;
+    const requested = normalizeRole(role);
+
+    if (!knownRoles.has(requested)) {
+      return false;
     }
 
-    return getRole() === role;
+    if (requested === ROLES.GUEST) {
+      return !isAuthenticated();
+    }
+
+    return isAuthenticated() && getRole() === requested;
   }
 
   function hasAnyRole(roles = []) {
     if (!Array.isArray(roles)) return false;
 
-    return roles.some(hasRole);
+    return roles.some((role) => hasRole(role));
   }
 
   function getPermissions(role = getRole()) {
-    return ROLE_PERMISSIONS[role] || [];
+    const normalized = normalizeRole(role);
+
+    return ROLE_PERMISSIONS[normalized] || [];
   }
 
   function can(permission) {
-    if (!permission || !isAuthenticated()) return false;
+    const requested = normalizePermission(permission);
+
+    if (!requested || !knownPermissions.has(requested)) {
+      return false;
+    }
 
     const role = getRole();
 
-    return getPermissions(role).includes(permission);
+    if (role === ROLES.GUEST) {
+      return permissionSets.get(ROLES.GUEST)?.has(requested) === true;
+    }
+
+    if (!isAuthenticated()) {
+      return false;
+    }
+
+    return permissionSets.get(role)?.has(requested) === true;
   }
 
   function canAny(permissions = []) {
-    if (!Array.isArray(permissions)) return false;
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      return false;
+    }
 
-    return permissions.some(can);
+    return permissions.some((permission) => can(permission));
   }
 
   function canAll(permissions = []) {
-    if (!Array.isArray(permissions)) return false;
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      return false;
+    }
 
-    return permissions.every(can);
+    return permissions.every((permission) => can(permission));
   }
 
   function hasMinimumRole(requiredRole) {
     if (!isAuthenticated()) return false;
 
     const currentLevel = ROLE_HIERARCHY[getRole()];
-    const requiredLevel = ROLE_HIERARCHY[requiredRole];
+    const requiredLevel = ROLE_HIERARCHY[normalizeRole(requiredRole)];
 
     if (
       currentLevel === undefined ||
@@ -281,103 +360,186 @@
   }
 
   function canAccessResource(resource, action = "read") {
-    const permission = `${resource}:${action}`;
+    if (
+      typeof resource !== "string" ||
+      typeof action !== "string"
+    ) {
+      return false;
+    }
 
-    return can(permission);
+    const key = `${resource.trim().toLowerCase()}:${action.trim().toLowerCase()}`;
+
+    return can(key);
   }
 
   function filterByPermission(items, permission) {
-    if (!Array.isArray(items) || !can(permission)) return [];
+    if (!Array.isArray(items) || !can(permission)) {
+      return [];
+    }
 
-    return items;
+    return items.slice();
   }
 
   function protectElement(element, options = {}) {
-    if (!element) return false;
+    if (!element || typeof element.setAttribute !== "function") {
+      return false;
+    }
 
-    const {
-      roles = [],
-      permissions = [],
-      requireAll = false,
-      hide = true
-    } = options;
+    const roles = Array.isArray(options.roles)
+      ? options.roles
+      : [];
+
+    const permissions = Array.isArray(options.permissions)
+      ? options.permissions
+      : [];
+
+    const requireAll = options.requireAll === true;
+    const hide = options.hide !== false;
 
     const roleAllowed =
       roles.length === 0 || hasAnyRole(roles);
 
     const permissionAllowed =
       permissions.length === 0 ||
-      (requireAll
-        ? canAll(permissions)
-        : canAny(permissions));
+      (requireAll ? canAll(permissions) : canAny(permissions));
 
     const allowed = roleAllowed && permissionAllowed;
 
     element.hidden = !allowed && hide;
     element.setAttribute("aria-hidden", String(!allowed));
 
-    if (!allowed && !hide) {
+    if (!allowed) {
       element.setAttribute("inert", "");
     } else {
       element.removeAttribute("inert");
     }
 
+    if ("disabled" in element) {
+      element.disabled = !allowed;
+    }
+
     return allowed;
+  }
+
+  function parseList(value) {
+    return String(value || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
   function applyPagePermissions() {
     document.querySelectorAll("[data-permission]").forEach((element) => {
-      const permissions = element.dataset.permission
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
-
       protectElement(element, {
-        permissions,
+        permissions: parseList(element.dataset.permission),
         requireAll: element.dataset.permissionMode === "all"
       });
     });
 
     document.querySelectorAll("[data-role]").forEach((element) => {
-      const roles = element.dataset.role
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
-
-      protectElement(element, { roles });
+      protectElement(element, {
+        roles: parseList(element.dataset.role)
+      });
     });
+
+    document.querySelectorAll("[data-minimum-role]").forEach((element) => {
+      const allowed = hasMinimumRole(
+        element.dataset.minimumRole
+      );
+
+      element.hidden = !allowed;
+      element.setAttribute("aria-hidden", String(!allowed));
+      element.toggleAttribute("inert", !allowed);
+
+      if ("disabled" in element) {
+        element.disabled = !allowed;
+      }
+    });
+
+    window.dispatchEvent(new CustomEvent(
+      "medorbits:permissions-applied",
+      {
+        detail: {
+          role: getRole(),
+          authenticated: isAuthenticated()
+        }
+      }
+    ));
+  }
+
+  function createPermissionError(message = "Permission denied.") {
+    const error = new Error(message);
+
+    error.name = "PermissionError";
+    error.code = "PERMISSION_DENIED";
+
+    return error;
   }
 
   function requirePermission(permission) {
     if (can(permission)) return true;
 
-    const error = new Error("Permission denied.");
-    error.name = "PermissionError";
-    error.code = "PERMISSION_DENIED";
-
-    throw error;
+    throw createPermissionError();
   }
 
   function requireAnyPermission(permissions = []) {
     if (canAny(permissions)) return true;
 
-    const error = new Error("Permission denied.");
-    error.name = "PermissionError";
-    error.code = "PERMISSION_DENIED";
+    throw createPermissionError();
+  }
 
-    throw error;
+  function requireAllPermissions(permissions = []) {
+    if (canAll(permissions)) return true;
+
+    throw createPermissionError();
   }
 
   function init() {
     applyPagePermissions();
 
-    document.addEventListener(
+    if (initialized) return;
+    initialized = true;
+
+    window.addEventListener(
       "medorbits:auth-change",
+      applyPagePermissions
+    );
+
+    window.addEventListener(
+      "medorbits:auth-changed",
+      applyPagePermissions
+    );
+
+    window.addEventListener(
+      "medorbits:profile-updated",
       applyPagePermissions
     );
   }
 
-  const MedOrbitsPermissions = Object.freeze({
+  function destroy() {
+    if (!initialized) return;
+
+    window.removeEventListener(
+      "medorbits:auth-change",
+      applyPagePermissions
+    );
+
+    window.removeEventListener(
+      "medorbits:auth-changed",
+      applyPagePermissions
+    );
+
+    window.removeEventListener(
+      "medorbits:profile-updated",
+      applyPagePermissions
+    );
+
+    initialized = false;
+  }
+
+  const publicAPI = Object.freeze({
+    version: "1.1.0",
+
     ROLES,
     PERMISSIONS,
     ROLE_PERMISSIONS,
@@ -403,16 +565,14 @@
 
     requirePermission,
     requireAnyPermission,
-    init
+    requireAllPermissions,
+
+    init,
+    destroy
   });
 
-  if (window.MedOrbitsPermissions) {
-    console.warn("[MedOrbits] Permissions module already exists.");
-    return;
-  }
-
   Object.defineProperty(window, "MedOrbitsPermissions", {
-    value: MedOrbitsPermissions,
+    value: publicAPI,
     writable: false,
     configurable: false,
     enumerable: true

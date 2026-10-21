@@ -1,15 +1,16 @@
 {
   "schemaVersion": "1.0.0",
-  "updatedAt": "2026-10-19T18:59:15.704Z",
+  "updatedAt": "2026-10-20T00:00:00Z",
   "metadata": {
     "title": "MedOrbits News and Notifications",
-    "description": "News, official notices and updates about exams, admissions, counselling, courses and policy. Items are published only with a traceable official or reputable source.",
+    "description": "News, official notices and updates about exams, admissions, counselling, courses, policy, study abroad and jobs. Items are published only after a traceable source and editorial review.",
     "defaultCountryCode": "IN",
     "defaultLanguage": "en",
     "dateFormat": "YYYY-MM-DD",
     "datetimeFormat": "ISO 8601 with UTC offset",
     "timezonePolicy": "Store publishedAt in ISO 8601 with offset; use the issuing authority's timezone for notice dates.",
-    "editorialPolicy": "Summarise in original wording. Link to the official notice. Do not copy articles, and do not publish rumours or unverified claims as fact."
+    "editorialPolicy": "Summarise in original wording. Link to the official notice. Do not copy articles, and do not publish rumours or unverified claims as fact.",
+    "feedRegistryNote": "feedSources is a source directory only. It does not mean that these sites have been scraped or that any listed notice is current."
   },
   "fields": [
     "id",
@@ -148,8 +149,7 @@
     "actionRequired": {
       "type": "string",
       "required": false,
-      "nullable": true,
-      "note": "Plain-language action, only if the official notice requires one."
+      "nullable": true
     },
     "effectiveFrom": {
       "type": "string",
@@ -209,8 +209,7 @@
         "url": "string",
         "alt": "string",
         "credit": "string or null"
-      },
-      "note": "Use only images MedOrbits has the right to use."
+      }
     },
     "relatedNewsIds": {
       "type": "array",
@@ -221,8 +220,7 @@
       "type": "string",
       "required": false,
       "nullable": true,
-      "references": "news.id",
-      "note": "Set when an update replaces an earlier item."
+      "references": "news.id"
     },
     "isBreaking": {
       "type": "boolean",
@@ -400,12 +398,12 @@
       ],
       "retracted": []
     },
-    "notes": "A published item that is wrong must be corrected with a 'correction' item that sets supersedesId, or retracted with a visible note."
+    "notes": "A published item that is wrong must be corrected with a correction item that sets supersedesId, or retracted with a visible note."
   },
   "dataRules": [
     "Every news item must have a unique id and slug.",
     "title, summary, category, newsType and source are required.",
-    "An item may be set to 'published' only when it has an officialNoticeUrl or sourceUrl, and for official_notice items verificationStatus must be 'verified'.",
+    "An item may be set to published only when it has an officialNoticeUrl or sourceUrl, and for official_notice items verificationStatus must be verified.",
     "Write summaries in original wording; do not copy or closely paraphrase articles, and keep any quotation short and attributed.",
     "Never invent dates, deadlines, results, eligibility or notice numbers; use null when unknown.",
     "Dates must use YYYY-MM-DD; publishedAt and expiresAt use ISO 8601 with offset; expiresAt must not precede publishedAt.",
@@ -416,7 +414,8 @@
     "Never present news as official guidance when it comes from a non-official source; state the source type.",
     "Items past deadlineDate or expiresAt must be reviewed or archived before being shown as current.",
     "Images require alt text and must be licensed for use.",
-    "The active field controls display only; it does not indicate that anything is open or in force."
+    "The active field controls display only; it does not indicate that anything is open or in force.",
+    "feedSources entries are source endpoints for a future/manual feed workflow; they are not news items and do not imply automated ingestion."
   ],
   "displayRules": {
     "defaultSort": [
@@ -447,6 +446,224 @@
     "defaultPageSize": 20,
     "maxPageSize": 100
   },
+  "feedSources": [
+    {
+      "id": "feed-pib",
+      "name": "Press Information Bureau",
+      "countryCode": "IN",
+      "sourceType": "press_release",
+      "url": "https://pib.gov.in/",
+      "categories": [
+        "general",
+        "exams",
+        "admissions",
+        "courses",
+        "institutions",
+        "scholarships",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-nta",
+      "name": "National Testing Agency",
+      "countryCode": "IN",
+      "sourceType": "examination_authority",
+      "url": "https://nta.ac.in/",
+      "categories": [
+        "exams",
+        "results",
+        "admissions"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-nmc",
+      "name": "National Medical Commission",
+      "countryCode": "IN",
+      "sourceType": "regulator",
+      "url": "https://www.nmc.org.in/",
+      "categories": [
+        "courses",
+        "institutions",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-mcc",
+      "name": "Medical Counselling Committee",
+      "countryCode": "IN",
+      "sourceType": "counselling_authority",
+      "url": "https://mcc.nic.in/",
+      "categories": [
+        "counselling",
+        "admissions",
+        "results"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-upsc",
+      "name": "Union Public Service Commission",
+      "countryCode": "IN",
+      "sourceType": "examination_authority",
+      "url": "https://upsc.gov.in/",
+      "categories": [
+        "exams",
+        "results",
+        "jobs"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-ugc",
+      "name": "University Grants Commission",
+      "countryCode": "IN",
+      "sourceType": "regulator",
+      "url": "https://www.ugc.gov.in/",
+      "categories": [
+        "courses",
+        "institutions",
+        "scholarships",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-aicte",
+      "name": "All India Council for Technical Education",
+      "countryCode": "IN",
+      "sourceType": "regulator",
+      "url": "https://www.aicte-india.org/",
+      "categories": [
+        "courses",
+        "institutions",
+        "scholarships",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-ncs",
+      "name": "National Career Service",
+      "countryCode": "IN",
+      "sourceType": "government",
+      "url": "https://www.ncs.gov.in/",
+      "categories": [
+        "jobs",
+        "internships"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-scholarships",
+      "name": "National Scholarship Portal",
+      "countryCode": "IN",
+      "sourceType": "government",
+      "url": "https://scholarships.gov.in/",
+      "categories": [
+        "scholarships",
+        "admissions"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-uae-mohre",
+      "name": "UAE Ministry of Human Resources and Emiratisation",
+      "countryCode": "AE",
+      "sourceType": "government",
+      "url": "https://www.mohre.gov.ae/",
+      "categories": [
+        "jobs",
+        "regulations",
+        "study-abroad"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-uae-education",
+      "name": "UAE Ministry of Education",
+      "countryCode": "AE",
+      "sourceType": "government",
+      "url": "https://www.moe.gov.ae/",
+      "categories": [
+        "study-abroad",
+        "courses",
+        "institutions",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-saudi-hr",
+      "name": "Saudi Ministry of Human Resources and Social Development",
+      "countryCode": "SA",
+      "sourceType": "government",
+      "url": "https://www.hrsd.gov.sa/",
+      "categories": [
+        "jobs",
+        "regulations",
+        "study-abroad"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-qatar-education",
+      "name": "Qatar Ministry of Education and Higher Education",
+      "countryCode": "QA",
+      "sourceType": "government",
+      "url": "https://www.edu.gov.qa/",
+      "categories": [
+        "study-abroad",
+        "courses",
+        "institutions",
+        "regulations"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-uk-ucas",
+      "name": "UCAS",
+      "countryCode": "GB",
+      "sourceType": "institution",
+      "url": "https://www.ucas.com/",
+      "categories": [
+        "admissions",
+        "courses",
+        "study-abroad"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "feed-canada-education",
+      "name": "Government of Canada -- Education",
+      "countryCode": "CA",
+      "sourceType": "government",
+      "url": "https://www.canada.ca/en/services/benefits/education.html",
+      "categories": [
+        "study-abroad",
+        "scholarships",
+        "courses"
+      ],
+      "enabled": true,
+      "requiresHumanReview": true
+    }
+  ],
   "news": [
     {
       "id": "news-release-4d50c0684eaa1584bade",
@@ -457,7 +674,7 @@
       "category": "general",
       "tags": [
         "official-feed",
-        "pib-government-releases"
+        "review-required"
       ],
       "newsType": "announcement",
       "priority": "normal",
@@ -496,8 +713,8 @@
       "verifiedBy": null,
       "reviewDueAt": null,
       "active": false,
-      "createdAt": "2026-10-19T07:08:21.308Z",
-      "updatedAt": "2026-10-19T07:08:21.308Z"
+      "createdAt": "2026-10-19T18:59:15.704Z",
+      "updatedAt": "2026-10-19T18:59:15.704Z"
     },
     {
       "id": "news-release-afe59100958a8c3d316f",
@@ -508,7 +725,7 @@
       "category": "exams",
       "tags": [
         "official-feed",
-        "pib-government-releases"
+        "review-required"
       ],
       "newsType": "announcement",
       "priority": "normal",

@@ -1,4 +1,3 @@
-
 'use strict';
 
 const {
@@ -13,29 +12,112 @@ const {
 const BLOCKED_USER_FIELDS = new Set([
   'password',
   'passwordHash',
+  'password_hash',
   'resetToken',
   'resetTokenHash',
+  'reset_token',
+  'reset_token_hash',
   'verificationToken',
   'verificationTokenHash',
+  'verification_token',
+  'verification_token_hash',
   'refreshToken',
+  'refresh_token',
   'accessToken',
+  'access_token',
   'sessionToken',
+  'session_token',
   'recoveryCode',
   'recoveryCodes',
+  'recovery_code',
+  'recovery_codes',
   'mfaSecret',
+  'mfa_secret',
   'twoFactorSecret',
+  'two_factor_secret',
+  'totpSecret',
+  'totp_secret',
+  'privateKey',
+  'private_key',
 ]);
 
 function sanitizeUser(user) {
-  if (!user || typeof user !== 'object' || Array.isArray(user)) {
+  if (
+    !user ||
+    typeof user !== 'object' ||
+    Array.isArray(user)
+  ) {
     return null;
   }
 
   const safe = {};
 
   for (const [key, value] of Object.entries(user)) {
-    if (!BLOCKED_USER_FIELDS.has(key)) {
-      safe[key] = value;
+    if (BLOCKED_USER_FIELDS.has(key)) {
+      continue;
+    }
+
+    // Avoid exposing nested credential fields from repository
+    // projections or accidentally populated relations.
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
+      safe[key] = sanitizeNestedObject(value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      safe[key] = value.map((item) => {
+        if (
+          item &&
+          typeof item === 'object' &&
+          !Array.isArray(item)
+        ) {
+          return sanitizeNestedObject(item);
+        }
+
+        return item;
+      });
+
+      continue;
+    }
+
+    safe[key] = value;
+  }
+
+  return safe;
+}
+
+function sanitizeNestedObject(value) {
+  const safe = {};
+
+  for (const [key, item] of Object.entries(value)) {
+    if (BLOCKED_USER_FIELDS.has(key)) {
+      continue;
+    }
+
+    if (
+      item &&
+      typeof item === 'object' &&
+      !Array.isArray(item)
+    ) {
+      safe[key] = sanitizeNestedObject(item);
+    } else if (Array.isArray(item)) {
+      safe[key] = item.map((entry) => {
+        if (
+          entry &&
+          typeof entry === 'object' &&
+          !Array.isArray(entry)
+        ) {
+          return sanitizeNestedObject(entry);
+        }
+
+        return entry;
+      });
+    } else {
+      safe[key] = item;
     }
   }
 
@@ -60,6 +142,12 @@ function createAuthService({
     );
   }
 
+  if (typeof userRepository.findByEmail !== 'function') {
+    throw new TypeError(
+      'userRepository must implement findByEmail().'
+    );
+  }
+
   if (typeof passwordHasher.hash !== 'function') {
     throw new TypeError(
       'passwordHasher must implement hash().'
@@ -81,16 +169,10 @@ function createAuthService({
   function normalizeEmail(value) {
     return requiredString(value, 'email', {
       max: 254,
-    }).toLowerCase();
+    }).trim().toLowerCase();
   }
 
   async function findUserByEmail(email) {
-    if (typeof userRepository.findByEmail !== 'function') {
-      throw new TypeError(
-        'userRepository must implement findByEmail().'
-      );
-    }
-
     return userRepository.findByEmail(email);
   }
 
@@ -133,17 +215,23 @@ function createAuthService({
     }
   }
 
+  async function writeAudit(event) {
+    await audit(auditService, event);
+  }
+
   return {
     async register(input = {}) {
       const email = normalizeEmail(input.email);
+
       const password = requiredString(
         input.password,
         'password',
         { min: 10, max: 200 }
       );
+
       const name = requiredString(input.name, 'name', {
         max: 120,
-      });
+      }).trim();
 
       const existing = await findUserByEmail(email);
 
@@ -182,12 +270,14 @@ function createAuthService({
         try {
           await verificationService.sendEmailVerification(user);
         } catch {
-          // Do not return credentials or verification tokens.
-          // The account remains pending and can use a resend flow.
+          // Keep the account pending verification.
+          // Do not expose tokens or verification secrets.
+          // Record delivery failures within the verification
+          // service without logging sensitive message content.
         }
       }
 
-      await audit(auditService, {
+      await writeAudit({
         action: 'auth.registered',
         entity: 'User',
         entityId: user.id,
@@ -205,6 +295,7 @@ function createAuthService({
 
     async login(input = {}, context = {}) {
       const email = normalizeEmail(input.email);
+
       const password = requiredString(
         input.password,
         'password',
@@ -213,10 +304,9 @@ function createAuthService({
 
       const user = await findUserByEmail(email);
 
-      // Use a production password hasher with a dummy hash for
-      // unknown accounts if timing resistance is required.
       if (
         !user ||
+        typeof user.passwordHash !== 'string' ||
         !user.passwordHash ||
         !(await passwordHasher.verify(
           password,
@@ -255,41 +345,60 @@ function createAuthService({
         tokens = await tokenService.issue({
           userId: user.id,
           sessionId: session?.id,
-          roles: Array.isArray(user.roles) ? user.roles : [],
+          roles: Array.isArray(user.roles)
+            ? user.roles
+            : [],
         });
 
-        if (!tokens || typeof tokens !== 'object') {
+        if (
+          !tokens ||
+          typeof tokens !== 'object' ||
+          Array.isArray(tokens)
+        ) {
           throw new TypeError(
             'tokenService.issue() must return a token object.'
           );
         }
+
+        // Never allow a token provider to overwrite the sanitized
+        // user or session returned by this service.
+        if (
+          Object.prototype.hasOwnProperty.call(tokens, 'user') ||
+          Object.prototype.hasOwnProperty.call(tokens, 'session')
+        ) {
+          throw new TypeError(
+            'Token response must not contain user or session properties.'
+          );
+        }
       } catch (error) {
-        // Avoid leaving a newly created session active when
-        // token issuance fails.
         if (session?.id && sessionService?.revoke) {
           try {
-            await sessionService.revoke(session.id, user.id);
+            await sessionService.revoke(
+              session.id,
+              user.id
+            );
           } catch {
-            // Session cleanup should also be monitored operationally.
+            // Operational monitoring should capture cleanup failures
+            // without recording tokens or other secrets.
           }
         }
 
         throw error;
       }
 
-      await audit(auditService, {
+      await writeAudit({
         action: 'auth.login',
         entity: 'User',
         entityId: user.id,
         actorId: user.id,
         metadata: {
-          sessionId: session?.id,
+          sessionId: session?.id ?? null,
         },
       });
 
       return {
         user: sanitizeUser(user),
-        session,
+        session: session ? sanitizeUser(session) : null,
         ...tokens,
       };
     },
@@ -319,8 +428,12 @@ function createAuthService({
       sessionId,
       refreshToken,
     } = {}) {
+      let sessionRevoked = false;
+      let refreshTokenRevoked = false;
+
       if (sessionId != null) {
         requiredId(sessionId, 'sessionId');
+        requiredId(userId, 'userId');
 
         if (
           !sessionService ||
@@ -335,8 +448,8 @@ function createAuthService({
           );
         }
 
-        requiredId(userId, 'userId');
         await sessionService.revoke(sessionId, userId);
+        sessionRevoked = true;
       }
 
       if (refreshToken != null) {
@@ -357,17 +470,20 @@ function createAuthService({
         }
 
         await tokenService.revoke(token);
+        refreshTokenRevoked = true;
       }
 
       if (userId != null) {
-        await audit(auditService, {
+        requiredId(userId, 'userId');
+
+        await writeAudit({
           action: 'auth.logout',
           entity: 'User',
           entityId: userId,
           actorId: userId,
           metadata: {
-            sessionRevoked: sessionId != null,
-            refreshTokenRevoked: refreshToken != null,
+            sessionRevoked,
+            refreshTokenRevoked,
           },
         });
       }

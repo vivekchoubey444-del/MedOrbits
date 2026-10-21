@@ -1,65 +1,98 @@
+
 'use strict';
 
 /**
-
-* MedOrbits -- Payment Provider Interface
-* File: src/integrations/payment/payment.provider.js
-* Defines the contract for payment provider adapters.
-* Required methods:
-* ●	createCheckout(request)
-* ●	fetchPayment(paymentId)
-* ●	verifyWebhook(rawBody, headers)
-* This class does not process payments directly.
-    */
+ * MedOrbits -- Payment Provider Interface
+ *
+ * File: src/integrations/payment/payment.provider.js
+ * Runtime: Node.js >= 20
+ *
+ * Defines the contract for payment provider adapters.
+ *
+ * Required methods:
+ * - createCheckout(request)
+ * - fetchPayment(paymentId)
+ * - verifyWebhook(rawBody, headers)
+ *
+ * Optional lifecycle method:
+ * - close()
+ *
+ * This class does not process payments directly.
+ */
 
 const REQUIRED_METHODS = Object.freeze([
-'createCheckout',
-'fetchPayment',
-'verifyWebhook',
+  'createCheckout',
+  'fetchPayment',
+  'verifyWebhook',
+]);
+
+const OPTIONAL_METHODS = Object.freeze([
+  'close',
 ]);
 
 class PaymentProvider {
-constructor() {
-if (new.target === PaymentProvider) {
-throw new TypeError(
-'PaymentProvider is an abstract class and cannot be instantiated directly.'
-);
-}
+  constructor() {
+    if (new.target === PaymentProvider) {
+      throw new TypeError(
+        'PaymentProvider is abstract and cannot be instantiated directly.',
+      );
+    }
 
-this.validateImplementation();
+    this.validateImplementation();
+  }
 
-}
+  validateImplementation() {
+    for (const method of REQUIRED_METHODS) {
+      const implementation = this[method];
 
-validateImplementation() {
-for (const method of REQUIRED_METHODS) {
-if (this[method] === PaymentProvider.prototype[method]) {
-throw new TypeError(
-`${this.constructor.name} must implement ${method}().`
-);
-}
+      if (
+        implementation === PaymentProvider.prototype[method] ||
+        typeof implementation !== 'function'
+      ) {
+        throw new TypeError(
+          `${this.constructor.name} must implement ${method}().`,
+        );
+      }
+    }
 
-  if (typeof this[method] !== 'function') {
-    throw new TypeError(
-      `${this.constructor.name} must provide a valid ${method}() method.`
+    for (const method of OPTIONAL_METHODS) {
+      if (
+        this[method] !== undefined &&
+        typeof this[method] !== 'function'
+      ) {
+        throw new TypeError(
+          `${this.constructor.name}.${method} must be a function when provided.`,
+        );
+      }
+    }
+  }
+
+  async createCheckout(_request) {
+    throw new Error(
+      'createCheckout() must be implemented by the provider.',
     );
+  }
+
+  async fetchPayment(_paymentId) {
+    throw new Error(
+      'fetchPayment() must be implemented by the provider.',
+    );
+  }
+
+  async verifyWebhook(_rawBody, _headers) {
+    throw new Error(
+      'verifyWebhook() must be implemented by the provider.',
+    );
+  }
+
+  async close() {
+    // Optional lifecycle hook. Override when the provider owns
+    // resources that need explicit cleanup.
   }
 }
 
-}
-
-async createCheckout(_request) {
-throw new Error('createCheckout() must be implemented by the provider.');
-}
-
-async fetchPayment(_paymentId) {
-throw new Error('fetchPayment() must be implemented by the provider.');
-}
-
-async verifyWebhook(_rawBody, _headers) {
-throw new Error('verifyWebhook() must be implemented by the provider.');
-}
-}
-
 module.exports = {
-PaymentProvider,
+  PaymentProvider,
+  REQUIRED_METHODS,
+  OPTIONAL_METHODS,
 };

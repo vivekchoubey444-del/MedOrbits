@@ -3,9 +3,9 @@
 
 ## 1. Purpose
 
-This directory contains unit tests for MedOrbits policies, services, middleware, utilities, and validators.
+This directory contains unit tests for implemented MedOrbits policies, services, middleware, utilities, and validators.
 
-Unit tests verify individual components in isolation using controlled inputs, fixtures, and mocks. They should run quickly and must not depend on production services or production data.
+Tests must be deterministic, isolated, fast, and independent of production services and production data. Use controlled inputs, fixtures, and mocks.
 
 ## 2. Directory Structure
 
@@ -28,7 +28,6 @@ tests/unit/
 │   ├── subscription.policy.test.js
 │   ├── university.policy.test.js
 │   └── user.policy.test.js
-│
 ├── services/
 │   ├── application.service.test.js
 │   ├── audit.service.test.js
@@ -36,7 +35,6 @@ tests/unit/
 │   ├── document.service.test.js
 │   ├── payment.service.test.js
 │   └── subscription.service.test.js
-│
 ├── middleware.test.js
 ├── services.test.js
 ├── utils.test.js
@@ -44,7 +42,7 @@ tests/unit/
 └── README.md
 ```
 
-Only include test files for implemented modules. Add `recruitment.policy.test.js` when the corresponding policy is present.
+Only add tests for modules that exist and are implemented. Add `recruitment.policy.test.js` when the corresponding policy exists.
 
 ## 3. Test Categories
 
@@ -57,17 +55,18 @@ Verify:
 - Unauthenticated access denial.
 - Protected-field modification attempts.
 - Invalid status transitions.
-- Access to private records and candidate data.
+- Access restrictions for private records and candidate data.
 
 ### Service Tests
 
 Verify:
 - Input validation and business rules.
-- Repository success and failure behavior.
+- Repository success, empty results, and failure behavior.
 - Invalid state transitions.
-- Audit-event creation and failure handling.
+- Audit-event creation and audit-provider failure handling.
 - Secret redaction and response sanitization.
 - Payment and subscription lifecycle behavior.
+- Duplicate requests and idempotency where applicable.
 
 ### Middleware Tests
 
@@ -77,14 +76,16 @@ Verify:
 - Request validation.
 - Rate limiting.
 - Standardized error handling.
+- Correct handling of rejected asynchronous middleware.
 
 ### Utility and Validator Tests
 
 Verify:
 - ID and pagination normalization.
 - Object and string validation.
-- Invalid, missing, or oversized input.
+- Missing, invalid, and oversized input.
 - Consistent error codes and response behavior.
+- Boundary values and malformed input.
 
 ## 4. Test Framework
 
@@ -103,13 +104,15 @@ test(‘returns the expected result’, () => {
 });
 ```
 
+Do not mix test-runner APIs in the same test file. If the project uses Jest, retain Jest APIs consistently and run the tests with Jest.
+
 ## 5. Running Tests
 
-From the project root, run:
+From the project root:
 
 ```bash
-# Run the unit test suite
-node —test tests/unit/**/*.test.js
+# Run all unit tests using Node’s test runner
+node —test
 
 # Run a specific policy test
 node —test tests/unit/policies/application.policy.test.js
@@ -118,27 +121,41 @@ node —test tests/unit/policies/application.policy.test.js
 node —test tests/unit/services/payment.service.test.js
 ```
 
-Shell glob expansion varies by environment. If the recursive pattern does not work, use the project’s configured test script or Node.js test discovery.
+Node’s test discovery can discover files matching supported test naming conventions. Explicit paths are more portable than shell-dependent recursive globs.
 
-If `package.json` defines an appropriate test script, prefer:
+If `package.json` defines a suitable test script, prefer:
 
 ```bash
 npm test
 ```
 
+If the project uses Jest instead, run:
+
+```bash
+npx jest tests/unit —runInBand
+```
+
+Configure the test script to match the test runner actually used by the repository. Do not assume that a passing test command executed every intended test file.
+
 ## 6. Mocking and Fixtures
 
 - Mock repositories, payment providers, email providers, and external APIs.
-- Use deterministic fixtures for users, applications, documents, and payments.
-- Do not connect unit tests to production databases or payment accounts.
+- Use deterministic fixtures for users, applications, documents, payments, and subscriptions.
+- Never connect unit tests to production databases or production payment accounts.
+- Use fake clocks or fixed dates for time-dependent behavior.
 - Restore mocks and clean up temporary state after each test.
+- Ensure each test can run independently.
+- Avoid real network requests, random uncontrolled values, and arbitrary sleeps.
 
 ## 7. Security Requirements
 
 - Test both allowed and denied authorization cases.
 - Never trust roles, permissions, ownership IDs, or payment status supplied by clients.
 - Verify that secrets and sensitive personal information are not returned.
-- Test that repository failures do not produce false success responses.
+- Test mass-assignment protections for privileged fields.
+- Verify that repository and provider failures cannot produce false success responses.
+- Verify that payment operations are safe against duplicate processing where applicable.
+- Test access to records belonging to other users.
 - Do not treat a policy unit test as proof that an HTTP endpoint enforces the policy.
 
 ## 8. Naming Conventions
@@ -157,8 +174,10 @@ A unit test is complete when it:
 1. Tests a real, implemented module.
 2. Covers expected behavior and relevant failure cases.
 3. Includes authorization-denial cases where applicable.
-4. Runs deterministically and independently.
-5. Passes in the project’s configured test environment.
+4. Uses isolated dependencies and deterministic fixtures.
+5. Runs independently and reliably.
+6. Passes in the repository’s configured test environment.
+7. Does not rely on production data or credentials.
 
 ## 10. Related Test Suites
 
@@ -169,3 +188,6 @@ Other test responsibilities belong in:
 - `tests/api/` — HTTP endpoint contracts.
 - `tests/e2e/` — complete user workflows.
 - `tests/accessibility/` — keyboard, screen-reader, and accessibility checks.
+```
+
+**Important:** The README is documentation, not proof that the listed files exist or pass. Keep the directory tree synchronized with the actual repository and use one consistent test runner per test file.

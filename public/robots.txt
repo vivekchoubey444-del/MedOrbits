@@ -1,28 +1,17 @@
-MedOrbits -- Search Engine Crawling Policy
 
-Website: https://medorbits.in/
+# ============================================================================
+# MedOrbits -- Search Engine Crawling Policy
+# Website: https://medorbits.in/
+# File: https://medorbits.in/robots.txt
+# Standard: Robots Exclusion Protocol (RFC 9309)
+# ============================================================================
 
-File: https://medorbits.in/robots.txt
-
-Purpose: Guide compliant search engine crawlers
-
-IMPORTANT:
-
-Robots directives are crawl guidance, not access controls.
-
-Protect private resources using server-side authentication
-
-and authorization.
-
-1. Default policy for all crawlers
-
+# 1. Default policy
 User-agent: *
 Allow: /
 
-2. Administrative, private, and internal routes
-
-Confirm these paths against the deployed application.
-
+# 2. Private, administrative and internal routes
+# Confirm these paths against the deployed application.
 Disallow: /admin/
 Disallow: /account/
 Disallow: /dashboard/
@@ -34,45 +23,35 @@ Disallow: /config/
 Disallow: /includes/
 Disallow: /vendor/
 
-3. API and system endpoints
-
+# 3. API and system endpoints
+# Exclude endpoints that are not intended for search indexing.
 Disallow: /api/
 Disallow: /health
 Disallow: /debug/
 Disallow: /test/
 Disallow: /tmp/
 
-4. User-specific and transactional pages
-
-Retain only rules matching actual application routes.
-
-Disallow: /account/login/
-Disallow: /account/register/
-Disallow: /account/reset-password/
-Disallow: /account/forgot-password/
+# 4. Authentication and transactional pages
+# Retain only rules that match actual application routes.
 Disallow: /applications/draft/
 Disallow: /payments/checkout/
 Disallow: /payments/receipt/
 Disallow: /messages/private/
 
-5. Search, sorting, and filtered URL variants
-
-Optional: enable only after reviewing actual URL patterns.
-
+# 5. Query-parameter URL variants
+# Optional: validate actual URL patterns before enabling.
 Disallow: /*?sort=
-
-Disallow: /?filter=
-
-Disallow: /?page=
-
-Disallow: /?search=
-
+Disallow: /*&sort=
+Disallow: /*?filter=
+Disallow: /*&filter=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?search=
+Disallow: /*&search=
 Disallow: /*?utm_
 
-6. Public content and assets
-
-Allow public pages and resources needed for rendering.
-
+# 6. Public content and rendering resources
+# Public pages and assets remain crawlable unless excluded above.
 Allow: /assets/
 Allow: /education/
 Allow: /careers/
@@ -83,6 +62,5 @@ Allow: /services/
 Allow: /pages/
 Allow: /legal/
 
-7. Sitemap discovery
-
+# 7. Sitemap discovery
 Sitemap: https://medorbits.in/sitemap.xml

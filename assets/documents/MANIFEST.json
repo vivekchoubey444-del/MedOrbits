@@ -2,10 +2,13 @@
 {
   "$schema": "./manifest.schema.json",
   "schemaVersion": "1.0.0",
-  "manifestVersion": "1.0.0",
+  "manifestVersion": "1.2.0",
+  "manifestType": "standard",
   "metadata": {
     "name": "MedOrbits Document Library",
-    "description": "Central registry for MedOrbits public document resources, including checklists, admission guides, fee guides, and other approved downloadable educational resources.",
+    "title": "MedOrbits Public Document Library",
+    "description": "Central registry for MedOrbits public document resources, including checklists, admission guides, fee guides, and other approved educational downloads.",
+    "purpose": "Provide a central, maintainable index of approved public document resources and their category-specific manifests.",
     "brand": "MedOrbits",
     "designSystem": "Royal Burgundy and Champagne Gold",
     "directory": "assets/documents/",
@@ -22,27 +25,26 @@
     {
       "id": "checklists",
       "title": "Checklists Library",
-      "path": "checklists/",
-      "readme": "checklists/README.md",
-      "manifest": "checklists/MANIFEST.json",
-      "schema": "checklists/manifest.schema.json",
-      "description": "Printable planning checklists for admissions, applications, education, examinations, career development, general organization, and study abroad."
+      "path": "assets/documents/checklists/",
+      "readme": "assets/documents/checklists/README.md",
+      "manifest": "assets/documents/checklists/MANIFEST.json",
+      "description": "Printable planning checklists for education, admissions, applications, examinations, career development, organization, and study abroad."
     },
     {
       "id": "admission-guides",
       "title": "Admission Guides",
-      "path": "admission-guides/",
-      "readme": "admission-guides/README.md",
-      "manifest": "admission-guides/MANIFEST.json",
-      "description": "Educational admission guides covering general admissions and programme-specific pathways."
+      "path": "assets/documents/admission-guides/",
+      "readme": "assets/documents/admission-guides/README.md",
+      "manifest": "assets/documents/admission-guides/MANIFEST.json",
+      "description": "General and programme-specific admission guidance, including application processes and preparation resources."
     },
     {
       "id": "fee-guides",
       "title": "Fee Guides",
-      "path": "fee-guides/",
-      "readme": "fee-guides/README.md",
-      "manifest": "fee-guides/manifest.json",
-      "description": "Planning guides for education fees, living costs, scholarships, education loans, counselling charges, and refund terms."
+      "path": "assets/documents/fee-guides/",
+      "readme": "assets/documents/fee-guides/README.md",
+      "manifest": "assets/documents/fee-guides/MANIFEST.json",
+      "description": "Education cost-planning resources covering tuition, living costs, scholarships, education loans, counselling charges, and refund policies."
     }
   ],
   "publicationPolicy": {
@@ -66,109 +68,67 @@
     "publicDownloadStatuses": [
       "published"
     ],
+    "requireVerificationForPublicDownload": true,
+    "requireOfficialSourcesForOfficiallyVerified": true,
     "requirements": [
-      "Each category must have a valid README and its own manifest where specified.",
-      "Each resource manifest must conform to the applicable JSON schema.",
-      "Every published resource must exist at its declared path.",
-      "Resource paths must not traverse outside the approved assets/documents directory.",
+      "Each category must have a README and a category manifest at its declared location.",
+      "Each manifest must validate against its applicable JSON Schema.",
+      "Every published downloadable resource must exist at its declared path.",
+      "Resource paths must remain inside the approved assets/documents directory.",
       "Documents must pass content, privacy, accessibility, and file-quality reviews before publication.",
-      "Time-sensitive information must be reviewed against relevant official sources.",
+      "Time-sensitive information must be reviewed against the relevant official sources.",
       "Verification claims must be supported by documented evidence.",
       "Public download links must be tested after deployment.",
-      "Retired or outdated resources must not be presented as current guidance."
+      "Outdated, withdrawn, or archived resources must not be presented as current guidance."
+    ],
+    "rules": [
+      "Only resources with status published may be exposed as public downloads.",
+      "Schema validation is not proof of authenticity, accuracy, authorization, or official endorsement.",
+      "Never publish applicant records, identity documents, confidential information, credentials, or private personal data in this public directory.",
+      "Do not mark a resource published merely because its manifest entry exists."
     ]
   },
-  "resources": [
-    {
-      "id": "checklists-library",
-      "title": "MedOrbits Checklists Library",
-      "category": "checklists",
-      "path": "checklists/README.md",
-      "format": "text/markdown",
-      "description": "Library documentation and index for downloadable checklist resources.",
-      "intendedUse": "Discovering and maintaining the checklist collection.",
-      "status": "draft",
-      "verificationStatus": "not_verified",
-      "version": "1.0.0",
-      "language": "en",
-      "keywords": [
-        "checklists",
-        "planning",
-        "education",
-        "career",
-        "study abroad"
+  "verificationPolicy": {
+    "allowedStatuses": [
+      "not_verified",
+      "content_reviewed",
+      "official_sources_checked",
+      "officially_verified"
+    ],
+    "publicDownloadStatuses": [
+      "published"
+    ],
+    "requirements": [
+      "Use official issuing-authority sources for time-sensitive admission, eligibility, fee, deadline, and policy claims.",
+      "Record source URLs and check dates before claiming official verification.",
+      "Content-reviewed resources must not be labelled officially verified.",
+      "An official-source link does not automatically establish that the entire document is officially endorsed.",
+      "Recheck time-sensitive content before its review due date."
+    ]
+  },
+  "resources": [],
+  "extensions": {
+    "manifestPurpose": "Central document-library index",
+    "categoryManifestFilename": "MANIFEST.json",
+    "categoryManifestFilenamePolicy": "Use the exact case-sensitive filename declared by this manifest.",
+    "downloadPolicy": {
+      "publicStatuses": [
+        "published"
       ],
-      "officialSources": [],
-      "lastReviewedAt": null,
-      "reviewDueAt": null
+      "requireExistingFile": true,
+      "requirePdfMimeValidation": true,
+      "requirePathContainmentCheck": true
     },
-    {
-      "id": "admission-guides-library",
-      "title": "MedOrbits Admission Guides",
-      "category": "admission-guides",
-      "path": "admission-guides/README.md",
-      "format": "text/markdown",
-      "description": "Library documentation and index for programme-specific and general admission guides.",
-      "intendedUse": "Discovering and maintaining admission guidance resources.",
-      "status": "draft",
-      "verificationStatus": "not_verified",
-      "version": "1.0.0",
-      "language": "en",
-      "keywords": [
-        "admissions",
-        "MBBS",
-        "BDS",
-        "AYUSH",
-        "engineering",
-        "law",
-        "management",
-        "nursing",
-        "pharmacy"
+    "integration": {
+      "intendedConsumers": [
+        "document-library page",
+        "site search",
+        "resource cards",
+        "download controls",
+        "document validation scripts"
       ],
-      "officialSources": [],
-      "lastReviewedAt": null,
-      "reviewDueAt": null
-    },
-    {
-      "id": "fee-guides-library",
-      "title": "MedOrbits Fee Guides",
-      "category": "fee-guides",
-      "path": "fee-guides/README.md",
-      "format": "text/markdown",
-      "description": "Library documentation and index for education fee and financial planning guides.",
-      "intendedUse": "Discovering and maintaining education cost and financing resources.",
-      "status": "draft",
-      "verificationStatus": "not_verified",
-      "version": "1.0.0",
-      "language": "en",
-      "keywords": [
-        "education fees",
-        "tuition",
-        "living costs",
-        "scholarships",
-        "education loans",
-        "refunds"
-      ],
-      "officialSources": [],
-      "lastReviewedAt": null,
-      "reviewDueAt": null
-    },
-    {
-      "id": "official-notice-verification-checklist",
-      "title": "Official Notice Verification Checklist",
-      "category": "checklists",
-      "path": "checklists/general/official-notice-verification-checklist.pdf",
-      "format": "application/pdf",
-      "description": "A general checklist for locating and checking notices on the issuing authority's own channels.",
-      "intendedUse": "Reviewing an education or career notice before acting on it.",
-      "status": "published",
-      "verificationStatus": "content_reviewed",
-      "version": "1.0.0",
-      "language": "en",
-      "keywords": ["notice", "verification", "official source", "checklist"],
-      "officialSources": [],
-      "lastReviewedAt": "2026-10-17",
-      "reviewDueAt": null
+      "loadCategoryManifests": true,
+      "hideNonPublishedResources": true
     }
-  ]
+  }
 }

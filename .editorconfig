@@ -18,7 +18,7 @@ indent_size = 2
 
 Markdown and documentation
 
-[*.md]
+[*.{md,mdx,markdown}]
 indent_style = space
 indent_size = 2
 trim_trailing_whitespace = false
@@ -34,7 +34,7 @@ insert_final_newline = true
 
 JSON and JSON-based configuration
 
-[*.{json,jsonc,json5}]
+[*.{json,jsonc,json5,jsonld,ndjson}]
 indent_style = space
 indent_size = 2
 end_of_line = lf
@@ -46,16 +46,16 @@ indent_style = space
 indent_size = 2
 end_of_line = lf
 
-HTML, templates, stylesheets, and vector graphics
+HTML, templates, stylesheets, XML, and vector graphics
 
-[*.{html,htm,css,scss,sass,less,xml,svg}]
+[*.{html,htm,xhtml,css,scss,sass,less,xml,svg}]
 indent_style = space
 indent_size = 2
 end_of_line = lf
 
 Shell scripts
 
-[*.{sh,bash}]
+[*.{sh,bash,zsh}]
 indent_style = space
 indent_size = 2
 end_of_line = lf
@@ -74,9 +74,67 @@ indent_style = space
 indent_size = 2
 end_of_line = lf
 
-TOML, INI, and environment configuration
+TOML, INI, and configuration files
 
-[*.{toml,ini,conf}]
+[*.{toml,ini,conf,properties}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+Environment files
+
+[.env*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = unset
+indent_size = unset
+
+Docker configuration
+
+[Dockerfile]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[docker-compose.yml]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[compose.yml]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+Git configuration
+
+[.gitignore]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[.gitattributes]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+Editor and tool configuration
+
+[*.{editorconfig,prettierrc,eslintrc}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[*.{lock}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+JSON package-manager lockfile
+
+[package-lock.json]
 indent_style = space
 indent_size = 2
 end_of_line = lf
@@ -86,6 +144,7 @@ Makefiles require tabs for recipe indentation
 [Makefile]
 indent_style = tab
 end_of_line = lf
+insert_final_newline = true
 
 Windows command scripts
 
@@ -93,32 +152,20 @@ Windows command scripts
 end_of_line = crlf
 insert_final_newline = true
 
-Environment files
+PowerShell scripts
 
-[.env*]
+[.ps1,.psm1,*.psd1]
+indent_style = space
+indent_size = 2
+end_of_line = crlf
 insert_final_newline = true
-trim_trailing_whitespace = true
-
-Lockfiles and package-manager metadata
-
-[package-lock.json]
-indent_style = space
-indent_size = 2
-
-[yarn.lock]
-indent_style = space
-indent_size = 2
-
-[pnpm-lock.yaml]
-indent_style = space
-indent_size = 2
 
 Binary and generated assets: do not apply text-file formatting rules
 
-[*.{jpg,jpeg,png,gif,webp,ico,pdf,zip,woff,woff2,ttf,eot,mp4,webm,mp3,sqlite,db}]
-insert_final_newline = unset
-trim_trailing_whitespace = unset
+[*.{jpg,jpeg,png,gif,webp,ico,pdf,zip,woff,woff2,ttf,eot,otf,mp4,webm,mp3,wav,ogg,sqlite,db,wasm}]
 charset = unset
 end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
 indent_style = unset
 indent_size = unset

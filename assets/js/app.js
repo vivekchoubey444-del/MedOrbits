@@ -1,32 +1,38 @@
 
 /**
  * MedOrbits -- Application Bootstrap
- * File: assets/js/app.js
+ * File: /assets/js/app.js
+ * Version: 1.1.0
  *
  * Responsibilities:
  * - Initialize application-wide UI behavior
- * - Manage mobile navigation and dropdowns
- * - Handle theme preferences
- * - Provide accessible notifications
- * - Enhance forms and external links
- * - Handle global errors
+ * - Manage accessible mobile navigation and dropdowns
+ * - Persist theme preferences
+ * - Provide accessible toast notifications
+ * - Enhance forms, password visibility and external links
+ * - Initialize optional page modules safely
+ * - Manage footer year and social links
+ * - Provide cookie-consent helpers and global error logging
  *
- * Keep authentication, API requests, payments, and permissions
- * inside their dedicated modules.
+ * Authentication, API clients, payments and authorization belong
+ * to their dedicated modules.
  */
 
 (() => {
   "use strict";
 
+  if (window.MedOrbits?.initialized) return;
+
   const APP = Object.freeze({
     name: "MedOrbits",
-    version: "1.0.0",
+    version: "1.1.0",
+
     storageKeys: Object.freeze({
       theme: "medorbits-theme",
       cookieConsent: "medorbits-cookie-consent"
     }),
+
     selectors: Object.freeze({
-      header: "[data-site-header]",
       menuToggle: "[data-menu-toggle]",
       navigation: "[data-navigation]",
       dropdownToggle: "[data-dropdown-toggle]",
@@ -41,7 +47,7 @@
 
   const state = {
     initialized: false,
-    menuOpen: false,
+    cleanups: [],
     toastTimerIds: new Set()
   };
 
@@ -72,29 +78,39 @@
     },
 
     prefersReducedMotion() {
-      return window.matchMedia(
+      return window.matchMedia?.(
         "(prefers-reduced-motion: reduce)"
-      ).matches;
+      ).matches === true;
     },
 
-    isModifiedClick(event) {
-      return (
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey
-      );
+    addListener(target, type, handler, options) {
+      if (!target?.addEventListener) return;
+
+      target.addEventListener(type, handler, options);
+
+      state.cleanups.push(() => {
+        target.removeEventListener(type, handler, options);
+      });
     },
 
     isExternalLink(url) {
       return url.origin !== window.location.origin;
+    },
+
+    emit(name, detail = {}) {
+      document.dispatchEvent(
+        new CustomEvent(`medorbits:${name}`, { detail })
+      );
+    },
+
+    safeURL(value, base = window.location.href) {
+      try {
+        return new URL(value, base);
+      } catch {
+        return null;
+      }
     }
   };
-
-  // --------------------------------------------------
-  // Application logging
-  // --------------------------------------------------
 
   const logger = {
     info(message, details) {
@@ -112,20 +128,11 @@
     }
   };
 
-  // --------------------------------------------------
-  // Shared custom events
-  // --------------------------------------------------
-
-  const events = {
+  const events = Object.freeze({
     emit(name, detail = {}) {
-      document.dispatchEvent(
-        new CustomEvent(`medorbits:${name}`, {
-          bubbles: true,
-          detail
-        })
-      );
+      helpers.emit(name, detail);
     }
-  };
+  });
 
   // --------------------------------------------------
   // Mobile navigation
@@ -138,69 +145,67 @@
 
       if (!toggle || !nav) return;
 
+      if (!nav.id) nav.id = "medorbits-primary-navigation";
+
+      toggle.setAttribute("aria-controls", nav.id);
+
       if (!toggle.hasAttribute("aria-expanded")) {
         toggle.setAttribute("aria-expanded", "false");
       }
 
-      if (!nav.id) {
-        nav.id = "medorbits-primary-navigation";
-      }
+      const isOpen = () =>
+        toggle.getAttribute("aria-expanded") === "true";
 
-      toggle.setAttribute("aria-controls", nav.id);
+      const setOpen = (open, { returnFocus = false } = {}) => {
+        toggle.setAttribute("aria-expanded", String(open));
+        nav.classList.toggle("is-open", open);
+        document.body.classList.toggle("menu-is-open", open);
 
-      toggle.addEventListener("click", () => {
-        this.setOpen(
-          toggle.getAttribute("aria-expanded") !== "true",
-          toggle,
-          nav
-        );
+        helpers.emit("navigation-change", { open });
+
+        if (!open && returnFocus) {
+          toggle.focus({ preventScroll: true });
+        }
+      };
+
+      helpers.addListener(toggle, "click", () => {
+        setOpen(!isOpen());
       });
 
-      nav.addEventListener("click", (event) => {
+      helpers.addListener(nav, "click", (event) => {
         const link = event.target.closest("a");
 
-        if (link && window.matchMedia("(max-width: 768px)").matches) {
-          this.setOpen(false, toggle, nav);
-        }
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          this.setOpen(false, toggle, nav);
-        }
-      });
-
-      document.addEventListener("click", (event) => {
         if (
-          state.menuOpen &&
+          link &&
+          window.matchMedia("(max-width: 768px)").matches
+        ) {
+          setOpen(false);
+        }
+      });
+
+      helpers.addListener(document, "keydown", (event) => {
+        if (event.key === "Escape" && isOpen()) {
+          setOpen(false, { returnFocus: true });
+        }
+      });
+
+      helpers.addListener(document, "click", (event) => {
+        if (
+          isOpen() &&
           !toggle.contains(event.target) &&
           !nav.contains(event.target)
         ) {
-          this.setOpen(false, toggle, nav);
+          setOpen(false);
         }
       });
 
-      window.addEventListener("resize", () => {
-        if (window.innerWidth > 768) {
-          this.setOpen(false, toggle, nav);
+      helpers.addListener(window, "resize", () => {
+        if (window.innerWidth > 768 && isOpen()) {
+          setOpen(false);
         }
       });
-    },
 
-    setOpen(open, toggle, nav) {
-      state.menuOpen = open;
-
-      toggle.setAttribute("aria-expanded", String(open));
-      nav.classList.toggle("is-open", open);
-
-      document.body.classList.toggle("menu-is-open", open);
-
-      events.emit("navigation-change", { open });
-
-      if (open) {
-        const firstLink = helpers.query("a", nav);
-        firstLink?.focus({ preventScroll: true });
-      }
+      setOpen(isOpen());
     }
   };
 
@@ -211,6 +216,8 @@
   const dropdowns = {
     init() {
       helpers.queryAll(APP.selectors.dropdownToggle).forEach((toggle) => {
+        if (toggle.dataset.dropdownInitialized === "true") return;
+
         const targetId = toggle.getAttribute("aria-controls");
         const panel = targetId
           ? document.getElementById(targetId)
@@ -218,28 +225,42 @@
 
         if (!panel) return;
 
+        toggle.dataset.dropdownInitialized = "true";
+
+        const initialOpen =
+          toggle.getAttribute("aria-expanded") === "true" &&
+          !panel.hidden;
+
         const setOpen = (open) => {
           toggle.setAttribute("aria-expanded", String(open));
           panel.hidden = !open;
           panel.classList.toggle("is-open", open);
         };
 
-        if (!toggle.hasAttribute("aria-expanded")) {
-          setOpen(false);
-        }
+        setOpen(initialOpen);
 
-        toggle.addEventListener("click", () => {
+        helpers.addListener(toggle, "click", () => {
           setOpen(toggle.getAttribute("aria-expanded") !== "true");
         });
 
-        toggle.addEventListener("keydown", (event) => {
+        helpers.addListener(toggle, "keydown", (event) => {
           if (event.key === "Escape") {
             setOpen(false);
-            toggle.focus();
+            toggle.focus({ preventScroll: true });
+          }
+
+          if (
+            event.key === "ArrowDown" &&
+            toggle.getAttribute("aria-expanded") !== "true"
+          ) {
+            event.preventDefault();
+            setOpen(true);
+            helpers.query("a[href], button:not(:disabled)", panel)
+              ?.focus({ preventScroll: true });
           }
         });
 
-        document.addEventListener("click", (event) => {
+        helpers.addListener(document, "click", (event) => {
           if (
             !toggle.contains(event.target) &&
             !panel.contains(event.target)
@@ -257,32 +278,31 @@
 
   const theme = {
     init() {
-      const toggle = helpers.query(APP.selectors.themeToggle);
       const savedTheme = helpers.safeStorageGet(APP.storageKeys.theme);
+      const documentTheme = document.documentElement.dataset.theme;
 
-      const validTheme = ["dark", "light"].includes(savedTheme)
+      const initialTheme = ["dark", "light"].includes(savedTheme)
         ? savedTheme
-        : null;
-
-      const initialTheme =
-        validTheme ||
-        document.documentElement.dataset.theme ||
-        "dark";
+        : ["dark", "light"].includes(documentTheme)
+          ? documentTheme
+          : "dark";
 
       this.apply(initialTheme, false);
 
-      if (toggle) {
-        toggle.addEventListener("click", () => {
-          const current =
-            document.documentElement.dataset.theme || "dark";
+      helpers.queryAll(APP.selectors.themeToggle).forEach((toggle) => {
+        if (toggle.dataset.themeInitialized === "true") return;
 
-          this.apply(current === "dark" ? "light" : "dark", true);
+        toggle.dataset.themeInitialized = "true";
+
+        helpers.addListener(toggle, "click", () => {
+          const current = document.documentElement.dataset.theme || "dark";
+          this.apply(current === "dark" ? "light" : "dark");
         });
-      }
+      });
     },
 
     apply(value, persist = true) {
-      if (!["dark", "light"].includes(value)) return;
+      if (!["dark", "light"].includes(value)) return false;
 
       const root = document.documentElement;
 
@@ -296,7 +316,6 @@
             ? "Switch to light theme"
             : "Switch to dark theme"
         );
-
         toggle.setAttribute("aria-pressed", String(value === "dark"));
       });
 
@@ -304,7 +323,8 @@
         helpers.safeStorageSet(APP.storageKeys.theme, value);
       }
 
-      events.emit("theme-change", { theme: value });
+      helpers.emit("theme-change", { theme: value });
+      return true;
     }
   };
 
@@ -313,6 +333,8 @@
   // --------------------------------------------------
 
   const toast = {
+    container: null,
+
     init() {
       this.container = helpers.query(APP.selectors.toastContainer);
 
@@ -320,27 +342,30 @@
         this.container = document.createElement("div");
         this.container.dataset.toastContainer = "";
         this.container.className = "toast-container";
-        this.container.setAttribute("aria-label", "Notifications");
-        this.container.setAttribute("aria-live", "polite");
-        this.container.setAttribute("aria-relevant", "additions text");
         document.body.appendChild(this.container);
       }
+
+      this.container.setAttribute("aria-label", "Notifications");
+      this.container.setAttribute("aria-live", "polite");
+      this.container.setAttribute("aria-relevant", "additions text");
     },
 
     show(message, options = {}) {
-      if (!this.container) this.init();
-
-      const {
-        type = "info",
-        duration = 4000
-      } = options;
+      if (!this.container?.isConnected) this.init();
 
       const allowedTypes = ["info", "success", "warning", "error"];
-      const safeType = allowedTypes.includes(type) ? type : "info";
+      const type = allowedTypes.includes(options.type)
+        ? options.type
+        : "info";
+
+      const requestedDuration = Number(options.duration ?? 4000);
+      const duration = Number.isFinite(requestedDuration)
+        ? Math.max(0, Math.min(requestedDuration, 60000))
+        : 4000;
 
       const item = document.createElement("div");
-      item.className = `toast toast--${safeType}`;
-      item.setAttribute("role", safeType === "error" ? "alert" : "status");
+      item.className = `toast toast--${type}`;
+      item.setAttribute("role", type === "error" ? "alert" : "status");
 
       const text = document.createElement("span");
       text.textContent = String(message);
@@ -351,33 +376,28 @@
       close.setAttribute("aria-label", "Dismiss notification");
       close.textContent = "×";
 
+      let timerId = null;
+
       const remove = () => {
-        const timerId = item.dataset.timerId;
-
-        if (timerId) {
-          window.clearTimeout(Number(timerId));
-          state.toastTimerIds.delete(Number(timerId));
+        if (timerId !== null) {
+          window.clearTimeout(timerId);
+          state.toastTimerIds.delete(timerId);
+          timerId = null;
         }
-
         item.remove();
       };
 
-      close.addEventListener("click", remove);
+      helpers.addListener(close, "click", remove);
 
       item.append(text, close);
       this.container.appendChild(item);
 
       if (duration > 0) {
-        const timerId = window.setTimeout(remove, duration);
+        timerId = window.setTimeout(remove, duration);
         state.toastTimerIds.add(timerId);
-        item.dataset.timerId = String(timerId);
       }
 
-      events.emit("toast", {
-        type: safeType,
-        message: String(message)
-      });
-
+      helpers.emit("toast", { type, message: String(message) });
       return item;
     },
 
@@ -391,6 +411,15 @@
 
     warning(message, options = {}) {
       return this.show(message, { ...options, type: "warning" });
+    },
+
+    dismissAll() {
+      this.container?.querySelectorAll(".toast").forEach((item) => {
+        item.remove();
+      });
+
+      state.toastTimerIds.forEach((id) => window.clearTimeout(id));
+      state.toastTimerIds.clear();
     }
   };
 
@@ -401,36 +430,35 @@
   const forms = {
     init() {
       helpers.queryAll(APP.selectors.form).forEach((form) => {
-        form.addEventListener("submit", (event) => {
+        if (form.dataset.enhancedInitialized === "true") return;
+        form.dataset.enhancedInitialized = "true";
+
+        helpers.addListener(form, "submit", (event) => {
           if (!form.checkValidity()) {
             event.preventDefault();
             form.reportValidity();
 
             const invalidField = form.querySelector(":invalid");
-            invalidField?.focus();
+            invalidField?.focus({ preventScroll: true });
 
-            events.emit("form-invalid", { form });
+            helpers.emit("form-invalid", { form });
             return;
           }
 
-          // Application-specific submission belongs in the relevant
-          // form handler or API module. Do not simulate a server success.
-          events.emit("form-valid", { form });
+          // The responsible form handler must perform submission.
+          // Do not display success or prevent normal form submission here.
+          helpers.emit("form-valid", { form });
         });
 
-        form.addEventListener("input", (event) => {
+        helpers.addListener(form, "input", (event) => {
           const field = event.target;
 
-          if (
-            field instanceof HTMLInputElement ||
-            field instanceof HTMLTextAreaElement ||
-            field instanceof HTMLSelectElement
-          ) {
-            field.removeAttribute("aria-invalid");
+          if (!(field instanceof HTMLElement)) return;
+          if (!("checkValidity" in field)) return;
 
-            if (field.checkValidity()) {
-              field.classList.remove("is-invalid");
-            }
+          if (field.checkValidity()) {
+            field.removeAttribute("aria-invalid");
+            field.classList.remove("is-invalid");
           }
         });
       });
@@ -438,12 +466,14 @@
   };
 
   // --------------------------------------------------
-  // Password visibility controls
+  // Password visibility
   // --------------------------------------------------
 
   const passwordVisibility = {
     init() {
       helpers.queryAll(APP.selectors.passwordToggle).forEach((toggle) => {
+        if (toggle.dataset.passwordInitialized === "true") return;
+
         const targetId = toggle.getAttribute("aria-controls");
         const input = targetId
           ? document.getElementById(targetId)
@@ -452,11 +482,12 @@
         if (!(input instanceof HTMLInputElement)) return;
         if (!["password", "text"].includes(input.type)) return;
 
+        toggle.dataset.passwordInitialized = "true";
         toggle.setAttribute("aria-pressed", "false");
+        toggle.setAttribute("aria-label", "Show password");
 
-        toggle.addEventListener("click", () => {
+        helpers.addListener(toggle, "click", () => {
           const show = input.type === "password";
-
           input.type = show ? "text" : "password";
           toggle.setAttribute("aria-pressed", String(show));
           toggle.setAttribute(
@@ -469,31 +500,25 @@
   };
 
   // --------------------------------------------------
-  // External links and safe navigation
+  // External links
   // --------------------------------------------------
 
   const links = {
     init() {
       helpers.queryAll("a[href]").forEach((link) => {
-        let url;
-
-        try {
-          url = new URL(link.href, window.location.href);
-        } catch {
-          return;
-        }
+        const url = helpers.safeURL(link.getAttribute("href"));
+        if (!url) return;
 
         if (
-          url.protocol !== "http:" &&
-          url.protocol !== "https:" &&
-          url.protocol !== "mailto:" &&
-          url.protocol !== "tel:"
+          !["http:", "https:", "mailto:", "tel:"].includes(url.protocol)
         ) {
+          link.removeAttribute("href");
+          logger.warn("Blocked unsupported link protocol.");
           return;
         }
 
         if (
-          link.target === "_blank" &&
+          link.target.toLowerCase() === "_blank" &&
           helpers.isExternalLink(url)
         ) {
           const rel = new Set(
@@ -504,21 +529,19 @@
 
           rel.add("noopener");
           rel.add("noreferrer");
-
-          link.setAttribute("rel", Array.from(rel).join(" "));
+          link.setAttribute("rel", [...rel].join(" "));
         }
       });
     }
   };
 
   // --------------------------------------------------
-  // Back-to-top control
+  // Back to top
   // --------------------------------------------------
 
   const backToTop = {
     init() {
       const button = helpers.query(APP.selectors.backToTop);
-
       if (!button) return;
 
       const update = () => {
@@ -526,9 +549,9 @@
       };
 
       update();
-      window.addEventListener("scroll", update, { passive: true });
+      helpers.addListener(window, "scroll", update, { passive: true });
 
-      button.addEventListener("click", () => {
+      helpers.addListener(button, "click", () => {
         window.scrollTo({
           top: 0,
           behavior: helpers.prefersReducedMotion() ? "auto" : "smooth"
@@ -538,7 +561,7 @@
   };
 
   // --------------------------------------------------
-  // Footer year
+  // Footer year and social links
   // --------------------------------------------------
 
   const footer = {
@@ -549,24 +572,27 @@
         element.textContent = year;
       });
 
-      helpers.queryAll(".footer-bottom").forEach((element) => {
-        if (element.querySelector("[data-social-links]")) return;
+      this.loadSocialLinks();
+    },
 
-        const links = document.createElement("nav");
-        links.className = "footer-social-links";
-        links.dataset.socialLinks = "";
-        links.setAttribute("aria-label", "MedOrbits social links");
-        element.appendChild(links);
-      });
+    async loadSocialLinks() {
+      const containers = helpers.queryAll("[data-social-links]");
+      if (!containers.length) return;
 
-      fetch("/assets/data/social-links.json", {
-        headers: { Accept: "application/json" },
-        credentials: "same-origin"
-      }).then((response) => {
-        if (!response.ok) throw new Error("Social links are unavailable.");
-        return response.json();
-      }).then((data) => {
-        const iconIds = new Set([
+      try {
+        const response = await fetch("/assets/data/social-links.json", {
+          headers: { Accept: "application/json" },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          throw new Error("Social links could not be loaded.");
+        }
+
+        const data = await response.json();
+        const configured = Array.isArray(data.links) ? data.links : [];
+
+        const allowedIcons = new Set([
           "facebook",
           "instagram",
           "linkedin",
@@ -576,81 +602,59 @@
           "youtube",
           "website"
         ]);
-        const unconfiguredProfiles = ["instagram", "facebook", "x"];
-        helpers.queryAll("[data-social-links]").forEach((container) => {
+
+        containers.forEach((container) => {
           container.replaceChildren();
-          const configured = Array.isArray(data.links) ? data.links : [];
-          const configuredIds = new Set(configured.map((item) => String(item?.id || "").toLowerCase()));
+
           configured.forEach((item) => {
-            if (typeof item?.url !== "string" || !item.url.trim()) return;
-            let url;
-            try {
-              url = new URL(item.url);
-            } catch {
-              return;
-            }
-            if (url.protocol !== "https:") return;
+            if (!item || typeof item.url !== "string") return;
+
+            const url = helpers.safeURL(item.url);
+            if (!url || url.protocol !== "https:") return;
 
             const id = String(item.id || "").toLowerCase();
             const iconId = id.startsWith("whatsapp") ? "whatsapp" : id;
+            if (!allowedIcons.has(iconId)) return;
+
             const link = document.createElement("a");
             const icon = document.createElement("img");
             const label = document.createElement("span");
-            const iconName = iconId === "website"
-              ? "link"
-              : iconIds.has(iconId) ? iconId : "social";
 
             link.className = "footer-social-button";
             link.href = url.href;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
-            icon.src = `/assets/icons/social/${iconName}.svg`;
+
+            icon.src = `/assets/icons/social/${iconId === "website" ? "link" : iconId}.svg`;
             icon.alt = "";
             icon.width = 18;
             icon.height = 18;
             icon.setAttribute("aria-hidden", "true");
+
             label.textContent = String(item.label || item.id || "Social link");
+
             link.append(icon, label);
             container.appendChild(link);
           });
 
-          unconfiguredProfiles.forEach((id) => {
-            const item = configured.find((candidate) => String(candidate?.id || "").toLowerCase() === id);
-            if (configuredIds.has(id) && item?.url?.trim()) return;
-
-            const placeholder = document.createElement("span");
-            const icon = document.createElement("img");
-            const label = document.createElement("span");
-            placeholder.className = "footer-social-placeholder";
-            placeholder.setAttribute("role", "img");
-            placeholder.setAttribute("aria-label", `${id} profile link not configured`);
-            icon.src = `/assets/icons/social/${id}.svg`;
-            icon.alt = "";
-            icon.width = 18;
-            icon.height = 18;
-            icon.setAttribute("aria-hidden", "true");
-            label.textContent = id === "x" ? "X" : id[0].toUpperCase() + id.slice(1);
-            placeholder.append(icon, label);
-            container.appendChild(placeholder);
-          });
-
           container.hidden = container.childElementCount === 0;
         });
-      }).catch((error) => {
-        logger.error("Social links are unavailable.", error);
-        helpers.queryAll("[data-social-links]").forEach((container) => {
+      } catch (error) {
+        logger.warn("Social links are unavailable.", error);
+        containers.forEach((container) => {
           container.hidden = true;
         });
-      });
+      }
     }
   };
 
   // --------------------------------------------------
-  // Catalog sliders
+  // Catalog grids and pagination
   // --------------------------------------------------
 
   const catalogSliders = {
     observer: null,
+
     init() {
       if (!document.getElementById("medorbits-grid-layout")) {
         const style = document.createElement("style");
@@ -669,180 +673,181 @@
             flex: initial !important;
             scroll-snap-align: none !important;
           }
-          .footer-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 20px 16px !important;
-          }
-          .footer-grid > .footer-brand {
-            grid-column: 1 / -1 !important;
-          }
-          .footer-social-placeholder {
-            display: inline-flex;
-            min-height: 38px;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 12px;
-            border: 1px solid rgba(201, 169, 110, 0.18);
-            border-radius: 8px;
-            color: var(--muted, #a79caf);
-            font-size: 11px;
-            opacity: 0.6;
-          }
-          .footer-social-placeholder img {
-            width: 18px;
-            height: 18px;
-          }
           .catalog-slider-controls {
+            display: flex;
             justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+          }
+          .catalog-slider-controls[hidden] {
+            display: none !important;
+          }
+          .catalog-slider-button {
+            min-width: 40px;
+            min-height: 40px;
+            cursor: pointer;
+          }
+          .catalog-slider-button:disabled {
+            cursor: not-allowed;
+            opacity: .45;
           }
           @media (max-width: 390px) {
-            .cards.is-catalog-slider,
-            .footer-grid {
-              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            .cards.is-catalog-slider {
+              gap: 10px !important;
             }
           }
         `;
         document.head.appendChild(style);
       }
 
-      helpers.queryAll("[data-catalog-slider], .cards:not([data-no-catalog-slider])").forEach((track, index) => {
+      helpers.queryAll(
+        "[data-catalog-slider], .cards:not([data-no-catalog-slider])"
+      ).forEach((track, index) => {
         if (track.dataset.sliderInitialized === "true") return;
 
         track.dataset.sliderInitialized = "true";
-        track.dataset.sliderPageSize ||= "4";
         track.classList.add("is-catalog-slider");
+
+        const parsedSize = Number.parseInt(
+          track.dataset.sliderPageSize || "4",
+          10
+        );
+        const pageSize = Number.isInteger(parsedSize) && parsedSize > 0
+          ? Math.min(parsedSize, 100)
+          : 4;
+
         track.setAttribute(
           "aria-label",
           track.dataset.sliderLabel || `Catalog items ${index + 1}`
         );
-        track.setAttribute("tabindex", "0");
 
         const controls = document.createElement("div");
         controls.className = "catalog-slider-controls";
         controls.setAttribute("role", "group");
-        controls.setAttribute("aria-label", "Catalog navigation");
+        controls.setAttribute("aria-label", "Catalog pagination");
 
         const previous = document.createElement("button");
         previous.type = "button";
         previous.className = "catalog-slider-button";
-        previous.setAttribute("aria-label", "Show previous catalog items");
-        previous.title = "Previous items";
+        previous.setAttribute("aria-label", "Previous catalog page");
         previous.textContent = "‹";
 
         const next = document.createElement("button");
         next.type = "button";
         next.className = "catalog-slider-button";
-        next.setAttribute("aria-label", "Show next catalog items");
-        next.title = "Next items";
+        next.setAttribute("aria-label", "Next catalog page");
         next.textContent = "›";
 
         controls.append(previous, next);
         track.insertAdjacentElement("afterend", controls);
 
-        const pageSize = Number.parseInt(track.dataset.sliderPageSize || "", 10);
-        const paginated = Number.isInteger(pageSize) && pageSize > 0;
-        const items = [...track.children];
         let currentPage = 0;
-
-        const updateControls = () => {
-          if (paginated) {
-            previous.disabled = currentPage === 0;
-            next.disabled = (currentPage + 1) * pageSize >= items.length;
-            controls.hidden = items.length <= pageSize;
-            return;
-          }
-
-          const maxScroll = track.scrollWidth - track.clientWidth;
-          previous.disabled = track.scrollLeft <= 1;
-          next.disabled = track.scrollLeft >= maxScroll - 1;
-          controls.hidden = maxScroll <= 1;
-        };
+        const getItems = () => [...track.children].filter(
+          (item) => !item.matches("[data-slider-ignore]")
+        );
 
         const showPage = (page) => {
-          currentPage = Math.max(
-            0,
-            Math.min(page, Math.ceil(items.length / pageSize) - 1)
-          );
+          const items = getItems();
+          const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+          currentPage = Math.max(0, Math.min(page, pageCount - 1));
+
           items.forEach((item, index) => {
             item.hidden =
               index < currentPage * pageSize ||
               index >= (currentPage + 1) * pageSize;
           });
-          updateControls();
+
+          previous.disabled = currentPage === 0;
+          next.disabled = currentPage >= pageCount - 1;
+          controls.hidden = pageCount <= 1;
         };
 
-        const scrollByPage = (direction) => {
-          if (paginated) {
-            showPage(currentPage + direction);
-            return;
-          }
+        helpers.addListener(previous, "click", () => showPage(currentPage - 1));
+        helpers.addListener(next, "click", () => showPage(currentPage + 1));
 
-          const firstItem = track.firstElementChild;
-          const itemWidth = firstItem?.getBoundingClientRect().width || track.clientWidth;
-          const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
-          track.scrollBy({
-            left: direction * (itemWidth + gap),
-            behavior: helpers.prefersReducedMotion() ? "auto" : "smooth"
-          });
-        };
-
-        previous.addEventListener("click", () => scrollByPage(-1));
-        next.addEventListener("click", () => scrollByPage(1));
-        track.addEventListener("scroll", updateControls, { passive: true });
-        track.addEventListener("keydown", (event) => {
-          if (paginated && event.target !== track) return;
+        helpers.addListener(track, "keydown", (event) => {
           if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          if (event.target !== track) return;
+
           event.preventDefault();
-          scrollByPage(event.key === "ArrowRight" ? 1 : -1);
+          showPage(currentPage + (event.key === "ArrowRight" ? 1 : -1));
         });
-        window.addEventListener("resize", updateControls, { passive: true });
-        if (paginated) showPage(0);
-        else updateControls();
+
+        showPage(0);
       });
 
       if (!this.observer && "MutationObserver" in window && document.body) {
         this.observer = new MutationObserver((records) => {
-          const addedCatalog = records.some((record) => [...record.addedNodes].some((node) =>
-            node.nodeType === Node.ELEMENT_NODE &&
-            (node.matches(".cards") || node.querySelector(".cards"))
-          ));
+          const addedCatalog = records.some((record) =>
+            [...record.addedNodes].some((node) =>
+              node.nodeType === Node.ELEMENT_NODE &&
+              (node.matches(".cards, [data-catalog-slider]") ||
+                node.querySelector(".cards, [data-catalog-slider]"))
+            )
+          );
+
           if (addedCatalog) this.init();
         });
-        this.observer.observe(document.body, { childList: true, subtree: true });
+
+        this.observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
       }
     }
   };
 
+  // --------------------------------------------------
+  // Optional page modules
+  // --------------------------------------------------
+
+  function loadScriptOnce(selector, src, { defer = true } = {}) {
+    if (helpers.query(selector)) return;
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = defer;
+    script.dataset.moduleLoaded = "pending";
+
+    script.addEventListener("load", () => {
+      script.dataset.moduleLoaded = "loaded";
+      helpers.emit("module-loaded", { src });
+    }, { once: true });
+
+    script.addEventListener("error", () => {
+      script.dataset.moduleLoaded = "error";
+      logger.warn(`Optional module failed to load: ${src}`);
+    }, { once: true });
+
+    document.head.appendChild(script);
+  }
+
   const siteTools = {
     init() {
-      if (!/^\/(education|career)(\/|$)/.test(window.location.pathname)) return;
-      if (helpers.query('script[data-site-tools-script]')) return;
+      if (!/^\/(education|career)(\/|$)/.test(location.pathname)) return;
 
-      const script = document.createElement('script');
-      script.src = '/assets/js/site-tools.js';
-      script.dataset.siteToolsScript = '';
-      script.defer = true;
-      document.head.appendChild(script);
+      loadScriptOnce(
+        'script[data-site-tools-script]',
+        "/assets/js/site-tools.js"
+      );
     }
   };
 
   const documentLibrary = {
     init() {
-      const pathname = window.location.pathname;
-      if (!(pathname === "/" || /\/index\.html$/.test(pathname))) return;
-      if (/^\/(admin|account|legal)(\/|$)/.test(pathname)) return;
-      if (helpers.query('script[data-document-library]')) return;
+      const path = location.pathname;
+      if (!(path === "/" || /\/index\.html$/.test(path))) return;
 
-      const script = document.createElement("script");
-      script.src = "/assets/js/document-library.js";
-      script.dataset.documentLibrary = "";
-      document.head.appendChild(script);
+      loadScriptOnce(
+        "script[data-document-library]",
+        "/assets/js/document-library.js"
+      );
     }
   };
 
   const publicData = {
     init() {
-      const dataPages = new Set([
+      const pages = new Set([
         "/education/index.html",
         "/education/courses.html",
         "/education/colleges.html",
@@ -866,173 +871,169 @@
         "/pages/notifications.html",
         "/pages/testimonials.html"
       ]);
-      const pathname = window.location.pathname.endsWith("/")
-        ? `${window.location.pathname}index.html`
-        : window.location.pathname;
-      if (!dataPages.has(pathname)) return;
-      if (helpers.query("script[data-public-data]")) return;
 
-      const script = document.createElement("script");
-      script.src = "/assets/js/public-data.js";
-      script.dataset.publicData = "";
-      script.defer = true;
-      document.head.appendChild(script);
+      const path = location.pathname.endsWith("/")
+        ? `${location.pathname}index.html`
+        : location.pathname;
+
+      if (!pages.has(path)) return;
+
+      loadScriptOnce(
+        "script[data-public-data]",
+        "/assets/js/public-data.js"
+      );
     }
   };
 
   const publicBulletins = {
     init() {
-      const pathname = window.location.pathname;
-      if (
-        pathname !== "/" &&
-        pathname !== "/index.html" &&
-        pathname !== "/pages/notifications.html"
-      ) return;
-      if (helpers.query("script[data-public-bulletins]")) return;
+      if (![
+        "/",
+        "/index.html",
+        "/pages/notifications.html"
+      ].includes(location.pathname)) return;
 
-      const script = document.createElement("script");
-      script.src = "/assets/js/bulletins.js";
-      script.dataset.publicBulletins = "";
-      script.defer = true;
-      document.head.appendChild(script);
+      loadScriptOnce(
+        "script[data-public-bulletins]",
+        "/assets/js/bulletins.js"
+      );
     }
   };
 
+  // --------------------------------------------------
+  // Timed enquiry
+  // --------------------------------------------------
+
   const timedEnquiry = {
     init() {
-      const pathname = window.location.pathname;
+      if (document.documentElement.dataset.timedEnquiry !== "enabled") return;
+
+      const path = location.pathname;
+
       if (
-        (/^\/(admin|account|legal)(\/|$)/.test(pathname) &&
-          pathname !== "/legal/disclaimer.html") ||
-        pathname === "/pages/400.html" ||
-        pathname === "/pages/maintenance.html" ||
-        pathname === "/pages/contact.html" ||
+        /^\/(admin|account|legal)(\/|$)/.test(path) ||
+        path === "/pages/400.html" ||
+        path === "/pages/maintenance.html" ||
+        path === "/pages/contact.html" ||
         helpers.query("#contactForm")
       ) return;
 
-      const storageKeys = {
-        startedAt: "medorbits-enquiry-started-at",
-        shown: "medorbits-enquiry-shown"
-      };
+      const shownKey = "medorbits-enquiry-shown";
+      const startKey = "medorbits-enquiry-started-at";
       const delay = 120000;
-      let storageUnavailable = false;
-      let storageWarningLogged = false;
-      let shownInThisDocument = false;
 
-      const warnStorageUnavailable = (error) => {
-        storageUnavailable = true;
-        if (storageWarningLogged) return;
-        storageWarningLogged = true;
-        logger.warn(
-          "Timed enquiry session tracking is unavailable.",
-          error
-        );
-      };
+      let shown = false;
+      let startedAt = Date.now();
 
-      const readSessionValue = (key) => {
-        if (storageUnavailable) return null;
-        try {
-          return window.sessionStorage.getItem(key);
-        } catch (error) {
-          warnStorageUnavailable(error);
-          return null;
+      try {
+        if (sessionStorage.getItem(shownKey) === "true") return;
+
+        const stored = Number(sessionStorage.getItem(startKey));
+        if (Number.isSafeInteger(stored) && stored > 0 && stored <= Date.now()) {
+          startedAt = stored;
+        } else {
+          sessionStorage.setItem(startKey, String(startedAt));
         }
-      };
-
-      const writeSessionValue = (key, value) => {
-        if (storageUnavailable) return;
-        try {
-          window.sessionStorage.setItem(key, value);
-        } catch (error) {
-          warnStorageUnavailable(error);
-        }
-      };
-
-      if (readSessionValue(storageKeys.shown) === "true") return;
-
-      const storedStart = Number(readSessionValue(storageKeys.startedAt));
-      const startedAt = Number.isSafeInteger(storedStart) &&
-        storedStart > 0 &&
-        storedStart <= Date.now()
-        ? storedStart
-        : Date.now();
-      if (startedAt !== storedStart) {
-        writeSessionValue(storageKeys.startedAt, String(startedAt));
+      } catch {
+        // Session storage is optional; this document still behaves normally.
       }
 
-      const closeButtonSelector = "[data-timed-enquiry-close]";
-
       const show = () => {
-        if (shownInThisDocument) return;
-        if (readSessionValue(storageKeys.shown) === "true") return;
+        if (shown) return;
 
-        shownInThisDocument = true;
-        writeSessionValue(storageKeys.shown, "true");
+        try {
+          if (sessionStorage.getItem(shownKey) === "true") return;
+          sessionStorage.setItem(shownKey, "true");
+        } catch {
+          // Prevent duplicate display in this document.
+        }
+
+        shown = true;
 
         const backdrop = document.createElement("div");
         backdrop.className = "timed-enquiry-backdrop";
-        backdrop.setAttribute("data-timed-enquiry", "");
-        backdrop.innerHTML = `
-          <section
-            class="timed-enquiry-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="timed-enquiry-title"
-            aria-describedby="timed-enquiry-description"
-            tabindex="-1"
-          >
-            <button class="timed-enquiry-close" type="button" aria-label="Close enquiry form" data-timed-enquiry-close>×</button>
-            <p class="timed-enquiry-eyebrow">Here to help</p>
-            <h2 id="timed-enquiry-title">Have a question?</h2>
-            <p id="timed-enquiry-description">Share your details and our team will get back to you.</p>
-            <form class="timed-enquiry-form" novalidate>
-              <label>
-                Name
-                <input name="name" autocomplete="name" minlength="2" maxlength="100" required>
-              </label>
-              <label>
-                Email
-                <input name="email" type="email" autocomplete="email" maxlength="254">
-              </label>
-              <label>
-                Phone
-                <input name="phone" type="tel" autocomplete="tel" maxlength="25">
-              </label>
-              <label>
-                What can we help with?
-                <select name="category">
-                  <option value="general">General enquiry</option>
-                  <option value="admissions">Admissions</option>
-                  <option value="study_abroad">Study abroad</option>
-                  <option value="career">Career</option>
-                  <option value="recruitment">Recruitment</option>
-                  <option value="partnership">Partnership</option>
-                  <option value="technical_support">Technical support</option>
-                  <option value="feedback">Feedback</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-              <label class="timed-enquiry-message">
-                Your question
-                <textarea name="message" rows="3" minlength="10" maxlength="10000" required></textarea>
-              </label>
-              <input name="source" type="hidden" value="website">
-              <p class="timed-enquiry-contact-hint">Please provide an email address or phone number.</p>
-              <p class="timed-enquiry-status" role="status" aria-live="polite" hidden></p>
-              <button class="timed-enquiry-submit" type="submit">Send enquiry</button>
-            </form>
-          </section>
-        `;
+        backdrop.dataset.timedEnquiry = "";
 
+        const dialog = document.createElement("section");
+        dialog.className = "timed-enquiry-dialog";
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-modal", "true");
+        dialog.setAttribute("aria-labelledby", "timed-enquiry-title");
+        dialog.setAttribute("aria-describedby", "timed-enquiry-description");
+        dialog.tabIndex = -1;
+
+        const title = document.createElement("h2");
+        title.id = "timed-enquiry-title";
+        title.textContent = "Have a question?";
+
+        const description = document.createElement("p");
+        description.id = "timed-enquiry-description";
+        description.textContent =
+          "Share your details and our team will get back to you.";
+
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "timed-enquiry-close";
+        close.textContent = "×";
+        close.setAttribute("aria-label", "Close enquiry form");
+
+        const form = document.createElement("form");
+        form.className = "timed-enquiry-form";
+
+        const addField = (labelText, name, type, required = false) => {
+          const label = document.createElement("label");
+          label.append(document.createTextNode(labelText));
+
+          const field = document.createElement(type === "textarea" ? "textarea" : "input");
+          field.name = name;
+          if (type !== "textarea") field.type = type;
+          field.required = required;
+          field.maxLength = name === "email" ? 254 : 1000;
+          label.appendChild(field);
+          form.appendChild(label);
+          return field;
+        };
+
+        const name = addField("Name", "name", "text", true);
+        name.minLength = 2;
+        name.autocomplete = "name";
+
+        const email = addField("Email", "email", "email");
+        email.autocomplete = "email";
+
+        const phone = addField("Phone", "phone", "tel");
+        phone.autocomplete = "tel";
+
+        const message = addField("Your question", "message", "textarea", true);
+        message.minLength = 10;
+        message.maxLength = 10000;
+
+        const source = document.createElement("input");
+        source.type = "hidden";
+        source.name = "source";
+        source.value = "website";
+        form.appendChild(source);
+
+        const status = document.createElement("p");
+        status.className = "timed-enquiry-status";
+        status.setAttribute("role", "status");
+        status.setAttribute("aria-live", "polite");
+        status.hidden = true;
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.className = "timed-enquiry-submit";
+        submit.textContent = "Send enquiry";
+
+        form.append(status, submit);
+        dialog.append(close, title, description, form);
+        backdrop.appendChild(dialog);
         document.body.appendChild(backdrop);
-        const dialog = helpers.query(".timed-enquiry-dialog", backdrop);
-        const form = helpers.query(".timed-enquiry-form", backdrop);
-        const status = helpers.query(".timed-enquiry-status", backdrop);
-        const submit = helpers.query(".timed-enquiry-submit", backdrop);
+
         const previousFocus = document.activeElement;
         const previousOverflow = document.body.style.overflow;
 
-        const close = () => {
+        const closeDialog = () => {
           backdrop.remove();
           document.body.style.overflow = previousOverflow;
           if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
@@ -1040,85 +1041,43 @@
           }
         };
 
-        const focusableElements = () => helpers.queryAll(
-          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]',
-          dialog
-        ).filter((element) => !element.hidden);
-
-        backdrop.addEventListener("click", (event) => {
-          if (
-            event.target === backdrop ||
-            (event.target instanceof Element &&
-              event.target.closest(closeButtonSelector))
-          ) {
-            close();
-          }
+        helpers.addListener(close, "click", closeDialog);
+        helpers.addListener(backdrop, "click", (event) => {
+          if (event.target === backdrop) closeDialog();
         });
 
-        dialog.addEventListener("keydown", (event) => {
+        helpers.addListener(dialog, "keydown", (event) => {
           if (event.key === "Escape") {
             event.preventDefault();
-            close();
-            return;
-          }
-          if (event.key !== "Tab") return;
-
-          const focusable = focusableElements();
-          const first = focusable[0];
-          const last = focusable[focusable.length - 1];
-          if (!first || !last) {
-            event.preventDefault();
-            dialog.focus();
-          } else if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
+            closeDialog();
           }
         });
 
-        document.body.style.overflow = "hidden";
-        form.elements.name.focus();
-
-        [form.elements.email, form.elements.phone].forEach((field) => {
-          field.addEventListener("input", () => field.setCustomValidity(""));
-        });
-
-        form.addEventListener("submit", async (event) => {
+        helpers.addListener(form, "submit", async (event) => {
           event.preventDefault();
-          const email = form.elements.email;
-          const phone = form.elements.phone;
-          const emailValue = email.value.trim();
-          const phoneValue = phone.value.trim();
-          const phoneDigits = phoneValue.replace(/\D/g, "").length;
 
-          email.setCustomValidity("");
-          phone.setCustomValidity("");
-          if (!emailValue && !phoneValue) {
+          if (!email.value.trim() && !phone.value.trim()) {
             email.setCustomValidity("Enter an email address or a phone number.");
             phone.setCustomValidity("Enter an email address or a phone number.");
             form.reportValidity();
             return;
           }
-          if (
-            phoneValue &&
-            (!/^[+()\d\s.-]+$/.test(phoneValue) ||
-              phoneDigits < 7 ||
-              phoneDigits > 15)
-          ) {
+
+          email.setCustomValidity("");
+          phone.setCustomValidity("");
+
+          const digits = phone.value.replace(/\D/g, "").length;
+          if (phone.value.trim() && (digits < 7 || digits > 15)) {
             phone.setCustomValidity("Enter a valid phone number.");
             form.reportValidity();
             return;
           }
+
           if (!form.reportValidity()) return;
 
-          if (status) {
-            status.hidden = false;
-            status.textContent = "Sending your enquiry...";
-            status.dataset.state = "pending";
-          }
-          if (submit) submit.disabled = true;
+          submit.disabled = true;
+          status.hidden = false;
+          status.textContent = "Sending your enquiry...";
 
           try {
             const response = await fetch("/api/v1/contact", {
@@ -1128,32 +1087,31 @@
                 "Content-Type": "application/json"
               },
               credentials: "same-origin",
-              body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))
+              body: JSON.stringify(Object.fromEntries(new FormData(form)))
             });
+
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
               throw new Error(
-                payload.error?.message ||
-                  payload.message ||
-                  "Your enquiry could not be submitted. Please try again."
+                payload?.error?.message ||
+                payload?.message ||
+                "Your enquiry could not be submitted."
               );
             }
+
             form.reset();
-            if (status) {
-              status.textContent = "Thank you. Your enquiry has been submitted.";
-              status.dataset.state = "success";
-            }
+            status.textContent = "Thank you. Your enquiry has been submitted.";
           } catch (error) {
-            if (status) {
-              status.textContent = error.message ||
-                "Your enquiry could not be submitted. Please try again.";
-              status.dataset.state = "error";
-            }
-            logger.error("Timed enquiry submission failed.", error);
+            status.textContent =
+              error.message || "Your enquiry could not be submitted.";
+            logger.warn("Timed enquiry submission failed.", error);
           } finally {
-            if (submit) submit.disabled = false;
+            submit.disabled = false;
           }
         });
+
+        document.body.style.overflow = "hidden";
+        name.focus({ preventScroll: true });
       };
 
       window.setTimeout(show, Math.max(0, delay - (Date.now() - startedAt)));
@@ -1167,20 +1125,27 @@
   const consent = {
     get() {
       const value = helpers.safeStorageGet(APP.storageKeys.cookieConsent);
-
       if (!value) return null;
 
       try {
-        return JSON.parse(value);
+        const parsed = JSON.parse(value);
+        if (!parsed || typeof parsed !== "object") return null;
+
+        return {
+          necessary: true,
+          analytics: parsed.analytics === true,
+          marketing: parsed.marketing === true,
+          updatedAt: typeof parsed.updatedAt === "string"
+            ? parsed.updatedAt
+            : null
+        };
       } catch {
         return null;
       }
     },
 
     save(preferences) {
-      if (!preferences || typeof preferences !== "object") {
-        return false;
-      }
+      if (!preferences || typeof preferences !== "object") return false;
 
       const normalized = {
         necessary: true,
@@ -1194,21 +1159,18 @@
         JSON.stringify(normalized)
       );
 
-      if (saved) {
-        events.emit("consent-change", normalized);
-      }
-
+      if (saved) helpers.emit("consent-change", normalized);
       return saved;
     }
   };
 
   // --------------------------------------------------
-  // Global error handling
+  // Global errors
   // --------------------------------------------------
 
   const errorHandling = {
     init() {
-      window.addEventListener("error", (event) => {
+      helpers.addListener(window, "error", (event) => {
         logger.error("Uncaught browser error", {
           message: event.message,
           filename: event.filename,
@@ -1217,56 +1179,51 @@
         });
       });
 
-      window.addEventListener("unhandledrejection", (event) => {
+      helpers.addListener(window, "unhandledrejection", (event) => {
         logger.error("Unhandled promise rejection", event.reason);
       });
     }
   };
 
   // --------------------------------------------------
-  // Initialize application
+  // Initialization
   // --------------------------------------------------
+
+  const modules = [
+    ["navigation", navigation],
+    ["dropdowns", dropdowns],
+    ["theme", theme],
+    ["toast", toast],
+    ["forms", forms],
+    ["password visibility", passwordVisibility],
+    ["links", links],
+    ["back to top", backToTop],
+    ["footer", footer],
+    ["catalog grids", catalogSliders],
+    ["site tools", siteTools],
+    ["document library", documentLibrary],
+    ["public data", publicData],
+    ["public bulletins", publicBulletins],
+    ["timed enquiry", timedEnquiry],
+    ["error handling", errorHandling]
+  ];
 
   function init() {
     if (state.initialized) return;
 
     state.initialized = true;
 
-    try {
-      navigation.init();
-      dropdowns.init();
-      theme.init();
-      toast.init();
-      forms.init();
-      passwordVisibility.init();
-      links.init();
-      backToTop.init();
-      footer.init();
-      catalogSliders.init();
-      siteTools.init();
-      documentLibrary.init();
-      publicData.init();
-      publicBulletins.init();
-      timedEnquiry.init();
-      errorHandling.init();
+    modules.forEach(([name, module]) => {
+      try {
+        module.init();
+      } catch (error) {
+        logger.error(`Failed to initialize ${name}.`, error);
+      }
+    });
 
-      logger.info("Application initialized", {
-        version: APP.version
-      });
-
-      events.emit("ready", {
-        name: APP.name,
-        version: APP.version
-      });
-    } catch (error) {
-      logger.error("Application initialization failed", error);
-      state.initialized = false;
-    }
+    logger.info("Application initialized", { version: APP.version });
+    helpers.emit("ready", { name: APP.name, version: APP.version });
   }
-
-  // --------------------------------------------------
-  // Public application interface
-  // --------------------------------------------------
 
   window.MedOrbits = Object.freeze({
     version: APP.version,

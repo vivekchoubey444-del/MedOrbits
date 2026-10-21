@@ -80,13 +80,15 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 500,
-      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//).+$"
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*//)(?!.*\\s$).+$",
+      "description": "Repository-relative POSIX path. Absolute paths, drive prefixes, backslashes, traversal segments, empty segments, and trailing whitespace are not permitted."
     },
     "filename": {
       "type": "string",
       "minLength": 1,
       "maxLength": 255,
-      "pattern": "^[^./\\\\][^/\\\\]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._ -]*[A-Za-z0-9]$|^[A-Za-z0-9]$",
+      "description": "A plain filename without path separators, leading dots, or trailing spaces or dots."
     },
     "category": {
       "type": "object",
@@ -172,25 +174,26 @@
         },
         "keywords": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
             "maxLength": 80
-          },
-          "uniqueItems": true
+          }
         },
         "programmes": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120
-          },
-          "uniqueItems": true
+          }
         },
         "audience": {
           "type": "array",
           "minItems": 1,
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "enum": [
@@ -203,15 +206,14 @@
               "institutions",
               "general-public"
             ]
-          },
-          "uniqueItems": true
+          }
         },
         "countryCodes": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/countryCode"
-          },
-          "uniqueItems": true
+          }
         },
         "academicYear": {
           "type": [
@@ -219,7 +221,7 @@
             "null"
           ],
           "maxLength": 20,
-          "pattern": "^(?:\\d{4}-\\d{2,4}|\\d{4}|)$"
+          "pattern": "^(?:\\d{4}(?:-\\d{2,4})?)$"
         },
         "status": {
           "$ref": "#/$defs/documentStatus"
@@ -239,10 +241,10 @@
         },
         "relatedDocumentIds": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/slug"
-          },
-          "uniqueItems": true
+          }
         }
       },
       "allOf": [

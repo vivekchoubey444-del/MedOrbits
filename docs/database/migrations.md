@@ -1,257 +1,351 @@
-Database Migrations
 
-Project: MedOrbits
-Purpose: Define the standards for creating, reviewing, testing, deploying, and recovering database schema changes.
+# MedOrbits Database Migrations
 
-1. Requirements
+**Project:** MedOrbits  
+**Recommended location:** `docs/database-migrations.md`  
+**Scope:** Migration creation, review, testing, deployment, tracking, rollback, and recovery  
+**Status:** Engineering standard — verify the actual database engine, migration runner, and deployment process before treating these controls as implemented.
 
-All database migrations must follow these requirements:
+## 1. Purpose
 
-* Version control: Store migration files in the repository and review them alongside related application changes.
-* Deterministic ordering: Apply migrations in a predictable sequence.
-* Unique identifiers: Assign every migration a unique, ordered identifier, such as a timestamp or sequential version.
-* SQL review: Inspect generated SQL before execution, including table alterations, indexes, constraints, data transformations, and destructive operations.
-* Testing: Test migrations against an empty database and a representative staging copy.
-* Compatibility: Where practical, ensure schema changes support overlapping application versions during rolling deployments and rollback windows.
-* Status tracking: Record which migrations have been applied, when they ran, and whether execution succeeded or failed.
-* Clear failure behavior: Stop the migration process on failure, report the relevant migration identifier, and avoid silently continuing with an inconsistent schema.
-* Concurrency control: Prevent multiple deployment processes from applying the same migration concurrently.
-* Auditability: Retain migration history and review records according to the project’s operational requirements.
+This document defines the standards for managing database schema and data changes safely throughout the MedOrbits application lifecycle.
 
-The migration mechanism must be confirmed against the actual MedOrbits database tooling before these requirements are considered implemented.
+Migrations must preserve data integrity, support application compatibility, provide traceable execution history, and define recovery procedures appropriate to the risks of each change.
 
-2. Migration Naming and Ordering
+The intended database is MySQL, subject to verification against the actual connection configuration, database driver, server version, and deployed schema.
 
-Use a consistent naming convention, for example:
+**Core rule:** A migration file is not proof that a migration has been executed successfully. The migration runner’s recorded state and the actual database schema must agree.
 
-YYYYMMDDHHMMSS_short_description.sql
+## 2. Migration Requirements
 
-Example:
+Every migration must meet the following requirements:
 
-* 20261015090000_create_users_table.sql
-* 20261015100000_add_email_verification.sql
-* 20261015110000_add_application_status_index.sql
+- **Version control:** Store migration files in the repository and review them alongside related application changes.
+- **Deterministic ordering:** Apply migrations in a predictable sequence.
+- **Unique identifiers:** Assign each migration a unique identifier supported by the adopted migration runner.
+- **SQL review:** Inspect schema changes, indexes, constraints, data transformations, and destructive operations.
+- **Testing:** Test the migration sequence against an empty database and a representative, appropriately protected staging environment.
+- **Compatibility:** Preserve compatibility with overlapping application versions where rolling deployments or rollback windows require it.
+- **Status tracking:** Record applied migrations, execution outcomes, timestamps, and checksums where supported.
+- **Failure visibility:** Stop dependent deployment steps when a migration fails and report the failing migration identifier.
+- **Concurrency control:** Prevent multiple deployment processes from applying the same migration concurrently.
+- **Auditability:** Preserve migration history, review decisions, and execution records according to operational requirements.
+- **Least privilege:** Use dedicated migration credentials with only the permissions required for approved schema and data changes.
+- **Reproducibility:** Avoid undocumented manual database changes that cause environments to diverge.
 
-These names are illustrative. Use the naming convention supported by the migration runner already adopted by the project.
+The migration mechanism must be identified and verified before these requirements are considered implemented.
+
+## 3. Directory Structure and Naming
+
+A possible layout is:
+
+```text
+database/
+├── migrations/
+│   ├── 20261015090000_create_users_table.sql
+│   ├── 20261015100000_add_email_verification.sql
+│   └── 20261015110000_add_application_status_index.sql
+├── schema/
+├── seeds/
+└── fixtures/
+```
+
+This is a reference structure, not a claim that these files exist. Follow the migration runner and directory conventions already adopted by MedOrbits.
+
+### 3.1 Naming convention
+
+If supported by the chosen runner, use:
+
+`YYYYMMDDHHMMSS_short_description.sql`
 
 Each migration should:
 
-1. Have a unique identifier.
+1. Have a unique, ordered identifier.
 2. Perform one logically coherent change.
 3. Include comments for non-obvious or high-risk operations.
-4. Avoid relying on undocumented manual database changes.
-5. Be committed to version control before deployment.
-6. Have an explicit verification strategy.
+4. Document assumptions and verification steps.
+5. Avoid relying on undocumented manual database changes.
+6. Be committed and reviewed before deployment.
 
-Never modify an already-applied migration to change production history. Create a new migration to correct or extend an earlier change, unless the project’s controlled migration policy explicitly provides another safe procedure.
+### 3.2 Applied migrations
 
-3. Safe Change Pattern: Expand and Contract
+Never edit an already-applied production migration to rewrite its historical meaning.
 
-For changes that span releases, prefer an expand-and-contract approach.
+Create a new migration to correct or extend an earlier change, unless a formally controlled procedure explicitly authorizes another approach.
 
-Phase 1 — Expand
+If a migration is incorrect, determine whether a forward repair or a tested reversal is safer before making changes.
 
-Add compatible schema elements without immediately removing the old structure.
+## 4. Safe Schema Evolution
 
-Examples include adding a nullable column, creating a new table, or introducing a compatible index.
+Prefer an expand-and-contract approach when a change spans releases or must support multiple running application versions.
 
-Phase 2 — Deploy Compatible Code
+### Phase 1 — Expand
 
-Deploy application code that can operate safely with both the old and new schema structures during the transition.
+Add compatible schema elements without immediately removing the existing structure.
 
-Check compatibility with any older application instances that may remain active during deployment.
+Examples:
 
-Phase 3 — Backfill Data
+- Add a nullable column.
+- Create a new table.
+- Add a compatible index.
+- Introduce a new field while preserving the old field.
 
-Move or transform existing data in controlled batches where appropriate.
+Evaluate locking, disk usage, index-building behavior, and database-version support before execution.
 
-* Define batch size and execution limits.
-* Make the process safe to retry.
-* Track progress.
-* Monitor database load and errors.
-* Validate data integrity after each batch or completed stage.
+### Phase 2 — Deploy Compatible Code
 
-Avoid unnecessarily long transactions on large tables.
+Deploy application code that safely supports both the old and new schema during the transition.
 
-Phase 4 — Verify
+Confirm compatibility with application instances, background workers, scheduled tasks, and other consumers that may still use the old structure.
 
-Verify the new application behavior, data integrity, performance, and operational metrics.
+### Phase 3 — Backfill Data
 
-Confirm that all application instances and dependent jobs have stopped relying on the old structure.
+Transform existing data in controlled batches where appropriate.
 
-Phase 5 — Contract
+- Define batch size and execution limits.
+- Make the operation safe to retry.
+- Track progress and failures.
+- Monitor database load and replication lag where relevant.
+- Validate the transformed data.
+- Avoid unnecessarily long transactions on large tables.
 
-Remove obsolete columns, tables, indexes, or compatibility logic only in a later, separately reviewed release.
+For large tables, assess whether online schema changes or a dedicated backfill process is required.
 
-Before removal, confirm that the old structure is no longer used and that the recovery plan accounts for the change.
+### Phase 4 — Verify
 
-4. Pre-Migration Review
+Verify data integrity, application behavior, query performance, and operational metrics.
 
-Before executing a migration, review:
+Confirm that no active application version or dependent job still relies on the old structure.
 
-* [ ]	Migration identifier and ordering.
-* [ ]	Generated SQL and execution plan, where applicable.
-* [ ]	Table sizes and expected data volume.
-* [ ]	Index creation and removal costs.
-* [ ]	Locking behavior and expected runtime.
-* [ ]	Available disk space and database capacity.
-* [ ]	Foreign keys, unique constraints, and other integrity rules.
-* [ ]	Application compatibility during deployment.
-* [ ]	Data transformation and backfill requirements.
-* [ ]	Failure behavior and recovery procedure.
-* [ ]	Backup requirements and verification status.
-* [ ]	Approval requirements for destructive changes.
+### Phase 5 — Contract
 
-Review database-engine-specific behavior rather than assuming that the same DDL operation has identical locking, transactional, or rollback behavior across engines.
+Remove obsolete columns, tables, indexes, or compatibility logic in a later, separately reviewed change.
 
-5. Testing Requirements
+Before removal, confirm that the old structure is no longer used and that the recovery plan accounts for irreversible changes.
 
-5.1 Empty Database
+## 5. Pre-Migration Review
 
-Test the complete migration sequence against an empty database using the supported database engine and version.
+Before approving a migration, review:
+
+- [ ] Migration identifier and ordering.
+- [ ] SQL statements and expected resulting schema.
+- [ ] Data transformations and expected data volume.
+- [ ] Table sizes, indexes, constraints, and foreign keys.
+- [ ] Locking behavior and estimated execution time.
+- [ ] Disk capacity and database resource requirements.
+- [ ] Compatibility with active application and worker versions.
+- [ ] Transactional behavior and implicit-commit limitations.
+- [ ] Failure conditions and potential partial states.
+- [ ] Backup requirements and recovery objectives.
+- [ ] Rollback or forward-repair strategy.
+- [ ] Required approvals for high-risk operations.
+- [ ] Post-migration verification queries or tests.
+
+Database-specific behavior must be reviewed against the actual MySQL version and storage engine. Do not assume that all DDL statements are transactionally reversible.
+
+## 6. Testing Requirements
+
+### 6.1 Empty database
+
+Test the complete migration sequence against a newly created database using the supported database engine and version.
 
 Verify that:
 
-* All migrations run in the intended order.
-* The resulting schema matches the expected structure.
-* Constraints and indexes are present.
-* Required seed data is handled separately or consistently with project policy.
-* The application can start and perform essential operations.
+- All migrations run in the intended order.
+- The resulting schema matches the expected structure.
+- Indexes, constraints, and foreign keys exist as intended.
+- Required seed data follows the project’s seed policy.
+- The application starts and performs essential database operations.
+- The migration runner records the correct final state.
 
-5.2 Representative Staging Database
+### 6.2 Representative staging database
 
-Test against a staging copy representative of production structure and data volume.
+Test against a staging environment representative of production schema, data volume, and application compatibility requirements.
 
-Verify:
+Verify that:
 
-* Existing data remains valid.
-* Data transformations produce the expected results.
-* Runtime and locking remain within acceptable limits.
-* Application versions remain compatible during deployment.
-* Failure recovery behaves as expected.
-* Critical queries and workflows continue to function.
+- Existing data remains valid.
+- Backfills produce expected results.
+- Execution time and locking remain acceptable.
+- Application versions remain compatible during deployment.
+- Failure handling and recovery procedures work.
+- Important queries and business workflows continue to function.
 
-Protect staging data using appropriate access controls and privacy safeguards. Do not copy production data into staging without an approved data-handling process.
+Protect staging data using appropriate access controls and privacy safeguards. Do not copy production data without an approved data-handling process.
 
-5.3 Automated Verification
+### 6.3 Automated checks
 
-Where supported by the project, automate migration checks in CI/CD.
+Where supported, integrate migration checks into CI/CD.
 
-Recommended checks include migration naming and ordering, duplicate identifiers, schema validation, application compatibility tests, and execution against a disposable test database.
+Recommended checks include:
 
-A successful test run is evidence of the tested scenarios, not a guarantee that production will experience identical timing or load.
+- Migration naming and ordering.
+- Duplicate identifiers.
+- SQL linting or schema validation, where appropriate.
+- Execution against a disposable database.
+- Migration-state consistency.
+- Application compatibility tests.
+- Data-integrity checks.
+- Relevant integration tests.
 
-6. Migration Execution and Status
+A successful test run establishes evidence for the scenarios tested; it does not guarantee identical performance or locking behavior in production.
+
+## 7. Migration Tracking and Execution
 
 The migration runner should maintain a reliable record of migration execution.
 
-At minimum, the record should identify:
+Where supported, track:
 
-* Migration identifier.
-* Execution status.
-* Start and completion timestamps.
-* Applied migration version or checksum, where supported.
-* Error information sufficient for diagnosis.
-* Deployment or execution context, where appropriate.
+| Field | Purpose |
+|—|—|
+| Migration identifier | Uniquely identifies the migration |
+| Checksum | Detects changes to an existing migration |
+| Execution status | Records success or failure |
+| Start timestamp | Records when execution began |
+| Completion timestamp | Records when execution finished |
+| Execution context | Identifies the release or approved deployment |
+| Error details | Supports diagnosis without exposing secrets |
 
-Migration execution should fail clearly when a migration fails.
+### 7.1 Execution requirements
 
-The runner must account for database-engine transaction limitations. If a migration performs operations that cannot be rolled back atomically, document the possible partial state and the recovery procedure.
+- Acquire an appropriate migration lock before executing pending migrations.
+- Check the recorded migration state before applying changes.
+- Execute migrations in deterministic order.
+- Stop dependent deployment steps on failure.
+- Report the failing migration identifier and safe diagnostic information.
+- Record completion only after the migration’s required operations have succeeded.
+- Detect unexpected changes to previously applied migration files.
+- Ensure concurrent deployment processes cannot apply the same migration simultaneously.
 
-Do not mark a migration as successfully applied before its required operations and verification have completed.
+The locking mechanism must be appropriate to the actual database and migration runner. A process-local mutex is insufficient when multiple deployment processes can run on different machines.
 
-7. Production Safeguards
+### 7.2 Failure handling
 
-Before a high-risk production migration:
+A failed migration may leave the database partially changed, especially when the database engine implicitly commits DDL operations.
+
+The runner must not assume that failure means the schema is unchanged. Before retrying, inspect the actual database state and follow the migration’s recovery procedure.
+
+Never silently continue to later migrations when a failed migration leaves dependent schema changes incomplete.
+
+## 8. Production Deployment Safeguards
+
+Before executing a high-risk production migration:
 
 1. Obtain the required review and approval.
-2. Take a backup appropriate to the recovery objectives.
-3. Verify that the backup can be restored or that the documented recovery procedure is operational.
-4. Assess locking, runtime, disk capacity, and expected workload.
-5. Confirm application-version compatibility.
-6. Define monitoring and stop conditions.
-7. Establish the execution window and responsible operator.
-8. Prepare recovery steps and communicate the expected impact.
+2. Confirm the target environment and database identity.
+3. Verify backup availability and the applicable recovery procedure.
+4. Confirm that the backup can be restored or that the documented recovery method has been tested.
+5. Assess locking, runtime, disk space, and expected workload.
+6. Verify compatibility with active application and worker versions.
+7. Define monitoring, stop conditions, and an acceptable execution window.
+8. Identify the responsible operator.
+9. Prepare rollback or forward-repair instructions.
+10. Record the execution outcome and post-migration verification results.
 
-Never run production migrations from an unreviewed local environment.
+Prefer an approved deployment pipeline with controlled credentials and recorded execution.
 
-Prefer an approved deployment or release process with controlled credentials, recorded execution, and clear ownership.
+Never run production migrations from an unreviewed local environment or against an ambiguously identified database.
 
-8. Rollback and Recovery
+## 9. Rollback and Recovery
 
-Do not assume that every migration can be reversed safely.
+A migration is not automatically reversible merely because a corresponding `down` script can be written.
 
-A rollback may be unsafe when a migration:
+Rollback may be unsafe when a migration:
 
-* Deletes or overwrites data.
-* Changes data formats or meanings.
-* Removes columns or tables used by active application versions.
-* Performs irreversible external side effects.
-* Depends on database-engine behavior that prevents transactional reversal.
+- Deletes or overwrites data.
+- Changes data formats or meanings.
+- Removes fields used by active application versions.
+- Performs irreversible transformations.
+- Triggers external side effects.
+- Uses database operations that cannot be atomically reversed.
 
 For each high-risk migration, document:
 
-* Failure conditions.
-* Whether a tested down migration exists.
-* Whether forward repair is safer than reversal.
-* Data recovery requirements.
-* Backup restoration implications.
-* Application rollback compatibility.
-* Verification steps after recovery.
+- Failure conditions.
+- Whether a tested down migration exists.
+- Whether a forward repair is safer.
+- Data recovery requirements.
+- Backup restoration implications.
+- Application-version compatibility.
+- Post-recovery verification steps.
 
-Application rollback and database recovery are separate procedures. Reverting application code does not automatically restore the previous database schema or recover deleted data.
+**Application rollback and database recovery are separate procedures.** Reverting application code does not automatically restore a previous database schema or recover deleted data.
 
-Prefer a forward-fix migration when reversal would cause data loss or additional inconsistency.
+Prefer a forward-fix migration when reversal would cause data loss or further inconsistency.
 
-9. Destructive Changes
+## 10. Destructive Changes
 
-Destructive migrations include operations such as dropping tables or columns, removing constraints, truncating data, or performing irreversible transformations.
+Destructive operations include dropping tables or columns, truncating data, removing constraints, and performing irreversible transformations.
 
-Such changes require:
+Such operations require:
 
-* Explicit impact assessment.
-* Confirmation that the affected data is no longer required.
-* Review and approval from the appropriate owner.
-* Verified backup or an approved alternative recovery strategy.
-* A documented deployment and recovery plan.
-* Post-migration verification.
+- Explicit impact assessment.
+- Confirmation that affected data is no longer required.
+- Review and approval by the appropriate owner.
+- A verified backup or approved alternative recovery strategy.
+- A documented execution and recovery plan.
+- Post-migration integrity checks.
+- Confirmation that active application versions no longer depend on the removed structure.
 
-Never include a destructive operation merely to make a migration pass without understanding its effect on existing data and running application versions.
+Do not include a destructive operation merely to make a migration pass without understanding its effect on existing data and running application versions.
 
-10. Operational Responsibilities
+## 11. Data Migrations and Seed Data
 
-The migration process should make ownership clear:
+Keep schema migrations, production data transformations, development seeds, and test fixtures logically distinct.
 
-* Developer: Creates the migration, reviews its impact, and supplies tests.
-* Reviewer: Checks correctness, compatibility, performance risks, and recovery plans.
-* Release operator: Executes or authorizes the approved deployment procedure.
-* Database or platform owner: Reviews high-risk changes and recovery readiness where applicable.
+Requirements:
+
+- Make data transformations deterministic and safe to retry where possible.
+- Validate row counts and important invariants before and after transformations.
+- Avoid embedding private user data in seed files.
+- Keep development seed data separate from production initialization.
+- Avoid destructive seed operations against shared or production databases.
+- Document whether a migration is safe to run on a partially populated database.
+- Define how long-running backfills are monitored, resumed, and verified.
+
+For large data transformations, consider a resumable application-level job rather than a single long-running migration transaction.
+
+## 12. Operational Responsibilities
 
 Adapt these responsibilities to the actual MedOrbits team and deployment process.
 
-11. Related Documentation
+| Role | Responsibility |
+|—|—|
+| Developer | Creates the migration, assesses impact, and provides tests |
+| Reviewer | Reviews correctness, compatibility, performance, and recovery |
+| Release operator | Executes or authorizes the approved deployment |
+| Database/platform owner | Reviews high-risk changes and recovery readiness where applicable |
 
-Maintain links to the project’s actual resources when available:
+Migration credentials should be restricted to approved operators or deployment services. Application runtime credentials should not receive broad schema-modification privileges unless the deployment architecture explicitly requires and justifies them.
 
-* Database schema and entity documentation.
-* Migration directory and migration-runner instructions.
-* Database configuration guide.
-* Backup and restoration procedure.
-* Deployment and release procedure.
-* Incident response and recovery documentation.
-* Relevant automated tests.
+## 13. Related Documentation
 
-12. Definition of Done
+Maintain links to verified project resources where available:
+
+- Database schema and entity documentation.
+- Migration directory and runner instructions.
+- Database configuration guide.
+- Backup and restoration procedures.
+- Deployment and release procedures.
+- Incident response and recovery documentation.
+- Relevant integration and migration tests.
+
+Use canonical documentation paths from the repository. Do not link to planned files as if they already exist.
+
+## 14. Definition of Done
 
 A migration is ready for production only when:
 
-* [ ]	The migration is committed and uniquely identified.
-* [ ]	SQL and operational risks have been reviewed.
-* [ ]	Empty-database and representative staging tests have passed.
-* [ ]	Application compatibility has been assessed.
-* [ ]	Status tracking and failure behavior have been verified.
-* [ ]	Required approvals have been obtained.
-* [ ]	Backup and recovery arrangements are appropriate to the risk.
-* [ ]	Deployment and post-migration verification steps are documented.
+- [ ] The migration is committed and uniquely identified.
+- [ ] SQL and operational risks have been reviewed.
+- [ ] Empty-database migration tests pass.
+- [ ] Representative staging tests pass.
+- [ ] Application-version compatibility has been assessed.
+- [ ] Migration tracking and concurrency controls have been verified.
+- [ ] Failure behavior and partial-state recovery are documented.
+- [ ] Required approvals have been obtained.
+- [ ] Backup and recovery arrangements are appropriate to the risk.
+- [ ] Deployment and post-migration verification steps are documented.
+- [ ] Relevant automated checks pass.
 
-Final rule: Treat database migrations as controlled production changes. Preserve data integrity, make failures observable, and maintain a recovery strategy appropriate to the consequences of the change.
+**Final rule:** Treat database migrations as controlled production changes. Preserve data integrity, make failures observable, and maintain a recovery strategy appropriate to the consequences of each change.

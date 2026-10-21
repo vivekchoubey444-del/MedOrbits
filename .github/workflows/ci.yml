@@ -1,33 +1,104 @@
+
+# File: .github/workflows/ci.yml
+
 name: MedOrbits CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: medorbits-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
+    name: Validate and Secure
     runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+    timeout-minutes: 25
 
+    env:
+      CI: "true"
+      HUSKY: "0"
+      NODE_ENV: test
+
+    steps:
+      # ─────────────────────────────────────────────
+      # 1. Source checkout
+      # ─────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # ─────────────────────────────────────────────
+      # 2. Runtime setup
+      # ─────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm run check:node
-      - run: npm run check:json
-      - run: npm run check:data
-      - run: npm run check:security
-      - run: npm run lint:check
-      - run: npm run format:check
-      - run: npm run test:ci
-      - run: npm run security:audit:production
+
+      - name: Report runtime versions
+        run: |
+          node --version
+          npm --version
+
+      # ─────────────────────────────────────────────
+      # 3. Dependency installation
+      # ─────────────────────────────────────────────
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      # ─────────────────────────────────────────────
+      # 4. Runtime and configuration validation
+      # ─────────────────────────────────────────────
+      - name: Check Node.js compatibility
+        run: npm run check:node
+
+      - name: Validate JSON syntax
+        run: npm run check:json
+
+      - name: Validate application datasets
+        run: npm run check:data
+
+      # ─────────────────────────────────────────────
+      # 5. Code quality
+      # ─────────────────────────────────────────────
+      - name: Check linting
+        run: npm run lint:check
+
+      - name: Check formatting
+        run: npm run format:check
+
+      # ─────────────────────────────────────────────
+      # 6. Automated tests
+      # ─────────────────────────────────────────────
+      - name: Run CI test suite
+        run: npm run test:ci
+
+      # ─────────────────────────────────────────────
+      # 7. Security checks
+      # ─────────────────────────────────────────────
+      - name: Check repository security
+        run: npm run check:security
+
+      - name: Audit production dependencies
+        run: npm run security:audit:production
+
+      # ─────────────────────────────────────────────
+      # 8. Final status
+      # ─────────────────────────────────────────────
+      - name: Validation summary
+        if: success()
+        run: |
+          echo "MedOrbits CI passed."
+          echo "Runtime, JSON, data, lint, formatting, tests,"
+          echo "and configured security checks completed successfully."

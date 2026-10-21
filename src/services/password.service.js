@@ -13,8 +13,12 @@ const {
 } = require('./service-utils');
 
 const DEFAULT_TOKEN_TTL_MS = 30 * 60 * 1000;
+const MIN_TOKEN_TTL_MS = 60 * 1000;
+const MAX_TOKEN_TTL_MS = 60 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 10;
 const MAX_PASSWORD_LENGTH = 200;
+const TOKEN_BYTES = 32;
+const TOKEN_PATTERN = /^[a-f0-9]{64}$/;
 
 function createPasswordService({
   userRepository,
@@ -23,6 +27,7 @@ function createPasswordService({
   emailService,
   sessionService,
   auditService,
+  clock = () => new Date(),
   tokenTtlMs = DEFAULT_TOKEN_TTL_MS,
 }) {
   requireDependency(userRepository, 'userRepository');
@@ -30,16 +35,80 @@ function createPasswordService({
   requireDependency(passwordHasher, 'passwordHasher');
 
   if (
-    !Number.isSafeInteger(tokenTtlMs) ||
-    tokenTtlMs <= 0
+    typeof userRepository.findByEmail !== 'function' ||
+    typeof userRepository.findById !== 'function' ||
+    typeof userRepository.updateById !== 'function'
   ) {
-    throw new TypeError('tokenTtlMs must be a positive integer.');
+    throw new ServiceError(
+      'User repository is missing required methods.',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
+
+  if (
+    typeof passwordResetRepository.create !== 'function' ||
+    typeof passwordResetRepository.findValidByHash !== 'function' ||
+    typeof passwordResetRepository.updateById !== 'function'
+  ) {
+    throw new ServiceError(
+      'Password reset repository is missing required methods.',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
+
+  if (
+    typeof passwordHasher.hash !== 'function' ||
+    typeof passwordHasher.verify !== 'function'
+  ) {
+    throw new ServiceError(
+      'Password hasher is missing required methods.',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(tokenTtlMs) ||
+    tokenTtlMs < MIN_TOKEN_TTL_MS ||
+    tokenTtlMs > MAX_TOKEN_TTL_MS
+  ) {
+    throw new TypeError(
+      `tokenTtlMs must be between ${MIN_TOKEN_TTL_MS} and ${MAX_TOKEN_TTL_MS}.`,
+    );
+  }
+
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
+
+  function getNow() {
+    const value = clock();
+    const date = value instanceof Date
+      ? new Date(value.getTime())
+      : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      throw new ServiceError('Invalid service clock value.', {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      });
+    }
+
+    return date;
   }
 
   function hashToken(token) {
     return crypto
       .createHash('sha256')
-      .update(token)
+      .update(token, 'utf8')
       .digest('hex');
   }
 
@@ -54,33 +123,85 @@ function createPasswordService({
   }
 
   function validatePassword(value, field = 'password') {
-    return requiredString(value, field, {
+    const password = requiredString(value, field, {
       min: MIN_PASSWORD_LENGTH,
       max: MAX_PASSWORD_LENGTH,
     });
+
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(password)) {
+      throw new ServiceError(`${field} contains invalid characters.`, {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return password;
+  }
+
+  function normalizeEmail(value) {
+    const email = requiredString(value, 'email', {
+      max: 254,
+    }).toLowerCase();
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      /[\r\n\u0000-\u001f\u007f]/.test(email)
+    ) {
+      throw new ServiceError('Invalid email address.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return email;
   }
 
   async function revokeSessions(userId) {
-    if (typeof sessionService?.revokeAllForUser === 'function') {
-      await sessionService.revokeAllForUser(userId);
+    if (typeof sessionService?.revokeAllForUser !== 'function') {
+      throw new ServiceError(
+        'Session revocation is not configured.',
+        {
+          code: 'SESSION_REVOCATION_UNAVAILABLE',
+          status: 503,
+        },
+      );
+    }
+
+    await sessionService.revokeAllForUser(userId);
+  }
+
+  async function invalidateOutstandingTokens(userId) {
+    if (
+      typeof passwordResetRepository.invalidateOutstandingForUser ===
+      'function'
+    ) {
+      await passwordResetRepository.invalidateOutstandingForUser(
+        userId,
+        getNow(),
+      );
     }
   }
 
   return {
     async requestReset(email) {
-      const normalizedEmail = requiredString(email, 'email', {
-        max: 254,
-      }).toLowerCase();
+      const normalizedEmail = normalizeEmail(email);
 
+      // The public endpoint should return the same response for known
+      // and unknown accounts, and apply rate limits before this call.
       const user = await userRepository.findByEmail(normalizedEmail);
 
-      // Keep the public response identical for existing and unknown users.
-      if (!user) {
+      if (!user || !user.id || !user.email) {
+        return { accepted: true };
+      }
+
+      if (
+        user.status &&
+        !['active', 'pending_verification'].includes(user.status)
+      ) {
         return { accepted: true };
       }
 
       if (typeof emailService?.sendPasswordResetEmail !== 'function') {
-        // Avoid creating reset tokens that cannot be delivered.
         throw new ServiceError(
           'Password reset delivery is temporarily unavailable.',
           {
@@ -90,28 +211,47 @@ function createPasswordService({
         );
       }
 
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(TOKEN_BYTES).toString('hex');
       const tokenHash = hashToken(token);
-      const expiresAt = new Date(Date.now() + tokenTtlMs);
+      const now = getNow();
+      const expiresAt = new Date(now.getTime() + tokenTtlMs);
+
+      await invalidateOutstandingTokens(user.id);
 
       await passwordResetRepository.create({
         userId: user.id,
         tokenHash,
         expiresAt,
         consumedAt: null,
+        createdAt: now,
       });
 
       try {
         await emailService.sendPasswordResetEmail({
           to: user.email,
-          name: user.name || '',
+          name: typeof user.name === 'string' ? user.name : '',
           token,
           expiresAt,
           expiryMinutes: Math.ceil(tokenTtlMs / 60000),
         });
       } catch {
+        // Invalidate the undelivered token where the repository supports it.
+        if (
+          typeof passwordResetRepository.invalidateByTokenHash ===
+          'function'
+        ) {
+          try {
+            await passwordResetRepository.invalidateByTokenHash(
+              tokenHash,
+              getNow(),
+            );
+          } catch {
+            // Expiry remains the fallback limit for the token.
+          }
+        }
+
         throw new ServiceError(
-          'Unable to send the password reset email. Please try again later.',
+          'Password reset delivery is temporarily unavailable.',
           {
             code: 'EMAIL_DELIVERY_FAILED',
             status: 503,
@@ -123,25 +263,36 @@ function createPasswordService({
     },
 
     async reset(input = {}) {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        throw new ServiceError('Reset input must be an object.', {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+        });
+      }
+
       const token = requiredString(input.token, 'token', {
-        max: 256,
+        min: 64,
+        max: 64,
       });
 
-      const password = validatePassword(input.password);
+      if (!TOKEN_PATTERN.test(token)) {
+        throw invalidTokenError();
+      }
 
+      const password = validatePassword(input.password);
       const tokenHash = hashToken(token);
-      const reset = assertFound(
-        await passwordResetRepository.findValidByHash(tokenHash),
-        'Password reset token',
+      const now = getNow();
+
+      const reset = await passwordResetRepository.findValidByHash(
+        tokenHash,
       );
 
-      const now = new Date();
-
       if (
-        reset.consumedAt ||
+        !reset ||
+        reset.consumedAt != null ||
         !reset.expiresAt ||
         Number.isNaN(new Date(reset.expiresAt).getTime()) ||
-        new Date(reset.expiresAt) <= now
+        new Date(reset.expiresAt).getTime() <= now.getTime()
       ) {
         throw invalidTokenError();
       }
@@ -149,26 +300,40 @@ function createPasswordService({
       const passwordHash = await passwordHasher.hash(password);
 
       /*
-       * Production requirement:
-       * Consume the reset token and update the user's password in a
-       * single database transaction. The sequential operations below
-       * retain your existing repository interface but are not atomic.
+       * REQUIRED: consume the reset token and update the password
+       * atomically. The repository method must conditionally consume
+       * the token only if it remains unused and unexpired, then update
+       * the user in the same transaction.
        */
-      const updatedUser = assertFound(
-        await userRepository.updateById(reset.userId, {
+      if (
+        typeof passwordResetRepository.consumeAndUpdatePassword !==
+        'function'
+      ) {
+        throw new ServiceError(
+          'Atomic password reset is not configured.',
+          {
+            code: 'PASSWORD_RESET_MISCONFIGURED',
+            status: 503,
+          },
+        );
+      }
+
+      const updatedUser =
+        await passwordResetRepository.consumeAndUpdatePassword({
+          tokenHash,
+          now,
           passwordHash,
           passwordChangedAt: now,
-        }),
-        'User',
-      );
+        });
 
-      assertFound(
-        await passwordResetRepository.updateById(reset.id, {
-          consumedAt: now,
-        }),
-        'Password reset token',
-      );
+      if (!updatedUser) {
+        throw invalidTokenError();
+      }
 
+      assertFound(updatedUser, 'User');
+
+      // Password change is committed; do not report success if sessions
+      // remain active. Operational monitoring should alert on failures.
       await revokeSessions(updatedUser.id);
 
       await audit(auditService, {
@@ -183,6 +348,13 @@ function createPasswordService({
 
     async change(userId, input = {}) {
       requiredId(userId, 'userId');
+
+      if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        throw new ServiceError('Password input must be an object.', {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+        });
+      }
 
       const currentPassword = requiredString(
         input.currentPassword,
@@ -210,7 +382,10 @@ function createPasswordService({
         'User',
       );
 
-      if (!user.passwordHash) {
+      if (
+        typeof user.passwordHash !== 'string' ||
+        user.passwordHash.length === 0
+      ) {
         throw new ServiceError(
           'Password authentication is unavailable for this account.',
           {
@@ -225,7 +400,7 @@ function createPasswordService({
         user.passwordHash,
       );
 
-      if (!valid) {
+      if (valid !== true) {
         throw new ServiceError('Current password is incorrect.', {
           code: 'INVALID_CREDENTIALS',
           status: 401,
@@ -233,15 +408,37 @@ function createPasswordService({
       }
 
       const passwordHash = await passwordHasher.hash(newPassword);
-      const now = new Date();
+      const now = getNow();
 
-      assertFound(
-        await userRepository.updateById(userId, {
+      if (
+        typeof userRepository.changePasswordIfHashMatches !== 'function'
+      ) {
+        throw new ServiceError(
+          'Atomic password updates are not configured.',
+          {
+            code: 'PASSWORD_CHANGE_MISCONFIGURED',
+            status: 503,
+          },
+        );
+      }
+
+      const updatedUser =
+        await userRepository.changePasswordIfHashMatches({
+          userId,
+          expectedPasswordHash: user.passwordHash,
           passwordHash,
           passwordChangedAt: now,
-        }),
-        'User',
-      );
+        });
+
+      if (!updatedUser) {
+        throw new ServiceError(
+          'Password changed by another request. Please sign in again.',
+          {
+            code: 'PASSWORD_STATE_CONFLICT',
+            status: 409,
+          },
+        );
+      }
 
       await revokeSessions(userId);
 
@@ -257,4 +454,11 @@ function createPasswordService({
   };
 }
 
-module.exports = { createPasswordService };
+module.exports = {
+  createPasswordService,
+  DEFAULT_TOKEN_TTL_MS,
+  MIN_TOKEN_TTL_MS,
+  MAX_TOKEN_TTL_MS,
+  MIN_PASSWORD_LENGTH,
+  MAX_PASSWORD_LENGTH,
+};

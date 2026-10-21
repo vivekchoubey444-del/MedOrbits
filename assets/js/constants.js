@@ -1,67 +1,71 @@
 
 /**
  * MedOrbits -- Application Constants
- * File: assets/js/constants.js
+ * File: /assets/js/constants.js
+ * Version: 1.1.0
  *
- * Central source of truth for:
- * - Application metadata and routes
- * - API endpoints
- * - User roles and permissions
- * - Education and career categories
- * - Application and payment statuses
- * - Validation and upload limits
- * - Storage keys and event names
- * - Security-related client configuration
+ * Central source of truth for public frontend constants.
  *
- * Important:
- * These constants are public frontend configuration.
- * Never place passwords, API secrets, private tokens,
- * database credentials, or payment secrets in this file.
+ * Security:
+ * These constants are public. Never place credentials, private tokens,
+ * API secrets, payment secrets, or database credentials here.
+ * Frontend role and feature definitions are not authorization controls.
  */
 
-(() => {
+(function (window) {
   "use strict";
 
-  // --------------------------------------------------
-  // Application metadata
-  // --------------------------------------------------
+  var GLOBAL_KEY = "MedOrbitsConstants";
 
-  const APP = Object.freeze({
+  if (window[GLOBAL_KEY]) {
+    return;
+  }
+
+  function deepFreeze(value) {
+    if (
+      value === null ||
+      typeof value !== "object" ||
+      Object.isFrozen(value)
+    ) {
+      return value;
+    }
+
+    Object.keys(value).forEach(function (key) {
+      deepFreeze(value[key]);
+    });
+
+    return Object.freeze(value);
+  }
+
+  var APP = {
     NAME: "MedOrbits",
     BRAND: "MedOrbits",
-    VERSION: "1.0.0",
+    VERSION: "1.1.0",
     DESCRIPTION:
       "Education guidance, medical admissions, study abroad, careers, jobs and recruitment.",
     DEFAULT_LOCALE: "en-IN",
+    DEFAULT_LANGUAGE: "en",
     DEFAULT_TIMEZONE: "Asia/Kolkata",
     DEFAULT_CURRENCY: "INR",
     DEFAULT_COUNTRY: "IN",
     DEFAULT_COUNTRY_NAME: "India",
-    SUPPORT_EMAIL: "",
+    SUPPORT_EMAIL: "support@medorbits.in",
     SUPPORT_PHONE: "",
-    COPYRIGHT_START_YEAR: 2026
-  });
+    COPYRIGHT_START_YEAR: 2026,
+    WEBSITE_URL: "https://medorbits.in"
+  };
 
-  // --------------------------------------------------
-  // Environment names
-  // --------------------------------------------------
-
-  const ENVIRONMENTS = Object.freeze({
+  var ENVIRONMENTS = {
     DEVELOPMENT: "development",
     TEST: "test",
     STAGING: "staging",
     PRODUCTION: "production"
-  });
+  };
 
-  // --------------------------------------------------
-  // Website routes
-  // Keep these synchronized with the actual HTML files.
-  // --------------------------------------------------
-
-  const ROUTES = Object.freeze({
+  var ROUTES = {
     HOME: "/index.html",
 
-    PAGES: Object.freeze({
+    PAGES: {
       ABOUT: "/pages/about.html",
       SERVICES: "/pages/services.html",
       CONTACT: "/pages/contact.html",
@@ -76,9 +80,9 @@
       SERVER_ERROR: "/pages/500.html",
       OFFLINE: "/pages/offline.html",
       MAINTENANCE: "/pages/maintenance.html"
-    }),
+    },
 
-    ACCOUNT: Object.freeze({
+    ACCOUNT: {
       LOGIN: "/account/login.html",
       REGISTER: "/account/register.html",
       LOGOUT: "/account/logout.html",
@@ -103,15 +107,15 @@
       INTERNSHIPS: "/account/internships.html",
       SUPPORT: "/account/support.html",
       ACTIVITY: "/account/activity.html"
-    }),
+    },
 
-    EDUCATION: Object.freeze({
+    EDUCATION: {
       HOME: "/education/index.html",
       COURSES: "/education/courses.html",
       COLLEGES: "/education/colleges.html",
       UNIVERSITIES: "/education/universities.html",
 
-      STUDY_INDIA: Object.freeze({
+      STUDY_INDIA: {
         HOME: "/education/study-india/index.html",
         MBBS: "/education/study-india/mbbs.html",
         BDS: "/education/study-india/bds.html",
@@ -125,9 +129,9 @@
         PG_MEDICAL: "/education/study-india/pg-medical.html",
         PG_OTHERS: "/education/study-india/pg-others.html",
         MORE: "/education/study-india/more-courses.html"
-      }),
+      },
 
-      STUDY_ABROAD: Object.freeze({
+      STUDY_ABROAD: {
         HOME: "/education/study-abroad/index.html",
         MBBS: "/education/study-abroad/mbbs-abroad.html",
         RUSSIA: "/education/study-abroad/russia.html",
@@ -137,18 +141,18 @@
         KYRGYZSTAN: "/education/study-abroad/kyrgyzstan.html",
         UAE: "/education/study-abroad/uae.html",
         MORE: "/education/study-abroad/more-countries.html"
-      }),
+      },
 
-      ADMISSIONS: Object.freeze({
+      ADMISSIONS: {
         HOME: "/education/admissions/index.html",
         PROCESS: "/education/admissions/process.html",
         ELIGIBILITY: "/education/admissions/eligibility.html",
         EXAMS: "/education/admissions/exams.html",
         COUNSELLING: "/education/admissions/counselling.html",
         DOCUMENTS: "/education/admissions/documents.html"
-      }),
+      },
 
-      RESOURCES: Object.freeze({
+      RESOURCES: {
         HOME: "/education/resources/index.html",
         FEES: "/education/resources/fees.html",
         SCHOLARSHIPS: "/education/resources/scholarships.html",
@@ -157,10 +161,10 @@
         BROCHURES: "/education/resources/brochures.html",
         STUDENT_LOANS: "/education/resources/student-loans.html",
         FAQS: "/education/resources/faqs.html"
-      })
-    }),
+      }
+    },
 
-    CAREER: Object.freeze({
+    CAREER: {
       HOME: "/career/index.html",
       JOBS: "/career/jobs.html",
       JOB_DETAILS: "/career/job-details.html",
@@ -181,7 +185,7 @@
       RESUME_BUILDER: "/career/resume-builder.html",
       INTERVIEW_PREPARATION: "/career/interview-preparation.html",
 
-      SECTORS: Object.freeze({
+      SECTORS: {
         HOME: "/career/sectors/index.html",
         HEALTHCARE: "/career/sectors/healthcare.html",
         IT: "/career/sectors/it.html",
@@ -191,9 +195,9 @@
         MANUFACTURING: "/career/sectors/manufacturing.html",
         LOGISTICS: "/career/sectors/logistics.html",
         OTHERS: "/career/sectors/others.html"
-      }),
+      },
 
-      LOCATIONS: Object.freeze({
+      LOCATIONS: {
         HOME: "/career/locations/index.html",
         DELHI_NCR: "/career/locations/delhi-ncr.html",
         NOIDA: "/career/locations/noida.html",
@@ -203,9 +207,9 @@
         BENGALURU: "/career/locations/bengaluru.html",
         OVERSEAS: "/career/locations/overseas.html",
         OTHERS: "/career/locations/others.html"
-      }),
+      },
 
-      RESOURCES: Object.freeze({
+      RESOURCES: {
         HOME: "/career/resources/index.html",
         GUIDES: "/career/resources/guides.html",
         RESUME_TEMPLATES: "/career/resources/resume-templates.html",
@@ -213,10 +217,10 @@
         SALARY_GUIDE: "/career/resources/salary-guide.html",
         JOB_FRAUD_AWARENESS: "/career/resources/job-fraud-awareness.html",
         FAQS: "/career/resources/faqs.html"
-      })
-    }),
+      }
+    },
 
-    ADMIN: Object.freeze({
+    ADMIN: {
       HOME: "/admin/index.html",
       LOGIN: "/admin/login.html",
       DASHBOARD: "/admin/dashboard.html",
@@ -232,9 +236,9 @@
       SUPPORT: "/admin/support.html",
       AUDIT_LOGS: "/admin/audit-logs.html",
       SETTINGS: "/admin/settings.html"
-    }),
+    },
 
-    LEGAL: Object.freeze({
+    LEGAL: {
       HOME: "/legal/index.html",
       PRIVACY: "/legal/privacy-policy.html",
       TERMS: "/legal/terms.html",
@@ -248,27 +252,47 @@
       EMPLOYER_TERMS: "/legal/employer-terms.html",
       PAYMENT_TERMS: "/legal/payment-terms.html",
       GRIEVANCE: "/legal/grievance-redressal.html"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // API configuration
-  // The API base URL can be supplied by config.js.
-  // --------------------------------------------------
-
-  const API = Object.freeze({
+  var API = {
     PREFIX: "/api/v1",
-    DEFAULT_TIMEOUT_MS: 15000,
+    DEFAULT_TIMEOUT_MS: 20000,
     UPLOAD_TIMEOUT_MS: 60000,
     MAX_RETRIES: 2,
 
-    ENDPOINTS: Object.freeze({
+    ENDPOINTS: {
       HEALTH: "/health",
-      AUTH: "/auth",
-      SESSION: "/sessions",
-      VERIFICATION: "/verification",
-      PASSWORD: "/password",
-      USERS: "/users",
+
+      AUTH: {
+        LOGIN: "/auth/login",
+        REGISTER: "/auth/register",
+        LOGOUT: "/auth/logout",
+        REFRESH: "/auth/refresh",
+        ME: "/auth/me",
+        SESSIONS: "/sessions"
+      },
+
+      VERIFICATION: {
+        SEND_EMAIL: "/verification/email/send",
+        VERIFY_EMAIL: "/verification/email/confirm",
+        SEND_PHONE: "/verification/phone/send",
+        VERIFY_PHONE: "/verification/phone/confirm"
+      },
+
+      PASSWORD: {
+        FORGOT: "/password/forgot",
+        RESET: "/password/reset",
+        CHANGE: "/password/change"
+      },
+
+      USERS: {
+        PROFILE: "/users/me",
+        SETTINGS: "/users/me/settings",
+        ACTIVITY: "/users/me/activity",
+        DELETE_ACCOUNT: "/users/me"
+      },
+
       COURSES: "/courses",
       COLLEGES: "/colleges",
       UNIVERSITIES: "/universities",
@@ -291,37 +315,33 @@
       FAQ_ANSWER: "/faqs/answer",
       SUBSCRIPTIONS: "/subscriptions",
       ADMIN: "/admin"
-    }),
+    },
 
-    METHODS: Object.freeze({
+    METHODS: {
       GET: "GET",
       POST: "POST",
       PUT: "PUT",
       PATCH: "PATCH",
       DELETE: "DELETE"
-    }),
+    },
 
-    HEADERS: Object.freeze({
+    HEADERS: {
       CONTENT_TYPE: "Content-Type",
       ACCEPT: "Accept",
       AUTHORIZATION: "Authorization",
       REQUEST_ID: "X-Request-ID",
       CSRF_TOKEN: "X-CSRF-Token"
-    }),
+    },
 
-    CONTENT_TYPES: Object.freeze({
+    CONTENT_TYPES: {
       JSON: "application/json",
       FORM_DATA: "multipart/form-data",
       URL_ENCODED: "application/x-www-form-urlencoded"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Authentication and user roles
-  // --------------------------------------------------
-
-  const AUTH = Object.freeze({
-    ROLES: Object.freeze({
+  var AUTH = {
+    ROLES: {
       GUEST: "guest",
       STUDENT: "student",
       CANDIDATE: "candidate",
@@ -330,19 +350,19 @@
       RECRUITER: "recruiter",
       ADMIN: "admin",
       SUPER_ADMIN: "super_admin"
-    }),
+    },
 
-    PROVIDERS: Object.freeze({
+    PROVIDERS: {
       EMAIL: "email",
       GOOGLE: "google"
-    }),
+    },
 
-    SESSION: Object.freeze({
+    SESSION: {
       USER: "medorbits-user",
       STATUS: "medorbits-session-status"
-    }),
+    },
 
-    REQUIREMENTS: Object.freeze({
+    REQUIREMENTS: {
       EMAIL_VERIFICATION: true,
       PASSWORD_MIN_LENGTH: 12,
       PASSWORD_MAX_LENGTH: 128,
@@ -350,36 +370,28 @@
       OTP_EXPIRY_SECONDS: 300,
       RESET_TOKEN_EXPIRY_SECONDS: 1800,
       MAX_LOGIN_ATTEMPTS: 5
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // User account states
-  // --------------------------------------------------
-
-  const USER_STATUS = Object.freeze({
+  var USER_STATUS = {
     ACTIVE: "active",
     PENDING: "pending",
     SUSPENDED: "suspended",
     DISABLED: "disabled",
     DELETED: "deleted",
     UNVERIFIED: "unverified"
-  });
+  };
 
-  const VERIFICATION_STATUS = Object.freeze({
+  var VERIFICATION_STATUS = {
     NOT_STARTED: "not_started",
     PENDING: "pending",
     VERIFIED: "verified",
     REJECTED: "rejected",
     EXPIRED: "expired"
-  });
+  };
 
-  // --------------------------------------------------
-  // Education categories
-  // --------------------------------------------------
-
-  const EDUCATION = Object.freeze({
-    COURSE_CATEGORIES: Object.freeze([
+  var EDUCATION = {
+    COURSE_CATEGORIES: [
       "MBBS",
       "BDS",
       "AYUSH",
@@ -391,14 +403,14 @@
       "Law",
       "Postgraduate Medical",
       "Other Postgraduate Courses"
-    ]),
+    ],
 
-    STUDY_DESTINATIONS: Object.freeze({
+    STUDY_DESTINATIONS: {
       INDIA: "india",
       ABROAD: "abroad"
-    }),
+    },
 
-    ADMISSION_STATUS: Object.freeze({
+    ADMISSION_STATUS: {
       DRAFT: "draft",
       SUBMITTED: "submitted",
       UNDER_REVIEW: "under_review",
@@ -407,23 +419,19 @@
       REJECTED: "rejected",
       WITHDRAWN: "withdrawn",
       COMPLETED: "completed"
-    }),
+    },
 
-    COUNSELLING_STATUS: Object.freeze({
+    COUNSELLING_STATUS: {
       REQUESTED: "requested",
       SCHEDULED: "scheduled",
       IN_PROGRESS: "in_progress",
       COMPLETED: "completed",
       CANCELLED: "cancelled"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Career, jobs and internships
-  // --------------------------------------------------
-
-  const CAREER = Object.freeze({
-    SECTORS: Object.freeze([
+  var CAREER = {
+    SECTORS: [
       "healthcare",
       "it",
       "finance",
@@ -432,9 +440,9 @@
       "manufacturing",
       "logistics",
       "other"
-    ]),
+    ],
 
-    JOB_TYPES: Object.freeze({
+    JOB_TYPES: {
       FULL_TIME: "full_time",
       PART_TIME: "part_time",
       CONTRACT: "contract",
@@ -442,15 +450,15 @@
       INTERNSHIP: "internship",
       APPRENTICESHIP: "apprenticeship",
       REMOTE: "remote"
-    }),
+    },
 
-    WORK_MODES: Object.freeze({
+    WORK_MODES: {
       ONSITE: "onsite",
       HYBRID: "hybrid",
       REMOTE: "remote"
-    }),
+    },
 
-    JOB_STATUS: Object.freeze({
+    JOB_STATUS: {
       DRAFT: "draft",
       PENDING_REVIEW: "pending_review",
       PUBLISHED: "published",
@@ -458,9 +466,9 @@
       CLOSED: "closed",
       REJECTED: "rejected",
       ARCHIVED: "archived"
-    }),
+    },
 
-    APPLICATION_STATUS: Object.freeze({
+    APPLICATION_STATUS: {
       SUBMITTED: "submitted",
       UNDER_REVIEW: "under_review",
       SHORTLISTED: "shortlisted",
@@ -469,23 +477,19 @@
       HIRED: "hired",
       REJECTED: "rejected",
       WITHDRAWN: "withdrawn"
-    }),
+    },
 
-    EXPERIENCE_LEVELS: Object.freeze([
+    EXPERIENCE_LEVELS: [
       "fresher",
       "entry_level",
       "mid_level",
       "senior",
       "executive"
-    ])
-  });
+    ]
+  };
 
-  // --------------------------------------------------
-  // Document management
-  // --------------------------------------------------
-
-  const DOCUMENTS = Object.freeze({
-    TYPES: Object.freeze({
+  var DOCUMENTS = {
+    TYPES: {
       IDENTITY: "identity",
       ADDRESS_PROOF: "address_proof",
       EDUCATION: "education",
@@ -497,52 +501,48 @@
       ADMISSION: "admission",
       FINANCIAL: "financial",
       OTHER: "other"
-    }),
+    },
 
-    STATUS: Object.freeze({
+    STATUS: {
       PENDING: "pending",
       UPLOADED: "uploaded",
       UNDER_REVIEW: "under_review",
       VERIFIED: "verified",
       REJECTED: "rejected",
       EXPIRED: "expired"
-    }),
+    },
 
-    UPLOAD: Object.freeze({
+    UPLOAD: {
       MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
       MAX_FILES_PER_REQUEST: 10,
 
-      ALLOWED_EXTENSIONS: Object.freeze([
+      ALLOWED_EXTENSIONS: [
         ".pdf",
         ".jpg",
         ".jpeg",
         ".png"
-      ]),
+      ],
 
-      ALLOWED_MIME_TYPES: Object.freeze([
+      ALLOWED_MIME_TYPES: [
         "application/pdf",
         "image/jpeg",
         "image/png"
-      ])
-    })
-  });
+      ]
+    }
+  };
 
-  // --------------------------------------------------
-  // Payments and subscriptions
-  // --------------------------------------------------
-
-  const PAYMENTS = Object.freeze({
+  var PAYMENTS = {
     CURRENCY: "INR",
 
-    METHODS: Object.freeze({
+    METHODS: {
       UPI: "upi",
       CARD: "card",
       NET_BANKING: "net_banking",
       WALLET: "wallet",
       BANK_TRANSFER: "bank_transfer"
-    }),
+    },
 
-    STATUS: Object.freeze({
+    STATUS: {
       CREATED: "created",
       PENDING: "pending",
       PROCESSING: "processing",
@@ -551,116 +551,98 @@
       CANCELLED: "cancelled",
       REFUNDED: "refunded",
       PARTIALLY_REFUNDED: "partially_refunded"
-    }),
+    },
 
-    REFUND_STATUS: Object.freeze({
+    REFUND_STATUS: {
       NOT_REQUESTED: "not_requested",
       REQUESTED: "requested",
       PROCESSING: "processing",
       APPROVED: "approved",
       REJECTED: "rejected",
       COMPLETED: "completed"
-    })
-  });
+    }
+  };
 
-  const SUBSCRIPTIONS = Object.freeze({
-    PLANS: Object.freeze({
+  var SUBSCRIPTIONS = {
+    PLANS: {
       FREE: "free",
       BASIC: "basic",
       PREMIUM: "premium",
       PROFESSIONAL: "professional",
       ENTERPRISE: "enterprise"
-    }),
+    },
 
-    STATUS: Object.freeze({
+    STATUS: {
       TRIAL: "trial",
       ACTIVE: "active",
       PAST_DUE: "past_due",
       PAUSED: "paused",
       CANCELLED: "cancelled",
       EXPIRED: "expired"
-    }),
+    },
 
-    INTERVALS: Object.freeze({
+    INTERVALS: {
       MONTHLY: "monthly",
       QUARTERLY: "quarterly",
       YEARLY: "yearly"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Form validation
-  // --------------------------------------------------
-
-  const VALIDATION = Object.freeze({
+  var VALIDATION = {
     NAME_MIN_LENGTH: 2,
     NAME_MAX_LENGTH: 100,
-
     EMAIL_MAX_LENGTH: 254,
-
     PHONE_MIN_LENGTH: 7,
     PHONE_MAX_LENGTH: 15,
-
     MESSAGE_MIN_LENGTH: 10,
     MESSAGE_MAX_LENGTH: 5000,
-
     SEARCH_MIN_LENGTH: 2,
     SEARCH_MAX_LENGTH: 200,
-
     PASSWORD_MIN_LENGTH: 12,
     PASSWORD_MAX_LENGTH: 128,
 
-    PAGINATION: Object.freeze({
+    PAGINATION: {
       DEFAULT_PAGE: 1,
       DEFAULT_LIMIT: 20,
       MAX_LIMIT: 100
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Local storage and session storage keys
-  // --------------------------------------------------
-
-  const STORAGE_KEYS = Object.freeze({
+  var STORAGE_KEYS = {
     THEME: "medorbits-theme",
     COOKIE_CONSENT: "medorbits-cookie-consent",
     LANGUAGE: "medorbits-language",
     USER_PREFERENCES: "medorbits-user-preferences",
     SEARCH_HISTORY: "medorbits-search-history",
     SAVED_FILTERS: "medorbits-saved-filters",
+    COMPARISON: "medorbits-comparison",
     ONBOARDING_COMPLETED: "medorbits-onboarding-completed"
-  });
+  };
 
-  // Do not store session identifiers, access tokens,
-  // passwords, or sensitive documents in localStorage.
-
-  // --------------------------------------------------
-  // UI and accessibility
-  // --------------------------------------------------
-
-  const UI = Object.freeze({
-    BREAKPOINTS: Object.freeze({
+  var UI = {
+    BREAKPOINTS: {
       MOBILE: 480,
       TABLET: 768,
       DESKTOP: 1024,
       WIDE: 1280
-    }),
+    },
 
-    TOAST: Object.freeze({
+    TOAST: {
       DEFAULT_DURATION_MS: 4000,
       ERROR_DURATION_MS: 6000,
       MAX_VISIBLE: 5
-    }),
+    },
 
     DEBOUNCE_MS: 300,
     THROTTLE_MS: 200,
     ANIMATION_DURATION_MS: 250,
     SCROLL_TOP_THRESHOLD: 400
-  });
+  };
 
-  const ACCESSIBILITY = Object.freeze({
+  var ACCESSIBILITY = {
     REDUCED_MOTION_QUERY: "(prefers-reduced-motion: reduce)",
     HIGH_CONTRAST_QUERY: "(prefers-contrast: more)",
+
     FOCUSABLE_SELECTOR: [
       "a[href]",
       "button:not([disabled])",
@@ -669,80 +651,64 @@
       "textarea:not([disabled])",
       '[tabindex]:not([tabindex="-1"])'
     ].join(", ")
-  });
+  };
 
-  // --------------------------------------------------
-  // Notifications
-  // --------------------------------------------------
-
-  const NOTIFICATIONS = Object.freeze({
-    TYPES: Object.freeze({
+  var NOTIFICATIONS = {
+    TYPES: {
       INFO: "info",
       SUCCESS: "success",
       WARNING: "warning",
       ERROR: "error"
-    }),
+    },
 
-    CHANNELS: Object.freeze({
+    CHANNELS: {
       IN_APP: "in_app",
       EMAIL: "email",
       SMS: "sms",
       PUSH: "push"
-    }),
+    },
 
-    STATUS: Object.freeze({
+    STATUS: {
       UNREAD: "unread",
       READ: "read",
       ARCHIVED: "archived"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Support and contact
-  // --------------------------------------------------
-
-  const SUPPORT = Object.freeze({
-    PRIORITY: Object.freeze({
+  var SUPPORT = {
+    PRIORITY: {
       LOW: "low",
       NORMAL: "normal",
       HIGH: "high",
       URGENT: "urgent"
-    }),
+    },
 
-    STATUS: Object.freeze({
+    STATUS: {
       OPEN: "open",
       IN_PROGRESS: "in_progress",
       WAITING: "waiting",
       RESOLVED: "resolved",
       CLOSED: "closed"
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Consent categories
-  // --------------------------------------------------
-
-  const CONSENT = Object.freeze({
-    CATEGORIES: Object.freeze({
+  var CONSENT = {
+    CATEGORIES: {
       NECESSARY: "necessary",
       ANALYTICS: "analytics",
       MARKETING: "marketing",
       PREFERENCES: "preferences"
-    }),
+    },
 
-    DEFAULTS: Object.freeze({
+    DEFAULTS: {
       necessary: true,
       analytics: false,
       marketing: false,
       preferences: false
-    })
-  });
+    }
+  };
 
-  // --------------------------------------------------
-  // Custom event names
-  // --------------------------------------------------
-
-  const EVENTS = Object.freeze({
+  var EVENTS = {
     APP_READY: "medorbits:ready",
     NAVIGATION_CHANGE: "medorbits:navigation-change",
     THEME_CHANGE: "medorbits:theme-change",
@@ -755,14 +721,13 @@
     DOCUMENT_UPLOADED: "medorbits:document-uploaded",
     PAYMENT_UPDATED: "medorbits:payment-updated",
     SUBSCRIPTION_UPDATED: "medorbits:subscription-updated",
-    CONSENT_CHANGE: "medorbits:consent-change"
-  });
+    CONSENT_CHANGE: "medorbits:consent-change",
+    COMPARISON_UPDATED: "medorbits:comparison-updated",
+    COLLEGES_LOADED: "medorbits:colleges-loaded",
+    COLLEGES_ERROR: "medorbits:colleges-error"
+  };
 
-  // --------------------------------------------------
-  // HTTP status codes
-  // --------------------------------------------------
-
-  const HTTP_STATUS = Object.freeze({
+  var HTTP_STATUS = {
     OK: 200,
     CREATED: 201,
     ACCEPTED: 202,
@@ -777,13 +742,9 @@
     TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
     SERVICE_UNAVAILABLE: 503
-  });
+  };
 
-  // --------------------------------------------------
-  // Data files
-  // --------------------------------------------------
-
-  const DATA_FILES = Object.freeze({
+  var DATA_FILES = {
     COUNTRIES: "/assets/data/countries.json",
     COURSES: "/assets/data/courses.json",
     COLLEGES: "/assets/data/colleges.json",
@@ -806,52 +767,39 @@
     TESTIMONIALS: "/assets/data/testimonials.json",
     FAQS: "/assets/data/faqs.json",
     NEWS: "/assets/data/news.json",
-    NOTIFICATIONS: "/assets/data/notifications.json"
+    NOTIFICATIONS: "/assets/data/notifications.json",
+    BULLETINS: "/assets/data/bulletins.json"
+  };
+
+  var constants = deepFreeze({
+    APP: APP,
+    ENVIRONMENTS: ENVIRONMENTS,
+    ROUTES: ROUTES,
+    API: API,
+    AUTH: AUTH,
+    USER_STATUS: USER_STATUS,
+    VERIFICATION_STATUS: VERIFICATION_STATUS,
+    EDUCATION: EDUCATION,
+    CAREER: CAREER,
+    DOCUMENTS: DOCUMENTS,
+    PAYMENTS: PAYMENTS,
+    SUBSCRIPTIONS: SUBSCRIPTIONS,
+    VALIDATION: VALIDATION,
+    STORAGE_KEYS: STORAGE_KEYS,
+    UI: UI,
+    ACCESSIBILITY: ACCESSIBILITY,
+    NOTIFICATIONS: NOTIFICATIONS,
+    SUPPORT: SUPPORT,
+    CONSENT: CONSENT,
+    EVENTS: EVENTS,
+    HTTP_STATUS: HTTP_STATUS,
+    DATA_FILES: DATA_FILES
   });
 
-  // --------------------------------------------------
-  // Public configuration interface
-  // --------------------------------------------------
-
-  const MedOrbitsConstants = Object.freeze({
-    APP,
-    ENVIRONMENTS,
-    ROUTES,
-    API,
-    AUTH,
-    USER_STATUS,
-    VERIFICATION_STATUS,
-    EDUCATION,
-    CAREER,
-    DOCUMENTS,
-    PAYMENTS,
-    SUBSCRIPTIONS,
-    VALIDATION,
-    STORAGE_KEYS,
-    UI,
-    ACCESSIBILITY,
-    NOTIFICATIONS,
-    SUPPORT,
-    CONSENT,
-    EVENTS,
-    HTTP_STATUS,
-    DATA_FILES
-  });
-
-  // Expose a single namespaced global for classic scripts.
-  // Avoid overwriting an existing constants object.
-  if (window.MedOrbitsConstants) {
-    console.warn(
-      "[MedOrbits] MedOrbitsConstants already exists. " +
-      "Check for duplicate script inclusion."
-    );
-    return;
-  }
-
-  Object.defineProperty(window, "MedOrbitsConstants", {
-    value: MedOrbitsConstants,
+  Object.defineProperty(window, GLOBAL_KEY, {
+    value: constants,
     writable: false,
     configurable: false,
     enumerable: true
   });
-})();
+})(window);

@@ -1,6 +1,19 @@
 
 'use strict';
 
+/**
+ * MedOrbits -- Job Authorization Policy
+ *
+ * File: src/policies/job.policy.js
+ * Runtime: Node.js >= 20
+ *
+ * Authorization for job listings, employer ownership, publication,
+ * lifecycle transitions, applicant access, and exports.
+ *
+ * Protected lifecycle and ownership fields must be changed only through
+ * dedicated service methods with database-level authorization checks.
+ */
+
 const {
   isAdmin,
   hasPermission,
@@ -11,18 +24,36 @@ const {
   safeStatus,
 } = require('./policy-utils');
 
-const JOB_OWNER_FIELDS = [
+const EMPLOYER_FIELDS = Object.freeze([
   'employerId',
+  'employer_id',
+]);
+
+const OWNER_FIELDS = Object.freeze([
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
-];
+  'managed_by',
+]);
 
 const PUBLIC_STATUSES = new Set([
   'published',
 ]);
 
 const EDITABLE_STATUSES = new Set([
+  'draft',
+  'published',
+  'paused',
+]);
+
+const PUBLISHABLE_STATUSES = new Set([
+  'draft',
+  'paused',
+]);
+
+const CLOSABLE_STATUSES = new Set([
   'draft',
   'published',
   'paused',
@@ -37,75 +68,159 @@ const TERMINAL_STATUSES = new Set([
 const PROTECTED_FIELDS = new Set([
   'id',
   '_id',
+  'jobId',
+  'job_id',
   'employerId',
+  'employer_id',
   'ownerId',
+  'owner_id',
   'createdBy',
+  'created_by',
   'managedBy',
+  'managed_by',
   'status',
   'verified',
+  'isVerified',
+  'is_verified',
   'verificationStatus',
+  'verification_status',
   'approvedBy',
+  'approved_by',
   'approvedAt',
+  'approved_at',
   'publishedAt',
+  'published_at',
   'closedAt',
+  'closed_at',
   'filledAt',
+  'filled_at',
   'deletedAt',
+  'deleted_at',
   'applicationCount',
+  'application_count',
   'createdAt',
+  'created_at',
   'updatedAt',
+  'updated_at',
 ]);
 
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isActiveActor(actor) {
+  if (!actor || typeof actor !== 'object') {
+    return false;
+  }
+
+  if (
+    actor.isActive === false ||
+    actor.is_active === false ||
+    actor.isSuspended === true ||
+    actor.is_suspended === true
+  ) {
+    return false;
+  }
+
+  return ![
+    'disabled',
+    'suspended',
+    'inactive',
+    'deleted',
+    'blocked',
+  ].includes(safeStatus(actor.status));
+}
+
+function jobStatus(job) {
+  return safeStatus(job && job.status);
+}
+
+function isDeletedJob(job) {
+  return jobStatus(job) === 'deleted';
+}
+
 function jobOwnerId(job) {
-  if (!job || typeof job !== 'object') {
+  if (!isPlainObject(job)) {
     return null;
   }
 
-  return resourceOwnerId(job, JOB_OWNER_FIELDS);
+  return resourceOwnerId(job, [
+    ...EMPLOYER_FIELDS,
+    ...OWNER_FIELDS,
+  ]);
 }
 
 function jobEmployerId(job) {
-  if (!job || typeof job !== 'object') {
+  if (!isPlainObject(job)) {
     return null;
   }
 
-  return job.employerId ?? null;
+  for (const field of EMPLOYER_FIELDS) {
+    if (job[field] != null) {
+      return job[field];
+    }
+  }
+
+  return null;
 }
 
 function isJobOwner(actor, job) {
-  if (!actor || !job) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job)
+  ) {
     return false;
   }
 
   const employerId = jobEmployerId(job);
+  const actorEmployerId = actor.employerId ?? actor.employer_id;
 
-  // Employer-owned jobs require a trusted employer membership
-  // association, not merely a matching client-supplied ID.
   if (
     employerId != null &&
-    sameId(actor.employerId, employerId) &&
+    actorEmployerId != null &&
+    sameId(actorEmployerId, employerId) &&
     hasRole(actor, 'employer')
   ) {
     return true;
   }
 
-  const ownerId = resourceOwnerId(job, [
-    'ownerId',
-    'createdBy',
-    'managedBy',
-  ]);
+  const ownerId = resourceOwnerId(job, OWNER_FIELDS);
+  const currentActorId = actorId(actor);
 
   return ownerId != null &&
-    sameId(actorId(actor), ownerId);
+    currentActorId != null &&
+    sameId(currentActorId, ownerId);
+}
+
+function hasProtectedChanges(changes) {
+  if (!isPlainObject(changes)) {
+    return true;
+  }
+
+  return Object.keys(changes).some((key) =>
+    PROTECTED_FIELDS.has(key)
+  );
 }
 
 function canViewJob(actor, job) {
-  if (!job || typeof job !== 'object') {
+  if (!isPlainObject(job) || isDeletedJob(job)) {
     return false;
   }
 
-  const status = safeStatus(job.status);
+  const status = jobStatus(job);
 
-  if (TERMINAL_STATUSES.has(status)) {
+  // Published jobs are public unless explicitly deleted.
+  if (PUBLIC_STATUSES.has(status)) {
+    return true;
+  }
+
+  if (!isActiveActor(actor)) {
     return false;
   }
 
@@ -116,25 +231,16 @@ function canViewJob(actor, job) {
     return true;
   }
 
-  if (status === 'published') {
-    return true;
-  }
-
   return Boolean(
-    actor &&
-    (
-      isJobOwner(actor, job) ||
-      hasPermission(actor, 'jobs:read:private')
-    )
+    isJobOwner(actor, job) ||
+    hasPermission(actor, 'jobs:read:private')
   );
 }
 
 function canCreateJob(actor, input = {}) {
   if (
-    !actor ||
-    !input ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
+    !isActiveActor(actor) ||
+    !isPlainObject(input)
   ) {
     return false;
   }
@@ -148,21 +254,19 @@ function canCreateJob(actor, input = {}) {
 
   return Boolean(
     hasRole(actor, 'employer') &&
-    actor.isSuspended !== true &&
-    actor.status !== 'suspended' &&
-    actor.status !== 'disabled' &&
-    actor.employerId != null &&
+    (actor.employerId ?? actor.employer_id) != null &&
     hasPermission(actor, 'jobs:create:own-employer')
   );
 }
 
 function canUpdateJob(actor, job, changes = {}) {
   if (
-    !actor ||
-    !job ||
-    !changes ||
-    typeof changes !== 'object' ||
-    Array.isArray(changes)
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    isDeletedJob(job) ||
+    !isPlainObject(changes) ||
+    Object.keys(changes).length === 0 ||
+    hasProtectedChanges(changes)
   ) {
     return false;
   }
@@ -174,25 +278,20 @@ function canUpdateJob(actor, job, changes = {}) {
     return true;
   }
 
-  if (!isJobOwner(actor, job)) {
-    return false;
-  }
-
-  if (!EDITABLE_STATUSES.has(safeStatus(job.status))) {
-    return false;
-  }
-
-  return !Object.keys(changes).some(
-    (key) => PROTECTED_FIELDS.has(key)
+  return Boolean(
+    isJobOwner(actor, job) &&
+    hasRole(actor, 'employer') &&
+    EDITABLE_STATUSES.has(jobStatus(job)) &&
+    hasPermission(actor, 'jobs:update:own-employer')
   );
 }
 
 function canPublishJob(actor, job) {
-  if (!actor || !job) {
-    return false;
-  }
-
-  if (!['draft', 'paused'].includes(safeStatus(job.status))) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    !PUBLISHABLE_STATUSES.has(jobStatus(job))
+  ) {
     return false;
   }
 
@@ -211,11 +310,11 @@ function canPublishJob(actor, job) {
 }
 
 function canPauseJob(actor, job) {
-  if (!actor || !job) {
-    return false;
-  }
-
-  if (safeStatus(job.status) !== 'published') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    jobStatus(job) !== 'published'
+  ) {
     return false;
   }
 
@@ -234,15 +333,10 @@ function canPauseJob(actor, job) {
 }
 
 function canCloseJob(actor, job) {
-  if (!actor || !job) {
-    return false;
-  }
-
   if (
-    TERMINAL_STATUSES.has(safeStatus(job.status)) ||
-    !['published', 'paused', 'draft'].includes(
-      safeStatus(job.status)
-    )
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    !CLOSABLE_STATUSES.has(jobStatus(job))
   ) {
     return false;
   }
@@ -262,11 +356,11 @@ function canCloseJob(actor, job) {
 }
 
 function canMarkJobFilled(actor, job) {
-  if (!actor || !job) {
-    return false;
-  }
-
-  if (safeStatus(job.status) !== 'published') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    jobStatus(job) !== 'published'
+  ) {
     return false;
   }
 
@@ -285,11 +379,11 @@ function canMarkJobFilled(actor, job) {
 }
 
 function canDeleteJob(actor, job) {
-  if (!actor || !job) {
-    return false;
-  }
-
-  if (safeStatus(job.status) === 'deleted') {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    isDeletedJob(job)
+  ) {
     return false;
   }
 
@@ -302,14 +396,18 @@ function canDeleteJob(actor, job) {
 
   return Boolean(
     isJobOwner(actor, job) &&
-    safeStatus(job.status) === 'draft' &&
+    jobStatus(job) === 'draft' &&
     hasRole(actor, 'employer') &&
     hasPermission(actor, 'jobs:delete:own-employer')
   );
 }
 
 function canViewJobApplicants(actor, job) {
-  if (!actor || !job) {
+  if (
+    !isActiveActor(actor) ||
+    !isPlainObject(job) ||
+    isDeletedJob(job)
+  ) {
     return false;
   }
 
@@ -329,7 +427,7 @@ function canViewJobApplicants(actor, job) {
 
 function canExportJobs(actor) {
   return Boolean(
-    actor &&
+    isActiveActor(actor) &&
     (
       isAdmin(actor) ||
       hasPermission(actor, 'jobs:export')
@@ -337,7 +435,7 @@ function canExportJobs(actor) {
   );
 }
 
-module.exports = {
+module.exports = Object.freeze({
   jobOwnerId,
   jobEmployerId,
   isJobOwner,
@@ -351,4 +449,4 @@ module.exports = {
   canDeleteJob,
   canViewJobApplicants,
   canExportJobs,
-};
+});

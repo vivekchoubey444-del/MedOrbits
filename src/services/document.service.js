@@ -6,7 +6,6 @@ const {
   requireDependency,
   requiredId,
   requiredString,
-  plainObject,
   assertFound,
   createCrudService,
   audit,
@@ -20,17 +19,57 @@ const ALLOWED_STATUSES = new Set([
   'deleted',
 ]);
 
-const DOWNLOADABLE_STATUSES = new Set([
-  'approved',
-]);
+const DOWNLOADABLE_STATUSES = new Set(['approved']);
+
+const STATUS_TRANSITIONS = Object.freeze({
+  pending: new Set(['pending', 'under_review', 'approved', 'rejected', 'deleted']),
+  under_review: new Set(['under_review', 'approved', 'rejected', 'deleted']),
+  approved: new Set(['approved', 'under_review', 'deleted']),
+  rejected: new Set(['rejected', 'under_review', 'deleted']),
+  deleted: new Set(['deleted']),
+});
+
+const DEFAULT_DOWNLOAD_TTL_SECONDS = 300;
+const MAX_DOWNLOAD_TTL_SECONDS = 900;
+const MIN_DOWNLOAD_TTL_SECONDS = 30;
 
 function createDocumentService({
   documentRepository,
   storageService,
   auditService,
+  clock = () => new Date(),
 }) {
   requireDependency(documentRepository, 'documentRepository');
   requireDependency(storageService, 'storageService');
+
+  if (typeof clock !== 'function') {
+    throw new TypeError('clock must be a function.');
+  }
+
+  const findById =
+    typeof documentRepository.findById === 'function'
+      ? documentRepository.findById
+      : documentRepository.getById;
+
+  if (typeof findById !== 'function') {
+    throw new ServiceError(
+      'Document repository must implement findById() or getById().',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
+
+  if (typeof documentRepository.updateById !== 'function') {
+    throw new ServiceError(
+      'Document repository must implement updateById().',
+      {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      },
+    );
+  }
 
   const crud = createCrudService({
     repository: documentRepository,
@@ -45,7 +84,38 @@ function createDocumentService({
     ],
   });
 
-  function assertOwnerOrAdmin(document, actor = {}) {
+  function getNow() {
+    const value = clock();
+    const date = value instanceof Date
+      ? new Date(value.getTime())
+      : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      throw new ServiceError('Invalid service clock value.', {
+        code: 'CONFIGURATION_ERROR',
+        status: 500,
+      });
+    }
+
+    return date;
+  }
+
+  function validateActor(actor) {
+    if (!actor || typeof actor !== 'object' || Array.isArray(actor)) {
+      throw new ServiceError('Invalid actor.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    if (actor.id !== undefined && actor.id !== null) {
+      requiredId(actor.id, 'actor.id');
+    }
+
+    return actor;
+  }
+
+  function assertOwnerOrAdmin(document, actor) {
     const isAdmin = actor.isAdmin === true;
 
     const isOwner =
@@ -62,7 +132,7 @@ function createDocumentService({
   }
 
   function assertStatus(status) {
-    if (!ALLOWED_STATUSES.has(status)) {
+    if (typeof status !== 'string' || !ALLOWED_STATUSES.has(status)) {
       throw new ServiceError('Unsupported document status.', {
         code: 'VALIDATION_ERROR',
         status: 422,
@@ -73,28 +143,121 @@ function createDocumentService({
     }
   }
 
+  async function findDocument(id) {
+    return assertFound(
+      await findById.call(documentRepository, id),
+      'Document',
+    );
+  }
+
+  async function persistStatus(id, existing, changes) {
+    let updated;
+
+    if (typeof documentRepository.updateIfStatusMatches === 'function') {
+      updated = await documentRepository.updateIfStatusMatches(
+        id,
+        existing.status,
+        changes,
+      );
+    } else {
+      updated = await documentRepository.updateById(id, changes);
+    }
+
+    if (!updated) {
+      throw new ServiceError(
+        'Document status changed concurrently. Reload and try again.',
+        {
+          code: 'STATE_CONFLICT',
+          status: 409,
+        },
+      );
+    }
+
+    return assertFound(updated, 'Document');
+  }
+
+  function normalizeLimit(value) {
+    if (value === undefined || value === null || value === '') {
+      return 20;
+    }
+
+    const number = Number(value);
+
+    if (!Number.isSafeInteger(number) || number < 1 || number > 100) {
+      throw new ServiceError('Invalid document page limit.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return number;
+  }
+
+  function normalizeCursor(cursor) {
+    if (cursor === undefined || cursor === null || cursor === '') {
+      return undefined;
+    }
+
+    if (
+      typeof cursor !== 'string' ||
+      cursor.length > 512 ||
+      /[\u0000-\u001f\u007f]/.test(cursor)
+    ) {
+      throw new ServiceError('Invalid document cursor.', {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      });
+    }
+
+    return cursor;
+  }
+
+  function normalizeDownloadTtl(value) {
+    if (!Number.isSafeInteger(value)) {
+      throw new ServiceError(
+        'Download URL expiry must be an integer number of seconds.',
+        {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+        },
+      );
+    }
+
+    return Math.max(
+      MIN_DOWNLOAD_TTL_SECONDS,
+      Math.min(value, MAX_DOWNLOAD_TTL_SECONDS),
+    );
+  }
+
   return {
     ...crud,
 
     async getById(id, actor = {}) {
-      requiredId(id);
+      requiredId(id, 'documentId');
+      validateActor(actor);
 
-      const document = assertFound(
-        await documentRepository.findById(id),
-        'Document',
-      );
-
+      const document = await findDocument(id);
       assertOwnerOrAdmin(document, actor);
 
       return document;
     },
 
-    async listForOwner(ownerId, query = {}) {
+    async listForOwner(ownerId, query = {}, actor = {}) {
       requiredId(ownerId, 'ownerId');
+      validateActor(actor);
 
-      if (
-        typeof documentRepository.listForOwner !== 'function'
-      ) {
+      const isOwner =
+        actor.id != null &&
+        String(actor.id) === String(ownerId);
+
+      if (!isOwner && actor.isAdmin !== true) {
+        throw new ServiceError('Document listing not found.', {
+          code: 'NOT_FOUND',
+          status: 404,
+        });
+      }
+
+      if (typeof documentRepository.listForOwner !== 'function') {
         throw new ServiceError(
           'Document listing is not configured.',
           {
@@ -104,38 +267,40 @@ function createDocumentService({
         );
       }
 
-      const limitValue = Number(query.limit);
-      const limit =
-        Number.isFinite(limitValue) && limitValue > 0
-          ? Math.min(Math.floor(limitValue), 100)
-          : 20;
+      if (
+        query.status !== undefined &&
+        query.status !== null &&
+        query.status !== '' &&
+        !ALLOWED_STATUSES.has(query.status)
+      ) {
+        throw new ServiceError('Unsupported document status filter.', {
+          code: 'VALIDATION_ERROR',
+          status: 422,
+        });
+      }
 
       return documentRepository.listForOwner(ownerId, {
-        limit,
-        cursor:
-          typeof query.cursor === 'string' &&
-          query.cursor.length <= 512
-            ? query.cursor
-            : undefined,
-        status: ALLOWED_STATUSES.has(query.status)
-          ? query.status
-          : undefined,
+        limit: normalizeLimit(query.limit),
+        cursor: normalizeCursor(query.cursor),
+        status: query.status || undefined,
       });
     },
 
     async setStatus(id, status, actor = {}) {
-      requiredId(id);
+      requiredId(id, 'documentId');
+      validateActor(actor);
       assertStatus(status);
 
-      const document = assertFound(
-        await documentRepository.findById(id),
-        'Document',
-      );
+      const document = await findDocument(id);
 
-      if (status === 'approved' || status === 'rejected') {
+      if (
+        status === 'approved' ||
+        status === 'rejected' ||
+        status === 'under_review'
+      ) {
         if (actor.isAdmin !== true) {
           throw new ServiceError(
-            'Only authorized reviewers can approve or reject documents.',
+            'Only authorized reviewers can change the review status.',
             {
               code: 'FORBIDDEN',
               status: 403,
@@ -146,9 +311,16 @@ function createDocumentService({
         assertOwnerOrAdmin(document, actor);
       }
 
-      if (document.status === 'deleted' && status !== 'deleted') {
+      if (!ALLOWED_STATUSES.has(document.status)) {
+        throw new ServiceError('Document has an invalid stored status.', {
+          code: 'INVALID_STATE',
+          status: 409,
+        });
+      }
+
+      if (!STATUS_TRANSITIONS[document.status].has(status)) {
         throw new ServiceError(
-          'Deleted documents cannot be restored through this operation.',
+          `Cannot change document status from "${document.status}" to "${status}".`,
           {
             code: 'INVALID_STATUS_TRANSITION',
             status: 409,
@@ -156,27 +328,36 @@ function createDocumentService({
         );
       }
 
+      if (document.status === status) {
+        return document;
+      }
+
+      const now = getNow();
       const changes = {
         status,
-        updatedAt: new Date(),
+        updatedAt: now,
       };
 
       if (status === 'approved' || status === 'rejected') {
-        changes.reviewedAt = new Date();
+        changes.reviewedAt = now;
         changes.reviewedBy = actor.id;
       }
 
-      const updated = assertFound(
-        await documentRepository.updateById(id, changes),
-        'Document',
-      );
+      if (status === 'deleted') {
+        changes.deletedAt = now;
+      }
+
+      const updated = await persistStatus(id, document, changes);
 
       await audit(auditService, {
         action: 'document.status_changed',
         entity: 'Document',
-        entityId: id,
+        entityId: updated.id ?? id,
         actorId: actor.id,
-        metadata: { status },
+        metadata: {
+          previousStatus: document.status,
+          status,
+        },
       });
 
       return updated;
@@ -186,22 +367,25 @@ function createDocumentService({
       documentId,
       ownerId,
       actor = {},
-      expiresInSeconds = 300,
+      expiresInSeconds = DEFAULT_DOWNLOAD_TTL_SECONDS,
     } = {}) {
       requiredId(documentId, 'documentId');
+      validateActor(actor);
 
-      const document = assertFound(
-        await documentRepository.findById(documentId),
-        'Document',
-      );
-
+      const document = await findDocument(documentId);
       assertOwnerOrAdmin(document, actor);
 
       if (
-        document.status === 'deleted' ||
-        document.status === 'rejected' ||
-        !DOWNLOADABLE_STATUSES.has(document.status)
+        ownerId != null &&
+        String(ownerId) !== String(document.ownerId)
       ) {
+        throw new ServiceError('Document not found.', {
+          code: 'NOT_FOUND',
+          status: 404,
+        });
+      }
+
+      if (!DOWNLOADABLE_STATUSES.has(document.status)) {
         throw new ServiceError(
           'This document is not available for download.',
           {
@@ -211,22 +395,7 @@ function createDocumentService({
         );
       }
 
-      // If supplied, ownerId must match the authenticated identity.
-      if (
-        ownerId != null &&
-        actor.id != null &&
-        String(ownerId) !== String(actor.id) &&
-        actor.isAdmin !== true
-      ) {
-        throw new ServiceError('Document not found.', {
-          code: 'NOT_FOUND',
-          status: 404,
-        });
-      }
-
-      if (
-        typeof storageService.createDownloadUrl !== 'function'
-      ) {
+      if (typeof storageService.createDownloadUrl !== 'function') {
         throw new ServiceError(
           'Document downloads are not configured.',
           {
@@ -243,7 +412,7 @@ function createDocumentService({
           { max: 1024 },
         ),
         ownerId: document.ownerId,
-        expiresInSeconds,
+        expiresInSeconds: normalizeDownloadTtl(expiresInSeconds),
       });
 
       await audit(auditService, {
@@ -251,28 +420,26 @@ function createDocumentService({
         entity: 'Document',
         entityId: document.id ?? documentId,
         actorId: actor.id,
+        metadata: {
+          expiresInSeconds: normalizeDownloadTtl(expiresInSeconds),
+        },
       });
 
       return result;
     },
 
     async remove(id, actor = {}) {
-      requiredId(id);
+      requiredId(id, 'documentId');
+      validateActor(actor);
 
-      const document = assertFound(
-        await documentRepository.findById(id),
-        'Document',
-      );
-
+      const document = await findDocument(id);
       assertOwnerOrAdmin(document, actor);
 
       if (document.status === 'deleted') {
         return { id, deleted: true };
       }
 
-      if (
-        typeof storageService.remove !== 'function'
-      ) {
+      if (typeof storageService.remove !== 'function') {
         throw new ServiceError(
           'Document deletion is not configured.',
           {
@@ -282,23 +449,51 @@ function createDocumentService({
         );
       }
 
-      await storageService.remove({
-        storageKey: document.storageKey,
-        ownerId: document.ownerId,
+      /*
+       * Mark the record deleted first to prevent new downloads.
+       * If object deletion fails, retain the deleted record for retry.
+       */
+      const now = getNow();
+
+      const updated = await persistStatus(id, document, {
+        status: 'deleted',
+        deletedAt: now,
+        updatedAt: now,
       });
 
-      const updated = assertFound(
-        await documentRepository.updateById(id, {
-          status: 'deleted',
-          deletedAt: new Date(),
-        }),
-        'Document',
-      );
+      try {
+        await storageService.remove({
+          storageKey: requiredString(
+            document.storageKey,
+            'storageKey',
+            { max: 1024 },
+          ),
+          ownerId: document.ownerId,
+        });
+      } catch (error) {
+        await audit(auditService, {
+          action: 'document.storage_cleanup_failed',
+          entity: 'Document',
+          entityId: updated.id ?? id,
+          actorId: actor.id,
+          metadata: {
+            status: 'deleted',
+          },
+        });
+
+        throw new ServiceError(
+          'Document was marked deleted, but storage cleanup failed. Retry cleanup.',
+          {
+            code: 'DOCUMENT_CLEANUP_FAILED',
+            status: 503,
+          },
+        );
+      }
 
       await audit(auditService, {
         action: 'document.deleted',
         entity: 'Document',
-        entityId: id,
+        entityId: updated.id ?? id,
         actorId: actor.id,
       });
 
@@ -311,4 +506,12 @@ function createDocumentService({
   };
 }
 
-module.exports = { createDocumentService };
+module.exports = {
+  createDocumentService,
+  ALLOWED_STATUSES,
+  DOWNLOADABLE_STATUSES,
+  STATUS_TRANSITIONS,
+  DEFAULT_DOWNLOAD_TTL_SECONDS,
+  MIN_DOWNLOAD_TTL_SECONDS,
+  MAX_DOWNLOAD_TTL_SECONDS,
+};

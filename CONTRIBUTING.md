@@ -2,386 +2,361 @@ Contributing to MedOrbits
 
 Thank you for your interest in contributing to MedOrbits.
 
-MedOrbits aims to provide reliable, secure, accessible, and user-friendly solutions across education guidance, medical admissions, study-abroad services, career development, recruitment, employment opportunities, and related services.
+MedOrbits is an education, admissions, career development, recruitment, and student-services platform. We aim to build reliable, secure, accessible, maintainable, and user-friendly solutions that help people discover opportunities and navigate important educational and professional workflows.
 
-We welcome bug reports, feature proposals, documentation improvements, accessibility enhancements, performance optimizations, security improvements, and code contributions from developers and community members.
+We welcome meaningful contributions, including bug fixes, feature proposals, documentation improvements, accessibility enhancements, performance optimizations, automated tests, and security improvements.
 
-This guide explains how to prepare your development environment, propose changes, maintain quality standards, and submit contributions for review.
+This guide defines the expectations and workflow for contributing to the project. Please read it before submitting changes.
 
-By participating in this project, you agree to follow the project’s Code of Conduct.
+By participating, you agree to follow the project’s CODE_OF_CONDUCT.md and applicable repository policies.
 
 ⸻
 
-Table of Contents
+Contents
 
-1. Before You Start
+1. Before You Begin
 2. Development Environment
-3. Repository Structure and Architecture
-4. Choosing an Issue
-5. Development Principles
+3. Project Architecture
+4. Issues and Contribution Scope
+5. Engineering Principles
 6. Coding Standards
-7. Backend and API Contributions
+7. Backend and API Development
 8. Frontend and Accessibility
 9. Database and Migrations
-10. Security and Privacy Requirements
+10. Security and Privacy
 11. Testing and Quality Assurance
-12. Branches and Commit Messages
-13. Pull Request Process
+12. Branches and Commits
+13. Pull Request Workflow
 14. Pull Request Checklist
-15. Reporting Bugs
-16. Proposing Features
+15. Bug Reports
+16. Feature Proposals
 17. Security Vulnerability Reporting
 18. Documentation and Configuration
-19. Dependencies and Third-Party Services
-20. Review, Approval, and Merging
-21. Release and Compatibility Considerations
+19. Dependencies and External Services
+20. Review and Merge Policy
+21. Releases and Compatibility
 22. Code of Conduct
-23. License and Contribution Rights
-24. Questions and Support
+23. Licensing and Contribution Rights
+24. Support and Questions
 
 ⸻
 
-1. Before You Start
+1. Before You Begin
 
 Before making changes:
 
-* Read the root README.md for the project’s purpose, supported technologies, installation instructions, and development workflow.
-* Review SECURITY.md before investigating or reporting security vulnerabilities.
-* Read CODE_OF_CONDUCT.md and communicate respectfully throughout the contribution process.
-* Review CHANGELOG.md to understand documented changes and release history.
-* Inspect the existing implementation, configuration, tests, and related documentation before introducing new patterns.
+* Read README.md to understand the project’s purpose, installation process, architecture, and supported technologies.
+* Read SECURITY.md before investigating or reporting a potential vulnerability.
+* Review CODE_OF_CONDUCT.md and communicate respectfully.
+* Consult CHANGELOG.md, if present, for documented changes and release history.
 * Search existing issues and pull requests to avoid duplicate work.
-* For substantial architectural changes, new dependencies, database redesigns, payment integrations, or authentication changes, discuss the approach with maintainers before implementation.
-* Confirm that you have the necessary permissions to contribute any code, assets, documentation, or third-party material you intend to submit.
+* Inspect the relevant implementation, configuration, tests, and documentation before introducing a new pattern.
+* Discuss substantial architectural changes with maintainers before implementation.
+* Confirm that you have permission to contribute any code, content, images, fonts, datasets, or other material you submit.
 
-Never commit or publish:
+Never commit
 
-* Environment files containing secrets, including .env and environment-specific overrides.
-* API keys, passwords, access tokens, private keys, session cookies, or production credentials.
-* Real user records, application documents, identity documents, payment data, or confidential exports.
-* Database dumps, private uploads, logs containing sensitive information, or production backups.
-* Generated files, temporary artifacts, or dependency directories unless explicitly required by the repository.
+* Production credentials, API keys, passwords, private keys, access tokens, session cookies, or recovery codes.
+* .env files containing real secrets or environment-specific credentials.
+* Private application records, identity documents, academic records, payment information, or personal-data exports.
+* Production database dumps, private uploads, unredacted logs, or backups.
+* Local dependency directories, temporary files, or generated artifacts unless explicitly required by the project.
 
-Use synthetic data and appropriately sanitized examples throughout development and testing.
+Use synthetic data and sanitized examples in development, documentation, and tests.
 
 2. Development Environment
 
 Prerequisites
 
-Install the tools required by the repository:
+Use the versions and tools specified by the repository:
 
-* The Node.js version specified by package.json, .nvmrc, .node-version, or the project’s documented requirements.
-* The package manager used by the repository and its committed lockfile.
-* MySQL or another explicitly documented database dependency.
-* Redis, a browser automation runtime, or other services only when required by the feature being developed.
-* Git and any additional tooling documented by the project.
+* Node.js version specified in package.json, .nvmrc, .node-version, or project documentation.
+* The package manager and lockfile used by the project.
+* Git.
+* MySQL, Redis, browser automation, or other services when required by the feature.
+* Any additional tools documented by the project.
 
-Do not independently upgrade the runtime or package manager as part of an unrelated feature.
+Do not independently upgrade the runtime, package manager, or major dependencies as part of an unrelated change.
 
-Setup workflow
+Initial setup
 
-1. Clone the repository and create a dedicated feature branch.
-2. Install dependencies using the existing package manager and lockfile.
-3. Copy .env.example to the appropriate local environment file if the template exists.
-4. Configure local services and required environment variables using development-only credentials.
-5. Initialize the development database using the documented schema and migration procedures.
-6. Run the configured linting, formatting, and test commands.
-7. Start the application using the actual scripts defined in package.json.
-8. Verify the relevant functionality locally before submitting changes.
-
-Example commands, subject to the actual repository configuration:
+Clone the repository and enter its directory:
 
 git clone <repository-url>
 cd <repository-directory>
+
+Install dependencies using the committed lockfile:
+
 npm ci
+
+If .env.example exists, copy it to a local development environment file:
+
 cp .env.example .env
+
+On Windows, use an appropriate PowerShell or Command Prompt equivalent.
+
+Next:
+
+1. Configure development-only credentials and required environment variables.
+2. Start the required local services.
+3. Initialize the development database using the documented migration process.
+4. Run the project’s configured linting and test commands.
+5. Start the application using an existing development script.
+6. Verify the affected workflow locally.
+
+Example commands:
+
 npm run lint
 npm test
 npm run dev
 
-These commands are illustrative. A command should only be used when its corresponding script or setup procedure exists. On Windows, use an appropriate file-copy command instead of cp if necessary.
+These commands are examples. Check package.json before using them; not every script is guaranteed to exist.
 
 Environment configuration
 
-* Keep local credentials separate from staging and production credentials.
-* Use strong, randomly generated development secrets where required.
-* Never disable authentication or security controls merely to make a test pass.
-* Do not point tests at production services or production databases.
-* Document newly required environment variables in .env.example and the relevant setup documentation.
-* Use safe placeholder values rather than real credentials in configuration examples.
+* Keep development, staging, and production credentials separate.
+* Use strong development secrets where required.
+* Never use production credentials or production data for routine testing.
+* Document new environment variables in .env.example and relevant documentation.
+* Use clearly identified placeholder values instead of real credentials.
+* Validate required configuration at application startup.
 
-A variable appearing in .env.example does not mean the application implements or consumes it. New configuration must be connected to the appropriate code, validated, documented, and tested.
+Adding a variable to .env.example does not implement its functionality. Configuration must be connected to application code and tested.
 
-3. Repository Structure and Architecture
+3. Project Architecture
 
-Follow the existing repository architecture rather than creating competing patterns.
+Follow the existing architecture and established conventions. Do not create duplicate implementations simply to introduce a preferred design pattern.
 
-The backend may contain the following responsibilities:
+The following table describes intended responsibilities. Not every directory is guaranteed to exist.
 
-Area	Responsibility
-src/routes/	Register HTTP endpoints and connect middleware to controllers.
-src/controllers/	Handle HTTP requests, responses, and status codes.
-src/services/	Implement business rules and coordinate application workflows.
-src/repositories/	Encapsulate database access and persistence operations.
-src/models/	Define plain model metadata or domain representations according to existing conventions.
-src/validators/	Validate request payloads, parameters, and other untrusted input.
-src/middleware/	Implement cross-cutting request processing, authentication, and error handling.
-src/policies/	Enforce authorization and resource-access decisions.
-src/config/	Load and validate application configuration.
-src/integrations/	Encapsulate external services such as payments, email, AI, and storage.
-src/jobs/ and src/workers/	Handle scheduled or asynchronous work when configured.
-src/utils/	Contain reusable, focused utility functions.
-tests/	Contain automated tests organized according to the established test architecture.
+Component	Responsibility
+src/routes/	Register endpoints and connect middleware to controllers
+src/controllers/	Handle HTTP requests and responses
+src/services/	Implement business rules and coordinate workflows
+src/repositories/	Encapsulate database access where this layer is used
+src/models/	Represent domain entities or persistence models according to project conventions
+src/validators/	Validate request input and other untrusted data
+src/middleware/	Implement request processing, authentication, and error handling
+src/policies/	Enforce authorization and resource-access decisions where implemented
+src/config/	Load and validate application configuration
+src/integrations/	Encapsulate external services and providers
+src/jobs/ and src/workers/	Handle scheduled or asynchronous work where configured
+src/utils/	Provide focused, reusable utilities
+tests/	Contain automated tests following the established test architecture
 
-This table describes intended responsibilities, not a guarantee that every directory or feature currently exists.
+Before adding a new abstraction, inspect the existing codebase and determine whether an appropriate implementation already exists.
 
-Before adding a new directory, framework, service layer, or abstraction, check whether the project already provides an appropriate implementation.
+Prefer explicit interfaces, clear module boundaries, and one reliable implementation of each business operation.
 
-Prefer a single clear implementation over duplicate helpers, competing database access patterns, or multiple ways to perform the same business operation.
+4. Issues and Contribution Scope
 
-4. Choosing an Issue
+Contributions are welcome in areas including:
 
-Contributors can help with:
+* Education guidance and admissions workflows.
+* Medical admissions information and student services.
+* Study-abroad resources and related workflows.
+* Careers, internships, recruitment, and employment opportunities.
+* Authentication, registration, profiles, and account management.
+* Applications, document management, and notifications.
+* Payment and subscription integrations.
+* Search, comparison tools, calculators, and other platform utilities.
+* Accessibility, responsive design, performance, and reliability.
+* Documentation, developer tooling, and automated testing.
 
-* Reproducible bug fixes.
-* Documentation and developer-experience improvements.
-* Accessibility and responsive-design enhancements.
-* Performance and reliability improvements.
-* Automated testing and test infrastructure.
-* Input validation and error-handling improvements.
-* Security and privacy improvements.
-* Education, admissions, career, recruitment, and account-management functionality.
+For an existing issue, follow its acceptance criteria and maintainer instructions.
 
-For an existing issue, review its acceptance criteria and any maintainer guidance before implementation.
+For an undocumented problem, explain the issue and proposed solution before starting substantial work.
 
-For an issue that has not been discussed, explain the problem and proposed solution before beginning substantial work.
+Large contributions should be divided into reviewable stages, each with a defined scope and measurable acceptance criteria.
 
-For large features, divide the work into reviewable stages. Each stage should have a clear purpose, defined scope, and appropriate tests.
+Opening an issue or pull request does not guarantee acceptance, implementation, or a release date.
 
-Do not assume that opening a pull request automatically means a proposed feature will be accepted.
+5. Engineering Principles
 
-5. Development Principles
+Every contribution should prioritize the following principles.
 
-Contributions should follow these principles:
+Correctness: Implement the intended behavior and account for relevant edge cases.
 
-Correctness
+Security by default: Treat user input, uploaded files, webhooks, and external responses as untrusted.
 
-Implement the documented behavior, handle relevant edge cases, and avoid introducing regressions.
+Privacy: Collect, process, retain, and log only the information necessary for the intended purpose.
 
-Security by default
+Maintainability: Prefer readable code, explicit responsibilities, and limited unnecessary complexity.
 
-Treat client input, uploaded files, webhooks, external responses, and persisted user-controlled values as untrusted.
+Reliability: Handle expected failures, timeouts, retries, and partial operations deliberately.
 
-Maintainability
+Accessibility: Support semantic HTML, keyboard interaction, assistive technologies, and responsive layouts.
 
-Prefer readable, modular code with explicit responsibilities and limited unnecessary complexity.
+Compatibility: Preserve existing interfaces unless a breaking change has been discussed and documented.
 
-Backward compatibility
+Testability: Make important behavior verifiable without unnecessary dependence on live external services.
 
-Preserve existing interfaces unless a breaking change has been discussed and documented.
+Consistency: Follow existing naming, module-export, validation, error-handling, and formatting conventions.
 
-Accessibility
-
-Ensure user-facing changes remain usable with keyboards, assistive technologies, and different viewport sizes.
-
-Privacy
-
-Collect, process, log, and retain only the information necessary for the intended function.
-
-Testability
-
-Design changes so important behavior can be verified without depending unnecessarily on live external services.
-
-Consistency
-
-Follow existing naming, error-handling, validation, module-export, and architectural conventions.
-
-Minimal scope
-
-Avoid unrelated refactoring, formatting churn, dependency upgrades, or generated-file changes in focused bug fixes.
+Minimal scope: Avoid unrelated refactoring, dependency upgrades, formatting churn, and generated-file changes in focused fixes.
 
 6. Coding Standards
 
 JavaScript and Node.js
 
-* Follow the project’s ESLint and Prettier configuration.
-* Use the module system already established by the relevant package or directory.
-* Prefer const by default and use let when reassignment is necessary.
-* Use clear, descriptive names and small functions with well-defined responsibilities.
-* Handle rejected promises and asynchronous failures explicitly.
-* Avoid synchronous filesystem operations in request handlers unless justified.
-* Avoid broad exception handling that hides failures or incorrectly reports success.
-* Remove unused imports, debug statements, temporary code, and dead branches.
-* Do not introduce global mutable state without a clear need and documented lifecycle.
+* Follow the configured ESLint and Prettier rules.
+* Use the module system established by the relevant package or directory.
+* Prefer const and use let when reassignment is necessary.
+* Use descriptive names and focused functions.
+* Handle rejected promises and asynchronous errors explicitly.
+* Avoid blocking filesystem operations in request handlers unless justified.
+* Do not swallow exceptions or report success after a failed operation.
+* Remove unused imports, debugging statements, temporary code, and dead branches.
+* Avoid unnecessary global mutable state.
 
 HTTP and API behavior
 
 * Use appropriate HTTP methods and status codes.
-* Validate request bodies, query parameters, and route parameters.
-* Return consistent response formats according to existing API conventions.
-* Avoid exposing stack traces, internal database errors, secret values, or private implementation details to clients.
-* Do not return success responses when an operation has failed or remains unconfirmed.
-* Keep authentication separate from authorization: an authenticated user must not automatically gain access to every resource.
+* Validate request bodies, route parameters, and query parameters.
+* Follow the project’s established response format.
+* Return generic public errors rather than internal stack traces or database details.
+* Do not report success when an operation has failed or remains unconfirmed.
+* Distinguish authentication from authorization.
+* Enforce access restrictions at the resource level, not just at the route level.
 
-HTML, CSS, and browser JavaScript
+Frontend development
 
-* Preserve responsive layouts across supported screen sizes.
 * Use semantic HTML and accessible form labels.
+* Preserve responsive layouts and readable text at supported screen sizes.
 * Avoid unsafe HTML insertion and unsafe DOM manipulation.
-* Escape or safely render untrusted content according to its context.
-* Avoid introducing inline scripts or styles when the existing architecture uses external assets and content-security controls.
-* Follow the project’s visual design system and established brand conventions.
-* Keep loading, empty, error, success, and disabled states understandable.
+* Render untrusted content safely.
+* Follow the existing visual design system.
+* Respect content-security controls and avoid weakening them to accommodate new inline scripts.
+* Provide understandable loading, empty, error, success, and disabled states.
 
 Formatting
 
-Use the repository’s configured formatter and linter rather than manually imposing a new style.
+Use the repository’s configured formatter and linter. Avoid mixing unrelated formatting changes with functional contributions.
 
-Run formatting checks before submitting a pull request. Do not combine unrelated formatting changes with functional work unless requested.
+7. Backend and API Development
 
-7. Backend and API Contributions
-
-Backend changes must preserve the separation between transport, business logic, persistence, and authorization.
-
-Request processing
-
-Where appropriate, use this flow:
+Where appropriate, backend processing should separate:
 
 1. Route registration.
-2. Authentication and request validation.
-3. Authorization and resource-level policy checks.
+2. Authentication and input validation.
+3. Authorization and resource-access checks.
 4. Controller request handling.
 5. Service-layer business logic.
-6. Repository persistence operations.
-7. Consistent response or centralized error handling.
+6. Repository or database operations.
+7. Response formatting and centralized error handling.
 
-The exact sequence depends on the operation, but authorization must occur before protected data is disclosed or modified.
+The exact implementation should follow existing project conventions.
 
 Authorization requirements
 
-* Derive the authenticated identity from trusted server-side authentication state.
+* Derive user identity from trusted server-side authentication state.
 * Enforce ownership and role restrictions on the server.
-* Never trust client-supplied userId, ownerId, role, account status, payment status, or subscription status without independent verification.
-* Apply authorization to individual resources, not only to endpoint access.
-* Prevent insecure direct object reference vulnerabilities by checking whether the requester may access the requested resource.
+* Do not trust client-supplied userId, ownerId, role, payment status, subscription status, or account status without independent verification.
+* Verify that the requester may access or modify each requested resource.
+* Prevent insecure direct object reference vulnerabilities.
 * Fail closed when authorization cannot be established.
-
-Error handling
-
-* Use the project’s established error-handling mechanism.
-* Distinguish expected validation failures, authentication failures, authorization failures, conflicts, missing resources, and unexpected server errors.
-* Avoid swallowing exceptions or converting every failure into a successful response.
-* Log enough information for diagnosis without exposing sensitive data.
-* Avoid logging complete request bodies, authorization headers, cookies, identity documents, payment credentials, or other sensitive fields.
 
 External integrations
 
 External service calls should have appropriate timeouts, bounded retries, error handling, and observability.
 
-Retry only operations that are safe to repeat or protected by an appropriate idempotency mechanism. Avoid uncontrolled retry loops and duplicate side effects.
+Retry only operations that are safe to repeat or protected by idempotency controls. Avoid uncontrolled retry loops and duplicate side effects.
 
-Use mocks or controlled test environments for external services wherever practical.
+Use mocks, sandbox environments, or controlled test services where practical.
 
 8. Frontend and Accessibility
 
-User-facing changes should remain consistent with MedOrbits’ design system and accessibility expectations.
+User-facing changes must remain consistent with MedOrbits’ design conventions and accessibility requirements.
 
 Contributors should:
 
 * Use semantic headings, landmarks, buttons, links, and form controls.
-* Provide labels and meaningful error messages for form fields.
+* Provide labels and meaningful validation messages.
 * Preserve keyboard navigation and visible focus indicators.
-* Maintain sufficient text and control contrast.
+* Maintain sufficient contrast for text and interactive elements.
 * Avoid communicating important information through color alone.
-* Ensure interactive controls have accessible names.
+* Give interactive controls accessible names.
 * Provide meaningful alternative text for informative images.
 * Respect reduced-motion preferences when adding animations.
-* Avoid horizontal overflow and unintended text clipping on mobile devices.
+* Prevent unintended horizontal overflow and text clipping.
 * Test loading, empty, error, and success states.
-* Avoid exposing private information in browser-visible markup, URLs, source maps, or client-side configuration.
+* Avoid exposing secrets or private records in client-side code, URLs, markup, or configuration.
 
-Automated accessibility checks are useful, but they do not replace manual keyboard and interaction testing.
+Automated accessibility tools are useful but do not replace manual keyboard and interaction testing.
 
 9. Database and Migrations
 
 Database changes must be deliberate, reviewable, and compatible with the deployment process.
 
-For schema or data changes:
+Contributors should:
 
-* Follow the project’s established migration mechanism.
-* Include a migration whenever a persistent schema change requires one.
+* Use the project’s established migration mechanism.
+* Include migrations for persistent schema changes where required.
 * Use parameterized queries rather than interpolating untrusted values into SQL.
-* Use transactions where multiple operations must succeed or fail together.
-* Add appropriate indexes and constraints for query patterns and data integrity.
+* Use transactions when multiple operations must succeed or fail together.
+* Add suitable indexes and constraints.
 * Consider concurrent requests, duplicate submissions, and transaction isolation.
 * Avoid destructive changes without a documented migration strategy.
-* Document required backfills, deployment ordering, downtime, and rollback limitations.
+* Document backfills, deployment ordering, downtime, and rollback limitations.
+* Use synthetic data in automated tests.
 * Never run experimental migrations against production without an approved deployment procedure.
-* Use synthetic data for automated tests.
 
 Migration compatibility
 
-Where practical, use an expand-and-contract strategy:
+Where practical, use an expand-and-contract approach:
 
 1. Introduce backward-compatible schema changes.
-2. Deploy application code compatible with both old and new structures.
+2. Deploy application code compatible with the existing and updated structures.
 3. Backfill or migrate data safely.
 4. Switch application behavior.
-5. Remove obsolete structures only after compatibility has been verified.
+5. Remove obsolete structures only after compatibility is verified.
 
-A rollback plan must reflect actual data and schema risks. Reversing a migration is not always safe or possible, particularly after destructive data changes.
+A rollback plan must account for data and schema risks. Reversing a migration is not always safe or possible after destructive changes.
 
-10. Security and Privacy Requirements
+10. Security and Privacy
 
 Security is a mandatory part of contribution review.
 
 Authentication and sessions
 
 * Use established authentication mechanisms.
-* Validate session and token handling against the project’s security requirements.
 * Protect sensitive account changes and privileged operations.
-* Do not expose tokens or session identifiers in logs or URLs.
-* Avoid weakening password, session, cookie, or authentication controls to accommodate tests.
+* Do not expose tokens or session identifiers in URLs or logs.
+* Avoid weakening password, session, cookie, or authentication controls to make tests pass.
 
 Input validation and output handling
 
-* Validate untrusted data on the server.
+* Validate untrusted input on the server.
 * Apply context-appropriate output encoding.
 * Use parameterized database queries.
-* Prevent injection, cross-site scripting, cross-site request forgery, and unsafe deserialization where relevant.
-* Avoid unsafe redirects, path traversal, and unrestricted file access.
+* Prevent injection, cross-site scripting, cross-site request forgery, unsafe deserialization, path traversal, and unsafe redirects where relevant.
 
 File uploads and private documents
 
-* Enforce file-size and allowed-type limits.
-* Do not trust filenames or client-supplied MIME types.
-* Generate safe storage identifiers instead of relying on user-supplied paths.
+* Enforce file-size and permitted-type limits.
+* Do not trust client-supplied filenames or MIME types.
+* Generate safe storage identifiers.
 * Store private documents outside publicly served directories or in appropriately private object storage.
-* Apply per-request authorization before downloads or document operations.
-* Integrate malware scanning or quarantine where required by the deployed architecture.
-* Do not expose identity documents, application records, or other private files through predictable public URLs.
+* Enforce authorization before document downloads or other file operations.
+* Use malware scanning or quarantine when required by the deployed architecture.
+* Do not expose private documents through predictable public URLs.
 
 Payments and subscriptions
 
-* Verify payment-provider webhook signatures using the provider’s documented method and the exact request bytes required by that method.
-* Verify amount, currency, transaction identity, and expected payment state.
-* Implement durable idempotency and safe duplicate-event handling.
-* Do not mark an order, application, or subscription as paid based solely on a browser redirect or client-supplied status.
+* Verify webhook signatures using the provider’s documented procedure and the exact raw request bytes required.
+* Verify transaction identity, amount, currency, and expected payment state.
+* Implement durable idempotency and duplicate-event handling.
+* Do not mark an application, order, or subscription as paid solely because of a browser redirect or client-supplied status.
 * Protect payment credentials and webhook secrets.
 * Test duplicate events, invalid signatures, interrupted processing, and retry behavior.
 
 Configuration and secrets
 
 * Never commit production secrets.
-* Validate required environment variables during startup.
-* Keep example configuration free of real credentials.
+* Validate required environment variables at startup.
+* Avoid insecure production defaults.
 * Use least-privilege service accounts and database users.
-* Ensure production configuration does not silently fall back to insecure development defaults.
-* Review changes to CORS, trusted proxies, rate limits, logging, security headers, and cookie settings carefully.
-
-Security testing
-
-Do not introduce intentional vulnerabilities or weaken security checks merely to make a test pass. Use controlled test environments and synthetic data.
+* Review changes to CORS, trusted proxies, rate limiting, security headers, cookies, and logging carefully.
 
 Follow SECURITY.md for vulnerability reporting and disclosure.
 
@@ -389,17 +364,13 @@ Follow SECURITY.md for vulnerability reporting and disclosure.
 
 Every functional change should include appropriate verification.
 
-Choose tests based on the behavior being changed rather than adding tests only to satisfy a checklist.
-
 Unit tests
 
-Use unit tests for isolated business rules, validation, transformations, permissions, and error handling.
-
-Test both expected outcomes and meaningful edge cases.
+Test isolated business rules, validation, transformations, permissions, and error handling, including relevant edge cases.
 
 Integration tests
 
-Use integration tests to verify interactions between actual application components, such as:
+Where applicable, test interactions involving:
 
 * Authentication and authorization middleware.
 * Services and repositories.
@@ -408,30 +379,30 @@ Use integration tests to verify interactions between actual application componen
 * Notification dispatch and retry handling.
 * Payment-event processing and idempotency.
 
-Mocks are appropriate for external dependencies, but they must not be mistaken for proof that the real integration works.
+Mocks are useful for external dependencies, but they do not prove that the real integration works.
 
 End-to-end tests
 
-Use end-to-end tests for important user workflows, where supported by the repository, such as registration, login, application submission, document access, and payment completion.
+Where supported, test important user workflows such as registration, login, application submission, document access, and payment completion.
 
-Test against the actual configured routes and user interface. Do not assume example routes exist without checking the implementation.
+Use actual configured routes and workflows rather than assuming example endpoints exist.
 
-Security and regression tests
+Regression and security tests
 
-Where relevant, verify:
+Where relevant, verify that:
 
 * Unauthenticated access is rejected.
-* Unauthorized users cannot access another user’s resources.
-* Invalid inputs are rejected safely.
+* Unauthorized users cannot access other users’ resources.
+* Invalid input is rejected safely.
 * Duplicate requests do not create unintended duplicate operations.
-* Sensitive fields are not returned or logged.
+* Sensitive fields are not exposed.
 * Invalid payment webhooks are rejected.
 * Database failures do not produce false success responses.
-* Existing behavior remains intact.
+* Existing functionality remains intact.
 
 Running checks
 
-Use the scripts defined in package.json. Depending on the repository configuration, these may include:
+Check package.json and run the scripts actually defined by the project. Examples may include:
 
 npm test
 npm run lint
@@ -439,27 +410,25 @@ npm run format:check
 npm run test:integration
 npm run test:e2e
 
-These are example commands, not a guarantee that every script exists.
+Not every script is guaranteed to exist.
 
-Before running database-backed tests, confirm that the test database is separate from development and production data. Do not run destructive setup or cleanup against an unverified database.
+Before database-backed tests, verify that the test database is separate from development and production data. Never run destructive setup or cleanup against an unverified database.
 
-For browser tests, install the required browser runtime and configure the test server according to the project’s documentation.
+Report results accurately
 
-Reporting results
-
-In your pull request, state:
+In the pull request, state:
 
 * Which checks you ran.
-* Whether they passed or failed.
-* Any checks you could not run and why.
+* Which passed or failed.
+* Which checks could not be run and why.
 * Any required external services or manual verification.
-* Known limitations or follow-up work.
+* Known limitations and follow-up work.
 
-Never claim a test passed unless it was actually executed and passed.
+Never claim that a test passed unless it was actually executed and passed.
 
 12. Branches and Commit Messages
 
-Create a descriptive branch for each independent contribution.
+Use a descriptive branch for each independent contribution.
 
 Examples:
 
@@ -481,136 +450,124 @@ docs: improve contributor setup instructions
 test: cover application authorization rules
 refactor: separate application persistence logic
 
-These examples follow a Conventional Commits-inspired style. Follow any stricter convention already established in the repository.
+These examples follow a Conventional Commits-inspired format. Follow any stricter convention already established in the repository.
 
-Keep commits focused and avoid including:
-
-* Unrelated modifications.
-* Secrets or private data.
-* Temporary debugging changes.
-* Unnecessary generated artifacts.
-* Local environment files.
-* Dependency lockfile changes unrelated to the intended update.
-
-Before pushing, inspect the complete change set:
+Before committing, inspect the complete change set:
 
 git status
 git diff —check
 git diff
+git diff —cached
 
-Review staged changes as well before committing.
+Do not commit secrets, private data, unrelated modifications, temporary debugging changes, or unnecessary generated artifacts.
 
-13. Pull Request Process
+13. Pull Request Workflow
 
-Step 1: Prepare the branch
+Step 1 — Prepare the branch
 
-Create a branch from the appropriate base branch and keep it focused on one coherent change.
+Create a branch from the appropriate base branch and keep the change focused.
 
-Step 2: Implement the change
+Step 2 — Implement the change
 
 Follow existing conventions and add or update tests for the changed behavior.
 
-Step 3: Update documentation
+Step 3 — Update documentation
 
-Update the README, API documentation, environment examples, migration instructions, and changelog where relevant.
+Update relevant API documentation, environment examples, migration instructions, README sections, and changelog entries.
 
-Step 4: Run checks
+Step 4 — Run verification
 
 Run the applicable tests, linting, formatting, build, migration, and security checks supported by the project.
 
-Step 5: Review the complete diff
+Step 5 — Review the diff
 
-Check for accidental file changes, secrets, sensitive data, debug code, unsafe defaults, and generated artifacts.
+Look for accidental changes, secrets, sensitive data, debug code, unsafe defaults, and generated artifacts.
 
-Step 6: Open the pull request
+Step 6 — Open the pull request
 
-Describe the problem, solution, implementation approach, testing performed, risks, and any trade-offs.
+Explain the problem, proposed solution, implementation, testing performed, risks, and trade-offs.
 
-Step 7: Support review
+Step 7 — Address review feedback
 
-Respond constructively to feedback, clarify design decisions, and make focused follow-up commits.
+Respond constructively and make focused follow-up commits where necessary.
 
-Step 8: Communicate deployment requirements
+Step 8 — Communicate deployment requirements
 
-Identify environment-variable changes, migrations, dependency changes, feature flags, external-service configuration, and operational considerations.
+Identify environment-variable changes, migrations, dependency updates, feature flags, external-service configuration, and operational considerations.
 
 Do not merge until the applicable review requirements and required status checks have passed.
 
 14. Pull Request Checklist
 
-Before requesting review, confirm the following:
+Before requesting review, confirm:
 
-* [ ]	The purpose and scope of the change are clear.
-* [ ]	The implementation follows existing architecture and coding conventions.
+* [ ]	The purpose and scope are clear.
+* [ ]	The implementation follows the existing architecture and conventions.
 * [ ]	Relevant tests have been added or updated.
-* [ ]	Tests and checks have been executed, and results are accurately reported.
+* [ ]	Checks have been executed and their results are accurately reported.
 * [ ]	Input validation and resource-level authorization are enforced where required.
-* [ ]	Sensitive information and secrets are not included.
+* [ ]	No secrets or sensitive information have been included.
 * [ ]	Error handling and logging are appropriate.
 * [ ]	Database changes include migration and recovery considerations.
-* [ ]	Payment and asynchronous workflows handle duplicates and failures safely where applicable.
+* [ ]	Payment and asynchronous workflows handle failures and duplicates safely where applicable.
 * [ ]	Documentation and configuration examples have been updated.
 * [ ]	New dependencies and runtime requirements are justified.
 * [ ]	User-facing changes preserve accessibility and responsive behavior.
-* [ ]	Compatibility, deployment, and breaking changes are documented.
+* [ ]	Compatibility and deployment implications are documented.
 * [ ]	The complete diff has been reviewed.
-* [ ]	The change complies with the Code of Conduct and relevant project policies.
+* [ ]	The contribution complies with the Code of Conduct and applicable project policies.
 
 15. Reporting Bugs
 
-Before opening a bug report, check existing issues and confirm that the behavior is reproducible.
+Before opening a bug report, search existing issues and confirm that the behavior is reproducible.
 
-Include as much relevant information as can be shared safely.
-
-Recommended bug report details
+Include, where relevant:
 
 * Summary: A concise description of the problem.
 * Expected behavior: What should happen.
 * Actual behavior: What happened instead.
-* Reproduction steps: The smallest reliable sequence that reproduces the problem.
-* Environment: Relevant Node.js, database, browser, operating-system, and application versions.
-* Impact: Which workflow or users are affected.
+* Reproduction steps: The smallest reliable sequence that reproduces the issue.
+* Environment: Relevant runtime, database, browser, operating-system, and application versions.
+* Impact: Which workflows or users are affected.
 * Evidence: Sanitized error messages, screenshots, or logs.
-* Frequency: Whether the issue occurs consistently or intermittently.
+* Frequency: Whether the issue is consistent or intermittent.
 * Workarounds: Any known temporary mitigation.
 
-Provide a minimal reproduction where practical.
-
-Do not include credentials, access tokens, private user data, identity documents, payment details, session cookies, or unredacted logs.
+Remove credentials, access tokens, private user data, identity documents, payment details, session cookies, and unredacted logs.
 
 If the issue may expose a security vulnerability, follow SECURITY.md instead of filing a public bug report.
 
 16. Proposing Features
 
-Feature proposals should explain the problem before prescribing a particular implementation.
+A useful feature proposal explains the problem before prescribing an implementation.
 
 Include:
 
 * The user need or operational problem.
 * The intended audience and expected benefit.
-* The proposed behavior and acceptance criteria.
+* Proposed behavior and acceptance criteria.
 * Relevant workflows, edge cases, and failure states.
-* Accessibility and mobile considerations for user-facing functionality.
+* Accessibility and mobile considerations.
 * Security, privacy, and authorization implications.
-* Database, API, and configuration changes that may be required.
+* Database, API, and configuration changes.
 * Alternatives considered and their trade-offs.
-* Any dependencies or external services needed.
+* Dependencies or external services required.
 
-For substantial changes, seek maintainer feedback before investing in a large implementation.
+Seek maintainer feedback before implementing substantial changes.
 
-A proposal may be revised, deferred, or declined based on project priorities, feasibility, security, maintenance costs, and compatibility.
+Proposals may be revised, deferred, or declined based on project priorities, feasibility, security, compatibility, and maintenance costs.
 
 17. Security Vulnerability Reporting
 
 Do not disclose security vulnerabilities through public issues, discussions, or pull requests.
 
-Follow the private reporting procedure documented in SECURITY.md. Use a private contact method explicitly published in the repository’s root README.md or on the official MedOrbits website.
+Follow the private reporting procedure in SECURITY.md. Use only a private reporting channel explicitly documented in the repository or on the official MedOrbits website.
 
-If no private reporting contact is available, ask a maintainer through an appropriate non-public channel to provide one before sharing sensitive technical details.
+If no private reporting channel is available, ask a maintainer through an appropriate non-public channel to provide one before sharing sensitive technical details.
 
-A useful report may include:
+A report may include:
 
-* Affected component and version, if known.
+* The affected component and version, if known.
 * The security impact and relevant threat scenario.
 * Minimal reproduction steps.
 * Sanitized logs or proof-of-concept material.
@@ -618,62 +575,58 @@ A useful report may include:
 
 Do not include unrelated personal data, production credentials, or unnecessary copies of private records.
 
-Do not access, modify, or exfiltrate data without authorization. Follow the scope, authorization requirements, and disclosure limitations documented in SECURITY.md.
-
-Do not assume that a vulnerability report authorizes testing against production systems or third-party infrastructure.
+Do not access, modify, or extract data without authorization. A vulnerability report does not automatically authorize testing against production systems or third-party infrastructure.
 
 18. Documentation and Configuration
 
 Documentation is part of the implementation.
 
-When behavior changes, update the relevant documentation, including where applicable:
+Update relevant documentation when behavior changes, including:
 
-* Root README.md.
-* CHANGELOG.md.
+* README.md
+* CHANGELOG.md
 * API references and endpoint examples.
 * Environment-variable documentation and .env.example.
 * Installation and deployment instructions.
 * Database migration and recovery instructions.
-* Testing guides and developer workflows.
-* Feature-specific documentation and troubleshooting guides.
+* Testing and development guides.
+* Feature-specific documentation and troubleshooting instructions.
 
 Configuration requirements
 
-* Keep examples syntactically valid and clearly distinguish placeholders from real values.
-* Document required versus optional variables.
-* Explain units, allowed values, defaults, and environment-specific behavior.
+* Keep examples syntactically valid.
+* Clearly distinguish required and optional variables.
+* Document defaults, units, allowed values, and environment-specific behavior.
 * Identify variables that require coordinated deployment or secret rotation.
-* Never publish real credentials in examples.
-* Ensure configuration documentation reflects variables that the application actually reads.
+* Never include real credentials.
+* Ensure documentation matches the variables actually consumed by the application.
 
-Do not document an unimplemented feature as available or claim that an example command works unless it has been verified against the repository.
+Do not document an unimplemented feature as available or claim that an example command works unless it has been verified.
 
 19. Dependencies and Third-Party Services
 
 New dependencies increase maintenance, security, and operational costs.
 
-Before adding one:
+Before adding a dependency:
 
-* Check whether existing dependencies already provide the required functionality.
+* Check whether existing packages already provide the required functionality.
 * Explain why the dependency is necessary.
 * Review maintenance status, license compatibility, security history, and transitive dependencies.
-* Avoid packages that introduce unnecessary permissions or excessive functionality.
-* Pin or constrain versions according to the project’s package-management strategy.
-* Update the relevant lockfile using the repository’s package manager.
+* Avoid packages with unnecessary permissions or excessive functionality.
+* Follow the repository’s version-management strategy.
+* Update the appropriate lockfile.
 * Test the integration and document new configuration or runtime requirements.
 
-Do not introduce a new framework or service for a small feature without a clear justification.
-
-For external integrations, document expected availability, authentication, timeouts, failure handling, and any operational dependencies.
+For external integrations, document expected availability, authentication, timeouts, failure handling, and operational dependencies.
 
 Never embed private API credentials in browser-delivered JavaScript or publicly accessible configuration.
 
-20. Review, Approval, and Merging
+20. Review and Merge Policy
 
 Pull requests may be reviewed for:
 
-* Functional correctness.
-* Maintainability and consistency with the architecture.
+* Functional correctness and maintainability.
+* Architectural consistency.
 * Security, privacy, and authorization.
 * Test quality and reproducibility.
 * Accessibility and usability.
@@ -683,19 +636,15 @@ Pull requests may be reviewed for:
 
 Reviewers may request changes, clarification, additional tests, or a narrower implementation.
 
-Contributors should respond professionally and explain disagreements with evidence or relevant technical trade-offs.
-
 Maintainers may close or defer contributions that are out of scope, duplicate existing work, introduce unacceptable risks, lack required information, or cannot be maintained.
 
-Do not merge a pull request until the repository’s required approvals and applicable automated checks have passed. Exceptions, if permitted by project policy, should be handled explicitly rather than bypassed informally.
+Do not merge until the repository’s required approvals and applicable automated checks have passed. Any permitted exceptions must follow documented project policy.
 
-21. Release and Compatibility Considerations
+21. Releases and Compatibility
 
-Contributions that affect public APIs, database schemas, configuration, dependencies, or deployment procedures must identify relevant compatibility implications.
+Contributions affecting public APIs, database schemas, configuration, dependencies, or deployment procedures must identify compatibility implications.
 
-Follow the project’s release process and CHANGELOG.md conventions.
-
-When applicable, document:
+Where applicable, document:
 
 * Breaking changes.
 * Required database migrations.
@@ -706,7 +655,9 @@ When applicable, document:
 * Feature flags or staged rollout requirements.
 * Changes to external integrations or payment workflows.
 
-If Semantic Versioning is used for a release, follow its compatibility rules. Do not assign release versions or claim that a release has been published unless authorized and verified.
+Follow the project’s release process and CHANGELOG.md conventions.
+
+If Semantic Versioning is used, follow its compatibility rules. Do not claim that a release has been published unless it has been verified.
 
 22. Code of Conduct
 
@@ -714,33 +665,33 @@ All contributors must follow CODE_OF_CONDUCT.md.
 
 Maintain respectful, professional discussions. Critique technical decisions and work rather than attacking individuals.
 
-Harassment, discrimination, threats, intimidation, disclosure of private information, and retaliation against good-faith reporters are not acceptable.
+Harassment, discrimination, threats, intimidation, disclosure of private information, and retaliation against good-faith reporters are unacceptable.
 
 Maintainers may moderate contributions and restrict participation in accordance with the Code of Conduct.
 
-23. License and Contribution Rights
+23. Licensing and Contribution Rights
 
-Before contributing, review the repository’s LICENSE file and any applicable third-party licensing requirements.
+Before contributing, review LICENSE and any applicable third-party licensing requirements.
 
-By submitting a contribution, you represent that you have the right to submit the material and that doing so is consistent with the applicable license and any relevant agreements.
+By submitting a contribution, you represent that you have the right to submit the material and that doing so is consistent with the applicable license and relevant agreements.
 
-Do not submit code, images, fonts, documentation, datasets, or other material that you do not have permission to distribute.
+Do not submit code, images, fonts, documentation, datasets, or other materials that you do not have permission to distribute.
 
 Retain applicable copyright notices and license attributions.
 
-If the repository does not contain a license or the rights to a proposed contribution are unclear, ask the maintainers for clarification before submitting the material.
+If the repository has no applicable license or the rights to a proposed contribution are unclear, ask the maintainers for clarification before submitting the material.
 
 Submitting a contribution does not, by itself, grant the project rights beyond those provided by the applicable license or a separate agreement.
 
-24. Questions and Support
+24. Support and Questions
 
-For general contribution questions, use the project contact or discussion channel documented in the root README.md.
+For general contribution questions, use the project contact or discussion channel documented in README.md.
 
 For security concerns, follow SECURITY.md.
 
-For behavioral concerns, follow CODE_OF_CONDUCT.md.
+For conduct concerns, follow CODE_OF_CONDUCT.md.
 
-When asking for help, provide enough context to understand the problem while keeping credentials, personal information, and confidential material private.
+When requesting help, provide enough context to understand the problem while keeping credentials, personal information, and confidential material private.
 
 ⸻
 
@@ -751,3 +702,7 @@ Thank you for helping improve MedOrbits.
 Every thoughtful contribution—whether code, testing, documentation, accessibility improvements, or constructive feedback—helps make the project more reliable, secure, maintainable, and useful.
 
 We appreciate your time, care, and commitment to building MedOrbits responsibly.
+
+MedOrbits — Education · Admissions · Careers · Recruitment
+
+Study · Work · Grow

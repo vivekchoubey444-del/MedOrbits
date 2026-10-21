@@ -4,7 +4,7 @@ MedOrbits Database Tests
 
 The tests/database/ directory contains automated tests and shared utilities for verifying MedOrbits database connectivity, repository operations, schema constraints, indexes, migrations, and transaction behavior.
 
-The test suite is intended to detect:
+The suite is intended to detect:
 
 * Database connection and configuration failures.
 * Repository CRUD and query-handling defects.
@@ -34,68 +34,70 @@ File responsibilities
 
 File	Responsibility
 setup.js	Shared MySQL connection, configuration validation, and lifecycle helpers
-connection.test.js	Database connectivity and connection configuration
-constraints.test.js	Primary keys, unique constraints, required fields, and related database rules
+connection.test.js	Connectivity, database identity, and connection configuration
+constraints.test.js	Primary keys, unique constraints, required fields, and referential integrity
 indexes.test.js	Index metadata, uniqueness, and indexed query behavior
-migrations.test.js	Migration file naming, migration history, and migration tracking checks
+migrations.test.js	Migration naming, history, and tracking checks
 repositories.test.js	Repository-style CRUD operations and parameterized queries
-transactions.test.js	Transaction commit, rollback, atomicity, isolation, and connection cleanup
-README.md	Database testing setup, execution, safety, and maintenance guidance
+transactions.test.js	Transaction commit, rollback, atomicity, and isolation
+README.md	Database testing setup, execution, safety, and maintenance
 
 Each test file should have a clearly defined responsibility and avoid unnecessary duplication.
 
 3. Requirements
 
 * Node.js 20 or later.
-* MySQL-compatible test database.
-* mysql2 package.
-* Dedicated test database with a clearly identifiable test name.
+* A MySQL-compatible test database.
+* The mysql2 package.
+* A dedicated test database with a clearly identifiable test name.
 * Database credentials with only the privileges required by the tests.
-* Project migration runner and repository modules where actual application integration is required.
+* The project migration runner and repository modules where application integration is required.
 
-Install the MySQL driver if it is not already installed:
+Install the driver if it is not already installed:
 
 npm install mysql2
 
+Use the project’s existing test runner consistently. The examples below use Node.js’s built-in test runner (node:test).
+
 4. Environment configuration
 
-The shared setup module, tests/database/setup.js, uses the following environment variables.
+The shared module tests/database/setup.js uses these environment variables.
 
 Variable	Required	Description
 NODE_ENV	Yes	Must be test
-TEST_DATABASE_URL	Yes	MySQL connection URL for the dedicated test database
-MIGRATIONS_DIR	For migration tests	Migration directory when different from the test’s configured default
-MIGRATIONS_TABLE	Optional	Migration history table name when different from migrations
+TEST_DATABASE_URL	Yes	MySQL URL for the dedicated test database
+MIGRATIONS_DIR	For migration tests	Migration directory when different from the configured default
+MIGRATIONS_TABLE	Optional	Migration history table when different from migrations
 
-Example connection URL:
+Example URL:
 
 mysql://test_user:test_password@127.0.0.1:3306/medorbits_test
 
-Example environment configuration:
+Configure your local environment:
 
 export NODE_ENV=test
-export TEST_DATABASE_URL=“mysql://test_user:test_password@127.0.0.1:3306/medorbits_test”
+export TEST_DATABASE_URL=‘mysql://test_user:test_password@127.0.0.1:3306/medorbits_test’
 
 For credentials containing reserved URL characters, percent-encode the username and password.
 
-Do not commit actual database credentials to source control. Use your local environment or a secret manager in CI.
+Never commit actual database credentials to source control. Use local environment variables or a CI secret manager.
 
 Database safety requirements
 
 1. Set NODE_ENV=test.
 2. Use a dedicated, disposable test database.
 3. Ensure the database name contains a clear test marker, such as medorbits_test.
-4. Never point TEST_DATABASE_URL at a production database.
+4. Never point TEST_DATABASE_URL at production.
 5. Do not print database credentials in logs.
-6. Use a restricted database account instead of an administrative account.
-7. Review all tests that create, modify, truncate, or drop database objects.
+6. Use a restricted database account rather than an administrative account.
+7. Review tests that create, modify, truncate, or drop database objects.
 8. Confirm the database target before running destructive integration tests.
 
-The setup module validates configuration and checks the connected database. These checks reduce risk but cannot prove that a database is disposable. Verify the target and credentials independently.
+Configuration validation reduces risk but cannot prove that a database is disposable. Verify the target and credentials independently.
 
 5. Shared database setup
 
-Import the shared connection utilities from setup.js:
+Import the shared utilities from setup.js:
 
 ‘use strict’;
 const {
@@ -108,11 +110,7 @@ Example using Node.js’s built-in test runner
 
 ‘use strict’;
 const assert = require(‘node:assert/strict’);
-const {
-  before,
-  after,
-  test,
-} = require(‘node:test’);
+const { before, after, test } = require(‘node:test’);
 const {
   connectTestDatabase,
   getTestDatabaseConnection,
@@ -129,18 +127,19 @@ test(‘test database connection is available’, () => {
   assert.ok(connection);
 });
 
-This example verifies that the shared connection is available. It does not verify repository behavior, schema correctness, or transaction semantics.
+This example verifies that a shared connection is available. It does not verify repository behavior, schema correctness, or transaction semantics.
 
 Lifecycle requirements
 
 * Connect before database-dependent tests execute.
-* Close the connection after the suite completes.
+* Close the shared connection after the suite completes.
 * Ensure cleanup executes even when a test fails.
-* Avoid registering Jest lifecycle hooks in a node:test suite.
-* Do not close a shared connection while other tests are still using it.
+* Do not register Jest lifecycle hooks in a node:test suite.
+* Do not close a shared connection while other tests are using it.
 * Isolate tests that require independent connections or concurrent transactions.
+* Avoid closing a shared connection from individual test files when setup.js owns its lifecycle.
 
-The example assumes sequential suite setup and teardown. For concurrent test execution, use appropriately isolated connections or test databases.
+For concurrent execution, use appropriately isolated connections, schemas, or test databases.
 
 6. Running the tests
 
@@ -150,55 +149,51 @@ NODE_ENV=test \
 TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/*.test.js
 
-This command assumes every test file in the directory is compatible with Node.js’s built-in test runner and the configured database setup.
+This command assumes all test files use Node.js’s built-in test runner and the shared configuration.
 
-If your environment variables are not already exported, provide the test database URL explicitly:
+If the URL is not already exported, supply the dedicated test database URL explicitly:
 
 NODE_ENV=test \
-TEST_DATABASE_URL=“mysql://test_user:test_password@127.0.0.1:3306/medorbits_test” \
+TEST_DATABASE_URL=‘mysql://test_user:test_password@127.0.0.1:3306/medorbits_test’ \
 node —test tests/database/*.test.js
+
+Do not use real credentials in shared terminal logs, screenshots, documentation, or commits.
 
 Run individual test files
 
-Connection tests
+Connection tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/connection.test.js
 
-Constraint tests
+Constraint tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/constraints.test.js
 
-Index tests
+Index tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/indexes.test.js
 
-Migration tests
+Migration tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/migrations.test.js
 
-Repository tests
+Repository tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/repositories.test.js
 
-Transaction tests
+Transaction tests:
 
-NODE_ENV=test \
-TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
+NODE_ENV=test TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 node —test tests/database/transactions.test.js
 
 Add an npm script
 
-Merge the following entry into the existing scripts object in package.json:
+Merge this entry into the existing scripts object in package.json. Do not replace existing scripts.
 
 {
   “scripts”: {
@@ -206,19 +201,19 @@ Merge the following entry into the existing scripts object in package.json:
   }
 }
 
-Run the suite with:
+If package.json already contains a scripts object, add only the test:database property to it.
+
+Run the suite:
 
 NODE_ENV=test \
 TEST_DATABASE_URL=“$TEST_DATABASE_URL” \
 npm run test:database
 
-Do not replace the existing scripts object or remove other project scripts when adding this entry.
-
 7. Test responsibilities
 
 7.1 Connection tests
 
-The connection suite should verify that:
+Verify that:
 
 * The configured test database can be reached.
 * Missing or invalid configuration fails clearly.
@@ -229,21 +224,21 @@ The connection suite should verify that:
 
 7.2 Constraint tests
 
-The constraint suite should verify applicable database rules, including:
+Verify applicable database rules:
 
 * Primary-key uniqueness.
 * Unique email addresses or other business identifiers.
 * Required fields and NOT NULL constraints.
 * Foreign-key relationships.
 * Valid values for constrained fields.
-* Transaction rollback where applicable.
 * Referential integrity when records are updated or deleted.
+* Rollback behavior where relevant.
 
 Test actual database constraints rather than relying exclusively on application-level validation.
 
 7.3 Index tests
 
-The index suite should verify that:
+Verify that:
 
 * Required indexes exist.
 * Unique indexes reject duplicate values.
@@ -256,48 +251,48 @@ An index existing does not prove that the database uses it for a particular quer
 
 7.4 Migration tests
 
-The migration suite should verify that:
+Verify that:
 
 * Migration files follow the project’s naming convention.
 * Migration versions are unique.
 * Migration history is readable.
 * Recorded versions follow the project’s migration policy.
 * Applying pending migrations produces the expected schema.
-* Re-running the migration runner does not apply completed migrations again.
+* Re-running the migration runner does not reapply completed migrations.
 * Rollback behavior is tested where the migration system supports down migrations.
 
-Migration execution and rollback tests should use a disposable database or isolated schema.
+Migration execution and rollback tests must use a disposable database or isolated schema.
 
-Important: Migration filename and history checks alone do not prove that migrations execute correctly. The complete integration suite should call the actual MedOrbits migration runner.
+Important: Filename and migration-history checks alone do not prove that migrations execute correctly. Integration tests should invoke the actual MedOrbits migration runner.
 
 7.5 Repository tests
 
-The repository suite should verify that:
+Verify that:
 
 * Records can be created and retrieved.
 * Missing records produce predictable results.
-* Updates affect only the intended fields.
+* Updates affect only intended fields.
 * Deletions follow the repository contract.
 * Database uniqueness and other constraints are enforced.
 * Queries use parameterized values.
 * Transactions and foreign-key relationships are respected.
 * Repository methods handle database errors consistently.
 
-Repository tests should import the actual MedOrbits repository modules. Standalone example queries test database behavior but do not establish that the production repository implementation is correct.
+Repository tests should import the actual MedOrbits repository modules. Standalone SQL examples do not establish that production repository implementations are correct.
 
 7.6 Transaction tests
 
-The transaction suite, transactions.test.js, should verify the behavior of MedOrbits’ actual transaction implementation.
+The transactions.test.js suite should verify actual transaction behavior and, when available, the production transaction wrapper.
 
 Commit behavior
 
 * Successful transactions commit all intended changes.
 * Committed records are visible to subsequent transactions according to the configured isolation level.
-* A transaction does not report success before the commit operation succeeds.
+* A transaction does not report success before its commit succeeds.
 
 Rollback behavior
 
-* Failed transactions roll back changes made within the transaction.
+* Failed transactions roll back their changes.
 * Partial writes are not persisted after a transaction fails.
 * Errors during transactional operations are propagated correctly.
 * Rollback failures are handled without hiding the original failure.
@@ -306,32 +301,32 @@ Atomicity and consistency
 
 * Related database changes succeed or fail together.
 * Database constraints remain enforced within transactions.
-* A failed operation does not leave partially updated business records.
+* Failed operations do not leave partially updated business records.
 * Payment, application, subscription, and other multi-step operations preserve their required invariants.
 
 Connection handling
 
-* All statements within a transaction use the same database connection.
+* All statements within a transaction use the same connection.
 * Connections are released after commit or rollback.
-* Exceptions do not leave connections or transactions open.
-* A failed transaction does not accidentally reuse a connection with an open transaction.
+* Exceptions do not leave transactions open.
+* A failed transaction does not leave a connection in an unsafe state.
 
 Concurrency and isolation
 
 * Concurrent transactions do not produce unintended lost updates.
-* Locking and isolation behavior match the requirements of the selected database engine.
-* Deadlocks and serialization failures are handled according to the application’s retry policy.
+* Locking and isolation behavior match the database engine’s requirements.
+* Deadlocks and serialization failures follow the application’s retry policy.
 * Nested transactions follow the documented strategy, such as savepoints or explicit rejection.
 
-Use isolated records, temporary tables, or a dedicated test schema. Do not run destructive transaction tests against production or shared staging databases.
+Use isolated records, temporary tables, or a dedicated test schema. A concurrency test requires separate database connections; requesting the same shared connection twice is not sufficient.
 
-A rollback test should verify the database state after rollback, not merely assert that an exception was thrown.
+A rollback test must verify database state after rollback, not merely assert that an exception was thrown.
 
 8. Migration and schema consistency
 
 MedOrbits should maintain one authoritative database schema strategy.
 
-Document the following in the project’s database documentation:
+Document:
 
 * The database engine and supported versions.
 * The migration tool or runner.
@@ -345,7 +340,7 @@ Document the following in the project’s database documentation:
 
 Do not independently create or modify production tables from test setup code.
 
-Database tests should use the intended test schema or temporary database objects and should not conflict with production schema management.
+Database tests should use the intended test schema or temporary database objects and must not conflict with production schema management.
 
 9. Cleanup and test isolation
 
@@ -356,7 +351,7 @@ Recommended practices:
 * Generate unique identifiers for test records.
 * Use transactions and rollback when safe and appropriate.
 * Use isolated temporary tables or schemas for metadata tests.
-* Prevent concurrent tests from modifying the same fixture records.
+* Prevent concurrent tests from modifying the same fixtures.
 * Never assume auto-increment IDs begin at 1.
 * Close connections even when a test fails.
 * Use teardown hooks and finally blocks for cleanup.
@@ -365,7 +360,7 @@ Recommended practices:
 * Avoid dropping shared application tables during routine test cleanup.
 * Ensure parallel CI jobs use isolated databases or schemas.
 
-If multiple test suites execute concurrently, use independent test databases, schemas, or carefully isolated fixtures where necessary.
+If multiple suites execute concurrently, use independent test databases, schemas, or carefully isolated fixtures.
 
 10. CI integration
 
@@ -374,15 +369,15 @@ A CI pipeline should:
 1. Start a disposable MySQL service.
 2. Create a dedicated test database and restricted test account.
 3. Install project dependencies.
-4. Configure the test environment variables.
+4. Configure test environment variables using CI secrets where necessary.
 5. Apply the intended test schema and migrations.
 6. Run the database tests.
-7. Capture test output and failure reports.
+7. Capture test output and failure reports without exposing credentials.
 8. Destroy the disposable database after the job completes.
 
 Do not run destructive database tests against a shared staging or production database.
 
-CI should fail when a required database test fails. Do not silently skip tests that are mandatory for the configured environment.
+CI should fail when a required database test fails. Do not silently skip mandatory tests when the configured environment is expected to support them.
 
 11. Troubleshooting
 
@@ -394,12 +389,12 @@ Connection timeout	MySQL is unavailable or inaccessible	Check service status, ho
 Migration directory missing	Incorrect migration path	Set MIGRATIONS_DIR to the actual directory
 Migration history table missing	Migration bootstrap has not run	Initialize the migration system in the test database
 Duplicate-key error	A fixture reused a unique value	Generate unique test identifiers
-Transaction changes remain after failure	Rollback was not executed or was ineffective	Check the transaction wrapper and verify database state
-Connection remains busy after a test	Transaction or connection was not released	Add reliable rollback and teardown handling
-Concurrent tests interfere	Shared mutable fixtures or DDL operations	Isolate records, schemas, or databases
-Rollback test fails	Migration or transaction logic is incomplete	Review rollback behavior and the transaction contract
+Transaction changes remain after failure	Rollback was not executed or was ineffective	Inspect the transaction wrapper and verify database state
+Connection remains busy after a test	A transaction or connection was not released	Add reliable rollback and teardown handling
+Concurrent tests interfere	Shared fixtures or DDL operations	Isolate records, schemas, or databases
+Rollback test fails	Transaction logic or storage engine is unsuitable	Review rollback behavior and confirm transactional tables use InnoDB
 
-12. Completion criteria
+12. Completion checklist
 
 The database test suite is ready for CI when:
 

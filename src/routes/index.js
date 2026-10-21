@@ -2,12 +2,23 @@
 'use strict';
 
 /**
- * MedOrbits central API router.
+ * MedOrbits -- Central API Router
  *
- * Mounted by server.js at /api/v1.
+ * File: src/routes/index.js
+ * Runtime: Node.js >= 20
+ * Mount: /api/v1
  *
- * Every route module must export an Express Router:
- *   module.exports = router;
+ * Responsibilities:
+ * - Validate route definitions.
+ * - Load and validate Express Router exports.
+ * - Mount API modules in a deterministic order.
+ * - Fail fast when required production routes are missing or invalid.
+ *
+ * Security:
+ * - Keep authentication and authorization in the appropriate middleware.
+ * - Do not expose stack traces or internal paths to API clients.
+ * - Avoid logging secrets, request bodies, or personal information.
+ * - Review every registered route for its access-control policy.
  */
 
 const express = require('express');
@@ -52,6 +63,9 @@ const routeDefinitions = [
   ['/admin', 'admin.routes.js'],
 ];
 
+const ROUTE_FILENAME_PATTERN =
+  /^[a-zA-Z0-9][a-zA-Z0-9._-]*\.routes\.js$/;
+
 function resolveRouter(exported, filename) {
   const candidates = [
     exported,
@@ -70,8 +84,7 @@ function resolveRouter(exported, filename) {
   }
 
   throw new TypeError(
-    `Route module "${filename}" must export an Express Router. ` +
-    'Expected module.exports = router.'
+    `Route module "${filename}" must export an Express Router.`,
   );
 }
 
@@ -79,18 +92,23 @@ function validateDefinitions() {
   const prefixes = new Set();
   const filenames = new Set();
 
-  for (const [prefix, filename] of routeDefinitions) {
+  for (const definition of routeDefinitions) {
+    if (!Array.isArray(definition) || definition.length !== 2) {
+      throw new TypeError('Each route definition must contain a prefix and filename.');
+    }
+
+    const [prefix, filename] = definition;
+
     if (
       typeof prefix !== 'string' ||
-      !prefix.startsWith('/') ||
-      prefix === '/'
+      !/^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/i.test(prefix)
     ) {
       throw new Error(`Invalid route prefix: ${String(prefix)}`);
     }
 
     if (
       typeof filename !== 'string' ||
-      filename.length === 0 ||
+      !ROUTE_FILENAME_PATTERN.test(filename) ||
       path.basename(filename) !== filename
     ) {
       throw new Error(`Invalid route filename: ${String(filename)}`);
@@ -109,6 +127,41 @@ function validateDefinitions() {
   }
 }
 
+function loadRouteModule(filename) {
+  const absolutePath = path.resolve(ROUTES_DIR, filename);
+  const relative = path.relative(ROUTES_DIR, absolutePath);
+
+  if (
+    relative.startsWith(`..${path.sep}`) ||
+    relative === '..' ||
+    path.isAbsolute(relative)
+  ) {
+    throw new Error(`Route module is outside the routes directory: ${filename}`);
+  }
+
+  if (!fs.existsSync(absolutePath)) {
+    return { missing: true };
+  }
+
+  const stat = fs.statSync(absolutePath);
+
+  if (!stat.isFile()) {
+    throw new Error(`Route module is not a regular file: ${filename}`);
+  }
+
+  try {
+    return {
+      missing: false,
+      exported: require(absolutePath),
+    };
+  } catch (cause) {
+    throw new Error(
+      `Failed to load route module "${filename}": ${cause.message}`,
+      { cause },
+    );
+  }
+}
+
 function mountRoutes() {
   validateDefinitions();
 
@@ -116,35 +169,21 @@ function mountRoutes() {
   const mounted = [];
 
   for (const [prefix, filename] of routeDefinitions) {
-    const absolutePath = path.join(ROUTES_DIR, filename);
+    const loaded = loadRouteModule(filename);
 
-    if (!fs.existsSync(absolutePath)) {
+    if (loaded.missing) {
       missing.push(`${prefix} -> ${filename}`);
       continue;
-    }
-
-    let exported;
-
-    try {
-      // Resolve modules relative to this route directory.
-      exported = require(absolutePath);
-    } catch (cause) {
-      throw new Error(
-        `[MedOrbits][Routes] Failed to load "${filename}" ` +
-        `for prefix "${prefix}": ${cause.message}`,
-        { cause }
-      );
     }
 
     let route;
 
     try {
-      route = resolveRouter(exported, filename);
+      route = resolveRouter(loaded.exported, filename);
     } catch (cause) {
       throw new Error(
-        `[MedOrbits][Routes] Invalid export for "${filename}" ` +
-        `at prefix "${prefix}": ${cause.message}`,
-        { cause }
+        `Invalid route export for "${filename}" at "${prefix}": ${cause.message}`,
+        { cause },
       );
     }
 
@@ -152,17 +191,12 @@ function mountRoutes() {
       router.use(prefix, route);
     } catch (cause) {
       throw new Error(
-        `[MedOrbits][Routes] Failed to mount "${filename}" ` +
-        `at prefix "${prefix}": ${cause.message}`,
-        { cause }
+        `Failed to mount "${filename}" at "${prefix}": ${cause.message}`,
+        { cause },
       );
     }
 
-    mounted.push(prefix);
-
-    console.log(
-      `[MedOrbits][Routes] Mounted /api/v1${prefix} -> ${filename}`
-    );
+    mounted.push({ prefix, filename });
   }
 
   if (missing.length > 0) {
@@ -171,15 +205,21 @@ function mountRoutes() {
 
     if (IS_PRODUCTION) {
       throw new Error(
-        `[MedOrbits][Routes] Production startup aborted.\n${message}`
+        `[MedOrbits][Routes] Production startup aborted. ${message}`,
       );
     }
 
     console.warn(`[MedOrbits][Routes] ${message}`);
   }
 
+  for (const item of mounted) {
+    console.log(
+      `[MedOrbits][Routes] Mounted /api/v1${item.prefix} -> ${item.filename}`,
+    );
+  }
+
   console.log(
-    `[MedOrbits][Routes] Mounted ${mounted.length} route module(s).`
+    `[MedOrbits][Routes] Mounted ${mounted.length} route module(s).`,
   );
 }
 

@@ -1,14 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#100A17">
-  <meta name="description" content="Search MedOrbits for courses, colleges, universities, study destinations, admissions resources, jobs and career support.">
+  <meta name="description" content="Search MedOrbits education resources, colleges, courses, admissions, scholarships, study abroad, career guidance, jobs and student services.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="MedOrbits">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Search MedOrbits | Courses, Colleges, Careers & Resources</title>
+  <title>Search Resources | MedOrbits</title>
   <link rel="canonical" href="https://medorbits.in/pages/search.html">
   <link rel="icon" href="/assets/images/logo/medorbits-logo.png" type="image/png">
   <link rel="manifest" href="/manifest.json">
@@ -16,339 +17,1911 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/style.css">
+
   <style>
-    :root{color-scheme:dark;--bg:#100a17;--bg-2:#191023;--panel:#21172b;--panel-2:#2b1d36;--gold:#c9a96e;--gold-light:#e4d0a1;--lav:#d9cce4;--muted:#b7acbf;--line:rgba(201,169,110,.24);--white:#f7f1fa;--radius:18px;--shadow:0 22px 65px rgba(0,0,0,.25)}
-    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:radial-gradient(ellipse at 12% 0%,rgba(87,57,105,.22),transparent 35%),radial-gradient(ellipse at 92% 32%,rgba(201,169,110,.07),transparent 28%),linear-gradient(135deg,#100a17,#1a1024 55%,#21172b);color:var(--white);font:400 15px/1.7 "DM Sans",sans-serif}img{display:block;max-width:100%}a{color:inherit;text-decoration:none}button,input,select{font:inherit}button,a{-webkit-tap-highlight-color:transparent}.container{width:min(1180px,calc(100% - 40px));margin-inline:auto}.skip-link{position:absolute;top:-60px;left:12px;z-index:9999;background:var(--gold-light);color:#170e1d;padding:10px 14px;border-radius:8px}.skip-link:focus{top:12px}
-    .announcement{display:flex;justify-content:center;align-items:center;gap:12px;padding:8px 16px;background:#0b0710;border-bottom:1px solid rgba(201,169,110,.13);color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.14em;text-align:center;text-transform:uppercase}.announcement .spark{color:var(--gold)}
-    .header{position:sticky;top:0;z-index:1000;background:rgba(16,10,23,.91);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);transition:box-shadow .25s,background .25s}.header.scrolled{background:rgba(12,7,17,.98);box-shadow:0 12px 35px rgba(0,0,0,.25)}.nav-wrap{min-height:82px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}.brand img{width:47px;height:47px;object-fit:contain}.brand strong{display:block;color:var(--gold-light);font-size:16px;letter-spacing:.12em;line-height:1.3}.brand small{display:block;color:var(--muted);font-size:8px;letter-spacing:.13em;text-transform:uppercase}.nav{display:flex;align-items:center;gap:19px;font-size:12px}.nav>a,.nav-trigger{color:#eee6f2;white-space:nowrap}.nav>a:hover,.nav-trigger:hover{color:var(--gold-light)}.nav-group{position:relative}.nav-trigger{border:0;background:none;padding:12px 0;cursor:pointer}.nav-trigger span{color:var(--gold);margin-left:5px}.dropdown{position:absolute;top:100%;left:-14px;width:260px;display:none;padding:9px;border:1px solid var(--line);border-radius:12px;background:#21172b;box-shadow:var(--shadow)}.nav-group.open .dropdown,.nav-group:hover .dropdown,.nav-group:focus-within .dropdown{display:grid}.dropdown a{padding:10px 12px;border-radius:8px;font-size:12px;color:var(--lav)}.dropdown a:hover{background:rgba(201,169,110,.1);color:var(--gold-light)}.nav-cta,.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--gold);border-radius:9px;padding:11px 16px;background:var(--gold);color:#170e1d;font-size:12px;font-weight:700;transition:transform .2s,filter .2s}.btn:hover,.nav-cta:hover{transform:translateY(-2px);filter:brightness(1.07)}.btn-outline{background:transparent;color:var(--gold-light);border-color:rgba(217,204,228,.35)}.menu-toggle{display:none;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--gold-light);padding:9px 12px;font-weight:700;font-size:11px}
-    .hero{position:relative;isolation:isolate;overflow:hidden;padding:78px 0 72px;background:linear-gradient(90deg,rgba(16,10,23,.97),rgba(26,16,36,.88) 58%,rgba(26,16,36,.56)),url('/assets/images/hero/hero-home.png') center/cover no-repeat,#100a17}.hero:after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 82% 18%,rgba(201,169,110,.14),transparent 36%),radial-gradient(ellipse at 90% 90%,rgba(84,30,50,.2),transparent 42%)}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:48px}.eyebrow,.kicker{display:inline-flex;align-items:center;gap:9px;color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}.eyebrow:before{content:"";width:26px;height:1px;background:var(--gold)}h1,h2,h3,p{margin-top:0}.hero h1{max-width:720px;margin:18px 0;font:600 clamp(39px,5.3vw,67px)/1.08 "Playfair Display",Georgia,serif;letter-spacing:-.035em}.hero h1 em{color:var(--gold-light);font-style:normal}.hero-copy{max-width:610px;color:#d0c5d8;font-size:15px;line-height:1.85}.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.hero-visual{position:relative;min-height:390px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:linear-gradient(145deg,#30203e,#171020);box-shadow:var(--shadow)}.hero-visual img{width:100%;height:390px;object-fit:cover}.hero-visual:after{content:"";position:absolute;inset:40% 0 0;background:linear-gradient(transparent,rgba(16,10,23,.96))}.visual-caption{position:absolute;z-index:1;left:22px;right:22px;bottom:19px}.visual-caption strong{display:block;color:var(--gold-light);font:600 21px "Playfair Display",serif}.visual-caption span{color:#e2d9e7;font-size:12px}.visual-stamp{position:absolute;z-index:2;top:17px;right:17px;padding:8px 11px;border:1px solid var(--line);border-radius:30px;background:rgba(16,10,23,.8);color:var(--gold-light);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
-    .pillars{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--line);background:rgba(43,29,54,.38)}.pillar{padding:20px 14px;text-align:center;border-right:1px solid var(--line)}.pillar:last-child{border:0}.pillar strong{display:block;color:var(--gold-light);font:600 18px "Playfair Display",serif}.pillar span{color:var(--muted);font-size:10px}
-    .search-band{padding:23px 0;background:rgba(11,7,16,.65);border-bottom:1px solid var(--line)}.search-form{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px}.field{width:100%;min-width:0;border:1px solid rgba(201,169,110,.25);border-radius:9px;background:#21172b;color:var(--white);padding:13px 14px;outline:none}.field:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.1)}.field option{background:#21172b}
-    .section{padding:76px 0;scroll-margin-top:100px}.section.alt{background:radial-gradient(ellipse at 90% 10%,rgba(84,30,50,.13),transparent 40%),rgba(43,29,54,.18);border-block:1px solid rgba(217,204,228,.08)}.section-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:29px}.section-head h2,.about-title{margin:8px 0 10px;font:600 clamp(28px,3.3vw,42px)/1.18 "Playfair Display",Georgia,serif;letter-spacing:-.025em}.section-head h2 span,.about-title span{color:var(--gold-light)}.section-head p{max-width:650px;margin:0;color:var(--muted);font-size:12px}.text-link{color:var(--gold-light);font-size:11px;font-weight:700;white-space:nowrap}.text-link:hover{text-decoration:underline}
-    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}.card{min-width:0;overflow:hidden;border:1px solid rgba(201,169,110,.2);border-radius:14px;background:linear-gradient(145deg,#2b1d36,#191023);transition:transform .25s,border-color .25s,box-shadow .25s}.card:hover{transform:translateY(-5px);border-color:rgba(201,169,110,.68);box-shadow:0 18px 42px rgba(0,0,0,.26)}.card-media{position:relative;overflow:hidden;background:#2b1d36}.card-media img{width:100%;height:165px;object-fit:cover;transition:transform .45s}.card:hover .card-media img{transform:scale(1.045)}.tag{position:absolute;top:11px;left:11px;padding:5px 8px;border:1px solid rgba(201,169,110,.4);border-radius:5px;background:rgba(16,10,23,.88);color:var(--gold-light);font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.card-body{padding:16px}.card h3{margin:0 0 7px;color:#eee2f3;font:600 18px "Playfair Display",Georgia,serif}.card p{min-height:55px;margin:0 0 13px;color:var(--muted);font-size:11px;line-height:1.7}.card .card-link{color:var(--gold-light);font-size:10px;font-weight:700}
-    .about-grid{display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;gap:45px}.about-visual{overflow:hidden;border:1px solid var(--line);border-radius:17px;background:#21172b}.about-visual img{width:100%;height:380px;object-fit:cover}.body-copy{color:var(--muted);font-size:13px;line-height:1.9}.check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0 25px}.check-list span{color:var(--lav);font-size:12px}.check-list span:before{content:"✦";color:var(--gold);margin-right:8px}
-    .video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.video-card{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#21172b}.video-frame{aspect-ratio:16/9;background:#100a17}.video-frame video{width:100%;height:100%;object-fit:cover}.video-copy{padding:15px}.video-copy small{color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.video-copy h3{margin:6px 0;color:var(--lav);font:600 17px "Playfair Display",serif}.video-copy p{margin:0;color:var(--muted);font-size:11px}
-    .cta{padding:49px 0;border-block:1px solid var(--line);background:linear-gradient(100deg,rgba(16,10,23,.97),rgba(43,29,54,.91) 62%,rgba(84,30,50,.6)),url('/assets/images/education/education-global.jpg') center/cover}.cta-inner{display:flex;justify-content:space-between;align-items:center;gap:25px}.cta h2{margin:8px 0;font:600 clamp(27px,3vw,38px) "Playfair Display",serif}.cta p{margin:0;color:var(--muted);font-size:12px}.faq-list{display:grid;gap:10px}.faq{padding:17px 19px;border:1px solid var(--line);border-radius:10px;background:rgba(43,29,54,.45)}.faq summary{color:var(--lav);font-size:12px;font-weight:700;cursor:pointer}.faq p{margin:12px 0 0;color:var(--muted);font-size:12px}
-    .footer{padding:48px 0 0;background:#0b0710;border-top:1px solid var(--line)}.footer-grid{display:grid;grid-template-columns:1.45fr repeat(4,minmax(0,1fr));gap:25px;padding-bottom:34px}.footer-grid>div{min-width:0}.footer-brand p{max-width:270px;margin-top:13px;color:var(--muted);font-size:11px;line-height:1.9}.footer h3{margin:0 0 13px;padding-bottom:9px;border-bottom:1px solid rgba(201,169,110,.2);color:var(--gold-light);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.footer-grid>div:not(:first-child) a{display:block;margin:8px 0;color:var(--muted);font-size:10px}.footer a:hover{color:var(--gold-light)}.disclaimer{padding:13px 16px;margin:0 0 15px;border-left:2px solid var(--gold);border-radius:0 7px 7px 0;background:rgba(43,29,54,.32);color:#a79caf;font-size:10px;line-height:1.8}.footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:17px 0;border-top:1px solid rgba(201,169,110,.16);color:#a79caf;font-size:10px}
-    @media(max-width:1100px){.menu-toggle{display:inline-flex}.nav{display:none;position:absolute;top:100%;left:0;right:0;align-items:stretch;flex-direction:column;gap:4px;padding:15px 22px 20px;background:#160d20;border-bottom:1px solid var(--line)}.nav.open{display:flex}.nav>a,.nav-trigger{padding:11px 8px;text-align:left}.nav-group{width:100%}.dropdown{position:static;width:100%;box-shadow:none;margin-bottom:5px}.nav-cta{width:100%}.hero-grid{gap:28px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.footer-brand{grid-column:1/-1}}
-    @media(max-width:760px){.container{width:calc(100% - 28px)}.announcement{font-size:8px;letter-spacing:.06em;gap:7px}.nav-wrap{min-height:70px}.brand img{width:41px;height:41px}.brand strong{font-size:14px}.brand small{font-size:7px}.hero{padding:48px 0}.hero-grid,.about-grid{grid-template-columns:1fr}.hero h1{font-size:clamp(38px,10vw,54px)}.hero-visual,.hero-visual img{height:270px;min-height:270px}.pillars{grid-template-columns:repeat(2,1fr)}.pillar{border-bottom:1px solid var(--line)}.pillar:nth-child(2){border-right:0}.pillar:nth-child(n+3){border-bottom:0}.search-form{grid-template-columns:1fr}.section{padding:52px 0}.section-head{align-items:flex-start;flex-direction:column;gap:10px}.cards{gap:12px}.card-media img{height:135px}.card-body{padding:12px}.card h3{font-size:15px}.card p{min-height:66px;font-size:10px}.about-visual img{height:270px}.check-list{grid-template-columns:1fr}.video-grid{grid-template-columns:1fr}.cta-inner{align-items:flex-start;flex-direction:column}.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px}.footer-brand{grid-column:1/-1}.footer-bottom{flex-direction:column}}
-    @media(max-width:390px){.cards,.footer-grid{grid-template-columns:1fr}.card-media img{height:190px}.card p{min-height:0}.hero-actions .btn{width:100%}.brand small{letter-spacing:.07em}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    :root {
+      color-scheme: dark;
+      --bg: #100a17;
+      --bg2: #191023;
+      --panel: #21172b;
+      --panel2: #2b1d36;
+      --gold: #c9a96e;
+      --gold-light: #e4d0a1;
+      --lav: #d9cce4;
+      --muted: #b7acbf;
+      --line: rgba(201,169,110,.24);
+      --white: #f7f1fa;
+      --radius: 18px;
+      --shadow: 0 22px 65px rgba(0,0,0,.25);
+    }
 
-    /* Opening animation: isolated addition; the existing page styles remain unchanged. */
-    .intro-screen{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(84,30,50,.42),transparent 42%),linear-gradient(145deg,#100a17,#1a1024 58%,#0b0710);opacity:1;visibility:visible;transition:opacity .75s ease,visibility .75s ease}
-    .intro-screen::before,.intro-screen::after{content:"";position:absolute;width:min(62vw,420px);aspect-ratio:1;border:1px solid rgba(201,169,110,.2);border-radius:50%;animation:intro-orbit 2.6s ease-out both}
-    .intro-screen::after{width:min(48vw,320px);border-color:rgba(201,169,110,.32);animation-delay:.12s}
-    .intro-screen.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
-    .intro-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;animation:intro-rise .9s cubic-bezier(.2,.75,.25,1) both}
-    .intro-logo{width:76px;height:76px;object-fit:contain;margin-bottom:17px;filter:drop-shadow(0 0 22px rgba(201,169,110,.24));animation:intro-logo-in 1.1s cubic-bezier(.2,.75,.25,1) both}
-    .intro-wordmark{color:#e4d0a1;font:600 clamp(22px,4vw,31px)/1.2 "Playfair Display",Georgia,serif;letter-spacing:.23em;text-indent:.23em}
-    .intro-tagline{margin-top:12px;color:#b7acbf;font-size:9px;letter-spacing:.24em;text-indent:.24em;text-transform:uppercase;animation:intro-fade-in 1.2s .25s both}
-    .intro-rule{width:0;height:1px;margin-top:22px;background:linear-gradient(90deg,transparent,#c9a96e,transparent);animation:intro-rule-in .8s .35s ease-out forwards}
-    @keyframes intro-orbit{from{transform:scale(.72) rotate(-25deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
-    @keyframes intro-rise{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
-    @keyframes intro-logo-in{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}
-    @keyframes intro-fade-in{from{opacity:0;letter-spacing:.42em}to{opacity:1;letter-spacing:.24em}}
-    @keyframes intro-rule-in{to{width:150px}}
-    @media(prefers-reduced-motion:reduce){.intro-screen,.intro-screen::before,.intro-screen::after,.intro-content,.intro-logo,.intro-tagline,.intro-rule{animation:none!important;transition:none!important}.intro-rule{width:150px}}
+    *, *::before, *::after { box-sizing: border-box; }
 
-    /* Search page additions — uses the existing MedOrbits design system. */
-    .search-hero{padding:64px 0 48px;background:linear-gradient(90deg,rgba(16,10,23,.97),rgba(26,16,36,.87)),url('/assets/images/education/education-global.jpg') center/cover no-repeat,#100a17}
-    .search-hero h1{max-width:820px;margin:16px 0;font:600 clamp(38px,5vw,59px)/1.1 'Playfair Display',Georgia,serif;letter-spacing:-.03em}
-    .search-hero h1 span{color:var(--gold-light)}.search-hero .hero-copy{max-width:760px}
-    .search-panel{margin-top:28px;padding:19px;border:1px solid var(--line);border-radius:16px;background:rgba(16,10,23,.76);box-shadow:var(--shadow)}
-    .search-controls{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)) auto;gap:10px}
-    .search-controls .field{min-height:48px}.search-actions{display:flex;gap:10px;margin-top:12px;align-items:center;justify-content:space-between}
-    .search-note{margin:0;color:var(--muted);font-size:10px}.search-results-top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
-    .results-count{color:var(--gold-light);font-size:11px;font-weight:700}.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-    .result-card{display:flex;flex-direction:column;min-width:0;padding:20px;border:1px solid rgba(201,169,110,.2);border-radius:14px;background:linear-gradient(145deg,#2b1d36,#191023);transition:transform .22s,border-color .22s,box-shadow .22s}
-    .result-card:hover{transform:translateY(-4px);border-color:rgba(201,169,110,.65);box-shadow:0 16px 35px rgba(0,0,0,.22)}
-    .result-topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
-    .result-category{color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-    .result-chip{padding:4px 7px;border:1px solid var(--line);border-radius:5px;color:var(--muted);font-size:9px}
-    .result-card h3{margin:0 0 8px;color:#eee2f3;font:600 20px 'Playfair Display',Georgia,serif}
-    .result-card p{margin:0 0 16px;color:var(--muted);font-size:11px;line-height:1.8;flex:1}
-    .result-meta{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}.result-meta span{padding:5px 7px;border-radius:5px;background:rgba(217,204,228,.07);color:#cfc2d7;font-size:9px}
-    .result-link{align-self:flex-start;color:var(--gold-light);font-size:11px;font-weight:700}.result-link:hover{text-decoration:underline}
-    .empty-state{padding:38px 22px;text-align:center;border:1px dashed rgba(201,169,110,.35);border-radius:14px;background:rgba(43,29,54,.25)}
-    .empty-state h3{margin-bottom:8px;color:var(--gold-light);font:600 23px 'Playfair Display',Georgia,serif}.empty-state p{margin:0 auto 16px;max-width:520px;color:var(--muted);font-size:12px}
-    .quick-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.quick-link{padding:17px;border:1px solid var(--line);border-radius:12px;background:rgba(43,29,54,.42)}
-    .quick-link strong{display:block;margin-bottom:5px;color:var(--gold-light);font:600 17px 'Playfair Display',Georgia,serif}.quick-link span{display:block;color:var(--muted);font-size:10px;line-height:1.7}
-    .search-status{min-height:20px;color:var(--muted);font-size:10px}
-    @media(max-width:1100px){.search-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:760px){.search-hero{padding:48px 0 36px}.search-panel{padding:13px}.search-controls{grid-template-columns:1fr}.search-actions{align-items:flex-start;flex-direction:column}.result-grid{grid-template-columns:1fr}.search-results-top{align-items:flex-start;flex-direction:column}.quick-links{grid-template-columns:1fr}}
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 110px;
+    }
 
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--white);
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(87,57,105,.22), transparent 35%),
+        radial-gradient(ellipse at 92% 32%, rgba(201,169,110,.07), transparent 28%),
+        linear-gradient(135deg,#100a17,#1a1024 55%,#21172b);
+      font: 400 15px/1.7 "DM Sans", sans-serif;
+    }
+
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--gold-light);
+      outline-offset: 4px;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .skip-link {
+      position: absolute;
+      z-index: 99999;
+      top: -70px;
+      left: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--gold-light);
+      color: #170e1d;
+    }
+
+    .skip-link:focus { top: 12px; }
+
+    .announcement {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-bottom: 1px solid rgba(201,169,110,.13);
+      background: #0b0710;
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .spark { color: var(--gold); }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid var(--line);
+      background: rgba(16,10,23,.93);
+      backdrop-filter: blur(18px);
+      transition: box-shadow .25s, background .25s;
+    }
+
+    .header.scrolled {
+      background: rgba(12,7,17,.98);
+      box-shadow: 0 12px 35px rgba(0,0,0,.25);
+    }
+
+    .nav-wrap {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .brand img {
+      width: 47px;
+      height: 47px;
+      object-fit: contain;
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--gold-light);
+      font-size: 16px;
+      letter-spacing: .12em;
+      line-height: 1.3;
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 19px;
+      font-size: 12px;
+    }
+
+    .nav > a, .nav-trigger {
+      color: #eee6f2;
+      white-space: nowrap;
+    }
+
+    .nav > a:hover,
+    .nav-trigger:hover,
+    .nav > a.active {
+      color: var(--gold-light);
+    }
+
+    .nav-group { position: relative; }
+
+    .nav-trigger {
+      border: 0;
+      padding: 12px 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .nav-trigger span {
+      margin-left: 5px;
+      color: var(--gold);
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: -14px;
+      display: none;
+      width: 260px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #21172b;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-group.open .dropdown,
+    .nav-group:hover .dropdown,
+    .nav-group:focus-within .dropdown {
+      display: grid;
+    }
+
+    .dropdown a {
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--lav);
+      font-size: 12px;
+    }
+
+    .dropdown a:hover {
+      background: rgba(201,169,110,.1);
+      color: var(--gold-light);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border: 1px solid var(--gold);
+      border-radius: 9px;
+      padding: 11px 16px;
+      background: var(--gold);
+      color: #170e1d;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, filter .2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.07); }
+
+    .btn-outline {
+      border-color: rgba(217,204,228,.35);
+      background: transparent;
+      color: var(--gold-light);
+    }
+
+    .nav-cta { white-space: nowrap; }
+
+    .menu-toggle {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 9px 12px;
+      background: transparent;
+      color: var(--gold-light);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Animated brand intro */
+
+    .intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 42%,rgba(84,30,50,.42),transparent 42%),
+        linear-gradient(145deg,#100a17,#1a1024 58%,#0b0710);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .65s ease, visibility .65s ease;
+    }
+
+    .intro-screen::before,
+    .intro-screen::after {
+      position: absolute;
+      width: min(62vw,420px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(201,169,110,.2);
+      border-radius: 50%;
+      content: "";
+      animation: orbit 2.6s ease-out both;
+    }
+
+    .intro-screen::after {
+      width: min(48vw,320px);
+      border-color: rgba(201,169,110,.32);
+      animation-delay: .12s;
+    }
+
+    .intro-screen.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      animation: rise .9s cubic-bezier(.2,.75,.25,1) both;
+    }
+
+    .intro-logo {
+      width: 76px;
+      height: 76px;
+      margin-bottom: 17px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 22px rgba(201,169,110,.24));
+    }
+
+    .intro-wordmark {
+      color: var(--gold-light);
+      font: 600 clamp(22px,4vw,31px)/1.2 "Playfair Display", Georgia, serif;
+      letter-spacing: .23em;
+    }
+
+    .intro-tagline {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .intro-rule {
+      width: 150px;
+      height: 1px;
+      margin-top: 22px;
+      background: linear-gradient(90deg,transparent,var(--gold),transparent);
+    }
+
+    @keyframes orbit {
+      from { transform: scale(.72) rotate(-25deg); opacity: 0; }
+      to { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    @keyframes rise {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Hero */
+
+    .search-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 76px 0 65px;
+      background:
+        radial-gradient(ellipse at 78% 12%,rgba(201,169,110,.10),transparent 32%),
+        radial-gradient(ellipse at 12% 85%,rgba(84,30,50,.20),transparent 36%);
+    }
+
+    .search-hero::after {
+      position: absolute;
+      top: -180px;
+      right: -80px;
+      width: 330px;
+      height: 330px;
+      border: 1px solid rgba(201,169,110,.13);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+
+    .hero-layout {
+      display: grid;
+      grid-template-columns: minmax(0,1.2fr) minmax(270px,.8fr);
+      align-items: center;
+      gap: 45px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .17em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 22px;
+      height: 1px;
+      background: var(--gold);
+      content: "";
+    }
+
+    .hero-copy h1 {
+      margin: 17px 0;
+      font: 600 clamp(36px,5.5vw,65px)/1.08 "Playfair Display",Georgia,serif;
+      letter-spacing: -.035em;
+    }
+
+    .hero-copy h1 span,
+    .section-heading h2 span { color: var(--gold-light); }
+
+    .hero-copy > p {
+      max-width: 650px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin-top: 24px;
+    }
+
+    .hero-point {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--lav);
+      font-size: 11px;
+    }
+
+    .hero-point span { color: var(--gold); }
+
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      padding: 27px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: linear-gradient(145deg,rgba(43,29,54,.95),rgba(25,16,35,.97));
+      box-shadow: var(--shadow);
+    }
+
+    .panel-label {
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .hero-panel h2 {
+      margin: 10px 0 8px;
+      font: 600 25px/1.3 "Playfair Display",Georgia,serif;
+    }
+
+    .hero-panel > p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel-stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+      padding-top: 17px;
+      border-top: 1px solid rgba(201,169,110,.15);
+    }
+
+    .panel-stat-icon {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(201,169,110,.06);
+      color: var(--gold-light);
+      font-size: 20px;
+    }
+
+    .panel-stat strong { display: block; font-size: 12px; }
+    .panel-stat small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+
+    /* Search interface */
+
+    .search-section { padding: 0 0 72px; }
+
+    .search-box {
+      padding: clamp(22px,4vw,36px);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background:
+        radial-gradient(ellipse at 0 0,rgba(84,30,50,.16),transparent 45%),
+        linear-gradient(145deg,rgba(43,29,54,.92),rgba(25,16,35,.96));
+      box-shadow: var(--shadow);
+    }
+
+    .search-box-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 23px;
+    }
+
+    .search-box-heading h2 {
+      margin: 0;
+      font: 600 clamp(22px,3vw,30px)/1.25 "Playfair Display",Georgia,serif;
+    }
+
+    .search-box-heading p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .search-badge {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(201,169,110,.06);
+      color: var(--gold-light);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .search-form {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 190px auto;
+      gap: 11px;
+    }
+
+    .search-input-wrap { position: relative; min-width: 0; }
+
+    .search-input-wrap > span {
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      transform: translateY(-50%);
+      color: var(--gold-light);
+      font-size: 20px;
+      pointer-events: none;
+    }
+
+    .search-input,
+    .filter-select {
+      width: 100%;
+      min-height: 52px;
+      border: 1px solid rgba(217,204,228,.2);
+      border-radius: 10px;
+      background: rgba(12,7,17,.65);
+      color: var(--white);
+    }
+
+    .search-input {
+      padding: 13px 16px 13px 47px;
+    }
+
+    .search-input::placeholder { color: #94879d; }
+
+    .filter-select {
+      padding: 12px 13px;
+      color-scheme: dark;
+    }
+
+    .filter-select option {
+      background: #21172b;
+      color: var(--white);
+    }
+
+    .search-form .btn { min-height: 52px; }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) minmax(180px,.45fr);
+      gap: 18px;
+      align-items: end;
+      margin-top: 19px;
+    }
+
+    .filter-group label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .filter-controls {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 10px;
+    }
+
+    .quick-searches { margin-top: 22px; }
+
+    .quick-searches > span {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .quick-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick-btn {
+      border: 1px solid rgba(201,169,110,.22);
+      border-radius: 999px;
+      padding: 8px 13px;
+      background: rgba(201,169,110,.045);
+      color: var(--lav);
+      font-size: 11px;
+      cursor: pointer;
+      transition: border-color .2s,background .2s,color .2s;
+    }
+
+    .quick-btn:hover,
+    .quick-btn:focus-visible {
+      border-color: var(--gold);
+      background: rgba(201,169,110,.12);
+      color: var(--gold-light);
+    }
+
+    /* Results */
+
+    .results-section { padding: 0 0 85px; }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-heading h2 {
+      margin: 10px 0 5px;
+      font: 600 clamp(26px,3.5vw,38px)/1.2 "Playfair Display",Georgia,serif;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .results-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .results-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--gold-light);
+      background: rgba(201,169,110,.05);
+      white-space: nowrap;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 18px;
+    }
+
+    .result-card {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      padding: 23px;
+      border: 1px solid rgba(201,169,110,.18);
+      border-radius: 15px;
+      background: linear-gradient(145deg,rgba(43,29,54,.78),rgba(25,16,35,.91));
+      transition: transform .22s,border-color .22s,box-shadow .22s;
+    }
+
+    .result-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(201,169,110,.48);
+      box-shadow: 0 18px 40px rgba(0,0,0,.18);
+    }
+
+    .result-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 19px;
+    }
+
+    .result-icon {
+      display: grid;
+      width: 43px;
+      height: 43px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(201,169,110,.07);
+      color: var(--gold-light);
+      font-size: 20px;
+    }
+
+    .result-category {
+      border: 1px solid rgba(201,169,110,.19);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--gold-light);
+      font-size: 9px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .result-card h3 {
+      margin: 0 0 10px;
+      font: 600 20px/1.35 "Playfair Display",Georgia,serif;
+    }
+
+    .result-card p {
+      flex: 1;
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.85;
+    }
+
+    .result-type {
+      display: block;
+      margin-bottom: 10px;
+      color: #a99ab5;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .result-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(201,169,110,.14);
+      color: var(--gold-light);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .result-link span {
+      font-size: 18px;
+      transition: transform .2s;
+    }
+
+    .result-link:hover span { transform: translateX(4px); }
+
+    .empty-state {
+      display: none;
+      padding: 50px 20px;
+      border: 1px dashed rgba(201,169,110,.3);
+      border-radius: 16px;
+      background: rgba(33,23,43,.55);
+      text-align: center;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .empty-state .empty-icon {
+      margin-bottom: 13px;
+      color: var(--gold-light);
+      font-size: 38px;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 9px;
+      font: 600 25px "Playfair Display",Georgia,serif;
+    }
+
+    .empty-state p {
+      max-width: 520px;
+      margin: 0 auto 19px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .search-note {
+      margin: 23px 0 0;
+      padding: 14px 16px;
+      border-left: 2px solid var(--gold);
+      background: rgba(201,169,110,.045);
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    /* Search help */
+
+    .guidance-section {
+      padding: 65px 0;
+      border-top: 1px solid rgba(201,169,110,.13);
+      background: rgba(12,7,17,.22);
+    }
+
+    .guidance-layout {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+      gap: 35px;
+      align-items: center;
+    }
+
+    .guidance-copy h2 {
+      margin: 14px 0;
+      font: 600 clamp(28px,4vw,42px)/1.2 "Playfair Display",Georgia,serif;
+    }
+
+    .guidance-copy p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .guidance-links {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 11px;
+    }
+
+    .guidance-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 58px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(43,29,54,.65);
+      color: var(--lav);
+      font-size: 11px;
+      transition: border-color .2s,color .2s;
+    }
+
+    .guidance-link:hover {
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+
+    .guidance-link span { color: var(--gold); }
+
+    /* Footer */
+
+    .footer {
+      padding: 50px 0 20px;
+      border-top: 1px solid var(--line);
+      background: #0b0710;
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 35px;
+      padding-bottom: 35px;
+    }
+
+    .footer-brand { max-width: 420px; }
+
+    .footer-brand .brand { margin-bottom: 16px; }
+
+    .footer-brand > p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.9;
+    }
+
+    .social-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .social-links a {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--gold-light);
+      font-size: 11px;
+      font-weight: 700;
+      transition: background .2s;
+    }
+
+    .social-links a:hover { background: rgba(201,169,110,.12); }
+
+    .footer-links {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 26px;
+    }
+
+    .footer-column h3 {
+      margin: 0 0 14px;
+      color: var(--gold-light);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .footer-column a {
+      display: block;
+      width: fit-content;
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .footer-column a:hover { color: var(--gold-light); }
+
+    .footer-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 19px;
+      border-top: 1px solid rgba(201,169,110,.13);
+      color: #95899d;
+      font-size: 10px;
+    }
+
+    .footer-legal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .footer-legal a:hover { color: var(--gold-light); }
+
+    .whatsapp-float {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 900;
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      border: 1px solid rgba(228,208,161,.45);
+      border-radius: 50%;
+      background: #234d3b;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.3);
+      transition: transform .2s;
+    }
+
+    .whatsapp-float:hover { transform: translateY(-3px); }
+
+    .reveal {
+      animation: reveal-in .65s ease both;
+    }
+
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 1050px) {
+      .nav { gap: 12px; }
+      .nav-wrap { gap: 12px; }
+      .nav-cta { display: none; }
+      .results-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+
+    @media (max-width: 820px) {
+      .nav-wrap { min-height: 72px; }
+      .menu-toggle { display: inline-flex; }
+      .nav {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        display: none;
+        align-items: stretch;
+        gap: 0;
+        padding: 12px 20px 20px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(16,10,23,.99);
+      }
+
+      .nav.open { display: flex; flex-direction: column; }
+      .nav > a { padding: 12px 4px; }
+      .nav-group { width: 100%; }
+      .nav-trigger { width: 100%; padding: 12px 4px; text-align: left; }
+      .dropdown {
+        position: static;
+        width: 100%;
+        margin: 0 0 8px;
+        box-shadow: none;
+      }
+
+      .hero-layout { grid-template-columns: 1fr; gap: 28px; }
+      .hero-panel { max-width: 580px; }
+      .search-form { grid-template-columns: minmax(0,1fr) 170px; }
+      .search-form .btn { grid-column: 1 / -1; }
+      .guidance-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px,1180px); }
+      .announcement { font-size: 9px; letter-spacing: .08em; }
+      .brand img { width: 40px; height: 40px; }
+      .brand strong { font-size: 14px; }
+      .brand small { font-size: 7px; }
+      .search-hero { padding: 52px 0 44px; }
+      .hero-copy h1 { font-size: clamp(35px,10vw,48px); }
+      .hero-panel { padding: 21px; }
+      .search-box { padding: 19px 15px; }
+      .search-box-heading { flex-direction: column; gap: 12px; }
+      .search-form { grid-template-columns: 1fr; }
+      .search-form .btn { grid-column: auto; }
+      .filter-row { grid-template-columns: 1fr; }
+      .filter-controls { grid-template-columns: 1fr 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .results-meta { justify-content: flex-start; }
+      .results-grid { grid-template-columns: 1fr; }
+      .result-card { padding: 20px; }
+      .guidance-section { padding: 48px 0; }
+      .guidance-links { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; gap: 28px; }
+      .footer-links { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+      .footer-bottom { align-items: flex-start; flex-direction: column; }
+      .whatsapp-float { right: 14px; bottom: 14px; width: 48px; height: 48px; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="intro-screen" id="introScreen" role="status" aria-label="Loading MedOrbits">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <div class="intro-screen" id="introScreen" aria-hidden="true">
     <div class="intro-content">
-      <img class="intro-logo" src="/assets/images/logo/medorbits-logo.png" alt="" width="76" height="76">
+      <img class="intro-logo" src="/assets/images/logo/medorbits-logo.png" alt="">
       <div class="intro-wordmark">MEDORBITS</div>
-      <div class="intro-tagline">Study · Career · Consultancy</div>
-      <div class="intro-rule" aria-hidden="true"></div>
+      <div class="intro-tagline">Education · Opportunity · Progress</div>
+      <div class="intro-rule"></div>
     </div>
   </div>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-  <div class="announcement"><span>Your future, your direction</span><span class="spark" aria-hidden="true">✦</span><span>Study · Work · Grow — one connected destination</span></div>
+
+  <div class="announcement">
+    <span class="spark">✦</span>
+    Education · Admissions · Career · Opportunities
+    <span class="spark">✦</span>
+  </div>
 
   <header class="header" id="siteHeader">
     <div class="container nav-wrap">
       <a class="brand" href="/index.html" aria-label="MedOrbits home">
-        <img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo" width="48" height="48">
-        <span><strong>MEDORBITS</strong><small>Study · Career · Consultancy</small></span>
+        <img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo">
+        <span>
+          <strong>MEDORBITS</strong>
+          <small>Education &amp; Career Guidance</small>
+        </span>
       </a>
-      <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mainNav">☰ MENU</button>
+
+      <button class="menu-toggle" id="menuToggle" type="button"
+        aria-expanded="false" aria-controls="mainNav">MENU ☰</button>
+
       <nav class="nav" id="mainNav" aria-label="Main navigation">
-        <a href="/index.html">Home</a><a href="/pages/search.html" aria-current="page">Search</a>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Education <span>⌄</span></button><div class="dropdown">
-          <a href="/education/index.html">Education hub</a><a href="/education/courses.html">Courses</a><a href="/education/colleges.html">Colleges</a><a href="/education/universities.html">Universities</a><a href="/education/study-in-india/mbbs.html">MBBS in India</a><a href="/education/study-abroad/mbbs-abroad.html">MBBS abroad</a>
-        </div></div>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Admissions <span>⌄</span></button><div class="dropdown">
-          <a href="/education/admissions/index.html">Admission guidance</a><a href="/education/admissions/eligibility.html">Eligibility</a><a href="/education/admissions/exams.html">Entrance exams</a><a href="/education/admissions/counselling.html">Counselling</a><a href="/education/resources/fees.html">Fees & funding</a><a href="/education/resources/scholarships.html">Scholarships</a>
-        </div></div>
-        <div class="nav-group"><button class="nav-trigger" type="button" aria-expanded="false">Careers <span>⌄</span></button><div class="dropdown">
-          <a href="/career/index.html">Career hub</a><a href="/career/jobs.html">Find jobs</a><a href="/career/internships.html">Internships</a><a href="/career/resume-support.html">Resume support</a><a href="/career/recruitment.html">Recruitment services</a><a href="/career/employer-services.html">Employer services</a>
-        </div></div>
-        <a href="/pages/about.html" aria-current="page">About</a><a href="/pages/contact.html">Contact</a>
-        <a class="nav-cta" href="/pages/apply.html">Get Guidance ↗</a>
+        <a href="/index.html">Home</a>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">
+            Education <span>⌄</span>
+          </button>
+          <div class="dropdown">
+            <a href="/education/index.html">Education hub</a>
+            <a href="/education/courses.html">Explore courses</a>
+            <a href="/education/colleges.html">Colleges</a>
+            <a href="/education/universities.html">Universities</a>
+            <a href="/education/study-in-india/mbbs.html">MBBS in India</a>
+            <a href="/education/resources/scholarships.html">Scholarships</a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">
+            Admissions <span>⌄</span>
+          </button>
+          <div class="dropdown">
+            <a href="/education/admissions/index.html">Admission resources</a>
+            <a href="/education/admissions/eligibility.html">Eligibility guidance</a>
+            <a href="/education/admissions/documents.html">Document checklist</a>
+            <a href="/education/admissions/entrance-exams.html">Entrance exams</a>
+            <a href="/pages/apply.html">Apply for guidance</a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button class="nav-trigger" type="button" aria-expanded="false">
+            Career <span>⌄</span>
+          </button>
+          <div class="dropdown">
+            <a href="/career/index.html">Career hub</a>
+            <a href="/career/guidance.html">Career guidance</a>
+            <a href="/career/jobs.html">Find jobs</a>
+            <a href="/career/internships.html">Internships</a>
+            <a href="/career/resume-support.html">Resume support</a>
+            <a href="/career/recruitment.html">Recruitment services</a>
+          </div>
+        </div>
+
+        <a href="/education/study-abroad/index.html">Study Abroad</a>
+        <a class="active" href="/pages/search.html" aria-current="page">Search</a>
+        <a href="/pages/services.html">Services</a>
+        <a href="/pages/about.html">About</a>
+        <a href="/pages/contact.html">Contact</a>
+        <a class="btn nav-cta" href="/pages/request-guidance.html">Get Guidance ↗</a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
-    <section class="search-hero" id="search-start">
-      <div class="container">
-        <span class="eyebrow">Explore the MedOrbits directory</span>
-        <h1>Find your next step.<br><span>Start with a search.</span></h1>
-        <p class="hero-copy">Search education pathways, study destinations, admissions resources and career services from one place. Use the filters to narrow your options, then verify specific requirements with the relevant official institution or employer.</p>
-        <form class="search-panel" id="directorySearch" role="search">
-          <div class="search-controls">
-            <input class="field" id="searchQuery" name="q" type="search" placeholder="Try MBBS, nursing, scholarships, internships…" aria-label="Search MedOrbits resources">
-            <select class="field" id="searchCategory" name="category" aria-label="Resource type"><option value="">All resource types</option><option value="course">Courses</option><option value="destination">Study destinations</option><option value="admission">Admissions</option><option value="resource">Student resources</option><option value="career">Career services</option><option value="employer">Employer services</option></select>
-            <select class="field" id="searchLevel" name="level" aria-label="Study level"><option value="">All study levels</option><option>After Class 10</option><option>After Class 12</option><option>Undergraduate</option><option>Postgraduate</option><option>Doctoral</option><option>Diploma</option></select>
-            <select class="field" id="searchCountry" name="country" aria-label="Country or destination"><option value="">All destinations</option><option>India</option><option>Russia</option><option>Georgia</option><option>Kazakhstan</option><option>Uzbekistan</option><option>Kyrgyzstan</option><option>United Arab Emirates</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Australia</option><option>Germany</option></select>
-            <button class="btn" type="submit">Search ↗</button>
+    <section class="search-hero">
+      <div class="container hero-layout">
+        <div class="hero-copy reveal">
+          <span class="eyebrow">The MedOrbits search experience</span>
+          <h1>Find your next <span>opportunity.</span></h1>
+          <p>
+            Search education resources, colleges, courses, admissions,
+            scholarships, international study options, career guidance,
+            jobs and student services--all from one place.
+          </p>
+
+          <div class="hero-points">
+            <span class="hero-point"><span>✦</span> Education resources</span>
+            <span class="hero-point"><span>✦</span> Admission guidance</span>
+            <span class="hero-point"><span>✦</span> Career opportunities</span>
           </div>
-          <div class="search-actions"><p class="search-note">Search the featured MedOrbits directory. More results can be connected to your JSON data files.</p><button class="btn btn-outline" type="reset" id="clearSearch">Clear filters</button></div>
-          <p class="search-status" id="searchStatus" aria-live="polite"></p>
-        </form>
+        </div>
+
+        <aside class="hero-panel reveal">
+          <span class="panel-label">Your starting point</span>
+          <h2>Search smarter. Plan confidently.</h2>
+          <p>Discover resources that can help you understand your options and plan your next steps.</p>
+
+          <div class="panel-stat">
+            <span class="panel-stat-icon" aria-hidden="true">⌕</span>
+            <span>
+              <strong>One search interface</strong>
+              <small>Explore the available MedOrbits catalogue.</small>
+            </span>
+          </div>
+
+          <div class="panel-stat">
+            <span class="panel-stat-icon" aria-hidden="true">↗</span>
+            <span>
+              <strong>Direct resource links</strong>
+              <small>Open a matching page to continue your research.</small>
+            </span>
+          </div>
+        </aside>
       </div>
     </section>
 
-    <section class="pillars" aria-label="Search categories">
-      <div class="pillar"><strong>Courses</strong><span>Explore academic pathways</span></div>
-      <div class="pillar"><strong>Institutions</strong><span>Research colleges and universities</span></div>
-      <div class="pillar"><strong>Admissions</strong><span>Review requirements and resources</span></div>
-      <div class="pillar"><strong>Careers</strong><span>Find preparation and hiring support</span></div>
-    </section>
-
-    <section class="section" id="search-results">
+    <section class="search-section" aria-labelledby="search-heading">
       <div class="container">
-        <div class="section-head"><div><span class="kicker">Search results</span><h2>Explore your <span>options</span></h2><p>Results update when you search or change a filter.</p></div><a class="text-link" href="/education/courses.html">Browse all courses →</a></div>
-        <div class="search-results-top"><span class="results-count" id="resultsCount" aria-live="polite">Loading directory…</span><span class="search-note">Featured links · Verify details before applying</span></div>
-        <div class="result-grid" id="resultGrid" aria-live="polite"></div>
-        <div class="empty-state" id="emptyState" hidden><h3>No matching resources found</h3><p>Try a broader keyword or clear one or more filters. You can also browse the education and career hubs directly.</p><a class="btn" href="/education/index.html">Explore Education ↗</a></div>
-      </div>
-    </section>
+        <div class="search-box">
+          <div class="search-box-heading">
+            <div>
+              <h2 id="search-heading">What are you looking for?</h2>
+              <p>Enter a keyword, select a category or try one of the popular searches.</p>
+            </div>
+            <span class="search-badge"><span aria-hidden="true">✦</span> RESOURCE SEARCH</span>
+          </div>
 
-    <section class="section alt" id="popular-searches">
-      <div class="container">
-        <div class="section-head"><div><span class="kicker">Popular starting points</span><h2>Browse by <span>interest</span></h2><p>Choose a category to go directly to a relevant MedOrbits section.</p></div></div>
-        <div class="quick-links">
-          <a class="quick-link" href="/education/study-in-india/mbbs.html"><strong>MBBS pathways</strong><span>Medical education in India and related admission information.</span></a>
-          <a class="quick-link" href="/education/study-abroad/mbbs-abroad.html"><strong>Study abroad</strong><span>Research destinations, university options and requirements.</span></a>
-          <a class="quick-link" href="/education/resources/scholarships.html"><strong>Fees & scholarships</strong><span>Review funding resources and check official eligibility.</span></a>
-          <a class="quick-link" href="/career/jobs.html"><strong>Jobs & internships</strong><span>Explore career resources and available listings.</span></a>
+          <form class="search-form" id="searchForm" role="search">
+            <div class="search-input-wrap">
+              <span aria-hidden="true">⌕</span>
+              <input
+                class="search-input"
+                id="searchQuery"
+                name="q"
+                type="search"
+                placeholder="Search courses, colleges, jobs, scholarships..."
+                autocomplete="off"
+                aria-label="Search MedOrbits resources">
+            </div>
+
+            <select class="filter-select" id="categoryFilter" aria-label="Filter by category">
+              <option value="all">All categories</option>
+              <option value="Education">Education</option>
+              <option value="Admissions">Admissions</option>
+              <option value="Study Abroad">Study Abroad</option>
+              <option value="Scholarships">Scholarships</option>
+              <option value="Career">Career</option>
+              <option value="Student Resources">Student Resources</option>
+              <option value="Services">Services</option>
+            </select>
+
+            <button class="btn" type="submit">Search Resources ↗</button>
+          </form>
+
+          <div class="filter-row">
+            <div class="filter-group">
+              <label for="typeFilter">Resource type</label>
+              <div class="filter-controls">
+                <select class="filter-select" id="typeFilter">
+                  <option value="all">All resource types</option>
+                  <option value="Page">Website pages</option>
+                  <option value="Guide">Guides &amp; information</option>
+                  <option value="Service">Services</option>
+                  <option value="Opportunity">Opportunities</option>
+                  <option value="Tool">Tools</option>
+                </select>
+
+                <select class="filter-select" id="sortFilter">
+                  <option value="relevance">Sort: Relevance</option>
+                  <option value="title">Sort: Title A–Z</option>
+                  <option value="category">Sort: Category</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="limitFilter">Results per page</label>
+              <select class="filter-select" id="limitFilter">
+                <option value="6">6 results</option>
+                <option value="9" selected>9 results</option>
+                <option value="12">12 results</option>
+                <option value="24">24 results</option>
+                <option value="all">Show all</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="quick-searches">
+            <span>Popular searches</span>
+            <div class="quick-list">
+              <button class="quick-btn" type="button" data-query="MBBS">MBBS</button>
+              <button class="quick-btn" type="button" data-query="scholarships">Scholarships</button>
+              <button class="quick-btn" type="button" data-query="study abroad">Study abroad</button>
+              <button class="quick-btn" type="button" data-query="internships">Internships</button>
+              <button class="quick-btn" type="button" data-query="resume">Resume builder</button>
+              <button class="quick-btn" type="button" data-query="colleges">Colleges</button>
+              <button class="quick-btn" type="button" data-query="career guidance">Career guidance</button>
+              <button class="quick-btn" type="button" data-query="admission">Admissions</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="cta">
-      <div class="container cta-inner"><div><span class="kicker">Need help deciding?</span><h2>Make your next step clearer.</h2><p>Tell us what you are exploring and request guidance.</p></div><div class="hero-actions"><a class="btn" href="/pages/apply.html">Request Guidance →</a><a class="btn btn-outline" href="/pages/contact.html">Contact MedOrbits</a></div></div>
+    <section class="results-section" id="searchResults" aria-labelledby="results-heading">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Explore the catalogue</span>
+            <h2 id="results-heading">Search <span>results</span></h2>
+            <p id="resultsDescription" aria-live="polite">Browse available MedOrbits resources.</p>
+          </div>
+
+          <div class="results-meta">
+            <span class="results-count" id="resultsCount">Loading resources…</span>
+            <button class="btn btn-outline" type="button" id="clearFilters">Reset filters ↺</button>
+          </div>
+        </div>
+
+        <div class="results-grid" id="resultsGrid" aria-live="polite"></div>
+
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon" aria-hidden="true">⌕</div>
+          <h3>No matching resources found</h3>
+          <p>
+            Try a different keyword, remove some filters or explore a broader
+            category. If the resource is not in this catalogue, contact MedOrbits
+            to ask about available guidance.
+          </p>
+          <button class="btn" type="button" id="emptyReset">Clear search and try again</button>
+          <a class="btn btn-outline" href="/pages/contact.html">Contact MedOrbits</a>
+        </div>
+
+        <p class="search-note">
+          Search results are generated from the resource catalogue embedded in this page.
+          They do not automatically search every website or external database. Resource
+          availability, admission criteria, fees, deadlines and opportunities should be
+          verified with the relevant official institution or organisation.
+        </p>
+      </div>
+    </section>
+
+    <section class="guidance-section">
+      <div class="container guidance-layout">
+        <div class="guidance-copy">
+          <span class="eyebrow">Need a little help?</span>
+          <h2>Not sure where <span>to begin?</span></h2>
+          <p>
+            Start with a subject area or request personalised guidance. The MedOrbits
+            team can help you understand available resources and the next steps relevant
+            to your goals.
+          </p>
+          <a class="btn" href="/pages/request-guidance.html">Request Guidance ↗</a>
+        </div>
+
+        <div class="guidance-links">
+          <a class="guidance-link" href="/education/courses.html">Explore courses <span>↗</span></a>
+          <a class="guidance-link" href="/education/colleges.html">Find colleges <span>↗</span></a>
+          <a class="guidance-link" href="/education/resources/scholarships.html">Scholarships <span>↗</span></a>
+          <a class="guidance-link" href="/education/study-abroad/index.html">Study abroad <span>↗</span></a>
+          <a class="guidance-link" href="/career/jobs.html">Career opportunities <span>↗</span></a>
+          <a class="guidance-link" href="/pages/contact.html">Contact support <span>↗</span></a>
+        </div>
+      </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand"><a class="brand" href="/index.html"><img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo" width="48" height="48" loading="lazy"><span><strong>MEDORBITS</strong><small>Study · Career · Consultancy</small></span></a><p>Explore education pathways, admission resources and career opportunities with MedOrbits.</p></div>
-        <div><h3>Education</h3><a href="/education/courses.html">Courses</a><a href="/education/colleges.html">Colleges</a><a href="/education/universities.html">Universities</a><a href="/education/study-in-india/index.html">Study in India</a><a href="/education/study-abroad/index.html">Study Abroad</a></div>
-        <div><h3>Student Resources</h3><a href="/education/admissions/eligibility.html">Eligibility</a><a href="/education/admissions/exams.html">Entrance Exams</a><a href="/education/resources/fees.html">Fees</a><a href="/education/resources/scholarships.html">Scholarships</a><a href="/education/admissions/documents.html">Documents</a></div>
-        <div><h3>Career Services</h3><a href="/career/jobs.html">Jobs</a><a href="/career/internships.html">Internships</a><a href="/career/guidance.html">Career Guidance</a><a href="/career/resume-support.html">Resume Support</a><a href="/career/recruitment.html">Recruitment</a></div>
-        <div><h3>MedOrbits</h3><a href="/pages/about.html">About Us</a><a href="/pages/services.html">Services</a><a href="/pages/contact.html">Contact</a><a href="/education/resources/faqs.html">FAQs</a><a href="/legal/privacy-policy.html">Privacy Policy</a><a href="/legal/terms.html">Terms &amp; Conditions</a><a href="/legal/refund-policy.html">Refund Policy</a><a href="/legal/disclaimer.html">Disclaimer</a></div>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="/index.html">
+            <img src="/assets/images/logo/medorbits-logo.png" alt="MedOrbits logo">
+            <span>
+              <strong>MEDORBITS</strong>
+              <small>Education &amp; Career Guidance</small>
+            </span>
+          </a>
+
+          <p>
+            Helping students and professionals explore education pathways,
+            admission resources, career options and opportunities through
+            organised information and guidance.
+          </p>
+
+          <div class="social-links" aria-label="Social media">
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">FB</a>
+            <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a>
+            <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube">YT</a>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-column">
+            <h3>Education</h3>
+            <a href="/education/courses.html">Courses</a>
+            <a href="/education/colleges.html">Colleges</a>
+            <a href="/education/universities.html">Universities</a>
+            <a href="/education/study-in-india/mbbs.html">MBBS in India</a>
+            <a href="/education/resources/scholarships.html">Scholarships</a>
+            <a href="/education/study-abroad/index.html">Study abroad</a>
+          </div>
+
+          <div class="footer-column">
+            <h3>Admissions</h3>
+            <a href="/education/admissions/index.html">Admission resources</a>
+            <a href="/education/admissions/eligibility.html">Eligibility guidance</a>
+            <a href="/education/admissions/documents.html">Document checklist</a>
+            <a href="/pages/apply.html">Apply for guidance</a>
+            <a href="/pages/request-guidance.html">Request guidance</a>
+          </div>
+
+          <div class="footer-column">
+            <h3>Career Services</h3>
+            <a href="/career/guidance.html">Career guidance</a>
+            <a href="/career/jobs.html">Find jobs</a>
+            <a href="/career/internships.html">Internships</a>
+            <a href="/career/resume-support.html">Resume support</a>
+            <a href="/career/recruitment.html">Recruitment</a>
+          </div>
+
+          <div class="footer-column">
+            <h3>MedOrbits</h3>
+            <a href="/pages/about.html">About us</a>
+            <a href="/pages/services.html">Our services</a>
+            <a href="/pages/search.html">Search resources</a>
+            <a href="/pages/contact.html">Contact support</a>
+            <a href="/pages/help-centre.html">Help centre</a>
+            <a href="/pages/privacy-policy.html">Privacy policy</a>
+          </div>
+        </div>
       </div>
-      <p class="disclaimer">Information on this website is for general guidance and does not replace official advice from institutions, regulators or licensing authorities. Admission, recognition, eligibility, fees, employment and outcomes are not guaranteed. Verify current requirements directly with the relevant official source before making decisions.</p>
-      <div class="footer-bottom"><span>© <span id="currentYear"></span> MedOrbits. All rights reserved.</span><span>STUDY · WORK · GROW</span></div>
+
+      <div class="footer-bottom">
+        <span>© <span id="currentYear"></span> MedOrbits. All rights reserved.</span>
+        <div class="footer-legal">
+          <a href="/pages/terms.html">Terms</a>
+          <a href="/pages/privacy-policy.html">Privacy</a>
+          <a href="/pages/contact.html">Support</a>
+        </div>
+      </div>
     </div>
   </footer>
 
+  <a class="whatsapp-float"
+     href="https://wa.me/916205889064"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="Contact MedOrbits on WhatsApp">✆</a>
+
   <script>
-    (() => {
-      "use strict";
-      const introScreen = document.getElementById("introScreen");
-      if (introScreen) {
-        const dismissIntro = () => window.setTimeout(() => introScreen.classList.add("is-hidden"), 1900);
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          introScreen.classList.add("is-hidden");
-        } else {
-          dismissIntro();
-          introScreen.addEventListener("transitionend", event => {
-            if (event.target === introScreen && introScreen.classList.contains("is-hidden")) introScreen.remove();
-          }, { once: true });
-        }
-      }
-      const header = document.getElementById("siteHeader");
-      const menuToggle = document.getElementById("menuToggle");
-      const nav = document.getElementById("mainNav");
-      const groups = [...document.querySelectorAll(".nav-group")];
-      const year = document.getElementById("currentYear");
-      if (year) year.textContent = String(new Date().getFullYear());
+    "use strict";
 
-      function closeMenu() {
-        nav?.classList.remove("open");
-        menuToggle?.setAttribute("aria-expanded", "false");
-        groups.forEach(group => {
-          group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-        });
-      }
-      menuToggle?.addEventListener("click", () => {
-        const open = nav.classList.toggle("open");
-        menuToggle.setAttribute("aria-expanded", String(open));
-        menuToggle.textContent = open ? "× CLOSE" : "☰ MENU";
-        if (!open) groups.forEach(group => {
-          group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-        });
-      });
-      groups.forEach(group => {
-        const trigger = group.querySelector(".nav-trigger");
-        trigger?.addEventListener("click", event => {
-          event.stopPropagation();
-          const open = !group.classList.contains("open");
-          groups.forEach(item => {
-            item.classList.remove("open");
-            item.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-          });
-          if (open) {
-            group.classList.add("open");
-            trigger.setAttribute("aria-expanded", "true");
-          }
-        });
-      });
-      nav?.querySelectorAll("a").forEach(link => link.addEventListener("click", closeMenu));
-      document.addEventListener("click", event => {
-        if (!(event.target instanceof Element)) return;
-        if (!event.target.closest(".nav-group")) groups.forEach(group => {
-          group.classList.remove("open");
-          group.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
-        });
-        if (nav?.classList.contains("open") && !event.target.closest("#mainNav") && !event.target.closest("#menuToggle")) closeMenu();
-      });
-      document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-          closeMenu();
-          menuToggle?.focus();
-        }
-      });
-      window.addEventListener("scroll", () => header?.classList.toggle("scrolled", window.scrollY > 20), { passive: true });
-      window.matchMedia("(min-width: 1101px)").addEventListener?.("change", event => {
-        if (event.matches) closeMenu();
-      });
-      document.querySelectorAll('img[src^="/assets/images/"]').forEach(img => {
-        img.addEventListener("error", function () {
-          if (this.dataset.fallbackUsed === "true") return;
-          this.dataset.fallbackUsed = "true";
-          this.src = "/assets/images/placeholders/image-placeholder.svg";
-        });
-      });
+    /*
+     * MedOrbits Search
+     * This page searches the local catalogue below.
+     * Connect an API endpoint here if server-backed or external search is required.
+     */
 
-      const directoryForm = document.getElementById("directorySearch");
-      if (directoryForm) {
-        const queryInput = document.getElementById("searchQuery");
-        const categoryInput = document.getElementById("searchCategory");
-        const levelInput = document.getElementById("searchLevel");
-        const countryInput = document.getElementById("searchCountry");
-        const resultGrid = document.getElementById("resultGrid");
-        const resultsCount = document.getElementById("resultsCount");
-        const emptyState = document.getElementById("emptyState");
-        const searchStatus = document.getElementById("searchStatus");
-        const resources = [
-          {title:"MBBS in India",category:"course",description:"Explore medical education, admission routes and eligibility information for MBBS pathways in India.",url:"/education/study-in-india/mbbs.html",tags:["medical","medicine","neet","undergraduate"],levels:["After Class 12","Undergraduate"],countries:["India"],label:"Medical"},
-          {title:"BDS",category:"course",description:"Review dentistry programmes, admission pathways and related education requirements.",url:"/education/study-in-india/bds.html",tags:["dental","dentistry","healthcare"],levels:["After Class 12","Undergraduate"],countries:["India"],label:"Dental"},
-          {title:"AYUSH programmes",category:"course",description:"Explore programmes in traditional and complementary healthcare and review course-specific requirements.",url:"/education/study-in-india/ayush.html",tags:["ayurveda","homeopathy","healthcare"],levels:["After Class 12","Undergraduate"],countries:["India"],label:"Healthcare"},
-          {title:"Nursing",category:"course",description:"Discover nursing qualifications, admission information and healthcare career pathways.",url:"/education/study-in-india/nursing.html",tags:["healthcare","clinical","bsc nursing"],levels:["After Class 12","Undergraduate","Diploma"],countries:["India"],label:"Healthcare"},
-          {title:"Pharmacy",category:"course",description:"Explore pharmacy qualifications and related professional pathways.",url:"/education/study-in-india/pharmacy.html",tags:["healthcare","b pharm","d pharm"],levels:["After Class 12","Undergraduate","Diploma"],countries:["India"],label:"Healthcare"},
-          {title:"Paramedical courses",category:"course",description:"Review allied-health, diagnostic and support-care programmes.",url:"/education/study-in-india/paramedical.html",tags:["allied health","diagnostics","laboratory","medical technology"],levels:["After Class 12","Undergraduate","Diploma"],countries:["India"],label:"Allied health"},
-          {title:"Engineering",category:"course",description:"Compare technical study pathways and areas of specialization.",url:"/education/study-in-india/engineering.html",tags:["technology","btech","computer science"],levels:["After Class 12","Undergraduate","Postgraduate"],countries:["India"],label:"Technology"},
-          {title:"Management",category:"course",description:"Explore business, leadership and management qualifications.",url:"/education/study-in-india/management.html",tags:["business","bba","mba","leadership"],levels:["Undergraduate","Postgraduate"],countries:["India"],label:"Business"},
-          {title:"MBBS abroad",category:"destination",description:"Research international medical study options and verify recognition, costs and licensing requirements.",url:"/education/study-abroad/mbbs-abroad.html",tags:["international","medicine","medical","foreign university"],levels:["After Class 12","Undergraduate"],countries:["Russia","Georgia","Kazakhstan","Uzbekistan","Kyrgyzstan"],label:"Study abroad"},
-          {title:"Study in Russia",category:"destination",description:"Review international study options and student requirements for Russia.",url:"/education/study-abroad/russia.html",tags:["international","university","medical"],levels:["After Class 12","Undergraduate","Postgraduate"],countries:["Russia"],label:"Study abroad"},
-          {title:"Study in Georgia",category:"destination",description:"Explore study pathways in Georgia and research official admission requirements.",url:"/education/study-abroad/georgia.html",tags:["international","university","medical"],levels:["After Class 12","Undergraduate","Postgraduate"],countries:["Georgia"],label:"Study abroad"},
-          {title:"Study in Kazakhstan",category:"destination",description:"Review courses, admissions and planning resources for Kazakhstan.",url:"/education/study-abroad/kazakhstan.html",tags:["international","university","medical"],levels:["After Class 12","Undergraduate","Postgraduate"],countries:["Kazakhstan"],label:"Study abroad"},
-          {title:"Colleges directory",category:"resource",description:"Browse college information and research institutions relevant to your course interests.",url:"/education/colleges.html",tags:["institution","college list","admissions"],levels:["After Class 10","After Class 12","Undergraduate","Postgraduate"],countries:["India"],label:"Institutions"},
-          {title:"Universities directory",category:"resource",description:"Explore university information to support your education research.",url:"/education/universities.html",tags:["institution","university list","international"],levels:["Undergraduate","Postgraduate","Doctoral"],countries:["India","Russia","Georgia","Kazakhstan","United Kingdom","United States","Canada","Australia","Germany"],label:"Institutions"},
-          {title:"Admission guidance",category:"admission",description:"Understand common admission steps and plan your next actions.",url:"/education/admissions/index.html",tags:["application","counselling","admissions process"],levels:["After Class 10","After Class 12","Undergraduate","Postgraduate"],countries:["India"],label:"Admissions"},
-          {title:"Eligibility requirements",category:"admission",description:"Review eligibility information and confirm current rules with the relevant institution or authority.",url:"/education/admissions/eligibility.html",tags:["criteria","qualification","requirements"],levels:["After Class 10","After Class 12","Undergraduate","Postgraduate"],countries:["India"],label:"Admissions"},
-          {title:"Entrance exams",category:"admission",description:"Explore entrance-exam resources and check official examination notifications.",url:"/education/admissions/exams.html",tags:["neet","exam","test","entrance"],levels:["After Class 12","Undergraduate","Postgraduate"],countries:["India"],label:"Admissions"},
-          {title:"Fees and funding",category:"resource",description:"Research fee information and plan to confirm charges directly with institutions.",url:"/education/resources/fees.html",tags:["tuition","cost","budget","funding"],levels:["After Class 10","After Class 12","Undergraduate","Postgraduate"],countries:["India","Russia","Georgia","Kazakhstan"],label:"Student resources"},
-          {title:"Scholarships",category:"resource",description:"Explore scholarship resources and verify eligibility, deadlines and terms with providers.",url:"/education/resources/scholarships.html",tags:["financial aid","funding","grant"],levels:["After Class 10","After Class 12","Undergraduate","Postgraduate","Doctoral"],countries:["India","Russia","Georgia","Kazakhstan","United Kingdom","United States","Canada","Australia","Germany"],label:"Student resources"},
-          {title:"Find jobs",category:"career",description:"Browse job resources and review the requirements for individual roles.",url:"/career/jobs.html",tags:["employment","vacancy","work","job search"],levels:[],countries:[],label:"Candidates"},
-          {title:"Internships",category:"career",description:"Explore internship resources that may help build practical experience.",url:"/career/internships.html",tags:["experience","trainee","student work"],levels:[],countries:[],label:"Early career"},
-          {title:"Resume support",category:"career",description:"Prepare a clear resume and present your experience effectively.",url:"/career/resume-support.html",tags:["cv","curriculum vitae","job application"],levels:[],countries:[],label:"Career readiness"},
-          {title:"Career guidance",category:"career",description:"Explore career planning resources and think through possible next steps.",url:"/career/guidance.html",tags:["career planning","professional development"],levels:[],countries:[],label:"Career support"},
-          {title:"Recruitment services",category:"employer",description:"Explore hiring support and candidate sourcing services for employers.",url:"/career/recruitment.html",tags:["hiring","talent acquisition","employer"],levels:[],countries:[],label:"Employers"},
-          {title:"Employer services",category:"employer",description:"Review recruitment-related support and employer service information.",url:"/career/employer-services.html",tags:["business","recruitment","staffing"],levels:[],countries:[],label:"Employers"}
-        ];
-        const normalize = value => (value || "").toString().trim().toLowerCase();
-        const params = new URLSearchParams(window.location.search);
-        queryInput.value = params.get("q") || "";
-        levelInput.value = params.get("level") || "";
-        countryInput.value = params.get("country") || "";
-        categoryInput.value = params.get("category") || "";
-        function renderResults(updateUrl = false) {
-          const q = normalize(queryInput.value);
-          const category = categoryInput.value;
-          const level = levelInput.value;
-          const country = countryInput.value;
-          const words = q.split(/\s+/).filter(Boolean);
-          const filtered = resources.filter(item => {
-            const haystack = normalize([item.title,item.category,item.description,item.label,...item.tags,...item.levels,...item.countries].join(" "));
-            return (!words.length || words.every(word => haystack.includes(word))) &&
-              (!category || item.category === category) &&
-              (!level || item.levels.includes(level)) &&
-              (!country || item.countries.includes(country));
-          });
-          resultGrid.innerHTML = filtered.map(item => `<article class="result-card"><div class="result-topline"><span class="result-category">${item.label}</span><span class="result-chip">${({course:"Course",destination:"Destination",admission:"Admissions",resource:"Resource",career:"Career",employer:"Employer"})[item.category]}</span></div><h3>${item.title}</h3><p>${item.description}</p><div class="result-meta">${(item.levels.length ? item.levels.slice(0,2) : [item.category === "employer" ? "For employers" : "Career resource"]).map(value=>`<span>${value}</span>`).join("")}${item.countries.length ? `<span>${item.countries.slice(0,2).join(" · ")}</span>` : ""}</div><a class="result-link" href="${item.url}">Explore resource ↗</a></article>`).join("");
-          resultsCount.textContent = `${filtered.length} ${filtered.length === 1 ? "resource" : "resources"} found`;
-          emptyState.hidden = filtered.length !== 0;
-          resultGrid.hidden = filtered.length === 0;
-          searchStatus.textContent = q || category || level || country ? "Showing matches for your current search and filters." : "Showing featured education, admissions and career resources.";
-          if (updateUrl) {
-            const next = new URLSearchParams();
-            if (queryInput.value.trim()) next.set("q", queryInput.value.trim());
-            if (category) next.set("category", category);
-            if (level) next.set("level", level);
-            if (country) next.set("country", country);
-            const query = next.toString();
-            history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : "") + window.location.hash);
-          }
-        }
-        directoryForm.addEventListener("submit", event => { event.preventDefault(); renderResults(true); document.getElementById("search-results").scrollIntoView({behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); });
-        [categoryInput, levelInput, countryInput].forEach(input => input.addEventListener("change", () => renderResults(true)));
-        document.getElementById("clearSearch").addEventListener("click", () => window.setTimeout(() => { queryInput.value=""; categoryInput.value=""; levelInput.value=""; countryInput.value=""; renderResults(true); }, 0));
-        renderResults(false);
+    const resources = [
+      {
+        title: "Explore Courses",
+        category: "Education",
+        type: "Page",
+        description: "Explore academic courses, qualification pathways and study options to identify programmes that align with your interests and goals.",
+        keywords: "course courses degree diploma undergraduate postgraduate education programme program subjects",
+        url: "/education/courses.html",
+        icon: "▤"
+      },
+      {
+        title: "Find Colleges",
+        category: "Education",
+        type: "Page",
+        description: "Browse college information and discover institutions to research for your preferred course, location and qualification.",
+        keywords: "college colleges institution campus admission study university",
+        url: "/education/colleges.html",
+        icon: "⌂"
+      },
+      {
+        title: "Explore Universities",
+        category: "Education",
+        type: "Page",
+        description: "Explore universities and higher education institutions as part of your academic research and planning.",
+        keywords: "university universities ugc higher education institutions public private",
+        url: "/education/universities.html",
+        icon: "▥"
+      },
+      {
+        title: "MBBS in India",
+        category: "Admissions",
+        type: "Guide",
+        description: "Explore MBBS education resources, medical college research, NEET-related information and admission planning in India.",
+        keywords: "mbbs medical neet ug medical education doctor medicine india counselling",
+        url: "/education/study-in-india/mbbs.html",
+        icon: "✚"
+      },
+      {
+        title: "BDS and Dental Education",
+        category: "Admissions",
+        type: "Guide",
+        description: "Research dental education pathways, BDS programmes and admission-related resources.",
+        keywords: "bds dental dentistry dentist medical admission neet",
+        url: "/education/study-in-india/bds.html",
+        icon: "✚"
+      },
+      {
+        title: "Admission Resources",
+        category: "Admissions",
+        type: "Page",
+        description: "Review general admission guidance, application steps and planning resources before applying to an institution.",
+        keywords: "admission admissions application apply process counselling enrollment enrolment",
+        url: "/education/admissions/index.html",
+        icon: "▣"
+      },
+      {
+        title: "Eligibility Guidance",
+        category: "Admissions",
+        type: "Guide",
+        description: "Learn how to research course eligibility, entry requirements and qualification criteria before submitting an application.",
+        keywords: "eligibility qualification criteria requirements marks age entrance application",
+        url: "/education/admissions/eligibility.html",
+        icon: "✓"
+      },
+      {
+        title: "Admission Document Checklist",
+        category: "Admissions",
+        type: "Guide",
+        description: "Organise common application documents and prepare a checklist for review against the official institution requirements.",
+        keywords: "documents checklist certificates marksheet passport identity pdf application paperwork",
+        url: "/education/admissions/documents.html",
+        icon: "▤"
+      },
+      {
+        title: "Entrance Exams",
+        category: "Admissions",
+        type: "Guide",
+        description: "Explore entrance examination resources and prepare to verify exam dates, eligibility and instructions from official sources.",
+        keywords: "entrance exam exams test neet jee cuet examination preparation",
+        url: "/education/admissions/entrance-exams.html",
+        icon: "✎"
+      },
+      {
+        title: "Scholarships and Funding",
+        category: "Scholarships",
+        type: "Guide",
+        description: "Find scholarship and education-funding resources to help research eligibility, application requirements and potential financial support.",
+        keywords: "scholarship scholarships grant funding financial aid stipend fee support money",
+        url: "/education/resources/scholarships.html",
+        icon: "◇"
+      },
+      {
+        title: "Study Abroad",
+        category: "Study Abroad",
+        type: "Page",
+        description: "Explore international study destinations, programme research and the preparation steps involved in studying overseas.",
+        keywords: "study abroad overseas international foreign country education student visa",
+        url: "/education/study-abroad/index.html",
+        icon: "◎"
+      },
+      {
+        title: "Study in Germany",
+        category: "Study Abroad",
+        type: "Guide",
+        description: "Research German higher education options, programme requirements, language preparation and international student planning.",
+        keywords: "germany german europe international education bachelors masters university",
+        url: "/education/study-abroad/germany.html",
+        icon: "◎"
+      },
+      {
+        title: "Study in Europe",
+        category: "Study Abroad",
+        type: "Guide",
+        description: "Explore international education research for European destinations and verify programme and visa details with official sources.",
+        keywords: "europe poland germany france italy international universities overseas",
+        url: "/education/study-abroad/europe.html",
+        icon: "◎"
+      },
+      {
+        title: "International Student Documents",
+        category: "Study Abroad",
+        type: "Guide",
+        description: "Organise common study-abroad documents and research the requirements that apply to your destination and institution.",
+        keywords: "passport visa documents international student overseas application",
+        url: "/education/study-abroad/documents.html",
+        icon: "▤"
+      },
+      {
+        title: "Career Guidance",
+        category: "Career",
+        type: "Service",
+        description: "Explore career pathways, professional options, skill development and practical planning resources for your next step.",
+        keywords: "career guidance counselling counseling planning profession job work skills roadmap",
+        url: "/career/guidance.html",
+        icon: "↗"
+      },
+      {
+        title: "Career Planning",
+        category: "Career",
+        type: "Guide",
+        description: "Structure your career goals, compare professional pathways and identify useful next steps for skills and experience.",
+        keywords: "career planning roadmap goals skills profession future development",
+        url: "/career/planning.html",
+        icon: "⌁"
+      },
+      {
+        title: "Find Jobs",
+        category: "Career",
+        type: "Opportunity",
+        description: "Explore job-related resources and prepare to research suitable roles, application requirements and employer information.",
+        keywords: "jobs job vacancy vacancies employment hiring work full time part time",
+        url: "/career/jobs.html",
+        icon: "▣"
+      },
+      {
+        title: "Internships",
+        category: "Career",
+        type: "Opportunity",
+        description: "Explore internship resources and ways to research practical experience, training opportunities and application requirements.",
+        keywords: "internship internships trainee training experience student placement work",
+        url: "/career/internships.html",
+        icon: "↗"
+      },
+      {
+        title: "Resume Support",
+        category: "Career",
+        type: "Tool",
+        description: "Prepare and improve your resume by organising experience, education, skills and achievements for job applications.",
+        keywords: "resume cv curriculum vitae builder create build template job profile",
+        url: "/career/resume-support.html",
+        icon: "▤"
+      },
+      {
+        title: "Recruitment Services",
+        category: "Career",
+        type: "Service",
+        description: "Explore recruitment-related support and employer services. Contact MedOrbits to discuss the current scope and availability.",
+        keywords: "recruitment employer hiring staffing talent acquisition workforce company",
+        url: "/career/recruitment.html",
+        icon: "◎"
+      },
+      {
+        title: "Career Tools",
+        category: "Career",
+        type: "Tool",
+        description: "Explore available career resources and tools that can help organise your job search and professional planning.",
+        keywords: "career tools calculator resume tracker job planning",
+        url: "/career/tools.html",
+        icon: "⚙"
+      },
+      {
+        title: "Student Resources",
+        category: "Student Resources",
+        type: "Page",
+        description: "Explore student-focused information and resources for planning, preparing and navigating education-related decisions.",
+        keywords: "student resources help guide study planning learners",
+        url: "/pages/student-resources.html",
+        icon: "▧"
+      },
+      {
+        title: "Request Personalised Guidance",
+        category: "Services",
+        type: "Service",
+        description: "Submit a guidance request to discuss your education, admissions or career goals with the MedOrbits team.",
+        keywords: "request guidance counselling counselling support consultation help contact",
+        url: "/pages/request-guidance.html",
+        icon: "✦"
+      },
+      {
+        title: "Apply for MedOrbits Support",
+        category: "Services",
+        type: "Service",
+        description: "Use the application page to submit your details for consideration for available guidance and support services.",
+        keywords: "apply application form submit register student consultancy",
+        url: "/pages/apply.html",
+        icon: "▤"
+      },
+      {
+        title: "Our Services",
+        category: "Services",
+        type: "Page",
+        description: "Review MedOrbits education consultancy, admission guidance, study-abroad support, career planning and recruitment services.",
+        keywords: "services consultancy education admissions career recruitment business",
+        url: "/pages/services.html",
+        icon: "◇"
+      },
+      {
+        title: "About MedOrbits",
+        category: "Services",
+        type: "Page",
+        description: "Learn about MedOrbits and the education, admissions and career guidance resources offered through the platform.",
+        keywords: "about company organisation organization mission information",
+        url: "/pages/about.html",
+        icon: "◈"
+      },
+      {
+        title: "Contact and Support",
+        category: "Services",
+        type: "Page",
+        description: "Contact MedOrbits to ask a question, request assistance or find out more about available support services.",
+        keywords: "contact support help email phone query question assistance",
+        url: "/pages/contact.html",
+        icon: "✉"
+      },
+      {
+        title: "Help Centre",
+        category: "Services",
+        type: "Page",
+        description: "Find help and support information for navigating MedOrbits resources and services.",
+        keywords: "help centre center faqs frequently asked questions support",
+        url: "/pages/help-centre.html",
+        icon: "?"
       }
-    })();
+    ];
+
+    const elements = {
+      form: document.getElementById("searchForm"),
+      query: document.getElementById("searchQuery"),
+      category: document.getElementById("categoryFilter"),
+      type: document.getElementById("typeFilter"),
+      sort: document.getElementById("sortFilter"),
+      limit: document.getElementById("limitFilter"),
+      grid: document.getElementById("resultsGrid"),
+      count: document.getElementById("resultsCount"),
+      description: document.getElementById("resultsDescription"),
+      empty: document.getElementById("emptyState"),
+      clear: document.getElementById("clearFilters"),
+      emptyReset: document.getElementById("emptyReset"),
+      menuToggle: document.getElementById("menuToggle"),
+      nav: document.getElementById("mainNav"),
+      header: document.getElementById("siteHeader"),
+      intro: document.getElementById("introScreen")
+    };
+
+    const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    function normalise(value) {
+      return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function getSearchScore(item, query) {
+      const terms = normalise(query).split(/\s+/).filter(Boolean);
+      if (!terms.length) return 0;
+
+      const title = normalise(item.title);
+      const category = normalise(item.category);
+      const description = normalise(item.description);
+      const keywords = normalise(item.keywords);
+      const fullText = [title, category, description, keywords].join(" ");
+
+      // Every query term must match at least one field.
+      if (!terms.every((term) => fullText.includes(term))) return -1;
+
+      let score = 0;
+
+      for (const term of terms) {
+        if (title.includes(term)) score += title === term ? 12 : 6;
+        if (category.includes(term)) score += 4;
+        if (keywords.includes(term)) score += 3;
+        if (description.includes(term)) score += 1;
+      }
+
+      return score;
+    }
+
+    function getFilteredResources() {
+      const query = elements.query.value.trim();
+      const category = elements.category.value;
+      const type = elements.type.value;
+      const sort = elements.sort.value;
+
+      let filtered = resources
+        .map((item) => ({
+          ...item,
+          score: getSearchScore(item, query)
+        }))
+        .filter((item) => item.score >= 0)
+        .filter((item) => category === "all" || item.category === category)
+        .filter((item) => type === "all" || item.type === type);
+
+      if (sort === "title") {
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (sort === "category") {
+        filtered.sort((a, b) =>
+          a.category.localeCompare(b.category) ||
+          a.title.localeCompare(b.title)
+        );
+      } else {
+        filtered.sort((a, b) =>
+          b.score - a.score ||
+          a.title.localeCompare(b.title)
+        );
+      }
+
+      return filtered;
+    }
+
+    function renderCard(item) {
+      return `
+        <article class="result-card reveal">
+          <div class="result-card-top">
+            <span class="result-icon" aria-hidden="true">${escapeHTML(item.icon)}</span>
+            <span class="result-category">${escapeHTML(item.category)}</span>
+          </div>
+          <span class="result-type">${escapeHTML(item.type)}</span>
+          <h3>${escapeHTML(item.title)}</h3>
+          <p>${escapeHTML(item.description)}</p>
+          <a class="result-link" href="${escapeHTML(item.url)}">
+            Explore resource <span aria-hidden="true">→</span>
+          </a>
+        </article>
+      `;
+    }
+
+    function renderResults() {
+      const filtered = getFilteredResources();
+      const limitValue = elements.limit.value;
+      const limit = limitValue === "all" ? filtered.length : Number(limitValue);
+      const visible = filtered.slice(0, limit);
+      const query = elements.query.value.trim();
+
+      elements.grid.innerHTML = visible.map(renderCard).join("");
+      elements.empty.classList.toggle("visible", filtered.length === 0);
+      elements.grid.hidden = filtered.length === 0;
+
+      elements.count.textContent =
+        `${filtered.length} ${filtered.length === 1 ? "resource" : "resources"}`;
+
+      if (query) {
+        elements.description.textContent =
+          `Showing matches for "${query}".`;
+      } else {
+        elements.description.textContent =
+          "Browse available MedOrbits resources.";
+      }
+
+      if (filtered.length > visible.length) {
+        elements.description.textContent +=
+          ` Showing ${visible.length} of ${filtered.length} results.`;
+      }
+    }
+
+    function resetSearch() {
+      elements.query.value = "";
+      elements.category.value = "all";
+      elements.type.value = "all";
+      elements.sort.value = "relevance";
+      elements.limit.value = "9";
+      renderResults();
+      elements.query.focus();
+    }
+
+    elements.form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      renderResults();
+      document.getElementById("searchResults").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start"
+      });
+    });
+
+    elements.query.addEventListener("input", renderResults);
+    elements.category.addEventListener("change", renderResults);
+    elements.type.addEventListener("change", renderResults);
+    elements.sort.addEventListener("change", renderResults);
+    elements.limit.addEventListener("change", renderResults);
+
+    document.querySelectorAll("[data-query]").forEach((button) => {
+      button.addEventListener("click", () => {
+        elements.query.value = button.dataset.query || "";
+        renderResults();
+        document.getElementById("searchResults").scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth",
+          block: "start"
+        });
+      });
+    });
+
+    elements.clear.addEventListener("click", resetSearch);
+    elements.emptyReset.addEventListener("click", resetSearch);
+
+    // Responsive navigation menu.
+    elements.menuToggle.addEventListener("click", () => {
+      const isOpen = elements.nav.classList.toggle("open");
+      elements.menuToggle.setAttribute("aria-expanded", String(isOpen));
+      elements.menuToggle.textContent = isOpen ? "CLOSE ✕" : "MENU ☰";
+    });
+
+    // Expand dropdowns by click on touch devices.
+    document.querySelectorAll(".nav-trigger").forEach((button) => {
+      button.addEventListener("click", () => {
+        const group = button.closest(".nav-group");
+        const isOpen = group.classList.toggle("open");
+        button.setAttribute("aria-expanded", String(isOpen));
+      });
+    });
+
+    // Close mobile navigation after choosing a link.
+    elements.nav.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        elements.nav.classList.remove("open");
+        elements.menuToggle.setAttribute("aria-expanded", "false");
+        elements.menuToggle.textContent = "MENU ☰";
+      });
+    });
+
+    // Header scroll styling.
+    function updateHeader() {
+      elements.header.classList.toggle("scrolled", window.scrollY > 20);
+    }
+
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    updateHeader();
+
+    // Hide the intro animation and respect reduced-motion settings.
+    function hideIntro() {
+      if (elements.intro) elements.intro.classList.add("is-hidden");
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      hideIntro();
+    } else {
+      window.setTimeout(hideIntro, 1500);
+    }
+
+    document.getElementById("currentYear").textContent =
+      new Date().getFullYear();
+
+    // Render initial catalogue.
+    renderResults();
   </script>
-  <script defer src="/assets/js/constants.js"></script>
-  <script defer src="/assets/js/config.js"></script>
-  <script defer src="/assets/js/utils.js"></script>
-  <script defer src="/assets/js/navigation.js"></script>
-  <script defer src="/assets/js/search.js"></script>
-  <script defer src="/assets/js/animations.js"></script>
-  <script defer src="/assets/js/app.js"></script>
-  <script defer src="/assets/js/site-search-bar.js"></script>
 </body>
 </html>

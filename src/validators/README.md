@@ -383,6 +383,8 @@ const {
   email,
 } = require(‘../utils/validation’);
 
+const { httpError } = require(‘../utils/http’);
+
 const ALLOWED_FIELDS = Object.freeze([
   ‘name’,
   ‘email’,
@@ -396,8 +398,6 @@ function validateCreateContact(input) {
   );
 
   if (unknownFields.length > 0) {
-    const { httpError } = require(‘../utils/http’);
-
     throw httpError(
       400,
       ‘UNKNOWN_FIELDS’,

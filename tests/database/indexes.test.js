@@ -3,22 +3,17 @@
  * MedOrbits -- Database Index Tests
  *
  * File: tests/database/indexes.test.js
- *
  * Framework: Node.js built-in node:test
- *
- * Supported drivers:
- * - PostgreSQL: pg
- * - MySQL: mysql2/promise
  *
  * Run:
  *   node --test tests/database/indexes.test.js
  *
- * Required environment:
+ * Required:
  *   NODE_ENV=test
  *   TEST_DATABASE_CLIENT=postgres|mysql
  *
  * PostgreSQL:
- *   TEST_DATABASE_URL=postgresql://...
+ *   TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/medorbits_test
  *
  * MySQL:
  *   TEST_DATABASE_HOST=127.0.0.1
@@ -27,29 +22,41 @@
  *   TEST_DATABASE_USER=...
  *   TEST_DATABASE_PASSWORD=...
  *
- * Safety:
- * - Refuses to run in production.
- * - Requires explicit test database configuration.
- * - Creates uniquely named test tables only.
- * - Does not alter existing application tables.
- * - Cleans up test tables and closes the connection.
+ * Optional:
+ *   TEST_DATABASE_SSL=true
  *
- * Note:
- * These tests validate index behavior on test tables. They do not prove
- * that the actual MedOrbits production schema has the required indexes.
+ * These tests validate indexes on temporary test tables only.
+ * They do not verify the indexes in the actual MedOrbits schema.
+ *
+ * Use a dedicated test database and a restricted test account.
  */
-const test = require('node:test');
+const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { randomBytes } = require('node:crypto');
 const CLIENT = (
   process.env.TEST_DATABASE_CLIENT || ''
 ).trim().toLowerCase();
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-const VALID_CLIENTS = ['postgres', 'mysql'];
+const IS_PRODUCTION =
+  (process.env.NODE_ENV || '').trim().toLowerCase() === 'production';
+const DATABASE_URL = process.env.TEST_DATABASE_URL || '';
+function configuredDatabaseName() {
+  if (CLIENT === 'postgres') {
+    try {
+      return decodeURIComponent(
+        new URL(DATABASE_URL).pathname.replace(/^\/+/, ''),
+      );
+    } catch {
+      return '';
+    }
+  }
+  if (CLIENT === 'mysql') {
+    return (process.env.TEST_DATABASE_NAME || '').trim();
+  }
+  return '';
+}
+const DATABASE_NAME = configuredDatabaseName();
 const HAS_POSTGRES_CONFIG =
-  /^postgres(?:ql)?:\/\//i.test(
-    process.env.TEST_DATABASE_URL || '',
-  );
+  /^postgres(?:ql)?:\/\//i.test(DATABASE_URL);
 const HAS_MYSQL_CONFIG = Boolean(
   process.env.TEST_DATABASE_HOST &&
   process.env.TEST_DATABASE_NAME &&
@@ -57,13 +64,17 @@ const HAS_MYSQL_CONFIG = Boolean(
 );
 const CONFIG_ERROR = IS_PRODUCTION
   ? 'Database index tests cannot run in production.'
-  : !VALID_CLIENTS.includes(CLIENT)
+  : !['postgres', 'mysql'].includes(CLIENT)
     ? 'Set TEST_DATABASE_CLIENT to postgres or mysql.'
     : CLIENT === 'postgres' && !HAS_POSTGRES_CONFIG
       ? 'Set TEST_DATABASE_URL to a PostgreSQL test database.'
       : CLIENT === 'mysql' && !HAS_MYSQL_CONFIG
         ? 'Set TEST_DATABASE_HOST, TEST_DATABASE_NAME, and TEST_DATABASE_USER.'
-        : null;
+        : !DATABASE_NAME
+          ? 'Could not determine the configured database name.'
+          : !/test/i.test(DATABASE_NAME)
+            ? 'Database name must contain "test". Use a dedicated test database.'
+            : null;
 const SUFFIX = randomBytes(6).toString('hex');
 const TABLES = Object.freeze({
   users: `mo_idx_users_${SUFFIX}`,
@@ -77,7 +88,7 @@ const INDEXES = Object.freeze({
   paymentReference: `mo_idx_payment_ref_${SUFFIX}`,
 });
 let driver;
-let connection;
+let connection = null;
 let closeConnection = async () => {};
 let setupError = null;
 let connected = false;
@@ -91,10 +102,22 @@ function quoteIdentifier(identifier) {
     : `"${identifier}"`;
 }
 function table(name) {
+  if (!Object.prototype.hasOwnProperty.call(TABLES, name)) {
+    throw new Error(`Unknown test table: ${name}`);
+  }
   return quoteIdentifier(TABLES[name]);
 }
 function index(name) {
+  if (!Object.prototype.hasOwnProperty.call(INDEXES, name)) {
+    throw new Error(`Unknown test index: ${name}`);
+  }
   return quoteIdentifier(INDEXES[name]);
+}
+function placeholders(count) {
+  return Array.from(
+    { length: count },
+    (_, index) => CLIENT === 'postgres' ? `$${index + 1}` : '?',
+  ).join(', ');
 }
 async function query(sql, params = []) {
   if (!connection) {
@@ -114,9 +137,8 @@ async function ddl(sql) {
 }
 async function acquireConnection() {
   if (CLIENT === 'postgres') {
-    const { Pool } = driver;
-    const pool = new Pool({
-      connectionString: process.env.TEST_DATABASE_URL,
+    const pool = new driver.Pool({
+      connectionString: DATABASE_URL,
       max: 1,
       connectionTimeoutMillis: 5000,
       application_name: 'medorbits-index-tests',
@@ -128,14 +150,22 @@ async function acquireConnection() {
           }
         : {}),
     });
-    const client = await pool.connect();
-    return {
-      connection: client,
-      close: async () => {
-        client.release();
-        await pool.end();
-      },
-    };
+    try {
+      const client = await pool.connect();
+      return {
+        connection: client,
+        close: async () => {
+          try {
+            client.release();
+          } finally {
+            await pool.end();
+          }
+        },
+      };
+    } catch (error) {
+      await pool.end().catch(() => {});
+      throw error;
+    }
   }
   const mysqlConnection = await driver.createConnection({
     host: process.env.TEST_DATABASE_HOST,
@@ -151,19 +181,39 @@ async function acquireConnection() {
     close: async () => mysqlConnection.end(),
   };
 }
+async function verifyDatabaseIdentity() {
+  const result = CLIENT === 'postgres'
+    ? await query('SELECT current_database() AS database_name')
+    : await query('SELECT DATABASE() AS database_name');
+  assert.equal(result.rows.length, 1);
+  const actualName = result.rows[0].database_name;
+  assert.equal(
+    actualName,
+    DATABASE_NAME,
+    'Connected database does not match the configured test database.',
+  );
+  assert.match(
+    actualName,
+    /test/i,
+    'Refusing to create test tables outside a database whose name contains "test".',
+  );
+}
+async function createTable(name, sql) {
+  await ddl(sql);
+  createdTables.push(TABLES[name]);
+}
 async function createTables() {
   const users = table('users');
   const applications = table('applications');
   const payments = table('payments');
-  await ddl(`
+  await createTable('users', `
     CREATE TABLE ${users} (
       id INTEGER PRIMARY KEY,
       email VARCHAR(255) NOT NULL,
       display_name VARCHAR(120) NOT NULL
     )
   `);
-  createdTables.push(TABLES.users);
-  await ddl(`
+  await createTable('applications', `
     CREATE TABLE ${applications} (
       id INTEGER PRIMARY KEY,
       user_id INTEGER NOT NULL,
@@ -171,8 +221,7 @@ async function createTables() {
       created_at TIMESTAMP NOT NULL
     )
   `);
-  createdTables.push(TABLES.applications);
-  await ddl(`
+  await createTable('payments', `
     CREATE TABLE ${payments} (
       id INTEGER PRIMARY KEY,
       reference VARCHAR(100) NOT NULL,
@@ -180,23 +229,18 @@ async function createTables() {
       status VARCHAR(40) NOT NULL
     )
   `);
-  createdTables.push(TABLES.payments);
-  // Unique index for lookup by user email.
   await ddl(`
     CREATE UNIQUE INDEX ${index('userEmail')}
     ON ${users} (email)
   `);
-  // Single-column index for filtering application status.
   await ddl(`
     CREATE INDEX ${index('applicationStatus')}
     ON ${applications} (status)
   `);
-  // Composite index for filtering a user's applications by status.
   await ddl(`
     CREATE INDEX ${index('applicationOwnerStatus')}
     ON ${applications} (user_id, status)
   `);
-  // Unique payment reference prevents duplicate references.
   await ddl(`
     CREATE UNIQUE INDEX ${index('paymentReference')}
     ON ${payments} (reference)
@@ -211,9 +255,20 @@ async function cleanup() {
       errors.push(`${name}: ${error.message}`);
     }
   }
-  createdTables = [];
   if (errors.length) {
     throw new Error(`Index test cleanup failed: ${errors.join('; ')}`);
+  }
+  createdTables = [];
+}
+function requireReadyConnection() {
+  if (CONFIG_ERROR) {
+    throw new Error(CONFIG_ERROR);
+  }
+  if (setupError) {
+    throw setupError;
+  }
+  if (!connected || !connection) {
+    throw new Error('Database test connection was not initialized.');
   }
 }
 async function getIndexes(tableName) {
@@ -234,70 +289,92 @@ async function getIndexes(tableName) {
       definition: row.index_definition,
     }));
   }
-  const result = await connection.query(
+  const [rows] = await connection.query(
     `SHOW INDEX FROM ${quoteIdentifier(tableName)}`,
   );
-  return result[0].map((row) => ({
+  return rows.map((row) => ({
     name: row.Key_name,
     column: row.Column_name,
     nonUnique: Number(row.Non_unique),
     sequence: Number(row.Seq_in_index),
   }));
 }
-async function getExplain(sql, params = []) {
-  if (CLIENT === 'postgres') {
-    return query(`EXPLAIN ${sql}`, params);
-  }
-  // MySQL EXPLAIN supports prepared statements through execute().
-  return query(`EXPLAIN ${sql}`, params);
-}
 function hasIndex(indexes, name) {
   return indexes.some((item) => item.name === name);
 }
+function assertUniqueIndex(indexes, name) {
+  assert.ok(
+    hasIndex(indexes, name),
+    `Expected index "${name}" to exist.`,
+  );
+  if (CLIENT === 'postgres') {
+    const found = indexes.find((item) => item.name === name);
+    assert.match(
+      found.definition,
+      /\bUNIQUE INDEX\b/i,
+      `Expected "${name}" to be a unique PostgreSQL index.`,
+    );
+  } else {
+    const found = indexes.filter((item) => item.name === name);
+    assert.ok(found.length > 0);
+    assert.ok(
+      found.every((item) => item.nonUnique === 0),
+      `Expected "${name}" to be unique.`,
+    );
+  }
+}
 async function insertUser(id, email, displayName) {
-  const placeholders =
-    CLIENT === 'postgres' ? '$1, $2, $3' : '?, ?, ?';
   return query(
     `INSERT INTO ${table('users')} (id, email, display_name)
-     VALUES (${placeholders})`,
+     VALUES (${placeholders(3)})`,
     [id, email, displayName],
   );
 }
 async function insertApplication(id, userId, status, createdAt) {
-  const placeholders =
-    CLIENT === 'postgres' ? '$1, $2, $3, $4' : '?, ?, ?, ?';
   return query(
     `INSERT INTO ${table('applications')}
        (id, user_id, status, created_at)
-     VALUES (${placeholders})`,
+     VALUES (${placeholders(4)})`,
     [id, userId, status, createdAt],
   );
 }
 async function insertPayment(id, reference, amountMinor, status) {
-  const placeholders =
-    CLIENT === 'postgres' ? '$1, $2, $3, $4' : '?, ?, ?, ?';
   return query(
     `INSERT INTO ${table('payments')}
        (id, reference, amount_minor, status)
-     VALUES (${placeholders})`,
+     VALUES (${placeholders(4)})`,
     [id, reference, amountMinor, status],
   );
 }
-function skipReason() {
-  if (CONFIG_ERROR) {
-    return CONFIG_ERROR;
-  }
-  if (setupError) {
-    return `Database setup failed: ${setupError.message}`;
-  }
-  if (!connected) {
-    return 'Database connection was not initialized.';
-  }
-  return false;
+async function selectByEmail(email) {
+  return query(
+    `SELECT id, email
+     FROM ${table('users')}
+     WHERE email = ${CLIENT === 'postgres' ? '$1' : '?'}`,
+    [email],
+  );
 }
-const SHOULD_SKIP = Boolean(CONFIG_ERROR);
-test.before(async () => {
-  if (SHOULD_SKIP) {
+async function selectApplicationsByStatus(status) {
+  return query(
+    `SELECT id
+     FROM ${table('applications')}
+     WHERE status = ${CLIENT === 'postgres' ? '$1' : '?'}
+     ORDER BY id`,
+    [status],
+  );
+}
+async function selectApplicationsByOwnerAndStatus(userId, status) {
+  return query(
+    `SELECT id
+     FROM ${table('applications')}
+     WHERE user_id = ${CLIENT === 'postgres' ? '$1' : '?'}
+       AND status = ${CLIENT === 'postgres' ? '$2' : '?'}
+     ORDER BY id`,
+    [userId, status],
+  );
+}
+before(async () => {
+  if (CONFIG_ERROR) {
     return;
   }
   try {
@@ -308,84 +385,102 @@ test.before(async () => {
     connection = acquired.connection;
     closeConnection = acquired.close;
     connected = true;
+    await verifyDatabaseIdentity();
     await createTables();
   } catch (error) {
     setupError = error;
-    if (connected) {
+    if (connected && connection) {
       try {
         await cleanup();
-      } catch {
-        // Preserve the original setup error.
+      } catch (cleanupError) {
+        setupError = new AggregateError(
+          [error, cleanupError],
+          'Database setup failed and temporary-table cleanup also failed.',
+        );
       }
     }
     try {
       await closeConnection();
-    } catch {
-      // Preserve the original setup error.
+    } catch (closeError) {
+      setupError = new AggregateError(
+        [setupError, closeError],
+        'Database setup failed and connection cleanup also failed.',
+      );
     }
     connection = null;
     connected = false;
   }
 });
-test.after(async () => {
+after(async () => {
   if (!connected) {
     return;
   }
+  let cleanupError = null;
   try {
     await cleanup();
-  } finally {
+  } catch (error) {
+    cleanupError = error;
+  }
+  try {
     await closeConnection();
+  } catch (error) {
+    cleanupError = cleanupError
+      ? new AggregateError(
+          [cleanupError, error],
+          'Table cleanup and connection shutdown both failed.',
+        )
+      : error;
+  } finally {
     connection = null;
     connected = false;
+  }
+  if (cleanupError) {
+    throw cleanupError;
   }
 });
 test(
   'database index test environment initializes',
   { skip: CONFIG_ERROR || false },
   () => {
-    if (setupError) {
-      throw setupError;
-    }
-    assert.equal(connected, true);
+    requireReadyConnection();
     assert.equal(createdTables.length, 3);
   },
 );
 test(
   'unique user-email index exists',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const indexes = await getIndexes(TABLES.users);
-    assert.ok(
-      hasIndex(indexes, INDEXES.userEmail),
-      'Expected the unique user email index to exist.',
-    );
-    if (CLIENT === 'mysql') {
-      const emailIndex = indexes.filter(
-        (item) => item.name === INDEXES.userEmail,
-      );
-      assert.ok(emailIndex.length > 0);
-      assert.ok(emailIndex.every((item) => item.nonUnique === 0));
-    }
+    assertUniqueIndex(indexes, INDEXES.userEmail);
   },
 );
 test(
   'application status index exists',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const indexes = await getIndexes(TABLES.applications);
     assert.ok(
       hasIndex(indexes, INDEXES.applicationStatus),
       'Expected the application status index to exist.',
     );
+    if (CLIENT === 'mysql') {
+      const found = indexes.filter(
+        (item) => item.name === INDEXES.applicationStatus,
+      );
+      assert.deepEqual(
+        found.map((item) => item.column),
+        ['status'],
+      );
+    }
   },
 );
 test(
-  'composite application owner-status index exists',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'composite application owner-status index has the correct column order',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const indexes = await getIndexes(TABLES.applications);
     assert.ok(
       hasIndex(indexes, INDEXES.applicationOwnerStatus),
@@ -399,100 +494,88 @@ test(
         composite.map((item) => item.column),
         ['user_id', 'status'],
       );
-    }
-  },
-);
-test(
-  'unique payment reference index exists',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
-  async () => {
-    if (skipReason()) throw new Error(skipReason());
-    const indexes = await getIndexes(TABLES.payments);
-    assert.ok(
-      hasIndex(indexes, INDEXES.paymentReference),
-      'Expected the unique payment reference index to exist.',
-    );
-    if (CLIENT === 'mysql') {
-      const paymentIndex = indexes.filter(
-        (item) => item.name === INDEXES.paymentReference,
+    } else {
+      const found = indexes.find(
+        (item) => item.name === INDEXES.applicationOwnerStatus,
       );
-      assert.ok(paymentIndex.every((item) => item.nonUnique === 0));
+      assert.match(
+        found.definition,
+        /\(user_id,\s*status\)/i,
+        'Expected the composite index to begin with user_id and then status.',
+      );
     }
   },
 );
 test(
-  'email index supports correct lookup results',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'unique payment-reference index exists',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
+    const indexes = await getIndexes(TABLES.payments);
+    assertUniqueIndex(indexes, INDEXES.paymentReference);
+  },
+);
+test(
+  'email index supports correct parameterized lookup results',
+  { skip: CONFIG_ERROR || false },
+  async () => {
+    requireReadyConnection();
     await insertUser(1, 'indexed.user@example.test', 'Indexed User');
     await insertUser(2, 'other.user@example.test', 'Other User');
-    const placeholder = CLIENT === 'postgres' ? '$1' : '?';
-    const result = await query(
-      `SELECT id, email
-       FROM ${table('users')}
-       WHERE email = ${placeholder}`,
-      ['indexed.user@example.test'],
-    );
+    const result = await selectByEmail('indexed.user@example.test');
     assert.equal(result.rows.length, 1);
     assert.equal(Number(result.rows[0].id), 1);
-    assert.equal(
-      result.rows[0].email,
-      'indexed.user@example.test',
-    );
+    assert.equal(result.rows[0].email, 'indexed.user@example.test');
   },
 );
 test(
   'unique email index rejects duplicate email values',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     await insertUser(10, 'unique.user@example.test', 'First User');
     await assert.rejects(
       insertUser(11, 'unique.user@example.test', 'Duplicate User'),
-      (error) => {
-        if (CLIENT === 'postgres') {
-          return error.code === '23505';
-        }
-        return error.code === 'ER_DUP_ENTRY';
-      },
+      (error) => CLIENT === 'postgres'
+        ? error.code === '23505'
+        : error.code === 'ER_DUP_ENTRY',
     );
   },
 );
 test(
-  'unique payment reference index rejects duplicates',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'unique payment-reference index rejects duplicates',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
-    await insertPayment(1, 'payment-reference-001', 15000, 'pending');
+    requireReadyConnection();
+    await insertPayment(
+      1,
+      'payment-reference-001',
+      15000,
+      'pending',
+    );
     await assert.rejects(
-      insertPayment(2, 'payment-reference-001', 15000, 'pending'),
-      (error) => {
-        if (CLIENT === 'postgres') {
-          return error.code === '23505';
-        }
-        return error.code === 'ER_DUP_ENTRY';
-      },
+      insertPayment(
+        2,
+        'payment-reference-001',
+        15000,
+        'pending',
+      ),
+      (error) => CLIENT === 'postgres'
+        ? error.code === '23505'
+        : error.code === 'ER_DUP_ENTRY',
     );
   },
 );
 test(
-  'indexed application status lookup returns matching records',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'application status lookup returns only matching records',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const timestamp = '2026-01-01 10:00:00';
     await insertApplication(1, 101, 'pending', timestamp);
     await insertApplication(2, 102, 'approved', timestamp);
     await insertApplication(3, 103, 'pending', timestamp);
-    const placeholder = CLIENT === 'postgres' ? '$1' : '?';
-    const result = await query(
-      `SELECT id
-       FROM ${table('applications')}
-       WHERE status = ${placeholder}
-       ORDER BY id`,
-      ['pending'],
-    );
+    const result = await selectApplicationsByStatus('pending');
     assert.deepEqual(
       result.rows.map((row) => Number(row.id)),
       [1, 3],
@@ -500,22 +583,17 @@ test(
   },
 );
 test(
-  'composite index query returns only the selected user applications',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'composite index lookup filters by both owner and status',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const timestamp = '2026-01-01 10:00:00';
     await insertApplication(11, 501, 'pending', timestamp);
     await insertApplication(12, 501, 'approved', timestamp);
     await insertApplication(13, 502, 'pending', timestamp);
-    const placeholders =
-      CLIENT === 'postgres' ? '$1 AND status = $2' : '? AND status = ?';
-    const result = await query(
-      `SELECT id
-       FROM ${table('applications')}
-       WHERE user_id = ${placeholders.split(' AND ')[0]}
-         AND status = ${placeholders.split(' AND ')[1]}`,
-      [501, 'pending'],
+    const result = await selectApplicationsByOwnerAndStatus(
+      501,
+      'pending',
     );
     assert.deepEqual(
       result.rows.map((row) => Number(row.id)),
@@ -524,20 +602,15 @@ test(
   },
 );
 test(
-  'index-backed queries remain correct with parameterized inputs',
-  { skip: SHOULD_SKIP ? CONFIG_ERROR : false },
+  'parameterized email lookup treats SQL-like input as a value',
+  { skip: CONFIG_ERROR || false },
   async () => {
-    if (skipReason()) throw new Error(skipReason());
+    requireReadyConnection();
     const email = "test' OR '1'='1";
     await insertUser(20, email, 'Parameterized Query Test');
-    const placeholder = CLIENT === 'postgres' ? '$1' : '?';
-    const result = await query(
-      `SELECT id
-       FROM ${table('users')}
-       WHERE email = ${placeholder}`,
-      [email],
-    );
+    const result = await selectByEmail(email);
     assert.equal(result.rows.length, 1);
     assert.equal(Number(result.rows[0].id), 20);
+    assert.equal(result.rows[0].email, email);
   },
 );

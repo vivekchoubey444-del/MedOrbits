@@ -1,25 +1,25 @@
-MedOrbits AI Integration
 
-Directory: src/integrations/ai/
+# MedOrbits AI Integration
 
-Purpose: Provide a reusable, provider-based AI text-generation integration for approved MedOrbits application features, including educational guidance, career assistance, content drafting, and administrative support.
+**Directory:** `src/integrations/ai/`  
+**Runtime:** Node.js 20+  
+**Status:** Implementation documentation
 
-⸻
+## 1. Purpose
 
-1. Overview
+The MedOrbits AI integration provides a reusable, provider-based text-generation interface for approved application features, including educational guidance, career assistance, content drafting, and administrative support.
 
-The AI integration separates application logic from the underlying AI provider.
+Application services use `createAiClient()` to create a configured client and call `generateText()` to request generated text.
 
-Application services use createAiClient() to initialize the configured provider and call generateText() to request text generation.
+The current implementation uses an OpenAI-compatible Chat Completions endpoint. It supports configurable API credentials, endpoint, model, timeout, input-size limits, and output-token limits.
 
-The current implementation uses an OpenAI-compatible Chat Completions endpoint. It requires server-side API credentials and supports configurable endpoint, model, timeout, input-size, and output-token settings.
+AI-generated content is advisory. It may be inaccurate, incomplete, outdated, biased, or misleading. Validate generated output before displaying it, storing it as authoritative information, or using it to initiate application actions.
 
-AI-generated content is advisory and may be inaccurate, incomplete, outdated, biased, or misleading. Validate outputs before displaying them, storing them as authoritative information, or using them to trigger application actions.
+This integration does not automatically implement retrieval-augmented generation (RAG), document indexing, agent execution, tool calling, automated fact-checking, moderation, or persistent conversation memory.
 
-The AI integration does not automatically provide retrieval-augmented generation (RAG), document indexing, agent execution, tool calling, automated fact-checking, moderation, or persistent conversation memory.
+## 2. Directory Structure
 
-2. Directory structure
-
+```text
 src/integrations/ai/
 ├── README.md
 ├── ai.client.js
@@ -27,266 +27,321 @@ src/integrations/ai/
 ├── ai.provider.js
 ├── index.js
 └── openai.provider.js
+```
 
-File	Responsibility
-README.md	Documents setup, usage, security, and operational requirements.
-ai.client.js	Validates requests and delegates generation to the provider.
-ai.config.js	Loads and validates AI environment configuration.
-ai.provider.js	Defines the abstract AI provider contract.
-index.js	Exports the integration and creates configured AI clients.
-openai.provider.js	Sends requests to an OpenAI-compatible Chat Completions endpoint.
+| File | Responsibility |
+|—|—|
+| `README.md` | Setup, usage, security, testing, and operational documentation |
+| `ai.client.js` | Validates requests and delegates generation to the provider |
+| `ai.config.js` | Loads and validates AI environment configuration |
+| `ai.provider.js` | Defines the abstract AI provider contract |
+| `index.js` | Exports the integration and constructs AI clients |
+| `openai.provider.js` | Sends requests to an OpenAI-compatible Chat Completions endpoint |
 
-3. Requirements
+## 3. Requirements
 
-* Node.js 20 or later.
-* Built-in fetch and AbortController.
-* An API key for the selected AI service.
-* Network access to the configured API endpoint.
-* Server-side environment-variable management.
+- Node.js 20 or later.
+- Built-in `fetch` and `AbortController`.
+- An API key for the selected AI service.
+- Network access to the configured endpoint.
+- Server-side environment-variable and secret management.
 
-The current provider uses Node.js built-in fetch; it does not require the official OpenAI SDK.
+The implementation uses Node.js built-in networking APIs and does not require the official OpenAI SDK.
 
-No additional AI SDK installation is necessary for this implementation.
+## 4. Environment Configuration
 
-4. Environment configuration
+Configure these variables in the deployment environment or secret manager:
 
-Configure the following variables in the server environment or deployment secret manager.
-
+```dotenv
 AI_API_KEY=
 AI_API_URL=https://api.openai.com/v1
 AI_MODEL=gpt-4o-mini
 AI_TIMEOUT_MS=20000
 AI_MAX_OUTPUT_TOKENS=800
 AI_MAX_INPUT_CHARS=12000
+```
 
-Configuration reference
+| Variable | Default | Purpose |
+|—|—|—|
+| `AI_API_KEY` | None | Server-side API credential; required for generation |
+| `AI_API_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
+| `AI_MODEL` | `gpt-4o-mini` | Default model identifier |
+| `AI_TIMEOUT_MS` | `20000` | Request timeout in milliseconds |
+| `AI_MAX_OUTPUT_TOKENS` | `800` | Configured output-token budget |
+| `AI_MAX_INPUT_CHARS` | `12000` | Maximum prompt length in characters |
 
-Variable	Required	Default	Purpose
-AI_API_KEY	Yes for generation	None	Server-side API credential.
-AI_API_URL	No	https://api.openai.com/v1	Base URL for an OpenAI-compatible API.
-AI_MODEL	No	gpt-4o-mini	Default model identifier.
-AI_TIMEOUT_MS	No	20000	Request timeout in milliseconds.
-AI_MAX_OUTPUT_TOKENS	No	800	Configured maximum output-token budget.
-AI_MAX_INPUT_CHARS	No	12000	Maximum prompt length in characters.
+The actual defaults and validation ranges are defined in `ai.config.js`. Keep this documentation synchronized with the source.
 
-The exact defaults and validation ranges are defined in ai.config.js. Keep this documentation synchronized with the implementation whenever configuration changes.
+**Security requirements**
 
-Never expose AI_API_KEY through browser JavaScript, frontend build variables, public API responses, source control, or client-visible error messages.
+- Never expose `AI_API_KEY` through browser JavaScript, frontend build variables, public API responses, or source control.
+- Do not log API credentials or include them in error responses.
+- Use HTTPS for production API traffic.
+- Keep deployment secrets separate from public configuration.
+- If AI is optional for an environment, allow the application to start without a key while ensuring generation fails safely until credentials are configured.
 
-5. Creating an AI client
-
-Use the integration factory:
-
-‘use strict’;
-const {
-  createAiClient,
-} = require(‘./src/integrations/ai’);
-const aiClient = createAiClient();
+## 5. Creating an AI Client
 
 Create the client in the server-side application composition layer and reuse it where appropriate.
 
-Do not initialize a new provider for every request unless the provider’s lifecycle explicitly requires it.
+```javascript
+‘use strict’;
 
-6. Generating text
+const {
+  createAiClient,
+} = require(‘./src/integrations/ai’);
 
-The primary interface is:
+const aiClient = createAiClient();
+```
 
+For an injected provider:
+
+```javascript
+const aiClient = createAiClient({
+  provider: customProvider,
+});
+```
+
+An injected provider is not owned by the client by default. Set `ownsProvider: true` when the client should manage its lifecycle, provided the implementation of `AiClient` supports that option.
+
+Do not create a new provider for every incoming HTTP request unless its lifecycle explicitly requires it.
+
+Do not execute AI requests merely by importing the integration module.
+
+## 6. Generating Text
+
+```javascript
 const result = await aiClient.generateText({
-  system: ‘You are a helpful educational guidance assistant.’,
+  system: ‘You are an educational guidance assistant.’,
   prompt: ‘Explain the difference between MBBS and BDS.’,
 });
+
 console.log(result.text);
+```
 
-The current provider accepts:
+The primary request fields are:
 
-* system — optional system instructions.
-* prompt — required non-empty user prompt.
+| Field | Required | Description |
+|—|—|—|
+| `prompt` | Yes | Non-empty user prompt |
+| `system` | No | System instructions |
+| `model` | No | Model override, if permitted by application policy |
+| `maxOutputTokens` | No | Output-token limit |
+| `temperature` | No | Sampling temperature from 0 to 2 |
 
-The provider returns an object containing:
+The provider returns:
 
-* text — generated text.
-* model — the model identifier reported by the provider or the configured model.
-* usage — usage metadata when supplied by the API.
+```javascript
+{
+  text: ‘Generated response...’,
+  model: ‘gpt-4o-mini’,
+  usage: null
+}
+```
 
-The exact response structure is determined by openai.provider.js and should remain consistent with ai.client.js.
+`usage` contains provider-supplied usage metadata when available; otherwise, it is `null`.
 
-Additional request options
+The exact response shape must remain consistent across `openai.provider.js` and `ai.client.js`.
 
-The current provider implementation also supports optional model, maxOutputTokens, and temperature request fields.
+Model overrides, token limits, and temperature settings must be controlled by trusted application services. Never allow public clients to bypass model restrictions, output budgets, or cost policies.
 
-These options should be exposed to trusted application services only when needed. Public clients must not be allowed to bypass model restrictions, output budgets, or cost policies.
+## 7. OpenAI-Compatible Endpoint
 
-7. OpenAI-compatible endpoint
+The provider sends a `POST` request to:
 
-The provider sends a POST request to:
-
+```text
 {AI_API_URL}/chat/completions
+```
 
-It sends the configured model, system and user messages, output-token limit, and temperature.
+The request includes the model, system and user messages, output-token limit, and temperature.
 
-The endpoint must support the expected Chat Completions request and response format. A service that only supports another API format may require a separate provider adapter.
+A compatible endpoint must support the expected Chat Completions request and response structure. Providers using a different API format require a separate adapter.
 
-Before using a custom endpoint, verify its authentication mechanism, TLS configuration, request schema, response schema, rate limits, logging policy, data retention, and model capabilities.
+Before enabling a custom endpoint, verify:
 
-Do not assume that every OpenAI-compatible service behaves identically to OpenAI.
+- Authentication requirements.
+- TLS and certificate validation.
+- Request and response schemas.
+- Rate limits and quota behavior.
+- Model capabilities and context limits.
+- Data retention and logging policies.
+- Provider availability and operational guarantees.
 
-8. AI output is untrusted
+Do not assume all OpenAI-compatible services behave identically.
 
-AI-generated content must not be treated as verified fact or trusted application input.
+## 8. AI Output Is Untrusted
+
+Treat generated content as untrusted input.
 
 Before using generated output:
 
-* Validate the response structure and expected data types.
-* Apply length and content constraints.
-* Verify factual claims when accuracy matters.
-* Check generated URLs before linking or opening them.
-* Escape output when rendering HTML.
-* Sanitize permitted rich HTML with a suitable sanitizer.
-* Validate generated structured data against a schema.
-* Require authorization and explicit business rules before performing consequential actions.
-* Use human review for high-impact educational, financial, legal, medical, recruitment, or administrative decisions.
+- Validate response structure and expected data types.
+- Apply length, format, and content constraints.
+- Verify factual claims where accuracy matters.
+- Validate URLs before linking to or opening them.
+- Escape output when rendering HTML.
+- Sanitize permitted rich HTML using an appropriate sanitizer.
+- Validate structured output against an explicit schema.
+- Enforce authorization and business rules independently.
+- Require human review for high-impact decisions.
 
-Do not execute generated code, SQL, shell commands, or arbitrary tool instructions without a separately designed and authorized execution system.
+Never execute generated code, SQL, shell commands, or arbitrary tool instructions without a separately designed, authorized, and security-reviewed execution system.
 
-Prompt instructions are not a substitute for server-side access control.
+Prompt instructions do not replace server-side authorization.
 
-9. Privacy and data protection
+For MedOrbits, AI must not independently make admission decisions, guarantee admission outcomes, determine authoritative eligibility, approve payments, or alter student records.
 
-Do not send personal, financial, medical, educational-record, identity-document, application-document, credential, or other sensitive information to an external AI service without the required authorization, appropriate disclosure, and review of applicable policies.
+## 9. Privacy and Data Protection
 
-Before processing user data, determine:
+Do not send personal, financial, medical, educational-record, identity-document, application-document, credential, or other sensitive information to an external AI service without appropriate authorization, disclosure, and review of applicable policies.
 
-* The purpose and legal basis for processing.
-* Whether the data is necessary for the request.
-* Whether the user has received the required disclosure.
-* Whether the provider’s data handling and retention terms are acceptable.
-* Whether the request can be fulfilled with redacted or minimized data.
-* Whether retention, deletion, or audit requirements apply.
+Before processing user data, establish:
 
-Prefer anonymized or minimized prompts where practical.
+- The processing purpose and applicable legal basis.
+- Whether each data element is necessary.
+- Whether required disclosures and permissions have been obtained.
+- Whether provider data-handling and retention terms are acceptable.
+- Whether redaction or data minimization can reduce exposure.
+- Whether retention, deletion, or audit obligations apply.
 
-Do not include API keys, authentication tokens, passwords, database credentials, or private storage URLs in prompts.
+Prefer anonymized or minimized prompts wherever practical.
 
-10. Application integration
+Never include API keys, passwords, authentication tokens, database credentials, or private storage URLs in prompts.
 
-Use the AI integration from authorized application services rather than directly from public controllers.
+## 10. Application Integration
 
-Suitable integration points may include:
+Call the integration from authorized application services rather than exposing the provider directly to public controllers.
 
-* Educational explanations and study assistance.
-* Career-content drafting.
-* General-purpose content assistance.
-* Administrative drafting and summarization.
-* Structured suggestions subject to application validation.
+Potential use cases include:
 
-For MedOrbits education, admissions, recruitment, and consultancy workflows, AI output must not independently make admission decisions, guarantee admission outcomes, determine eligibility, approve payments, or alter authoritative student records.
+- Educational explanations and study assistance.
+- Career guidance content and drafting.
+- General-purpose content assistance.
+- Administrative drafting and summarization.
+- Structured suggestions subject to application validation.
 
-Use trusted database records and explicit application rules for consequential decisions.
+Use trusted database records and explicit application rules for consequential decisions. Generated text must not become authoritative application data without the required validation and authorization.
 
-11. Input validation and resource limits
+## 11. Input Validation and Resource Limits
 
-The provider should enforce the configured prompt-size and output-token limits.
+The integration should enforce configured prompt-size and output-token limits.
 
-Additional application-level controls should include:
+Application-level controls should also include:
 
-* Authentication and authorization.
-* Per-user and per-IP rate limits where appropriate.
-* Request-size limits.
-* Allowed-model restrictions.
-* Usage and cost budgets.
-* Request deadlines.
-* Abuse detection.
-* Appropriate concurrency limits.
+- Authentication and authorization.
+- Per-user and per-IP rate limits where appropriate.
+- Request-body size limits.
+- Allowed-model restrictions.
+- Usage and cost budgets.
+- Request deadlines.
+- Abuse detection.
+- Appropriate concurrency limits.
 
-Character limits do not equal token limits. A prompt within the configured character limit can still exceed the model’s context window when system instructions and other request data are included.
+Character limits do not equal token limits. System instructions, message overhead, and other request data also consume the model’s context window.
 
-12. Error handling
+Validate all effective request limits against the configured model’s capabilities.
 
-Handle failures according to their category:
+## 12. Error Handling
 
-* Validation errors: Reject malformed requests before contacting the provider.
-* Authentication errors: Correct credentials or permissions.
-* Rate limits: Apply bounded retries and backoff where appropriate.
-* Timeouts: Return a controlled error and avoid assuming the provider completed no work.
-* Network failures: Retry only when appropriate and within a bounded policy.
-* Invalid responses: Reject unexpected response structures.
-* Provider errors: Log safe diagnostic metadata without exposing credentials or raw sensitive payloads.
+Use stable application error codes and safe, controlled error messages.
 
-Use stable application error codes where clients need predictable behavior. Do not return raw provider error bodies or stack traces to public clients.
+| Failure | Handling |
+|—|—|
+| Invalid request | Reject before contacting the provider |
+| Authentication failure | Correct credentials or provider permissions |
+| Rate limit | Apply bounded retries and backoff where appropriate |
+| Timeout | Return a controlled error; do not assume the provider did no work |
+| Network failure | Retry only under a bounded policy |
+| Invalid response | Reject unexpected or malformed response structures |
+| Provider failure | Log safe diagnostic metadata without exposing sensitive payloads |
 
-If retries are added, account for cost implications and the possibility of repeated provider requests.
+Never return raw provider error bodies, API credentials, or internal stack traces to public clients.
 
-13. Logging and observability
+Retries can increase cost and may repeat provider operations. Use bounded attempts, appropriate backoff, and request-specific controls.
 
-Capture operational metadata such as:
+## 13. Logging and Observability
 
-* Request correlation ID.
-* Selected model.
-* Request duration.
-* Success or failure category.
-* Input and output token usage when available.
-* Rate-limit and timeout counts.
-* Estimated usage cost when reliable pricing data is available.
+Capture operational metadata where available:
+
+- Request correlation ID.
+- Selected model.
+- Request duration.
+- Success or failure category.
+- Token usage when supplied by the provider.
+- Timeout and rate-limit counts.
+- Estimated usage cost when pricing data is reliable.
 
 Avoid logging full prompts, generated content, personal records, documents, or API credentials by default.
 
-Use appropriate retention limits and access controls for operational logs.
+Apply appropriate log access controls, retention limits, and redaction policies.
 
-14. Testing checklist
+## 14. Testing Checklist
 
-Configuration
+### Configuration
 
-* [ ]	Missing API credentials are rejected before generation.
-* [ ]	Invalid timeout and limit values are rejected.
-* [ ]	The configured endpoint and model are applied correctly.
-* [ ]	Secrets never appear in logs or client responses.
+- [ ] Missing credentials are rejected before generation.
+- [ ] Invalid timeout and limit values are rejected.
+- [ ] Endpoint and model configuration are applied correctly.
+- [ ] Secrets never appear in logs or public errors.
 
-Request handling
+### Request handling
 
-* [ ]	Empty prompts are rejected.
-* [ ]	Oversized prompts are rejected.
-* [ ]	Invalid model and temperature options are rejected.
-* [ ]	Output-token limits are enforced.
-* [ ]	Request timeouts are handled safely.
+- [ ] Empty prompts are rejected.
+- [ ] Oversized prompts are rejected.
+- [ ] Invalid model and temperature values are rejected.
+- [ ] Output-token limits are enforced.
+- [ ] Timeouts and aborted requests are handled safely.
 
-Response handling
+### Response handling
 
-* [ ]	Valid responses produce the documented result structure.
-* [ ]	Invalid JSON and unexpected response formats are rejected.
-* [ ]	Provider authentication, rate-limit, and server errors are handled safely.
-* [ ]	Generated HTML and URLs are validated before use.
+- [ ] Valid responses return the documented structure.
+- [ ] Invalid JSON and unexpected response formats are rejected.
+- [ ] Authentication, rate-limit, and server errors are handled safely.
+- [ ] Oversized responses are rejected.
+- [ ] Generated HTML and URLs are validated before use.
 
-Privacy and operations
+### Privacy and operations
 
-* [ ]	Sensitive data is minimized and processed only under approved conditions.
-* [ ]	Public endpoints enforce authentication, authorization, and rate limits.
-* [ ]	Usage and cost controls are in place.
-* [ ]	High-impact outputs receive appropriate review.
-* [ ]	Provider shutdown and application shutdown behave correctly.
+- [ ] Sensitive data is minimized and processed only under approved conditions.
+- [ ] Public endpoints enforce authentication, authorization, and rate limits.
+- [ ] Usage and cost controls are enforced.
+- [ ] High-impact outputs receive appropriate review.
+- [ ] Provider and application shutdown behavior is tested.
+- [ ] Provider lifecycle and in-flight request cancellation are tested.
 
-15. Operational boundaries
+## 15. Operational Boundaries
 
 This integration provides a configurable text-generation client and an OpenAI-compatible provider adapter.
 
 It does not automatically implement:
 
-* Persistent chat history or memory.
-* Document retrieval or RAG.
-* Embeddings or vector databases.
-* Automated fact verification.
-* Content moderation.
-* AI agents or unrestricted tool execution.
-* A durable request queue.
-* Per-user billing or quota persistence.
-* Human review workflows.
-* Guaranteed accuracy or deterministic output.
+- Persistent conversation history or memory.
+- Document retrieval or RAG.
+- Embeddings or vector databases.
+- Automated fact verification.
+- Content moderation.
+- AI agents or unrestricted tool execution.
+- A durable request queue.
+- Per-user billing or persistent quota enforcement.
+- Human review workflows.
+- Guaranteed accuracy or deterministic output.
 
-Implement these features in separate modules with explicit security, privacy, and operational controls.
+Implement these capabilities in separate modules with explicit security, privacy, and operational controls.
 
-16. Maintenance
+## 16. Maintenance and Production Readiness
 
-Periodically review model availability, API pricing, provider compatibility, timeout behavior, request limits, data-handling terms, and error rates.
+Periodically review:
 
-Update configuration defaults only after confirming compatibility with the selected provider and testing the integration.
+- Model availability and compatibility.
+- Provider pricing and cost controls.
+- Data-handling and retention terms.
+- Request limits and timeout behavior.
+- Error rates and rate-limit frequency.
+- Dependency and runtime security.
+- Provider shutdown and application shutdown behavior.
 
-Implementation status: This README describes the expected interface and recommended safeguards. Verify each feature against the actual source code and deployment settings before treating it as implemented or production-ready.
+Update defaults only after verifying compatibility with the selected provider and testing the integration.
+
+### Implementation status
+
+This README documents the intended interface and recommended safeguards. Verify every feature against the actual source code, automated tests, central environment configuration, and deployment settings before considering it implemented or production-ready.

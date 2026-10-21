@@ -1,8 +1,6 @@
-MedOrbits Security Disclosure Policy
 
-Standard: RFC 9116
-
-Website: https://medorbits.in/
+# MedOrbits -- Security Disclosure Policy
+# Website: https://medorbits.in/
 
 Contact: https://medorbits.in/pages/contact.html
 Policy: https://medorbits.in/legal/security-policy.html

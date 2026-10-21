@@ -5,21 +5,14 @@
  * File: tests/fixtures/applications.js
  *
  * Purpose:
- *   Provide reusable, deterministic application records and payloads for
- *   unit, integration, authorization, and security tests.
+ *   Provide reusable, deterministic synthetic application records and
+ *   payloads for unit, integration, authorization, and security tests.
  *
  * Security:
  *   - Uses synthetic test data only.
- *   - Does not contain production credentials or real student information.
- *   - Does not assume that client-supplied ownership or status fields are trusted.
- *
- * Usage:
- *   const {
- *     createApplication,
- *     createApplicationPayload,
- *     createApplicationSet,
- *     APPLICATION_STATUSES,
- *   } = require('../fixtures/applications');
+ *   - Does not contain production credentials or real applicant information.
+ *   - Does not treat client-supplied ownership, role, or status fields as trusted.
+ *   - Does not create database records, files, sessions, or permissions.
  */
 const APPLICATION_STATUSES = Object.freeze({
   DRAFT: 'draft',
@@ -44,6 +37,12 @@ const APPLICATION_STATUS_VALUES = Object.freeze(
 const APPLICATION_TYPE_VALUES = Object.freeze(
   Object.values(APPLICATION_TYPES)
 );
+const DEFAULT_APPLICANT = Object.freeze({
+  firstName: 'Test',
+  lastName: 'Applicant',
+  email: 'applicant1@example.test',
+  phone: '+910000000001',
+});
 const DEFAULT_APPLICATION = Object.freeze({
   id: 'app_test_0001',
   applicationNumber: 'MO-TEST-0001',
@@ -53,12 +52,7 @@ const DEFAULT_APPLICATION = Object.freeze({
   applicationType: APPLICATION_TYPES.MBBS,
   status: APPLICATION_STATUSES.SUBMITTED,
   academicYear: '2026-2027',
-  applicant: Object.freeze({
-    firstName: 'Test',
-    lastName: 'Applicant',
-    email: 'applicant1@example.test',
-    phone: '+910000000001',
-  }),
+  applicant: DEFAULT_APPLICANT,
   documents: Object.freeze([]),
   notes: null,
   submittedAt: '2026-10-01T09:00:00.000Z',
@@ -67,138 +61,189 @@ const DEFAULT_APPLICATION = Object.freeze({
   updatedAt: '2026-10-01T09:00:00.000Z',
 });
 /**
- * Creates a fresh application record.
+ * Ensure a value is a plain object.
  *
- * Overrides are shallowly applied, except applicant and documents, which
- * are independently copied to avoid accidental mutation of shared fixtures.
+ * @param {unknown} value
+ * @param {string} label
+ * @returns {void}
+ */
+function assertPlainObject(value, label) {
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+}
+/**
+ * Copy a document metadata object.
  *
- * This is a test-data factory, not a production validation or authorization
+ * This validates the object shape, not the authenticity, safety, ownership,
+ * or authorization of a real uploaded file.
+ *
+ * @param {object} document
+ * @returns {object}
+ */
+function copyDocument(document) {
+  assertPlainObject(document, 'Application document');
+  return { ...document };
+}
+/**
+ * Copy a document metadata array.
+ *
+ * @param {unknown} documents
+ * @param {string} label
+ * @returns {object[]}
+ */
+function copyDocuments(documents, label = 'Application documents') {
+  if (!Array.isArray(documents)) {
+    throw new TypeError(`${label} must be an array`);
+  }
+  return documents.map(copyDocument);
+}
+/**
+ * Create a fresh application record.
+ *
+ * Overrides are shallowly applied to top-level fields. The applicant object
+ * is merged independently, and the documents array is copied.
+ *
+ * This is a fixture factory, not a production validation or authorization
  * boundary.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createApplication(overrides = {}) {
   assertPlainObject(overrides, 'Application overrides');
+  const applicantOverrides = overrides.applicant;
+  if (applicantOverrides !== undefined) {
+    assertPlainObject(applicantOverrides, 'Applicant overrides');
+  }
   const application = {
     ...DEFAULT_APPLICATION,
-    applicant: {
-      ...DEFAULT_APPLICATION.applicant,
-    },
-    documents: [],
     ...overrides,
+    applicant: {
+      ...DEFAULT_APPLICANT,
+      ...(applicantOverrides || {}),
+    },
+    documents: copyDocuments(
+      overrides.documents === undefined ? [] : overrides.documents
+    ),
   };
-  if (overrides.applicant !== undefined) {
-    assertPlainObject(overrides.applicant, 'Applicant overrides');
-    application.applicant = {
-      ...DEFAULT_APPLICATION.applicant,
-      ...overrides.applicant,
-    };
-  }
-  if (overrides.documents !== undefined) {
-    if (!Array.isArray(overrides.documents)) {
-      throw new TypeError('Application documents must be an array');
-    }
-    application.documents = overrides.documents.map((document) => {
-      if (document === null || typeof document !== 'object' || Array.isArray(document)) {
-        throw new TypeError('Each application document must be an object');
-      }
-      return { ...document };
-    });
-  }
   return application;
 }
 /**
- * Creates a client-submittable application payload.
+ * Create a client-submittable application payload.
  *
- * Server-managed fields are intentionally excluded:
- *   id, applicationNumber, userId, status, reviewedAt, createdAt, updatedAt.
+ * Server-managed fields are intentionally excluded from the default payload:
+ * id, applicationNumber, userId, status, reviewedAt, createdAt, updatedAt.
  *
- * The authenticated user identity and workflow status should be assigned
- * by the server, not trusted from a request body.
+ * Overrides are accepted to support negative and adversarial test cases.
+ * Consequently, this helper does not guarantee that the returned payload
+ * excludes server-managed fields if a caller explicitly supplies them.
  *
- * @param {object} [overrides]
+ * The server must independently allowlist accepted request fields.
+ *
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createApplicationPayload(overrides = {}) {
   assertPlainObject(overrides, 'Application payload overrides');
+  const applicantOverrides = overrides.applicant;
+  if (applicantOverrides !== undefined) {
+    assertPlainObject(applicantOverrides, 'Applicant payload overrides');
+  }
   const payload = {
     courseId: DEFAULT_APPLICATION.courseId,
     institutionId: DEFAULT_APPLICATION.institutionId,
     applicationType: DEFAULT_APPLICATION.applicationType,
     academicYear: DEFAULT_APPLICATION.academicYear,
     applicant: {
-      ...DEFAULT_APPLICATION.applicant,
+      ...DEFAULT_APPLICANT,
+      ...(applicantOverrides || {}),
     },
-    documents: [],
-    ...overrides,
+    documents: copyDocuments(
+      overrides.documents === undefined ? [] : overrides.documents,
+      'Application payload documents'
+    ),
   };
-  if (overrides.applicant !== undefined) {
-    assertPlainObject(overrides.applicant, 'Applicant payload overrides');
-    payload.applicant = {
-      ...DEFAULT_APPLICATION.applicant,
-      ...overrides.applicant,
-    };
-  }
-  if (overrides.documents !== undefined) {
-    if (!Array.isArray(overrides.documents)) {
-      throw new TypeError('Application payload documents must be an array');
-    }
-    payload.documents = overrides.documents.map((document) => {
-      if (document === null || typeof document !== 'object' || Array.isArray(document)) {
-        throw new TypeError('Each application document must be an object');
-      }
-      return { ...document };
-    });
-  }
-  return payload;
+  const { applicant, documents, ...otherOverrides } = overrides;
+  return {
+    ...payload,
+    ...otherOverrides,
+    applicant: {
+      ...DEFAULT_APPLICANT,
+      ...(applicant || {}),
+    },
+    documents: copyDocuments(
+      documents === undefined ? [] : documents,
+      'Application payload documents'
+    ),
+  };
 }
 /**
- * Creates several applications with unique IDs, application numbers,
- * user IDs, and email addresses.
+ * Create several applications with unique generated identifiers.
+ *
+ * The generated id, application number, user ID, and default applicant
+ * identity are kept unique even when common overrides are provided.
+ *
+ * Explicit applicant overrides apply to every generated record. In that
+ * case, email and other overridden fields may intentionally be shared.
  *
  * @param {number} [count=3]
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object[]}
  */
 function createApplicationSet(count = 3, overrides = {}) {
   if (!Number.isInteger(count) || count < 0 || count > 1000) {
-    throw new RangeError('Application count must be an integer from 0 to 1000');
+    throw new RangeError(
+      'Application count must be an integer from 0 to 1000'
+    );
   }
   assertPlainObject(overrides, 'Application set overrides');
+  if (overrides.applicant !== undefined) {
+    assertPlainObject(
+      overrides.applicant,
+      'Application set applicant overrides'
+    );
+  }
+  const applicantOverrides = overrides.applicant || {};
+  const otherOverrides = { ...overrides };
+  delete otherOverrides.applicant;
+  delete otherOverrides.id;
+  delete otherOverrides.applicationNumber;
+  delete otherOverrides.userId;
   return Array.from({ length: count }, (_, index) => {
     const sequence = String(index + 1).padStart(4, '0');
+    const generatedApplicant = {
+      firstName: 'Test',
+      lastName: `Applicant${index + 1}`,
+      email: `applicant${index + 1}@example.test`,
+      phone: `+91000000${String(index + 1).padStart(4, '0')}`,
+      ...applicantOverrides,
+    };
     return createApplication({
+      ...otherOverrides,
       id: `app_test_${sequence}`,
       applicationNumber: `MO-TEST-${sequence}`,
       userId: `user_test_${sequence}`,
-      applicant: {
-        firstName: 'Test',
-        lastName: `Applicant${index + 1}`,
-        email: `applicant${index + 1}@example.test`,
-        phone: `+91000000${String(index + 1).padStart(4, '0')}`,
-      },
-      ...overrides,
-      ...(overrides.applicant
-        ? {
-            applicant: {
-              firstName: 'Test',
-              lastName: `Applicant${index + 1}`,
-              email: `applicant${index + 1}@example.test`,
-              phone: `+91000000${String(index + 1).padStart(4, '0')}`,
-              ...overrides.applicant,
-            },
-          }
-        : {}),
+      applicant: generatedApplicant,
     });
   });
 }
 /**
- * Creates an application owned by a different synthetic user.
- * Useful for IDOR and authorization tests.
+ * Create an application owned by another synthetic user.
  *
- * @param {string} [ownerId]
- * @param {object} [overrides]
+ * Useful for testing insecure direct object reference (IDOR) protections
+ * and object-level authorization.
+ *
+ * @param {string} [ownerId='user_test_other']
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createForeignApplication(
@@ -206,10 +251,13 @@ function createForeignApplication(
   overrides = {}
 ) {
   if (typeof ownerId !== 'string' || ownerId.trim() === '') {
-    throw new TypeError('Foreign application owner ID must be a non-empty string');
+    throw new TypeError(
+      'Foreign application owner ID must be a non-empty string'
+    );
   }
   assertPlainObject(overrides, 'Foreign application overrides');
   return createApplication({
+    ...overrides,
     id: 'app_test_foreign_0001',
     applicationNumber: 'MO-TEST-FOREIGN-0001',
     userId: ownerId,
@@ -218,17 +266,17 @@ function createForeignApplication(
       lastName: 'Applicant',
       email: 'foreign.applicant@example.test',
       phone: '+910000000099',
+      ...(overrides.applicant || {}),
     },
-    ...overrides,
   });
 }
 /**
- * Creates a deliberately hostile client payload for mass-assignment tests.
+ * Create a deliberately hostile client payload for mass-assignment tests.
  *
- * Tests should verify that the server ignores or rejects server-managed
- * fields rather than persisting these values.
+ * Tests should verify that the server rejects or ignores unauthorized
+ * server-managed fields rather than persisting attacker-controlled values.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createMassAssignmentPayload(overrides = {}) {
@@ -248,12 +296,12 @@ function createMassAssignmentPayload(overrides = {}) {
   };
 }
 /**
- * Creates a minimal synthetic document reference.
+ * Create synthetic document metadata.
  *
- * This fixture represents metadata only. It does not create a file,
- * establish ownership, or authorize access to a download endpoint.
+ * This does not create a file, establish ownership, or authorize access to a
+ * download endpoint.
  *
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createApplicationDocument(overrides = {}) {
@@ -266,20 +314,21 @@ function createApplicationDocument(overrides = {}) {
     fileName: 'identity-proof-test.pdf',
     mimeType: 'application/pdf',
     sizeBytes: 1024,
-    storageKey: 'test-only/applications/app_test_0001/identity-proof-test.pdf',
+    storageKey:
+      'test-only/applications/app_test_0001/identity-proof-test.pdf',
     status: 'uploaded',
     uploadedAt: '2026-10-01T08:45:00.000Z',
     ...overrides,
   };
 }
 /**
- * Creates a copy of an application with a selected workflow status.
+ * Create an application with a selected workflow status.
  *
- * This helper does not validate whether the transition is permitted.
+ * This helper does not validate whether a transition is permitted.
  * Transition rules belong in the application service or domain layer.
  *
  * @param {string} status
- * @param {object} [overrides]
+ * @param {object} [overrides={}]
  * @returns {object}
  */
 function createApplicationWithStatus(status, overrides = {}) {
@@ -288,20 +337,9 @@ function createApplicationWithStatus(status, overrides = {}) {
   }
   assertPlainObject(overrides, 'Status overrides');
   return createApplication({
-    status,
     ...overrides,
+    status,
   });
-}
-function assertPlainObject(value, label) {
-  if (
-    value === null ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    (Object.getPrototypeOf(value) !== Object.prototype &&
-      Object.getPrototypeOf(value) !== null)
-  ) {
-    throw new TypeError(`${label} must be a plain object`);
-  }
 }
 module.exports = {
   APPLICATION_STATUSES,

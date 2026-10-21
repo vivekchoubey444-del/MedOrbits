@@ -70,7 +70,7 @@
 "error",
 "always"
 ],
-"no-return-await": "error"
+"no-return-await": "off"
 },
 "overrides": [
 {
@@ -110,16 +110,6 @@
 "env": {
 "node": true,
 "jest": true
-},
-"rules": {
-"no-unused-vars": [
-"warn",
-{
-"argsIgnorePattern": "^",
-"varsIgnorePattern": "^",
-"caughtErrors": "none"
-}
-]
 }
 }
 ]

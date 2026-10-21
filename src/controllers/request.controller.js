@@ -6,12 +6,8 @@
  *
  * File: src/controllers/request.controller.js
  *
- * Purpose:
- * - Handle request-submission HTTP operations.
- * - Validate request data before processing.
- * - Use the established API response contract.
- * - Delegate asynchronous errors to centralized middleware.
- * - Fail closed while request processing is unconfigured.
+ * Handles request submission and management.
+ * Persistence remains disabled until a request service is configured.
  */
 
 const asyncHandler = require('../utils/async-handler');
@@ -21,7 +17,7 @@ const requestValidator = require('../validators/request.validator');
 const SERVICE_UNAVAILABLE_CODE = 'REQUEST_SERVICE_NOT_CONFIGURED';
 
 const SERVICE_UNAVAILABLE_MESSAGE =
-  'Request submission is not available yet. Please try again later.';
+  'Request processing is not available yet. Please try again later.';
 
 const CREATE_FIELDS = Object.freeze([
   'name',
@@ -49,7 +45,7 @@ const UPDATE_FIELDS = Object.freeze([
 function sendUnavailable(res) {
   return apiResponse.sendError(
     res,
-    501,
+    503,
     SERVICE_UNAVAILABLE_CODE,
     SERVICE_UNAVAILABLE_MESSAGE
   );
@@ -61,17 +57,37 @@ function validateId(value) {
   });
 }
 
-/**
- * POST /requests
- *
- * Validate a prospective guidance or consultancy request.
- * Persistence remains disabled until the service is configured.
- */
-const createRequest = asyncHandler(async (req, res) => {
-  requestValidator.validateBody(req.body, {
-    allowedFields: CREATE_FIELDS,
+function validateObjectBody(body, allowedFields) {
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    Array.isArray(body)
+  ) {
+    throw new TypeError('Request body must be a JSON object.');
+  }
+
+  requestValidator.validateBody(body, {
+    allowedFields,
     rejectUnknown: true,
   });
+
+  const keys = Object.keys(body);
+
+  if (keys.length === 0) {
+    throw new TypeError('Request body must not be empty.');
+  }
+
+  requestValidator.validateRequiredFields(body, keys, {
+    field: 'body',
+  });
+}
+
+/**
+ * POST /requests
+ * Validate a prospective guidance or consultancy request.
+ */
+const createRequest = asyncHandler(async (req, res) => {
+  validateObjectBody(req.body, CREATE_FIELDS);
 
   requestValidator.validateRequiredFields(
     req.body,
@@ -84,16 +100,15 @@ const createRequest = asyncHandler(async (req, res) => {
 
 /**
  * GET /requests
- *
- * Validate list filters. Authorization and retrieval remain disabled.
+ * Validate list filters. Retrieval is not yet configured.
  */
 const listRequests = asyncHandler(async (req, res) => {
-  requestValidator.validateQuery(req.query, {
+  requestValidator.validateQuery(req.query || {}, {
     allowedFields: QUERY_FIELDS,
     rejectUnknown: true,
   });
 
-  requestValidator.validatePagination(req.query, {
+  requestValidator.validatePagination(req.query || {}, {
     defaultPage: 1,
     defaultLimit: 20,
     maxLimit: 100,
@@ -104,45 +119,31 @@ const listRequests = asyncHandler(async (req, res) => {
 
 /**
  * GET /requests/:id
- *
- * Validate the identifier. Resource access remains disabled.
+ * Validate the identifier. Resource access is not yet configured.
  */
 const getRequestById = asyncHandler(async (req, res) => {
-  validateId(req.params.id);
+  validateId(req.params?.id);
 
   return sendUnavailable(res);
 });
 
 /**
  * PATCH /requests/:id
- *
- * Validate the identifier and permitted update-field structure.
- * Business rules and state transitions are not implemented here.
+ * Validate the identifier and update payload.
  */
 const updateRequest = asyncHandler(async (req, res) => {
-  validateId(req.params.id);
-
-  requestValidator.validateBody(req.body, {
-    allowedFields: UPDATE_FIELDS,
-    rejectUnknown: true,
-  });
-
-  requestValidator.validateRequiredFields(
-    req.body,
-    Object.keys(req.body),
-    { field: 'body' }
-  );
+  validateId(req.params?.id);
+  validateObjectBody(req.body, UPDATE_FIELDS);
 
   return sendUnavailable(res);
 });
 
 /**
  * DELETE /requests/:id
- *
- * Validate the identifier. Deletion remains disabled.
+ * Deletion is disabled until the request service is implemented.
  */
 const deleteRequest = asyncHandler(async (req, res) => {
-  validateId(req.params.id);
+  validateId(req.params?.id);
 
   return sendUnavailable(res);
 });

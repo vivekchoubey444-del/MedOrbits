@@ -5,19 +5,20 @@
  * MedOrbits -- Cryptographic Utilities
  *
  * File: src/utils/crypto.js
+ * Runtime: Node.js >= 20
  *
  * Provides:
  * - Cryptographically secure random tokens.
  * - SHA-256 digests.
  * - HMAC-SHA-256 signatures.
- * - Timing-safe string comparisons.
+ * - Timing-safe comparisons.
  * - Scrypt password hashing and verification.
  *
  * Security:
- * - Never store plaintext passwords.
- * - Store password hashes, not password-reset tokens.
- * - Use a separate secret for each HMAC purpose.
- * - Keep cryptographic secrets in environment variables or a secret manager.
+ * - Never store plaintext passwords or raw reset tokens.
+ * - Use independent secrets for different HMAC purposes.
+ * - Store secrets in environment variables or a secret manager.
+ * - Never accept scrypt resource parameters directly from untrusted input.
  */
 
 const nodeCrypto = require('node:crypto');
@@ -32,7 +33,14 @@ const DEFAULT_SCRYPT_BLOCK_SIZE = 8;
 const DEFAULT_SCRYPT_PARALLELIZATION = 1;
 const DEFAULT_SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
 const DEFAULT_SALT_LENGTH = 16;
+
+const MIN_TOKEN_BYTES = 16;
+const MAX_TOKEN_BYTES = 1024;
 const MAX_PASSWORD_BYTES = 1024;
+const MAX_HMAC_SECRET_BYTES = 4096;
+
+const SCRYPT_FORMAT = 'scrypt';
+const SCRYPT_FORMAT_VERSION = '1';
 
 function assertString(value, name) {
   if (typeof value !== 'string') {
@@ -43,11 +51,11 @@ function assertString(value, name) {
 function randomToken(bytes = DEFAULT_TOKEN_BYTES) {
   if (
     !Number.isSafeInteger(bytes) ||
-    bytes < 16 ||
-    bytes > 1024
+    bytes < MIN_TOKEN_BYTES ||
+    bytes > MAX_TOKEN_BYTES
   ) {
     throw new RangeError(
-      'Token byte length must be between 16 and 1024.'
+      `Token byte length must be between ${MIN_TOKEN_BYTES} and ${MAX_TOKEN_BYTES}.`,
     );
   }
 
@@ -65,10 +73,14 @@ function sha256(value) {
 
 function hmacSha256(value, secret) {
   assertString(value, 'HMAC input');
+  assertString(secret, 'HMAC secret');
 
-  if (typeof secret !== 'string' || secret.length === 0) {
-    throw new TypeError(
-      'A non-empty HMAC secret is required.'
+  if (
+    Buffer.byteLength(secret, 'utf8') === 0 ||
+    Buffer.byteLength(secret, 'utf8') > MAX_HMAC_SECRET_BYTES
+  ) {
+    throw new RangeError(
+      `HMAC secret must be between 1 and ${MAX_HMAC_SECRET_BYTES} bytes.`,
     );
   }
 
@@ -78,6 +90,13 @@ function hmacSha256(value, secret) {
     .digest('hex');
 }
 
+/**
+ * Compares UTF-8 strings without leaking content-dependent timing
+ * through the final equality comparison.
+ *
+ * Different-length inputs return false immediately because
+ * timingSafeEqual requires equal-length buffers.
+ */
 function safeEqual(left, right) {
   if (
     typeof left !== 'string' ||
@@ -93,10 +112,7 @@ function safeEqual(left, right) {
     return false;
   }
 
-  return nodeCrypto.timingSafeEqual(
-    leftBuffer,
-    rightBuffer
-  );
+  return nodeCrypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 function isValidPasswordInput(password) {
@@ -117,7 +133,7 @@ async function derivePasswordKey(password, salt) {
       r: DEFAULT_SCRYPT_BLOCK_SIZE,
       p: DEFAULT_SCRYPT_PARALLELIZATION,
       maxmem: DEFAULT_SCRYPT_MAX_MEMORY,
-    }
+    },
   );
 }
 
@@ -128,7 +144,7 @@ async function hashPassword(password) {
 
   if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
     throw new RangeError(
-      'Password exceeds the maximum supported byte length.'
+      'Password exceeds the maximum supported byte length.',
     );
   }
 
@@ -136,7 +152,8 @@ async function hashPassword(password) {
   const derivedKey = await derivePasswordKey(password, salt);
 
   return [
-    'scrypt',
+    SCRYPT_FORMAT,
+    SCRYPT_FORMAT_VERSION,
     DEFAULT_SCRYPT_COST,
     DEFAULT_SCRYPT_BLOCK_SIZE,
     DEFAULT_SCRYPT_PARALLELIZATION,
@@ -157,8 +174,10 @@ function decodeBase64UrlStrict(value) {
   try {
     const decoded = Buffer.from(value, 'base64url');
 
-    // Reject non-canonical or malformed encodings.
-    if (decoded.toString('base64url') !== value) {
+    if (
+      decoded.length === 0 ||
+      decoded.toString('base64url') !== value
+    ) {
       return null;
     }
 
@@ -178,15 +197,20 @@ async function verifyPassword(password, storedHash) {
 
   const parts = storedHash.split('$');
 
-  if (parts.length !== 6 || parts[0] !== 'scrypt') {
+  // Format: scrypt$1$N$r$p$salt$derivedKey
+  if (
+    parts.length !== 7 ||
+    parts[0] !== SCRYPT_FORMAT ||
+    parts[1] !== SCRYPT_FORMAT_VERSION
+  ) {
     return false;
   }
 
-  const cost = Number(parts[1]);
-  const blockSize = Number(parts[2]);
-  const parallelization = Number(parts[3]);
+  const cost = Number(parts[2]);
+  const blockSize = Number(parts[3]);
+  const parallelization = Number(parts[4]);
 
-  // Never derive resource limits from untrusted hash parameters.
+  // Never allow stored hash parameters to select arbitrary resource usage.
   if (
     cost !== DEFAULT_SCRYPT_COST ||
     blockSize !== DEFAULT_SCRYPT_BLOCK_SIZE ||
@@ -195,8 +219,8 @@ async function verifyPassword(password, storedHash) {
     return false;
   }
 
-  const salt = decodeBase64UrlStrict(parts[4]);
-  const expectedKey = decodeBase64UrlStrict(parts[5]);
+  const salt = decodeBase64UrlStrict(parts[5]);
+  const expectedKey = decodeBase64UrlStrict(parts[6]);
 
   if (
     !salt ||
@@ -212,7 +236,7 @@ async function verifyPassword(password, storedHash) {
 
     return nodeCrypto.timingSafeEqual(
       Buffer.from(actualKey),
-      expectedKey
+      expectedKey,
     );
   } catch {
     return false;

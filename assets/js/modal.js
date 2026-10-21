@@ -1,17 +1,23 @@
+
 /* =========================================================
    MedOrbits -- Modal Manager
    File: /assets/js/modal.js
    Purpose: Accessible modals, dialogs, confirmations, focus
+   Version: 1.1.0
    ========================================================= */
 
 (function (window, document) {
   "use strict";
 
+  if (window.MedOrbitsModal) return;
+
   const state = {
     stack: [],
     initialized: false,
     previousBodyOverflow: "",
-    generatedId: 0
+    generatedId: 0,
+    backgroundState: new Map(),
+    listeners: []
   };
 
   const FOCUSABLE_SELECTOR = [
@@ -30,29 +36,20 @@
 
   const utils = {
     escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, function (char) {
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[char];
-      });
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
     },
 
-    dispatch(name, detail) {
-      document.dispatchEvent(
-        new CustomEvent("medorbits:modal:" + name, {
-          detail: detail || {}
-        })
-      );
-    },
-
-    notify(message, type) {
-      if (window.MedOrbitsErrorHandler?.notify) {
-        window.MedOrbitsErrorHandler.notify(message, type || "info");
-      }
+    dispatch(name, detail = {}) {
+      document.dispatchEvent(new CustomEvent(
+        "medorbits:modal:" + name,
+        { detail }
+      ));
     },
 
     getElement(target) {
@@ -76,24 +73,38 @@
 
       return Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR))
         .filter((element) => {
-          return (
-            !element.hidden &&
-            element.getAttribute("aria-hidden") !== "true" &&
-            element.getClientRects().length > 0
-          );
+          if (
+            element.hidden ||
+            element.disabled ||
+            element.getAttribute("aria-hidden") === "true" ||
+            element.closest("[hidden], [inert], [aria-hidden='true']")
+          ) {
+            return false;
+          }
+
+          return element.getClientRects().length > 0;
         });
     },
 
-    createId(prefix) {
+    createId(prefix = "mo-modal") {
       state.generatedId += 1;
 
-      return (
-        (prefix || "mo-modal") +
-        "-" +
-        Date.now().toString(36) +
-        "-" +
-        state.generatedId
-      );
+      return `${prefix}-${Date.now().toString(36)}-${state.generatedId}`;
+    },
+
+    safeFocus(element) {
+      if (!element || typeof element.focus !== "function") return;
+
+      try {
+        element.focus({ preventScroll: true });
+      } catch (_) {
+        element.focus();
+      }
+    },
+
+    listen(target, type, handler, options) {
+      target.addEventListener(type, handler, options);
+      state.listeners.push({ target, type, handler, options });
     }
   };
 
@@ -102,11 +113,13 @@
 
     if (!element) return null;
 
-    if (element.matches("[data-modal], .modal, [role='dialog']")) {
+    if (element.matches("[data-modal], .modal, [role='dialog'], [role='alertdialog']")) {
       return element;
     }
 
-    return element.closest("[data-modal], .modal, [role='dialog']");
+    return element.closest(
+      "[data-modal], .modal, [role='dialog'], [role='alertdialog']"
+    );
   }
 
   function getEntry(modal) {
@@ -114,63 +127,75 @@
   }
 
   function getTopEntry() {
-    return state.stack.length
-      ? state.stack[state.stack.length - 1]
-      : null;
+    return state.stack[state.stack.length - 1] || null;
   }
 
   function isOpen(target) {
     const modal = getModal(target);
-
     return Boolean(modal && getEntry(modal));
   }
 
-  function setBackgroundInert(enabled, modal) {
-    const bodyChildren = Array.from(document.body.children);
+  function setBackgroundInert(enabled, activeModal) {
+    if (!document.body) return;
 
-    bodyChildren.forEach((element) => {
-      if (
-        element === modal ||
-        element.contains(modal) ||
-        element.tagName === "SCRIPT" ||
-        element.tagName === "STYLE"
-      ) {
-        return;
-      }
+    if (enabled) {
+      state.backgroundState.clear();
 
-      if (enabled) {
-        if (!element.hasAttribute("data-mo-modal-inert")) {
-          element.dataset.moModalInert = element.inert ? "true" : "false";
+      Array.from(document.body.children).forEach((element) => {
+        if (
+          element === activeModal ||
+          element.contains(activeModal) ||
+          ["SCRIPT", "STYLE", "TEMPLATE"].includes(element.tagName)
+        ) {
+          return;
         }
+
+        state.backgroundState.set(element, {
+          inert: Boolean(element.inert),
+          ariaHidden: element.getAttribute("aria-hidden")
+        });
 
         element.inert = true;
         element.setAttribute("aria-hidden", "true");
-      } else if (element.hasAttribute("data-mo-modal-inert")) {
-        element.inert = element.dataset.moModalInert === "true";
+      });
 
-        if (element.dataset.moModalInert === "false") {
-          element.removeAttribute("aria-hidden");
-        }
-
-        delete element.dataset.moModalInert;
-      }
-    });
-  }
-
-  function prepareModal(modal, options) {
-    const settings = options || {};
-
-    if (!modal.id) {
-      modal.id = utils.createId();
+      return;
     }
 
-    modal.setAttribute("role", modal.getAttribute("role") || "dialog");
+    state.backgroundState.forEach((previous, element) => {
+      if (!element.isConnected) return;
+
+      element.inert = previous.inert;
+
+      if (previous.ariaHidden === null) {
+        element.removeAttribute("aria-hidden");
+      } else {
+        element.setAttribute("aria-hidden", previous.ariaHidden);
+      }
+    });
+
+    state.backgroundState.clear();
+  }
+
+  function prepareModal(modal, options = {}) {
+    if (!modal.id) modal.id = utils.createId();
+
+    const role = options.role ||
+      modal.getAttribute("role") ||
+      "dialog";
+
+    modal.setAttribute(
+      "role",
+      role === "alertdialog" ? "alertdialog" : "dialog"
+    );
     modal.setAttribute("aria-modal", "true");
 
-    if (settings.label) {
-      modal.setAttribute("aria-label", settings.label);
-    } else if (!modal.hasAttribute("aria-label") &&
-               !modal.hasAttribute("aria-labelledby")) {
+    if (options.label) {
+      modal.setAttribute("aria-label", String(options.label));
+    } else if (
+      !modal.hasAttribute("aria-label") &&
+      !modal.hasAttribute("aria-labelledby")
+    ) {
       const heading = modal.querySelector(
         "[data-modal-title], .modal-title, h1, h2, h3"
       );
@@ -186,22 +211,44 @@
       }
     }
 
+    if (options.description) {
+      const description = utils.getElement(options.description);
+
+      if (description) {
+        if (!description.id) {
+          description.id = utils.createId("mo-modal-description");
+        }
+
+        modal.setAttribute("aria-describedby", description.id);
+      }
+    }
+
     if (!modal.hasAttribute("tabindex")) {
       modal.setAttribute("tabindex", "-1");
     }
 
-    if (settings.size) {
-      modal.dataset.modalSize = settings.size;
+    if (options.size) {
+      modal.dataset.modalSize = String(options.size);
     }
 
-    modal.dataset.modalOpen = "true";
     modal.hidden = false;
     modal.removeAttribute("aria-hidden");
+    modal.dataset.modalOpen = "true";
   }
 
-  function open(target, options) {
+  function focusModal(modal) {
+    if (!modal) return;
+
+    const autofocus = modal.querySelector(
+      "[autofocus]:not([disabled])"
+    );
+
+    const focusable = utils.getFocusable(modal);
+    utils.safeFocus(autofocus || focusable[0] || modal);
+  }
+
+  function open(target, options = {}) {
     const modal = getModal(target);
-    const settings = options || {};
 
     if (!modal) {
       throw new Error("Modal element was not found.");
@@ -222,40 +269,51 @@
       document.body.style.overflow = "hidden";
     }
 
-    prepareModal(modal, settings);
+    prepareModal(modal, options);
 
     const entry = {
       modal,
       previousActiveElement,
       closeOnBackdrop:
-        settings.closeOnBackdrop !== false &&
+        options.closeOnBackdrop !== false &&
         modal.dataset.closeOnBackdrop !== "false",
       closeOnEscape:
-        settings.closeOnEscape !== false &&
+        options.closeOnEscape !== false &&
         modal.dataset.closeOnEscape !== "false",
-      onClose: typeof settings.onClose === "function"
-        ? settings.onClose
+      onClose: typeof options.onClose === "function"
+        ? options.onClose
         : null,
-      onOpen: typeof settings.onOpen === "function"
-        ? settings.onOpen
-        : null
+      onOpen: typeof options.onOpen === "function"
+        ? options.onOpen
+        : null,
+      options
     };
 
     state.stack.push(entry);
 
     if (firstOpen) {
       setBackgroundInert(true, modal);
+    } else {
+      const previousTop = state.stack[state.stack.length - 2];
+
+      if (previousTop) {
+        previousTop.modal.setAttribute("aria-hidden", "true");
+        previousTop.modal.removeAttribute("aria-modal");
+        previousTop.modal.inert = true;
+      }
     }
 
     modal.classList.add("is-open", "modal-open");
     modal.dispatchEvent(new CustomEvent("modal:open", {
       bubbles: true,
-      detail: { modal, options: settings }
+      detail: { modal, options }
     }));
 
-    utils.dispatch("opened", { modal, options: settings });
+    utils.dispatch("opened", { modal, options });
 
-    window.requestAnimationFrame(() => focusModal(modal));
+    window.requestAnimationFrame(() => {
+      if (getEntry(modal)) focusModal(modal);
+    });
 
     if (entry.onOpen) {
       try {
@@ -268,52 +326,48 @@
     return modal;
   }
 
-  function focusModal(modal) {
-    if (!modal) return;
-
-    const autofocus = modal.querySelector("[autofocus]");
-    const focusable = utils.getFocusable(modal);
-    const target = autofocus || focusable[0] || modal;
-
-    try {
-      target.focus({ preventScroll: true });
-    } catch (_) {
-      target.focus();
-    }
-  }
-
-  function close(target, options) {
-    const settings = options || {};
+  function close(target, options = {}) {
     const modal = getModal(target) || getTopEntry()?.modal;
 
     if (!modal) return false;
 
-    const index = state.stack.findIndex((entry) => entry.modal === modal);
+    const index = state.stack.findIndex(
+      (entry) => entry.modal === modal
+    );
 
     if (index === -1) return false;
 
     const entry = state.stack[index];
 
-    if (typeof settings.beforeClose === "function") {
-      const allowed = settings.beforeClose(modal);
+    if (typeof options.beforeClose === "function") {
+      try {
+        if (options.beforeClose(modal) === false) return false;
+      } catch (error) {
+        console.error("[MedOrbits Modal] beforeClose error:", error);
+        return false;
+      }
+    }
 
-      if (allowed === false) return false;
+    // Close only the topmost modal to preserve stack and focus order.
+    if (index !== state.stack.length - 1 && options.force !== true) {
+      return false;
     }
 
     state.stack.splice(index, 1);
 
     modal.classList.remove("is-open", "modal-open");
-    modal.removeAttribute("data-modal-open");
+    delete modal.dataset.modalOpen;
     modal.setAttribute("aria-hidden", "true");
     modal.removeAttribute("aria-modal");
+    modal.inert = false;
     modal.hidden = true;
 
     modal.dispatchEvent(new CustomEvent("modal:close", {
       bubbles: true,
-      detail: { modal, options: settings }
+      detail: { modal, options }
     }));
 
-    utils.dispatch("closed", { modal, options: settings });
+    utils.dispatch("closed", { modal, options });
 
     if (entry.onClose) {
       try {
@@ -326,6 +380,10 @@
     const topEntry = getTopEntry();
 
     if (topEntry) {
+      topEntry.modal.inert = false;
+      topEntry.modal.hidden = false;
+      topEntry.modal.removeAttribute("aria-hidden");
+      topEntry.modal.setAttribute("aria-modal", "true");
       focusModal(topEntry.modal);
     } else {
       document.body.style.overflow = state.previousBodyOverflow;
@@ -333,34 +391,32 @@
 
       if (
         entry.previousActiveElement &&
-        entry.previousActiveElement.isConnected &&
-        typeof entry.previousActiveElement.focus === "function"
+        entry.previousActiveElement.isConnected
       ) {
-        try {
-          entry.previousActiveElement.focus({ preventScroll: true });
-        } catch (_) {
-          entry.previousActiveElement.focus();
-        }
+        utils.safeFocus(entry.previousActiveElement);
       }
     }
 
     return true;
   }
 
-  function closeAll(options) {
-    const settings = options || {};
+  function closeAll(options = {}) {
+    let allClosed = true;
 
     while (state.stack.length) {
       const entry = getTopEntry();
 
-      if (!entry || !close(entry.modal, settings)) break;
+      if (!entry || !close(entry.modal, options)) {
+        allClosed = false;
+        break;
+      }
     }
+
+    return allClosed;
   }
 
-  function create(options) {
-    const settings = options || {};
+  function create(options = {}) {
     const modal = document.createElement("div");
-
     modal.className = "mo-modal";
     modal.dataset.modal = "";
     modal.hidden = true;
@@ -370,8 +426,8 @@
     content.className = "mo-modal-dialog";
     content.setAttribute("role", "document");
 
-    if (settings.size) {
-      content.dataset.modalSize = settings.size;
+    if (options.size) {
+      content.dataset.modalSize = String(options.size);
     }
 
     const header = document.createElement("div");
@@ -380,58 +436,56 @@
     const title = document.createElement("h2");
     title.className = "mo-modal-title";
     title.dataset.modalTitle = "";
-    title.textContent = settings.title || "Dialog";
+    title.textContent = String(options.title || "Dialog");
 
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.className = "mo-modal-close";
     closeButton.dataset.modalClose = "";
     closeButton.setAttribute("aria-label", "Close dialog");
-    closeButton.innerHTML = "&times;";
+    closeButton.textContent = "×";
 
-    header.append(title, closeButton);
+    header.append(title);
+
+    if (options.closeButton !== false) {
+      header.append(closeButton);
+    }
 
     const body = document.createElement("div");
     body.className = "mo-modal-body";
 
-    if (settings.content instanceof Node) {
-      body.appendChild(settings.content);
+    if (options.content instanceof Node) {
+      body.appendChild(options.content);
     } else {
-      body.textContent = String(settings.content || "");
+      body.textContent = String(options.content ?? "");
     }
 
     content.append(header, body);
 
-    if (settings.footer instanceof Node) {
+    if (options.footer instanceof Node) {
       const footer = document.createElement("div");
       footer.className = "mo-modal-footer";
-      footer.appendChild(settings.footer);
+      footer.appendChild(options.footer);
       content.appendChild(footer);
     }
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    if (settings.closeButton === false) {
-      closeButton.hidden = true;
+    if (options.removeOnClose !== false) {
+      modal.addEventListener("modal:close", () => modal.remove(), {
+        once: true
+      });
     }
 
-    modal.addEventListener("modal:close", function () {
-      if (settings.removeOnClose !== false) {
-        modal.remove();
-      }
-    }, { once: true });
-
-    if (settings.open !== false) {
-      open(modal, settings);
+    if (options.open !== false) {
+      open(modal, options);
     }
 
     return modal;
   }
 
-  function alertDialog(message, options) {
-    const settings = options || {};
-
+  function alertDialog(message, options = {}) {
     return new Promise((resolve) => {
       const footer = document.createElement("div");
       footer.className = "mo-modal-actions";
@@ -439,31 +493,29 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "mo-button mo-button-primary";
-      button.textContent = settings.confirmText || "OK";
-
+      button.textContent = options.confirmText || "OK";
       footer.appendChild(button);
 
       const modal = create({
-        title: settings.title || "Notice",
-        content: String(message || ""),
+        title: options.title || "Notice",
+        content: String(message ?? ""),
         footer,
         closeOnBackdrop: false,
-        closeOnEscape: settings.closeOnEscape !== false,
-        removeOnClose: true
+        closeOnEscape: options.closeOnEscape !== false
       });
 
       let settled = false;
 
-      function finish() {
+      function finish(result) {
         if (settled) return;
         settled = true;
         close(modal);
-        resolve(true);
+        resolve(result);
       }
 
-      button.addEventListener("click", finish);
+      button.addEventListener("click", () => finish(true));
 
-      modal.addEventListener("modal:close", function () {
+      modal.addEventListener("modal:close", () => {
         if (!settled) {
           settled = true;
           resolve(false);
@@ -474,9 +526,7 @@
     });
   }
 
-  function confirmDialog(message, options) {
-    const settings = options || {};
-
+  function confirmDialog(message, options = {}) {
     return new Promise((resolve) => {
       const footer = document.createElement("div");
       footer.className = "mo-modal-actions";
@@ -484,23 +534,24 @@
       const cancelButton = document.createElement("button");
       cancelButton.type = "button";
       cancelButton.className = "mo-button mo-button-secondary";
-      cancelButton.textContent = settings.cancelText || "Cancel";
+      cancelButton.textContent = options.cancelText || "Cancel";
 
       const confirmButton = document.createElement("button");
       confirmButton.type = "button";
-      confirmButton.className =
-        "mo-button " +
-        (settings.danger ? "mo-button-danger" : "mo-button-primary");
-      confirmButton.textContent = settings.confirmText || "Confirm";
+      confirmButton.className = "mo-button " +
+        (options.danger
+          ? "mo-button-danger"
+          : "mo-button-primary");
+      confirmButton.textContent = options.confirmText || "Confirm";
 
       footer.append(cancelButton, confirmButton);
 
       const modal = create({
-        title: settings.title || "Confirm action",
-        content: String(message || ""),
+        title: options.title || "Confirm action",
+        content: String(message ?? ""),
         footer,
         closeOnBackdrop: false,
-        removeOnClose: true
+        closeOnEscape: options.closeOnEscape !== false
       });
 
       let settled = false;
@@ -515,7 +566,7 @@
       cancelButton.addEventListener("click", () => finish(false));
       confirmButton.addEventListener("click", () => finish(true));
 
-      modal.addEventListener("modal:close", function () {
+      modal.addEventListener("modal:close", () => {
         if (!settled) {
           settled = true;
           resolve(false);
@@ -526,29 +577,35 @@
     });
   }
 
-  function promptDialog(message, options) {
-    const settings = options || {};
-
+  function promptDialog(message, options = {}) {
     return new Promise((resolve) => {
       const wrapper = document.createElement("div");
 
       const description = document.createElement("p");
-      description.textContent = String(message || "");
+      description.textContent = String(message ?? "");
 
       const input = document.createElement(
-        settings.multiline ? "textarea" : "input"
+        options.multiline ? "textarea" : "input"
       );
 
       input.className = "mo-modal-input";
       input.name = "modal-prompt";
-      input.value = settings.defaultValue || "";
-      input.placeholder = settings.placeholder || "";
+      input.value = String(options.defaultValue ?? "");
+      input.placeholder = String(options.placeholder ?? "");
 
-      if (settings.multiline) {
-        input.rows = Number(settings.rows) || 4;
+      if (options.multiline) {
+        input.rows = Math.max(1, Number(options.rows) || 4);
       } else {
-        input.type = settings.inputType || "text";
+        const allowedTypes = [
+          "text", "email", "number", "tel", "url", "password", "search"
+        ];
+
+        input.type = allowedTypes.includes(options.inputType)
+          ? options.inputType
+          : "text";
       }
+
+      if (options.required) input.required = true;
 
       wrapper.append(description, input);
 
@@ -558,21 +615,21 @@
       const cancelButton = document.createElement("button");
       cancelButton.type = "button";
       cancelButton.className = "mo-button mo-button-secondary";
-      cancelButton.textContent = settings.cancelText || "Cancel";
+      cancelButton.textContent = options.cancelText || "Cancel";
 
       const confirmButton = document.createElement("button");
       confirmButton.type = "button";
       confirmButton.className = "mo-button mo-button-primary";
-      confirmButton.textContent = settings.confirmText || "Submit";
+      confirmButton.textContent = options.confirmText || "Submit";
 
       footer.append(cancelButton, confirmButton);
 
       const modal = create({
-        title: settings.title || "Enter information",
+        title: options.title || "Enter information",
         content: wrapper,
         footer,
         closeOnBackdrop: false,
-        removeOnClose: true
+        closeOnEscape: options.closeOnEscape !== false
       });
 
       let settled = false;
@@ -580,7 +637,7 @@
       function finish(value) {
         if (settled) return;
 
-        if (value !== null && settings.required && !input.value.trim()) {
+        if (value !== null && options.required && !input.value.trim()) {
           input.setAttribute("aria-invalid", "true");
           input.focus();
           return;
@@ -594,14 +651,14 @@
       cancelButton.addEventListener("click", () => finish(null));
       confirmButton.addEventListener("click", () => finish(input.value));
 
-      input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" && !settings.multiline) {
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !options.multiline) {
           event.preventDefault();
           finish(input.value);
         }
       });
 
-      modal.addEventListener("modal:close", function () {
+      modal.addEventListener("modal:close", () => {
         if (!settled) {
           settled = true;
           resolve(null);
@@ -613,7 +670,9 @@
   }
 
   function bindTriggers() {
-    document.addEventListener("click", function (event) {
+    utils.listen(document, "click", (event) => {
+      if (!(event.target instanceof Element)) return;
+
       const opener = event.target.closest("[data-modal-open]");
 
       if (opener) {
@@ -622,12 +681,12 @@
         if (selector) {
           event.preventDefault();
 
-          const modal = getModal(selector) || utils.getElement(selector);
+          const target = utils.getElement(selector);
 
-          if (modal) {
-            open(modal, {
-              closeOnBackdrop: modal.dataset.closeOnBackdrop !== "false",
-              closeOnEscape: modal.dataset.closeOnEscape !== "false"
+          if (target) {
+            open(target, {
+              closeOnBackdrop: target.dataset.closeOnBackdrop !== "false",
+              closeOnEscape: target.dataset.closeOnEscape !== "false"
             });
           }
 
@@ -647,22 +706,21 @@
       }
     });
 
-    document.addEventListener("click", function (event) {
-      const topEntry = getTopEntry();
-
-      if (!topEntry) return;
+    utils.listen(document, "click", (event) => {
+      const entry = getTopEntry();
 
       if (
-        event.target === topEntry.modal &&
-        topEntry.closeOnBackdrop
+        entry &&
+        event.target === entry.modal &&
+        entry.closeOnBackdrop
       ) {
-        close(topEntry.modal);
+        close(entry.modal);
       }
     });
   }
 
   function bindKeyboard() {
-    document.addEventListener("keydown", function (event) {
+    utils.listen(document, "keydown", (event) => {
       const entry = getTopEntry();
 
       if (!entry) return;
@@ -679,19 +737,23 @@
 
       if (!focusable.length) {
         event.preventDefault();
-        entry.modal.focus();
+        utils.safeFocus(entry.modal);
         return;
       }
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
 
-      if (event.shiftKey && document.activeElement === first) {
+      if (!entry.modal.contains(active)) {
         event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+        utils.safeFocus(event.shiftKey ? last : first);
+      } else if (event.shiftKey && active === first) {
         event.preventDefault();
-        first.focus();
+        utils.safeFocus(last);
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        utils.safeFocus(first);
       }
     });
   }
@@ -702,26 +764,34 @@
     bindTriggers();
     bindKeyboard();
 
-    document.querySelectorAll("[data-modal], .modal, [role='dialog']").forEach((modal) => {
-      if (!modal.hasAttribute("aria-hidden") && !modal.hidden) {
-        modal.setAttribute("aria-hidden", "true");
+    document.querySelectorAll(
+      "[data-modal], .modal, [role='dialog'], [role='alertdialog']"
+    ).forEach((modal) => {
+      if (!getEntry(modal) && !modal.hidden) {
         modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        modal.classList.remove("is-open", "modal-open");
       }
     });
 
     state.initialized = true;
-
     utils.dispatch("initialized");
 
     return api;
   }
 
   function destroy() {
-    closeAll();
+    closeAll({ force: true });
+
+    state.listeners.forEach(({ target, type, handler, options }) => {
+      target.removeEventListener(type, handler, options);
+    });
+
+    state.listeners = [];
     state.initialized = false;
   }
 
-  const api = {
+  const api = Object.freeze({
     init,
     destroy,
     open,
@@ -743,10 +813,10 @@
       return getTopEntry()?.modal || null;
     },
 
-    constants: {
+    constants: Object.freeze({
       FOCUSABLE_SELECTOR
-    }
-  };
+    })
+  });
 
   window.MedOrbitsModal = api;
 
@@ -758,5 +828,4 @@
   } else {
     init();
   }
-
 })(window, document);

@@ -8,21 +8,22 @@ Collation: utf8mb4_0900_ai_ci
 
 1. Overview
 
-The database/ directory contains the consolidated database schema, versioned SQL migrations, seed scripts, and test fixtures used by the MedOrbits platform.
+The database/ directory contains the consolidated schema, versioned SQL migrations, seed scripts, and test fixtures used by the MedOrbits platform.
 
-The database supports education consultancy, college and university discovery, admission applications, document management, employer and job services, subscriptions, payments, notifications, role-based access control, and audit logging.
+The database supports:
 
-The database layer is responsible for:
+* Education consultancy and course discovery
+* College and university catalogues
+* Admission applications and document management
+* Employer profiles, recruitment, and job listings
+* User accounts and role-based access control
+* Subscriptions, payments, and refunds
+* Notifications and delivery processing
+* Audit logging and administrative workflows
 
-* Defining relational tables and data types.
-* Enforcing referential integrity and database-level constraints.
-* Supporting consistent application data access.
-* Maintaining versioned schema changes.
-* Providing controlled reference and demonstration data.
-* Supporting automated tests through synthetic fixtures.
-* Protecting sensitive records through appropriate database permissions and retention policies.
+The database layer is responsible for relational integrity, schema versioning, consistent data access, controlled reference data, test fixtures, and appropriate protection of sensitive records.
 
-Important: This directory targets MySQL. Do not execute its SQL against PostgreSQL without explicitly converting and testing the schema and migration logic.
+Important: This repository targets MySQL. Do not execute its SQL against PostgreSQL without explicitly converting and testing the schema and migration logic.
 
 2. Directory structure
 
@@ -38,7 +39,10 @@ database/
 │   ├── colleges.fixture.json
 │   ├── courses.fixture.json
 │   ├── payments.fixture.json
-│   └── users.fixture.json
+│   ├── users.fixture.json
+│   ├── subscriptions.fixture.json
+│   ├── documents.fixture.json
+│   └── roles-permissions.fixture.json
 ├── migrations/
 │   ├── README.md
 │   ├── 001_create_users.sql
@@ -58,46 +62,46 @@ database/
     ├── seed-demo-data.sql
     └── seed-roles.sql
 
-This structure describes the intended layout. Verify the actual filenames and paths before running database commands.
+This is the intended layout, not confirmation that every listed file currently exists. Verify the actual repository before running scripts.
 
 Filename consistency
 
-Migration filenames are part of the versioned schema history. The migration runner, migration README, deployment scripts, and repository must use exactly the same names.
+Migration filenames are part of the versioned schema history. The migration runner, documentation, deployment scripts, and repository must use the same names.
 
-Previously discussed alternatives include:
+The agreed filenames are:
 
-* 007_create_employers_jobs.sql versus 007_create_jobs_employers.sql
-* 008_create_subscriptions_payments.sql versus 008_create_payments_subscriptions.sql
+* 007_create_employers_jobs.sql
+* 008_create_subscriptions_payments.sql
 
-Choose the names present in the repository and standardize documentation accordingly. Do not create multiple migrations with the same numeric prefix.
+Use the actual filenames present in the repository. Do not create duplicate migration numbers or rename migrations that have already been applied in a shared environment.
 
 3. Database architecture
 
-MedOrbits uses a relational MySQL database with foreign keys, unique constraints, indexes, and database-level validation.
+MedOrbits uses a relational MySQL database with foreign keys, unique constraints, indexes, and supported database-level validation.
 
-Setting	Required configuration
-Database engine	MySQL
-Minimum target version	8.0.16+
+Setting	Configuration
+Engine	MySQL
+Minimum version	8.0.16+
 Storage engine	InnoDB
 Character set	utf8mb4
 Collation	utf8mb4_0900_ai_ci
-Primary keys	BIGINT UNSIGNED AUTO_INCREMENT, where appropriate
-Public identifiers	Application-generated UUIDs
+Internal primary keys	BIGINT UNSIGNED AUTO_INCREMENT, where appropriate
+Public identifiers	UUIDs
 Timestamps	DATETIME(3) where millisecond precision is required
-Structured metadata	JSON, where appropriate
-Schema history	schema_migrations, if implemented by the migration system
+Structured metadata	JSON where appropriate
+Migration history	schema_migrations, if implemented by the migration system
 
-Core design principles
+Core principles
 
 1. Use foreign keys for relational integrity.
-2. Use unique constraints to enforce identity and uniqueness requirements.
+2. Use unique constraints for identifiers and natural keys.
 3. Add indexes based on actual query patterns.
 4. Keep database constraints aligned with application validation.
 5. Separate schema definitions from seed data.
-6. Use migrations for incremental changes.
-7. Keep fixtures synthetic and restricted to development or testing.
+6. Use versioned migrations for incremental changes.
+7. Keep test fixtures synthetic and restricted to development or testing.
 8. Protect personal, financial, and document-related information.
-9. Prefer backward-compatible schema changes when application deployments are separate from database deployments.
+9. Prefer backward-compatible schema changes when application and database deployments are separate.
 
 4. Schema ownership and source of truth
 
@@ -105,9 +109,9 @@ MedOrbits maintains two schema representations.
 
 schema.sql — consolidated schema
 
-database/schema.sql represents the complete schema for a fresh installation.
+database/schema.sql describes the intended complete schema for a fresh installation.
 
-It should contain the tables, columns, relationships, indexes, and constraints required by the final database design.
+It should define the required tables, columns, relationships, indexes, and constraints.
 
 Use it only through the documented fresh-install procedure.
 
@@ -115,25 +119,25 @@ migrations/ — incremental schema history
 
 database/migrations/ contains the ordered SQL files describing incremental schema changes.
 
-The migration sequence is the authoritative history of those changes for migration-managed environments.
+For migration-managed environments, the applied migrations and their recorded history define the database’s evolution.
 
 Consistency requirement
 
-The consolidated schema and the complete migration sequence must produce structurally equivalent databases.
+The consolidated schema and complete migration sequence must produce structurally equivalent databases.
 
-This means comparing more than table names. Verify:
+Compare:
 
-* Column names, types, nullability, and defaults.
-* Primary keys and unique constraints.
-* Foreign keys and deletion behavior.
-* Indexes.
-* Check constraints.
-* Character sets and collations.
-* Relevant timestamp behavior.
+* Column names, types, nullability, and defaults
+* Primary keys and unique constraints
+* Foreign keys and deletion behavior
+* Indexes and check constraints
+* Character sets and collations
+* Timestamp behavior
+* Relevant status values and data invariants
 
 Do not apply schema.sql and migrations 001–010 to the same database unless a deliberate baseline and migration-history procedure has been implemented.
 
-If the two representations disagree, investigate and resolve the discrepancy rather than silently treating both as interchangeable.
+If the two representations disagree, resolve the discrepancy rather than treating them as interchangeable.
 
 5. Migration inventory
 
@@ -141,62 +145,58 @@ The intended migration responsibilities are:
 
 Migration	Responsibility
 001_create_users.sql	User accounts, credentials, and account status
-002_create_roles_permissions.sql	Roles, permissions, and their relationships
+002_create_roles_permissions.sql	Roles, permissions, and assignments
 003_create_courses.sql	Education course catalogue
 004_create_colleges_universities.sql	College and university records
 005_create_applications.sql	Admission and consultancy applications
 006_create_documents.sql	Document metadata and review status
 007_create_employers_jobs.sql	Employer profiles and job listings
 008_create_subscriptions_payments.sql	Subscriptions and payment records
-009_create_notifications.sql	User notifications and delivery infrastructure
+009_create_notifications.sql	Notifications and delivery infrastructure
 010_create_audit_logs.sql	Application and security audit events
 
-The actual SQL files determine which tables and capabilities exist. The inventory alone does not prove that every listed responsibility is implemented.
+The actual SQL files determine which tables and capabilities exist. This inventory does not prove that every listed migration has been implemented or successfully applied.
 
-For detailed migration conventions, dependencies, and execution guidance, see migrations/README.md.
+Refer to migrations/README.md for migration dependencies and execution standards.
 
-6. Database migrations and history
+6. Migration management
 
 Run migrations in numerical order through the reviewed migration runner, if one is implemented.
 
 A production-ready runner should:
 
-1. Discover eligible migration files deterministically.
-2. Validate their filenames and numeric prefixes.
+1. Discover migration files deterministically.
+2. Validate filenames and numeric prefixes.
 3. Apply unapplied migrations in order.
 4. Maintain accurate migration history.
-5. Prevent concurrent migration processes from applying the same migration.
+5. Prevent concurrent processes from applying the same migration simultaneously.
 6. Stop and report failures.
-7. Detect modifications to previously applied files, preferably using checksums.
+7. Detect changes to previously applied files, preferably using checksums.
 8. Verify the database engine and version.
 9. Handle partially completed migrations safely.
-10. Provide an operational recovery procedure.
+10. Provide a documented recovery procedure.
 
 The intended history table is schema_migrations. Its actual structure and behavior must match the migration runner.
 
 Important MySQL behavior
 
-MySQL DDL statements can implicitly commit. A failed multi-statement migration may leave some tables or constraints created.
+* MySQL DDL statements can implicitly commit.
+* A failed migration may leave some tables or constraints created.
+* CREATE TABLE IF NOT EXISTS does not update an existing table to match a revised definition.
+* A migration should not be assumed safe to rerun or automatically reversible.
 
-CREATE TABLE IF NOT EXISTS does not update an existing table to match a revised definition.
-
-Do not assume migrations are safe to rerun, fully transactional, or automatically reversible.
-
-Migration naming
-
-Once a migration has been applied in a shared environment, keep its filename stable. Make subsequent changes through a new migration rather than silently rewriting the historical file.
+Once a migration has been applied in a shared environment, keep its filename stable. Use a new migration for subsequent schema changes.
 
 7. Database configuration
 
-The application database connection is configured through:
+The intended application configuration files are:
 
-src/config/database.js
+* src/config/database.js
+* src/config/env.js
 
-Environment validation is expected to be handled through:
+Confirm that these files exist and inspect their accepted configuration before using the example below.
 
-src/config/env.js
-
-The following configuration is illustrative:
+Example .env configuration:
 
 DB_CLIENT=mysql
 DB_HOST=127.0.0.1
@@ -209,22 +209,14 @@ DB_CONNECT_TIMEOUT=10000
 DB_WAIT_FOR_CONNECTIONS=true
 DB_TIMEZONE=Z
 
-These variable names and values are examples, not confirmation of the current implementation.
-
-Before using them, verify:
-
-* The accepted variables in .env.example.
-* The validation rules in src/config/env.js.
-* The connection options in src/config/database.js.
-* The database adapter and supported options in package.json.
-* The runtime’s timezone handling.
+These names and values are illustrative. They are not confirmation of the current implementation.
 
 Credentials and permissions
 
 * Never commit .env files or production credentials.
-* Use a secrets manager or deployment environment variables for production secrets.
+* Use deployment environment variables or a secrets manager for production secrets.
 * Use a dedicated database account with least-privilege permissions.
-* Separate the runtime database account from the migration account where practical.
+* Separate runtime credentials from migration credentials where practical.
 * Restrict database network access.
 * Use TLS where required by the deployment environment.
 * Avoid exposing SQL errors or connection details in public API responses.
@@ -236,7 +228,7 @@ The application runtime should not receive schema-altering privileges unless exp
 Use this procedure for a new development or test database.
 
 1. Install a compatible MySQL server.
-2. Create the target database with the required character set and collation.
+2. Create the intended development or test database.
 3. Configure and verify the database connection.
 4. Review database/schema.sql.
 5. Apply the consolidated schema once.
@@ -251,9 +243,11 @@ CREATE DATABASE medorbits
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_0900_ai_ci;
 
-The command is illustrative. Confirm that the target database does not already contain production or otherwise valuable data before using setup commands.
+This is illustrative. Confirm that the database does not already contain valuable data before executing setup operations.
 
-Do not apply migrations 001–010 after the consolidated schema unless the project has an explicit baseline mechanism that records the appropriate migration history.
+Do not apply migrations 001–010 after applying the consolidated schema unless the project has an explicit baseline mechanism that records the appropriate migration history.
+
+The schema file may itself include CREATE DATABASE and USE statements. Review those statements and the selected database before execution.
 
 9. Existing database installation
 
@@ -261,80 +255,77 @@ For an existing database:
 
 1. Back up the database.
 2. Inspect the current schema and migration history.
-3. Confirm that the database matches the expected baseline.
+3. Confirm the database’s expected baseline.
 4. Identify unapplied migrations.
 5. Apply unapplied migrations in numerical order.
 6. Verify each migration’s result.
 7. Run integration tests.
-8. Monitor the application after deployment.
+8. Monitor application health after deployment.
 
 Do not use the fresh-install schema as a substitute for incremental migrations on an existing production database.
 
 Migration execution
 
-Inspect available package scripts:
+Inspect the available package scripts from the repository root:
 
 npm run
 
-If a migration script exists and has been reviewed, use the documented command. For example:
+If a reviewed migration script exists, use the documented command. For example:
 
 npm run migrate
 
-This command is illustrative; do not assume the script exists.
+The second command is illustrative and must not be assumed to exist.
 
-For manual development execution, use the MySQL client and apply individual files in the documented dependency order. Prefer the migration runner for shared and production environments.
+For manual development execution, use the MySQL client and apply individual files in the documented dependency order. Prefer a reviewed migration runner for shared and production environments.
 
 10. Seed data
 
-The seeds/ directory contains baseline reference data and controlled development or demonstration records.
+The seeds/ directory contains baseline reference data and controlled demonstration records.
 
 File	Responsibility
-seed-roles.sql	Initial roles and authorization reference data
-seed-courses.sql	Course catalogue records
-seed-colleges.sql	College and university records
-seed-demo-data.sql	Synthetic demonstration records
+seed-roles.sql	Initial roles, permissions, and role-permission mappings
+seed-courses.sql	Illustrative course catalogue
+seed-colleges.sql	Fictional universities and colleges
+seed-demo-data.sql	Synthetic demonstration application
 
 Run seeds only after their dependent tables exist.
 
 Before execution:
 
-* Confirm that the required columns exist.
+* Confirm that required columns exist.
 * Verify foreign-key and unique-constraint assumptions.
 * Confirm required users and reference records exist.
 * Review ON DUPLICATE KEY UPDATE behavior.
 * Test repeat execution.
-* Keep demonstration records clearly distinguishable from real records.
-* Do not load demo accounts or applicant information into production without explicit approval and a reviewed procedure.
+* Keep demonstration records distinguishable from real records.
+* Do not load demo accounts or applicant information into production without explicit authorization and a reviewed procedure.
 
-Reference data and demonstration data should be managed separately wherever practical.
+Reference data and demonstration data should be separated wherever practical.
 
-See seeds/README.md for detailed seed conventions and execution guidance.
+Refer to seeds/README.md for seed conventions and execution guidance.
 
 11. Test fixtures
 
 The fixtures/ directory contains synthetic JSON records for automated tests and development workflows.
 
-Expected fixtures:
+Expected fixtures include:
 
 * users.fixture.json
-* courses.fixture.json
-* colleges.fixture.json
+* subscriptions.fixture.json
+* documents.fixture.json
+* roles-permissions.fixture.json
 * applications.fixture.json
+* colleges.fixture.json
+* courses.fixture.json
 * payments.fixture.json
+
+Confirm the actual fixture files before relying on this inventory.
 
 Fixtures must conform to the current schema, identifier formats, required fields, foreign-key relationships, and allowed status values.
 
 JSON syntax validation alone does not validate database constraints or business rules. Fixtures are not automatically loaded unless a configured script or test explicitly loads them.
 
-Validate fixture JSON
-
-Run from the repository root:
-
-node -e ‘for (const f of process.argv.slice(1)) JSON.parse(require(“node:fs”).readFileSync(f, “utf8”)); console.log(“Fixture JSON is valid.”)’ database/fixtures/*.json
-
-This checks JSON syntax only. It does not verify required fields, foreign keys, status values, or application-specific rules.
-
-Use fixtures/README.md for fixture conventions, validation requirements, and loading guidance.
+Refer to fixtures/README.md for fixture conventions, validation requirements, and loading guidance.
 
 12. Schema and application integration
 
@@ -342,25 +333,27 @@ Database definitions must remain aligned with application models, repositories, 
 
 Users and roles
 
-The documented schema includes both users.role and normalized role-assignment tables.
-
-Define one authoritative authorization mechanism. If both representations remain during a transition, document and test their synchronization strategy.
-
-Backend authorization must use the authoritative role and permission source. Never trust a role or permission supplied by the client.
+* Define one authoritative authorization mechanism.
+* If legacy role fields and normalized role-assignment tables coexist, document and test their synchronization strategy.
+* Backend authorization must use the authoritative role and permission source.
+* Never trust a role or permission supplied by the client.
+* Store password hashes, not plaintext passwords.
 
 Courses and institutions
 
 * Keep course, college, and university slugs consistent with seed scripts and application queries.
 * Ensure foreign keys reference the intended internal IDs.
 * Distinguish institutional existence from verification and publication.
-* Confirm seed scripts use columns defined by the actual migrations.
+* Confirm that seed scripts use columns defined by the actual migrations.
+* Verify institution and course information with official sources before publishing it as factual admissions guidance.
 
-Applications
+Admission applications
 
 * Enforce unique public identifiers and application numbers.
-* Align status values with the application service and validators.
+* Align status values with application services and validators.
 * Populate reviewer and review timestamps consistently.
-* Confirm foreign-key behavior preserves the required historical information.
+* Confirm that foreign-key behavior preserves required historical information.
+* Enforce application ownership in trusted backend services.
 
 Documents
 
@@ -374,13 +367,13 @@ Employers and jobs
 
 * Validate employer verification and activation before allowing job publication.
 * Align employment types, workplace types, job statuses, and salary fields across the application and database.
-* Confirm whether employment application records are implemented in the actual migration set.
+* Confirm that employment application tables exist if required by the recruitment workflow.
 * Protect private employer and applicant information.
 
 Payments and subscriptions
 
 * Use one consistent monetary representation.
-* For INR, ₹1,500.00 equals 150000 paise when amounts are stored in paise.
+* If INR amounts are stored in paise, ₹1,500.00 equals 150000 paise.
 * Convert between provider amounts and database values explicitly.
 * Verify payment-provider webhooks on the server.
 * Implement idempotency and duplicate-event protection.
@@ -404,25 +397,25 @@ Audit logs
 
 13. Testing and validation
 
-Before deploying database changes:
+Before deploying database changes, verify the following:
 
-* [ ]	Validate SQL syntax against the target MySQL version.
-* [ ]	Apply all migrations to a clean disposable database.
-* [ ]	Verify primary keys, unique constraints, foreign keys, and indexes.
-* [ ]	Verify enforced check constraints and timestamp defaults.
-* [ ]	Confirm migration history accurately reflects completed migrations.
-* [ ]	Validate fixtures and seed data.
-* [ ]	Test application queries against the migrated schema.
-* [ ]	Test registration, authentication, and authorization.
-* [ ]	Test application submission and review workflows.
-* [ ]	Test document ownership and verification.
-* [ ]	Test job publication and employer verification.
-* [ ]	Test payment, refund, and webhook idempotency.
-* [ ]	Test notification scheduling and retries.
-* [ ]	Test audit logging and restricted access.
-* [ ]	Test migration failure recovery.
-* [ ]	Verify the consolidated schema and migration result are structurally equivalent.
-* [ ]	Test backup restoration.
+* [ ]	SQL syntax is valid for the target MySQL version.
+* [ ]	All migrations apply to a clean disposable database.
+* [ ]	Primary keys, unique constraints, foreign keys, and indexes are correct.
+* [ ]	Check constraints and timestamp defaults behave as expected.
+* [ ]	Migration history accurately reflects completed migrations.
+* [ ]	Fixtures and seed data are valid.
+* [ ]	Application queries work against the resulting schema.
+* [ ]	Registration, authentication, and authorization work.
+* [ ]	Application submission and review workflows work.
+* [ ]	Document ownership and verification are enforced.
+* [ ]	Job publication requires an eligible employer.
+* [ ]	Payment, refund, and webhook idempotency are tested.
+* [ ]	Notification scheduling and retries are tested.
+* [ ]	Audit logging and access restrictions are tested.
+* [ ]	Migration failure recovery is documented.
+* [ ]	Consolidated schema and migration results are structurally equivalent.
+* [ ]	Backup restoration has been tested.
 
 Run destructive and recovery tests only against disposable or explicitly designated test databases.
 
@@ -489,34 +482,34 @@ Whenever the database schema changes:
 3. Update models, repositories, services, validators, and workers.
 4. Update seed scripts and fixtures.
 5. Review indexes, foreign keys, constraints, and deletion behavior.
-6. Test both a clean installation and a representative existing database.
+6. Test a clean installation and a representative existing database.
 7. Update this README and migrations/README.md where appropriate.
 8. Document data transformations and recovery steps.
-9. Verify migration checksums and history, if implemented.
+9. Verify migration checksums and history if implemented.
 
 If a migration must be corrected after deployment, prefer a reviewed forward migration unless it is confirmed that the original migration has never been applied in any shared environment.
 
-18. Current repository verification
+18. Repository verification
 
 Before considering the database implementation production-ready, verify these items against the actual repository:
 
-1. Confirm the filename for migration 007 and use it consistently everywhere.
-2. Confirm the filename for migration 008 and use it consistently everywhere.
+1. Confirm migration 007’s filename and use it consistently.
+2. Confirm migration 008’s filename and use it consistently.
 3. Verify that migration 009 contains the intended notification schema.
 4. Verify that migration 010 matches the agreed audit-log design.
 5. Compare schema.sql against the complete migration sequence.
-6. Confirm that schema_migrations is implemented and maintained by the actual runner.
+6. Confirm whether schema_migrations is implemented and maintained by the actual runner.
 7. Verify whether the runner supports checksums, concurrency protection, failure reporting, and recovery.
-8. Compare seed scripts and fixtures with the real schema.
-9. Confirm that employment application tables exist if required by the recruitment workflow.
-10. Confirm that payment, refund, notification-delivery, and provider-event tables match the application services and workers.
+8. Compare seed scripts and fixtures with the actual schema.
+9. Confirm that employment application tables exist if required.
+10. Confirm that payment, refund, notification-delivery, and provider-event tables match application services and workers.
 11. Verify environment variable names against .env.example, src/config/env.js, and src/config/database.js.
 12. Confirm that production and test database credentials are separate.
 
-Documentation describes intended behavior; it does not establish that a feature has already been implemented or tested.
+Documentation describes intended behavior; it does not establish that a feature has been implemented or tested.
 
 19. Final principle
 
 Keep the MedOrbits database version-controlled, migration-managed, secure, recoverable, and aligned with the application.
 
-The numbered migrations define the history of incremental changes. The consolidated schema.sql must represent the same final schema for fresh installations. Seeds must remain controlled, fixtures must remain synthetic, and all production database changes must be reviewed, tested, and recoverable.
+The numbered migrations define the history of incremental changes. The consolidated schema must represent the same final schema for fresh installations. Seeds must remain controlled, fixtures must remain synthetic, and all production database changes must be reviewed, tested, and recoverable.

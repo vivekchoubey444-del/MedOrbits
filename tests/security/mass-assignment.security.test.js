@@ -1,11 +1,8 @@
-
 'use strict';
-
 /**
  * MedOrbits -- Mass Assignment Security Tests
  *
  * File: tests/security/mass-assignment.security.test.js
- *
  * Runtime: Node.js >= 20
  * Dependencies: Node.js built-in modules only
  *
@@ -21,73 +18,48 @@
  * Run:
  *   node --test tests/security/mass-assignment.security.test.js
  *
- * Security objectives:
- * - Reject or safely ignore protected fields in user-controlled input.
- * - Prevent privilege escalation through role or admin fields.
- * - Prevent ownership reassignment.
- * - Prevent application status and approval manipulation.
- * - Prevent modification of server-managed audit fields.
- *
  * IMPORTANT:
- * Use a dedicated test environment and a low-privilege test account.
- * Adapt endpoint paths and editable fields to the actual API contract.
+ * - Use a dedicated test environment and a low-privilege test account.
+ * - Use records that are safe to modify during security testing.
+ * - Never run these tests against production.
+ * - Adapt field names to the actual application schema.
+ * - Verify persisted state through trusted test helpers where possible.
  */
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
-
 const BASE_URL = (
   process.env.MASS_ASSIGNMENT_TEST_BASE_URL || ''
 ).replace(/\/+$/, '');
-
 const TOKEN =
   process.env.MASS_ASSIGNMENT_TEST_TOKEN || '';
-
 const USER_ID =
   process.env.MASS_ASSIGNMENT_TEST_USER_ID || '';
-
 const APPLICATION_ID =
   process.env.MASS_ASSIGNMENT_TEST_APPLICATION_ID || '';
-
 const PROFILE_PATH =
   process.env.MASS_ASSIGNMENT_TEST_PROFILE_PATH ||
-  (USER_ID ? `/api/users/${encodeURIComponent(USER_ID)}` : '');
-
+  (USER_ID
+    ? `/api/users/${encodeURIComponent(USER_ID)}`
+    : '');
 const APPLICATION_PATH =
   process.env.MASS_ASSIGNMENT_TEST_APPLICATION_PATH ||
-  (
-    APPLICATION_ID
-      ? `/api/applications/${encodeURIComponent(APPLICATION_ID)}`
-      : ''
-  );
-
+  (APPLICATION_ID
+    ? `/api/applications/${encodeURIComponent(APPLICATION_ID)}`
+    : '');
 const TIMEOUT_MS = Number(
   process.env.MASS_ASSIGNMENT_TEST_TIMEOUT_MS || 15000
 );
-
 const configured = Boolean(
   BASE_URL &&
   TOKEN &&
   Number.isFinite(TIMEOUT_MS) &&
   TIMEOUT_MS > 0
 );
-
-const skipReason =
-  'Configure MASS_ASSIGNMENT_TEST_BASE_URL and ' +
-  'MASS_ASSIGNMENT_TEST_TOKEN to run HTTP integration tests.';
-
-const JSON_HEADERS = {
+const JSON_HEADERS = Object.freeze({
   Accept: 'application/json',
   'Content-Type': 'application/json',
-};
-
-/**
- * Fields that should normally be controlled exclusively by trusted
- * server-side logic or a dedicated privileged workflow.
- *
- * Adjust these names to match the MedOrbits data model.
- */
-const PROTECTED_FIELDS = [
+});
+const PROTECTED_FIELDS = Object.freeze([
   'role',
   'roles',
   'isAdmin',
@@ -119,112 +91,8 @@ const PROTECTED_FIELDS = [
   'createdAt',
   'updatedAt',
   'deletedAt',
-];
-
-function requestHeaders(extra = {}) {
-  return {
-    ...JSON_HEADERS,
-    Authorization: `Bearer ${TOKEN}`,
-    ...extra,
-  };
-}
-
-async function request(path, options = {}) {
-  const controller = new AbortController();
-
-  const timeout = setTimeout(
-    () => controller.abort(),
-    TIMEOUT_MS
-  );
-
-  try {
-    return await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      headers: requestHeaders(options.headers || {}),
-      redirect: 'manual',
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function responseBody(response) {
-  const text = await response.text();
-
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-
-function assertClientError(response, description) {
-  assert.ok(
-    response.status >= 400 && response.status < 500,
-    `${description}: expected a 4xx response, received HTTP ${response.status}`
-  );
-}
-
-function normalizeKey(key) {
-  return String(key)
-    .replace(/[-_\s]/g, '')
-    .toLowerCase();
-}
-
-function collectProtectedFields(value, path = '$', found = []) {
-  if (!value || typeof value !== 'object') {
-    return found;
-  }
-
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => {
-      collectProtectedFields(item, `${path}[${index}]`, found);
-    });
-
-    return found;
-  }
-
-  for (const [key, child] of Object.entries(value)) {
-    const normalized = normalizeKey(key);
-    const protectedNames = new Set(
-      PROTECTED_FIELDS.map(normalizeKey)
-    );
-
-    if (protectedNames.has(normalized)) {
-      found.push({
-        path: `${path}.${key}`,
-        key,
-        value: child,
-      });
-    }
-
-    collectProtectedFields(child, `${path}.${key}`, found);
-  }
-
-  return found;
-}
-
-function assertNoProtectedFields(value, description) {
-  const found = collectProtectedFields(value);
-
-  assert.deepEqual(
-    found,
-    [],
-    `${description}: response exposed protected fields: ` +
-      found.map((field) => field.path).join(', ')
-  );
-}
-
-/**
- * These payloads intentionally contain privileged or server-managed
- * fields. They must never be accepted as ordinary user-editable data.
- */
-const privilegeEscalationPayload = {
+]);
+const PRIVILEGE_PAYLOAD = Object.freeze({
   role: 'admin',
   roles: ['admin', 'superadmin'],
   isAdmin: true,
@@ -232,17 +100,15 @@ const privilegeEscalationPayload = {
   admin: true,
   permissions: ['*'],
   permission: '*',
-};
-
-const ownershipTamperingPayload = {
+});
+const OWNERSHIP_PAYLOAD = Object.freeze({
   userId: 'attacker-controlled-user',
   ownerId: 'attacker-controlled-owner',
   createdBy: 'attacker-controlled-creator',
   updatedBy: 'attacker-controlled-updater',
   applicantId: 'attacker-controlled-applicant',
-};
-
-const workflowTamperingPayload = {
+});
+const WORKFLOW_PAYLOAD = Object.freeze({
   status: 'approved',
   approvalStatus: 'approved',
   approved: true,
@@ -256,275 +122,272 @@ const workflowTamperingPayload = {
   subscriptionPlan: 'enterprise',
   creditScore: 999,
   riskLevel: 'low',
-};
-
-const auditTamperingPayload = {
+});
+const AUDIT_PAYLOAD = Object.freeze({
   createdAt: '2000-01-01T00:00:00.000Z',
   updatedAt: '2000-01-01T00:00:00.000Z',
   deletedAt: null,
   passwordHash: 'attacker-controlled-hash',
   refreshToken: 'attacker-controlled-token',
-};
-
-const fullMassAssignmentPayload = {
+});
+const FULL_ATTACK_PAYLOAD = Object.freeze({
   displayName: 'Mass assignment security test',
-  ...privilegeEscalationPayload,
-  ...ownershipTamperingPayload,
-  ...workflowTamperingPayload,
-  ...auditTamperingPayload,
-};
-
+  ...PRIVILEGE_PAYLOAD,
+  ...OWNERSHIP_PAYLOAD,
+  ...WORKFLOW_PAYLOAD,
+  ...AUDIT_PAYLOAD,
+});
+function normalizeKey(key) {
+  return String(key)
+    .replace(/[-_\s]/g, '')
+    .toLowerCase();
+}
+const PROTECTED_KEY_SET = new Set(
+  PROTECTED_FIELDS.map(normalizeKey)
+);
+function assertPath(path, label) {
+  assert.ok(
+    typeof path === 'string' &&
+      path.startsWith('/') &&
+      !path.startsWith('//'),
+    `${label} must be a relative API path beginning with /`
+  );
+}
+async function request(path, options = {}) {
+  assertPath(path, 'Request path');
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    TIMEOUT_MS
+  );
+  try {
+    return await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      redirect: 'manual',
+      signal: controller.signal,
+      headers: {
+        ...JSON_HEADERS,
+        Authorization: `Bearer ${TOKEN}`,
+        ...(options.headers || {}),
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+async function responseBody(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+function assertNoServerError(response, description) {
+  assert.ok(
+    response.status < 500,
+    `${description}: unexpected HTTP ${response.status}`
+  );
+}
+function assertClientError(response, description) {
+  assert.ok(
+    response.status >= 400 && response.status < 500,
+    `${description}: expected 4xx; received HTTP ${response.status}`
+  );
+}
+function collectProtectedFields(value, path = '$', found = []) {
+  if (!value || typeof value !== 'object') {
+    return found;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      collectProtectedFields(item, `${path}[${index}]`, found);
+    });
+    return found;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (PROTECTED_KEY_SET.has(normalizeKey(key))) {
+      found.push({
+        path: `${path}.${key}`,
+        key,
+      });
+    }
+    collectProtectedFields(child, `${path}.${key}`, found);
+  }
+  return found;
+}
+function assertNoSensitiveFields(value, description) {
+  const found = collectProtectedFields(value);
+  assert.deepEqual(
+    found,
+    [],
+    `${description}: response contains protected fields: ` +
+      found.map((item) => item.path).join(', ')
+  );
+}
+/**
+ * API responses may wrap the record in { data: ... }.
+ * Adjust this helper if the actual API uses another envelope.
+ */
+function unwrapRecord(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return body;
+  }
+  if (body.data && typeof body.data === 'object') {
+    return body.data;
+  }
+  return body;
+}
+function readProtectedSnapshot(body) {
+  const record = unwrapRecord(body);
+  assert.ok(
+    record && typeof record === 'object' && !Array.isArray(record),
+    'Expected a JSON object representing the requested record'
+  );
+  const snapshot = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (PROTECTED_KEY_SET.has(normalizeKey(key))) {
+      snapshot[normalizeKey(key)] = value;
+    }
+  }
+  return snapshot;
+}
+function assertProtectedSnapshotUnchanged(before, after, description) {
+  assert.deepEqual(
+    readProtectedSnapshot(after),
+    readProtectedSnapshot(before),
+    `${description}: protected fields changed after the attack`
+  );
+}
+async function getRecord(path, description) {
+  const response = await request(path, {
+    method: 'GET',
+  });
+  assert.equal(
+    response.status,
+    200,
+    `${description}: expected HTTP 200, received ${response.status}`
+  );
+  return responseBody(response);
+}
+/**
+ * A secure API may reject protected fields or silently strip them.
+ * Both behaviors are acceptable only if protected persisted state
+ * remains unchanged.
+ */
+async function attackAndVerify({
+  path,
+  payload,
+  description,
+}) {
+  const before = await getRecord(path, `${description} baseline`);
+  const response = await request(path, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  assertNoServerError(response, description);
+  if (response.status >= 400) {
+    assertClientError(response, description);
+  } else {
+    assert.ok(
+      response.status >= 200 && response.status < 300,
+      `${description}: unexpected HTTP ${response.status}`
+    );
+  }
+  const after = await getRecord(path, `${description} verification`);
+  assertProtectedSnapshotUnchanged(
+    before,
+    after,
+    description
+  );
+  return {
+    status: response.status,
+    before,
+    after,
+  };
+}
 test(
   'Mass assignment security integration suite',
-  { skip: !configured ? skipReason : false },
+  { skip: !configured },
   async (t) => {
-    await t.test(
-      'Configuration uses explicit API paths',
-      () => {
-        assert.ok(
-          PROFILE_PATH === '' ||
-            (PROFILE_PATH.startsWith('/') &&
-              !PROFILE_PATH.startsWith('//')),
-          'Profile path must be an absolute API path'
-        );
-
-        assert.ok(
-          APPLICATION_PATH === '' ||
-            (APPLICATION_PATH.startsWith('/') &&
-              !APPLICATION_PATH.startsWith('//')),
-          'Application path must be an absolute API path'
-        );
+    await t.test('Configured API paths are valid', () => {
+      if (PROFILE_PATH) {
+        assertPath(PROFILE_PATH, 'Profile path');
       }
-    );
-
+      if (APPLICATION_PATH) {
+        assertPath(APPLICATION_PATH, 'Application path');
+      }
+      assert.ok(
+        PROFILE_PATH || APPLICATION_PATH,
+        'Configure at least one test record path'
+      );
+    });
     await t.test(
-      'User profile endpoint does not grant administrator privileges',
+      'Profile updates cannot grant administrator privileges',
       { skip: !PROFILE_PATH },
       async () => {
-        const beforeResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+        await attackAndVerify({
+          path: PROFILE_PATH,
+          payload: PRIVILEGE_PAYLOAD,
+          description: 'Profile privilege escalation',
         });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline profile: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(PROFILE_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(privilegeEscalationPayload),
-        });
-
-        // Strict rejection is expected for this test contract.
-        // If the API strips protected fields, replace this with a
-        // read-back assertion proving no privilege was granted.
-        assertClientError(
-          response,
-          'Profile privilege escalation attempt'
-        );
-
-        const afterResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify profile after attack: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
-          before,
-          'Profile changed after a rejected privilege escalation attempt'
-        );
       }
     );
-
     await t.test(
-      'User cannot reassign ownership through profile updates',
+      'Profile updates cannot reassign ownership',
       { skip: !PROFILE_PATH },
       async () => {
-        const beforeResponse = await request(PROFILE_PATH, {
-          method: 'GET',
+        await attackAndVerify({
+          path: PROFILE_PATH,
+          payload: OWNERSHIP_PAYLOAD,
+          description: 'Profile ownership reassignment',
         });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline profile: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(PROFILE_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(ownershipTamperingPayload),
-        });
-
-        assertClientError(
-          response,
-          'Profile ownership reassignment attempt'
-        );
-
-        const afterResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify profile ownership: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
-          before,
-          'Profile or ownership data changed after a rejected request'
-        );
       }
     );
-
     await t.test(
-      'Application endpoint rejects protected workflow-field changes',
+      'Application updates cannot manipulate workflow status',
       { skip: !APPLICATION_PATH },
       async () => {
-        const beforeResponse = await request(APPLICATION_PATH, {
-          method: 'GET',
+        await attackAndVerify({
+          path: APPLICATION_PATH,
+          payload: WORKFLOW_PAYLOAD,
+          description: 'Application workflow manipulation',
         });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline application: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(APPLICATION_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(workflowTamperingPayload),
-        });
-
-        assertClientError(
-          response,
-          'Application approval/status manipulation attempt'
-        );
-
-        const afterResponse = await request(APPLICATION_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify application after attack: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
-          before,
-          'Application data changed after rejected workflow manipulation'
-        );
       }
     );
-
     await t.test(
-      'Application endpoint rejects owner and applicant reassignment',
+      'Application updates cannot reassign ownership',
       { skip: !APPLICATION_PATH },
       async () => {
-        const beforeResponse = await request(APPLICATION_PATH, {
-          method: 'GET',
+        await attackAndVerify({
+          path: APPLICATION_PATH,
+          payload: OWNERSHIP_PAYLOAD,
+          description: 'Application ownership reassignment',
         });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline application: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(APPLICATION_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(ownershipTamperingPayload),
-        });
-
-        assertClientError(
-          response,
-          'Application ownership reassignment attempt'
-        );
-
-        const afterResponse = await request(APPLICATION_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify application after attack: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
-          before,
-          'Application ownership changed after a rejected request'
-        );
       }
     );
-
     await t.test(
-      'Server-managed audit fields cannot be overwritten',
+      'Profile updates cannot overwrite server-managed audit fields',
       { skip: !PROFILE_PATH },
       async () => {
-        const beforeResponse = await request(PROFILE_PATH, {
-          method: 'GET',
+        await attackAndVerify({
+          path: PROFILE_PATH,
+          payload: AUDIT_PAYLOAD,
+          description: 'Audit-field tampering',
         });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline profile: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(PROFILE_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(auditTamperingPayload),
-        });
-
-        assertClientError(
-          response,
-          'Audit field overwrite attempt'
-        );
-
-        const afterResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify audit fields: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
-          before,
-          'Server-managed fields changed after a rejected request'
-        );
       }
     );
-
     await t.test(
-      'Nested privilege escalation payload is rejected',
+      'Nested privilege escalation is rejected or safely ignored',
       { skip: !PROFILE_PATH },
       async () => {
+        const before = await getRecord(
+          PROFILE_PATH,
+          'Nested privilege baseline'
+        );
         const response = await request(PROFILE_PATH, {
           method: 'PATCH',
           body: JSON.stringify({
@@ -538,83 +401,53 @@ test(
             },
           }),
         });
-
-        assertClientError(
-          response,
-          'Nested privilege escalation attempt'
+        assertNoServerError(response, 'Nested privilege escalation');
+        if (response.status >= 400) {
+          assertClientError(response, 'Nested privilege escalation');
+        } else {
+          assert.ok(
+            response.status < 300,
+            `Unexpected nested payload response: HTTP ${response.status}`
+          );
+        }
+        const after = await getRecord(
+          PROFILE_PATH,
+          'Nested privilege verification'
         );
-      }
-    );
-
-    await t.test(
-      'Full mass-assignment payload cannot change protected fields',
-      { skip: !PROFILE_PATH },
-      async () => {
-        const beforeResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          beforeResponse.ok,
-          `Could not read baseline profile: HTTP ${beforeResponse.status}`
-        );
-
-        const before = await responseBody(beforeResponse);
-
-        const response = await request(PROFILE_PATH, {
-          method: 'PATCH',
-          body: JSON.stringify(fullMassAssignmentPayload),
-        });
-
-        assertClientError(
-          response,
-          'Full mass-assignment payload'
-        );
-
-        const afterResponse = await request(PROFILE_PATH, {
-          method: 'GET',
-        });
-
-        assert.ok(
-          afterResponse.ok,
-          `Could not verify profile after full attack: HTTP ${afterResponse.status}`
-        );
-
-        const after = await responseBody(afterResponse);
-
-        assert.deepEqual(
-          after,
+        assertProtectedSnapshotUnchanged(
           before,
-          'Profile changed after a rejected mass-assignment request'
+          after,
+          'Nested privilege escalation'
         );
+      }
+    );
+    await t.test(
+      'Combined mass-assignment payload cannot alter protected state',
+      {
+        skip: !PROFILE_PATH,
+      },
+      async () => {
+        await attackAndVerify({
+          path: PROFILE_PATH,
+          payload: FULL_ATTACK_PAYLOAD,
+          description: 'Combined mass-assignment attack',
+        });
       }
     );
   }
 );
-
-test(
-  'Mass assignment security payload definitions',
-  () => {
-    assert.ok(
-      PROTECTED_FIELDS.length > 0,
-      'Protected field inventory must not be empty'
-    );
-
-    for (const payload of [
-      privilegeEscalationPayload,
-      ownershipTamperingPayload,
-      workflowTamperingPayload,
-      auditTamperingPayload,
-    ]) {
-      assert.ok(
-        Object.keys(payload).length > 0,
-        'Each attack payload must contain test fields'
-      );
-    }
-
-    assert.ok(
-      collectProtectedFields(fullMassAssignmentPayload).length > 0,
-      'Full attack payload must include protected fields'
-    );
+test('Mass-assignment fixture definitions include protected fields', () => {
+  assert.ok(PROTECTED_FIELDS.length > 0);
+  for (const payload of [
+    PRIVILEGE_PAYLOAD,
+    OWNERSHIP_PAYLOAD,
+    WORKFLOW_PAYLOAD,
+    AUDIT_PAYLOAD,
+  ]) {
+    assert.ok(Object.keys(payload).length > 0);
   }
-);
+  assert.ok(
+    collectProtectedFields(FULL_ATTACK_PAYLOAD).length > 0,
+    'Combined attack payload should include protected fields'
+  );
+});

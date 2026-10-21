@@ -4,87 +4,116 @@ MedOrbits -- Copyright and Licensing Information
 
 Copyright © 2026 MedOrbits. All rights reserved where applicable.
 
-MedOrbits is distributed under the MIT License. The complete license text is available in the LICENSE file at the root of this repository.
+MedOrbits is distributed under the MIT License, available in the LICENSE file at the root of this repository.
 
-This notice provides supplementary licensing information for the project. It does not replace, amend, or override the MIT License or the applicable terms of any third-party material.
+This NOTICE provides supplementary information about copyright, licensing, third-party materials, and permitted use of project assets. It is informational and does not replace, amend, or override the MIT License or the applicable terms governing third-party materials.
+
+⸻
 
 1. Project License
 
-Unless a separate license, copyright notice, or other applicable agreement states otherwise, the MIT License applies to copyrightable project materials that MedOrbits is authorized to distribute under that license.
+Unless a separate license, copyright notice, or agreement specifies otherwise, the MIT License applies to copyrightable project materials that MedOrbits owns or is legally authorized to distribute under that license.
 
-The presence of a file in this repository does not, by itself, establish that MedOrbits owns the file or has unrestricted rights to redistribute it.
+The presence of a file or component in this repository does not, by itself, establish that MedOrbits owns it or has unrestricted rights to use, modify, or redistribute it.
 
-Users and distributors are responsible for observing applicable license terms and respecting the rights of third-party copyright holders.
+Users, contributors, maintainers, and distributors are responsible for complying with applicable license terms and respecting the rights of third-party copyright holders.
 
 2. Third-Party Software and Materials
 
-MedOrbits may incorporate, reference, or integrate third-party components and services, including:
+The MedOrbits project may incorporate, reference, or integrate third-party materials, including:
 
 * Software libraries, frameworks, packages, and developer tools.
 * Fonts, icons, illustrations, photographs, and other visual assets.
 * Open-source code, templates, datasets, and documentation.
 * External APIs, hosted services, and software development tools.
-* Other materials subject to separate licenses, permissions, or terms of service.
+* Other materials governed by separate licenses, permissions, or terms of service.
 
-Such components are not automatically covered by the MedOrbits MIT License.
+These materials are not automatically covered by the MedOrbits MIT License. Their respective copyright notices, license texts, attribution requirements, redistribution conditions, and other applicable restrictions remain in effect.
 
-Their respective copyright notices, license texts, attribution requirements, redistribution conditions, and other applicable restrictions remain in effect.
+Where a separate license or agreement governs a component, users must comply with its applicable terms.
 
-3. Dependencies and License Compliance
+3. Dependency Licensing and Compliance
 
-Before distributing or deploying a release, maintainers should review the licenses of the dependencies and other third-party materials actually included in, bundled with, or distributed alongside the project.
+Before distributing or deploying a release, maintainers should review the licenses of third-party components actually included in, bundled with, or distributed alongside that release.
 
 Where applicable, maintainers should:
 
 * Preserve required copyright and attribution notices.
-* Include required third-party license texts.
+* Include required third-party license texts and notices.
 * Comply with applicable redistribution and source-disclosure requirements.
 * Review direct and transitive dependency licenses.
-* Investigate license incompatibilities or restrictions before distribution.
+* Investigate potential license incompatibilities or restrictions before distribution.
 * Keep third-party notices and dependency records reasonably up to date.
 
-The presence of a dependency in a package manifest does not necessarily mean that it is included in every distribution. License reviews should reflect the actual release contents and distribution model.
+A dependency listed in a package manifest is not necessarily included in every distribution. License reviews should reflect the actual release contents, build configuration, and distribution model.
 
 4. Project Assets, Content, and Branding
 
-MedOrbits may contain original or separately licensed HTML, CSS, JavaScript, documentation, educational resources, datasets, images, fonts, icons, and other content.
+MedOrbits may contain HTML, CSS, JavaScript, documentation, educational resources, datasets, images, fonts, icons, and other project materials.
 
-Unless a separate notice or agreement applies, the MIT License covers only the material that MedOrbits is authorized to license under its terms.
+The applicable license for each material depends on the rights MedOrbits holds and any separate notice or agreement governing that material. The MIT License should not be interpreted as granting rights that MedOrbits does not possess.
 
-The MIT License does not automatically grant permission to use third-party trademarks, logos, brand names, institutional marks, photographs, or other protected materials.
+MedOrbits Branding
 
-The MedOrbits name, logo, visual identity, and other branding elements may be subject to separate rights or restrictions. Permission to use project code should not be interpreted as an endorsement by MedOrbits or as an unrestricted license to use its branding.
+The MIT License does not, by itself, grant permission to use the MedOrbits name, logo, visual identity, or other protected branding beyond what is independently permitted by applicable law or expressly authorized by the relevant rights holder.
 
-Third-party logos and trademarks remain subject to the rights of their respective owners.
+Permission to use or redistribute project code does not imply endorsement, sponsorship, affiliation, or approval by MedOrbits.
+
+Third-party names, logos, trademarks, institutional marks, and other protected assets remain subject to the rights and terms of their respective owners.
 
 5. External Services and APIs
 
-Integrations with external APIs, payment providers, cloud services, AI services, mapping platforms, email providers, or other third-party systems may be governed by separate terms, usage limits, licensing conditions, privacy requirements, and commercial agreements.
+Integrations with external APIs, payment providers, cloud services, AI services, mapping platforms, email providers, and other third-party systems may be governed by separate terms of service, usage limits, licensing conditions, privacy requirements, and commercial agreements.
 
-Use of the MedOrbits codebase does not automatically grant access to those services or permission to use their credentials, data, or proprietary resources.
+Use of the MedOrbits codebase does not automatically grant access to these services or permission to use their credentials, data, proprietary resources, or paid features.
 
 Users and operators must obtain any required accounts, credentials, permissions, and licenses and comply with the applicable service terms.
 
+API keys, access tokens, and other secrets must be handled securely and must not be published in the repository.
+
 6. Educational Information and Data
 
-Educational information, admission details, fee schedules, eligibility criteria, institutional information, and career resources may be subject to separate source terms or usage restrictions.
+Educational information, admission details, fee schedules, eligibility criteria, institutional information, and career resources may be subject to separate source terms, copyright protections, licensing conditions, or usage restrictions.
 
-Where such information is obtained from third-party sources, applicable attribution, licensing, and redistribution requirements must be respected.
+Where such information comes from third-party sources, applicable attribution, licensing, and redistribution requirements must be respected.
 
-Inclusion of information in MedOrbits does not, by itself, guarantee its accuracy, completeness, currency, or acceptance by an educational institution, employer, government authority, or other organization. Time-sensitive information should be verified with the relevant official source before use.
+Inclusion of information in MedOrbits does not, by itself, guarantee its accuracy, completeness, currency, or acceptance by an educational institution, employer, government authority, or other organization.
 
-7. No Additional Warranty or License Modification
+Time-sensitive information should be verified with the relevant official source before it is relied upon. Estimates and general guidance should be clearly distinguished from confirmed requirements, official decisions, and published charges.
+
+7. Warranty and License Interpretation
 
 This NOTICE is informational. It does not modify the MIT License, grant additional intellectual property rights, remove third-party restrictions, or create a separate warranty.
 
-The Software remains subject to the warranty disclaimer and limitation of liability stated in the applicable license.
+The Software remains subject to the warranty disclaimer and limitation of liability stated in the applicable license. Third-party materials and services remain subject to their respective licenses, agreements, and terms.
 
-For binding terms, refer to the project’s LICENSE file and the relevant third-party licenses, agreements, and terms of service.
+If this NOTICE and an applicable license appear to differ, consult the actual license governing the relevant material. This NOTICE does not override that license.
 
-8. Questions and Licensing Concerns
+8. Licensing Questions and Concerns
 
 For questions concerning the licensing of MedOrbits project materials, contact the project maintainers through a contact method published in the root README.md or on the official MedOrbits website.
 
-When raising a licensing concern, identify the relevant file or component and provide the applicable copyright notice or license reference where available.
+When submitting a licensing inquiry, identify the relevant file or component and provide the applicable copyright notice, source reference, or license information where available.
 
-Do not include credentials, confidential records, or unrelated personal information in licensing inquiries.
+Do not include credentials, confidential records, private applicant documents, or unrelated personal information in licensing inquiries.
+
+⸻
+
+Project Information
+
+Field	Details
+Project	MedOrbits
+Copyright	Copyright © 2026 MedOrbits
+Primary Software License	MIT License
+License File	LICENSE
+Supplementary Notice	NOTICE
+Maintained By	MedOrbits
+
+⸻
+
+This document provides general licensing information and is not a substitute for legal advice. The applicable license and rights associated with each component should be reviewed where necessary.
+
+MedOrbits
+Education · Admissions · Careers · Recruitment
+
+Study · Work · Grow

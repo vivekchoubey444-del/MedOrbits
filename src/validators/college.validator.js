@@ -1,4 +1,3 @@
-
 'use strict';
 
 const ALLOWED_FIELDS = Object.freeze([
@@ -41,21 +40,48 @@ const ALLOWED_STATUSES = Object.freeze([
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const PHONE_REGEX = /^[+()\d\s.-]+$/;
+
+const MAX_NAME_LENGTH = 200;
+const MAX_SLUG_LENGTH = 200;
+const MAX_CODE_LENGTH = 50;
+const MAX_LOCATION_LENGTH = 200;
+const MIN_PINCODE_LENGTH = 3;
+const MAX_PINCODE_LENGTH = 12;
+const MAX_WEBSITE_LENGTH = 2048;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PHONE_LENGTH = 25;
+const MAX_COURSES = 500;
+const MAX_ACCREDITATION_ENTRIES = 50;
+const MAX_ACCREDITATION_LENGTH = 200;
+const MIN_ESTABLISHED_YEAR = 1500;
+const MAX_DESCRIPTION_LENGTH = 10000;
+
+const hasOwn = (object, key) =>
+  Object.prototype.hasOwnProperty.call(object, key);
 
 function validationError(message, code = 'VALIDATION_ERROR') {
   const error = new Error(message);
+
   error.status = 400;
   error.code = code;
   error.publicMessage = message;
+
   return error;
 }
 
+function isPlainObject(value) {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
+}
+
 function pickAllowed(input = {}) {
-  if (
-    input === null ||
-    typeof input !== 'object' ||
-    Array.isArray(input)
-  ) {
+  if (!isPlainObject(input)) {
     throw validationError(
       'Request body must be a JSON object.',
       'INVALID_BODY'
@@ -76,12 +102,125 @@ function pickAllowed(input = {}) {
   const output = {};
 
   for (const key of ALLOWED_FIELDS) {
-    if (Object.prototype.hasOwnProperty.call(input, key)) {
+    if (hasOwn(input, key)) {
       output[key] = input[key];
     }
   }
 
   return output;
+}
+
+function normalizeString(data, field, options = {}) {
+  const {
+    maxLength,
+    minLength = 0,
+    lowercase = false,
+    uppercase = false,
+    allowEmpty = true,
+  } = options;
+
+  if (data[field] === undefined) {
+    return;
+  }
+
+  if (typeof data[field] !== 'string') {
+    throw validationError(`${field} must be a string.`);
+  }
+
+  let value = data[field].trim();
+
+  if (lowercase) {
+    value = value.toLowerCase();
+  }
+
+  if (uppercase) {
+    value = value.toUpperCase();
+  }
+
+  if (!allowEmpty && value.length === 0) {
+    throw validationError(`${field} must not be empty.`);
+  }
+
+  if (value.length < minLength || value.length > maxLength) {
+    throw validationError(
+      `${field} must contain between ${minLength} and ${maxLength} characters.`
+    );
+  }
+
+  data[field] = value;
+}
+
+function validateWebsite(value) {
+  if (value === '') {
+    return value;
+  }
+
+  if (value.length > MAX_WEBSITE_LENGTH) {
+    throw validationError(
+      `website must not exceed ${MAX_WEBSITE_LENGTH} characters.`
+    );
+  }
+
+  let url;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw validationError('website must be a valid URL.');
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw validationError('website must use HTTP or HTTPS.');
+  }
+
+  if (!url.hostname || url.username || url.password) {
+    throw validationError(
+      'website must contain a valid hostname and must not include credentials.'
+    );
+  }
+
+  return url.toString();
+}
+
+function validateAccreditation(value) {
+  if (!Array.isArray(value) || value.length > MAX_ACCREDITATION_ENTRIES) {
+    throw validationError(
+      `accreditation must be an array containing at most ${MAX_ACCREDITATION_ENTRIES} entries.`
+    );
+  }
+
+  const entries = value.map((item) => {
+    if (typeof item !== 'string') {
+      throw validationError(
+        'Each accreditation entry must be a string.'
+      );
+    }
+
+    const normalized = item.trim();
+
+    if (
+      normalized.length < 1 ||
+      normalized.length > MAX_ACCREDITATION_LENGTH
+    ) {
+      throw validationError(
+        `Each accreditation entry must contain between 1 and ${MAX_ACCREDITATION_LENGTH} characters.`
+      );
+    }
+
+    return normalized;
+  });
+
+  const normalizedEntries = entries.map((item) =>
+    item.toLocaleLowerCase('en')
+  );
+
+  if (new Set(normalizedEntries).size !== entries.length) {
+    throw validationError(
+      'accreditation must not contain duplicate entries.'
+    );
+  }
+
+  return entries;
 }
 
 function validate(input = {}, options = {}) {
@@ -94,72 +233,106 @@ function validate(input = {}, options = {}) {
     );
   }
 
-  for (const field of [
-    'name',
-    'slug',
-    'code',
-    'state',
-    'city',
-    'address',
-    'pincode',
-    'website',
-    'email',
-    'phone',
-    'description',
-  ]) {
-    if (data[field] === undefined) continue;
+  normalizeString(data, 'name', {
+    minLength: 2,
+    maxLength: MAX_NAME_LENGTH,
+    allowEmpty: false,
+  });
 
-    if (typeof data[field] !== 'string') {
-      throw validationError(`${field} must be a string.`);
-    }
+  normalizeString(data, 'slug', {
+    minLength: 2,
+    maxLength: MAX_SLUG_LENGTH,
+    lowercase: true,
+    allowEmpty: false,
+  });
 
-    data[field] = data[field].trim();
+  if (data.slug !== undefined && !SLUG_REGEX.test(data.slug)) {
+    throw validationError(
+      'slug must contain lowercase letters, numbers, and single hyphens.'
+    );
   }
 
-  if (data.name !== undefined) {
-    if (data.name.length < 2 || data.name.length > 200) {
+  normalizeString(data, 'code', {
+    minLength: 1,
+    maxLength: MAX_CODE_LENGTH,
+    allowEmpty: false,
+  });
+
+  normalizeString(data, 'state', {
+    maxLength: MAX_LOCATION_LENGTH,
+  });
+
+  normalizeString(data, 'city', {
+    minLength: 1,
+    maxLength: MAX_LOCATION_LENGTH,
+    allowEmpty: false,
+  });
+
+  normalizeString(data, 'address', {
+    maxLength: 1000,
+  });
+
+  normalizeString(data, 'pincode', {
+    minLength: MIN_PINCODE_LENGTH,
+    maxLength: MAX_PINCODE_LENGTH,
+  });
+
+  if (data.pincode !== undefined && data.pincode !== '') {
+    if (!/^[A-Za-z0-9\s-]+$/.test(data.pincode)) {
       throw validationError(
-        'name must contain between 2 and 200 characters.'
+        'pincode may contain only letters, numbers, spaces, and hyphens.'
       );
     }
   }
 
-  if (data.slug !== undefined) {
-    data.slug = data.slug.toLowerCase();
+  normalizeString(data, 'website', {
+    maxLength: MAX_WEBSITE_LENGTH,
+  });
 
-    if (
-      data.slug.length < 2 ||
-      data.slug.length > 200 ||
-      !SLUG_REGEX.test(data.slug)
-    ) {
+  if (data.website !== undefined) {
+    data.website = validateWebsite(data.website);
+  }
+
+  normalizeString(data, 'email', {
+    maxLength: MAX_EMAIL_LENGTH,
+    lowercase: true,
+  });
+
+  if (data.email !== undefined && data.email !== '') {
+    if (!EMAIL_REGEX.test(data.email)) {
       throw validationError(
-        'slug must contain lowercase letters, numbers, and single hyphens.'
+        'email must be a valid email address.'
       );
     }
   }
 
-  if (data.code !== undefined) {
+  normalizeString(data, 'phone', {
+    maxLength: MAX_PHONE_LENGTH,
+  });
+
+  if (data.phone !== undefined && data.phone !== '') {
     if (
-      data.code.length < 1 ||
-      data.code.length > 50
+      data.phone.length < 7 ||
+      !PHONE_REGEX.test(data.phone)
     ) {
       throw validationError(
-        'code must contain between 1 and 50 characters.'
+        'phone must be a valid phone number.'
       );
     }
   }
 
   if (data.college_type !== undefined) {
-    if (
-      typeof data.college_type !== 'string' ||
-      !ALLOWED_TYPES.includes(data.college_type.trim().toLowerCase())
-    ) {
+    if (typeof data.college_type !== 'string') {
+      throw validationError('college_type must be a string.');
+    }
+
+    data.college_type = data.college_type.trim().toLowerCase();
+
+    if (!ALLOWED_TYPES.includes(data.college_type)) {
       throw validationError(
         `college_type must be one of: ${ALLOWED_TYPES.join(', ')}.`
       );
     }
-
-    data.college_type = data.college_type.trim().toLowerCase();
   }
 
   if (data.country_code !== undefined) {
@@ -171,57 +344,8 @@ function validate(input = {}, options = {}) {
 
     if (!COUNTRY_CODE_REGEX.test(data.country_code)) {
       throw validationError(
-        'country_code must be a two-letter ISO country code.'
+        'country_code must be a two-letter ISO 3166-1 alpha-2 country code.'
       );
-    }
-  }
-
-  if (data.pincode !== undefined) {
-    if (
-      data.pincode.length < 3 ||
-      data.pincode.length > 12
-    ) {
-      throw validationError(
-        'pincode must contain between 3 and 12 characters.'
-      );
-    }
-  }
-
-  if (data.website !== undefined && data.website !== '') {
-    let url;
-
-    try {
-      url = new URL(data.website);
-    } catch {
-      throw validationError('website must be a valid URL.');
-    }
-
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      throw validationError(
-        'website must use HTTP or HTTPS.'
-      );
-    }
-
-    data.website = url.toString();
-  }
-
-  if (data.email !== undefined && data.email !== '') {
-    data.email = data.email.toLowerCase();
-
-    if (
-      data.email.length > 254 ||
-      !EMAIL_REGEX.test(data.email)
-    ) {
-      throw validationError('email must be a valid email address.');
-    }
-  }
-
-  if (data.phone !== undefined && data.phone !== '') {
-    if (
-      data.phone.length > 25 ||
-      !/^[+()\d\s.-]+$/.test(data.phone)
-    ) {
-      throw validationError('phone must be a valid phone number.');
     }
   }
 
@@ -239,10 +363,10 @@ function validate(input = {}, options = {}) {
   if (data.courses !== undefined) {
     if (
       !Array.isArray(data.courses) ||
-      data.courses.length > 500
+      data.courses.length > MAX_COURSES
     ) {
       throw validationError(
-        'courses must be an array containing at most 500 entries.'
+        `courses must be an array containing at most ${MAX_COURSES} entries.`
       );
     }
 
@@ -262,32 +386,7 @@ function validate(input = {}, options = {}) {
   }
 
   if (data.accreditation !== undefined) {
-    if (
-      !Array.isArray(data.accreditation) ||
-      data.accreditation.length > 50
-    ) {
-      throw validationError(
-        'accreditation must be an array containing at most 50 entries.'
-      );
-    }
-
-    data.accreditation = data.accreditation.map((item) => {
-      if (typeof item !== 'string') {
-        throw validationError(
-          'Each accreditation entry must be a string.'
-        );
-      }
-
-      const value = item.trim();
-
-      if (value.length < 1 || value.length > 200) {
-        throw validationError(
-          'Each accreditation entry must contain between 1 and 200 characters.'
-        );
-      }
-
-      return value;
-    });
+    data.accreditation = validateAccreditation(data.accreditation);
   }
 
   if (data.established_year !== undefined) {
@@ -295,14 +394,18 @@ function validate(input = {}, options = {}) {
 
     if (
       !Number.isSafeInteger(data.established_year) ||
-      data.established_year < 1500 ||
+      data.established_year < MIN_ESTABLISHED_YEAR ||
       data.established_year > currentYear
     ) {
       throw validationError(
-        `established_year must be an integer between 1500 and ${currentYear}.`
+        `established_year must be an integer between ${MIN_ESTABLISHED_YEAR} and ${currentYear}.`
       );
     }
   }
+
+  normalizeString(data, 'description', {
+    maxLength: MAX_DESCRIPTION_LENGTH,
+  });
 
   if (data.status !== undefined) {
     if (typeof data.status !== 'string') {
@@ -318,22 +421,20 @@ function validate(input = {}, options = {}) {
     }
   }
 
-  if (data.description !== undefined &&
-      data.description.length > 10000) {
-    throw validationError(
-      'description must not exceed 10000 characters.'
-    );
-  }
-
   if (!partial) {
-    for (const field of ['name', 'slug', 'country_code', 'city']) {
-      if (!data[field]) {
+    for (const field of [
+      'name',
+      'slug',
+      'country_code',
+      'city',
+      'college_type',
+    ]) {
+      if (
+        data[field] === undefined ||
+        data[field] === ''
+      ) {
         throw validationError(`${field} is required.`);
       }
-    }
-
-    if (data.college_type === undefined) {
-      throw validationError('college_type is required.');
     }
   }
 

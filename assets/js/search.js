@@ -1,922 +1,1610 @@
-/* =========================================================
-   MedOrbits -- Search Manager
-   File: /assets/js/search.js
-   Purpose: Global search, suggestions, filters, sorting,
-            pagination, recent searches and result rendering
-   ========================================================= */
+
+/**
+ * MedOrbits Search Engine
+ * File: /assets/js/search.js
+ * Version: 1.3.0
+ *
+ * Improvements:
+ * - Preserves existing public APIs and endpoint conventions.
+ * - Prevents stale search and suggestion responses from overwriting newer results.
+ * - Cancels superseded requests and cleans up pending timers.
+ * - Safely renders result content without injecting HTML from API responses.
+ * - Supports filters, sorting, pagination, recent searches and URL synchronization.
+ * - Provides accessible loading, empty and error states.
+ * - Supports custom events and on/off subscriptions.
+ * - Avoids duplicate delegated event listeners.
+ */
+
 (function (window, document) {
   "use strict";
-  const CONFIG = window.MedOrbitsConfig || {};
-  const API_BASE =
-    CONFIG.API_BASE_URL ||
-    CONFIG.apiBaseUrl ||
-    "/api";
+
+  if (window.MedorbitsSearch) return;
+
+  const root = window;
+  const doc = document;
+
+  const config = root.MedOrbitsConfig || {};
+
+  const API_BASE = String(
+    config.API_BASE_URL ||
+    config.apiBaseUrl ||
+    "/api"
+  ).replace(/\/+$/, "");
+
+  const SEARCH_ENDPOINT = API_BASE + "/search";
+  const SUGGESTIONS_ENDPOINT = API_BASE + "/search/suggestions";
+
   const STORAGE_KEY = "medorbits_recent_searches";
   const MAX_RECENT_SEARCHES = 8;
   const DEFAULT_PAGE_SIZE = 10;
-  const DEBOUNCE_DELAY = 300;
+  const MAX_PAGE_SIZE = 100;
   const MIN_QUERY_LENGTH = 2;
+  const DEBOUNCE_DELAY = 300;
+  const SUGGESTION_LIMIT = 8;
+
+  const EVENTS = {
+    SEARCH_STARTED: "medorbits:search:started",
+    SEARCH_COMPLETED: "medorbits:search:completed",
+    SEARCH_ERROR: "medorbits:search:error",
+    SUGGESTIONS_UPDATED: "medorbits:search:suggestions",
+    RESULTS_UPDATED: "medorbits:search:results",
+    FILTERS_UPDATED: "medorbits:search:filters",
+    PAGE_CHANGED: "medorbits:search:page",
+    RECENT_UPDATED: "medorbits:search:recent",
+    SAVE_REQUESTED: "medorbits:search:save"
+  };
+
   const state = {
     query: "",
-    category: "all",
+    category: "",
     filters: {},
-    sortBy: "relevance",
+    sort: "relevance",
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
     total: 0,
+    totalPages: 0,
     results: [],
     suggestions: [],
+    recent: [],
     loading: false,
+    error: null,
     initialized: false,
-    abortController: null,
-    debounceTimers: new WeakMap()
+    searchController: null,
+    suggestionController: null,
+    searchSequence: 0,
+    suggestionSequence: 0,
+    timers: new Map(),
+    listeners: new Map(),
+    lastResponse: null
   };
-  const listeners = new Map();
-  const utils = {
-    escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, function (char) {
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[char];
-      });
-    },
-    dispatch(name, detail) {
-      document.dispatchEvent(
-        new CustomEvent("medorbits:search:" + name, {
-          detail: detail || {}
+
+  const SELECTORS = {
+    form: "[data-search-form]",
+    input: "[data-search-input]",
+    results: "[data-search-results]",
+    suggestions: "[data-search-suggestions]",
+    recent: "[data-search-recent]",
+    category: "[data-search-category]",
+    page: "[data-search-page]",
+    sort: "[data-search-sort]",
+    pageSize: "[data-search-page-size]",
+    filter: "[data-search-filter]",
+    save: "[data-search-save]",
+    total: "[data-search-total]",
+    query: "[data-search-query]",
+    loading: "[data-search-loading]"
+  };
+
+  /* ---------------------------------------------------------
+     Utilities
+  --------------------------------------------------------- */
+
+  function isObject(value) {
+    return value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value);
+  }
+
+  function toText(value, fallback) {
+    if (value === null || value === undefined) {
+      return fallback || "";
+    }
+
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      return String(value);
+    }
+
+    return fallback || "";
+  }
+
+  function positiveInteger(value, fallback, maximum) {
+    const parsed = Number.parseInt(value, 10);
+
+    if (!Number.isFinite(parsed) || parsed < 1) {
+      return fallback;
+    }
+
+    return maximum
+      ? Math.min(parsed, maximum)
+      : parsed;
+  }
+
+  function normalizeQuery(value) {
+    return toText(value)
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeKey(value) {
+    return toText(value)
+      .trim()
+      .replace(/[^\w.-]/g, "");
+  }
+
+  function dispatch(name, detail) {
+    const payload = detail || {};
+
+    try {
+      doc.dispatchEvent(
+        new CustomEvent(name, {
+          detail: payload,
+          bubbles: false
         })
       );
-    },
-    getElement(target) {
-      if (!target) return null;
-      if (target instanceof Element) return target;
-      if (typeof target === "string") {
+    } catch (_) {
+      // Custom events are optional integrations.
+    }
+
+    const subscribers = state.listeners.get(name);
+
+    if (subscribers) {
+      subscribers.forEach(function (callback) {
         try {
-          return document.querySelector(target);
-        } catch (_) {
-          return null;
+          callback(payload);
+        } catch (error) {
+          console.error(
+            "[MedOrbits Search] Subscriber error:",
+            error
+          );
         }
+      });
+    }
+  }
+
+  function emitError(error, context) {
+    const detail = {
+      error: toText(
+        error && error.message,
+        "An unexpected search error occurred."
+      ),
+      context: context || "search"
+    };
+
+    dispatch(EVENTS.SEARCH_ERROR, detail);
+  }
+
+  function getHeaders() {
+    const headers = {
+      Accept: "application/json"
+    };
+
+    const token =
+      root.localStorage &&
+      root.localStorage.getItem("medorbits_token");
+
+    if (token) {
+      headers.Authorization = "Bearer " + token;
+    }
+
+    return headers;
+  }
+
+  function buildUrl(endpoint, params) {
+    const url = new URL(endpoint, root.location.origin);
+
+    Object.keys(params || {}).forEach(function (key) {
+      const value = params[key];
+
+      if (value === null || value === undefined || value === "") {
+        return;
       }
-      return null;
-    },
-    getRecentSearches() {
-      try {
-        const items = JSON.parse(
-          localStorage.getItem(STORAGE_KEY) || "[]"
-        );
-        return Array.isArray(items) ? items : [];
-      } catch (_) {
-        return [];
+
+      if (Array.isArray(value)) {
+        value.forEach(function (item) {
+          url.searchParams.append(key, String(item));
+        });
+        return;
       }
-    },
-    saveRecentSearch(query) {
-      const value = String(query || "").trim();
-      if (!value) return;
-      try {
-        const recent = utils.getRecentSearches().filter(
-          (item) => item.toLowerCase() !== value.toLowerCase()
-        );
-        recent.unshift(value);
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(recent.slice(0, MAX_RECENT_SEARCHES))
-        );
-      } catch (_) {
-        // Storage may be unavailable.
+
+      if (isObject(value)) {
+        Object.keys(value).forEach(function (nestedKey) {
+          const nestedValue = value[nestedKey];
+
+          if (
+            nestedValue !== null &&
+            nestedValue !== undefined &&
+            nestedValue !== ""
+          ) {
+            url.searchParams.append(
+              key + "[" + nestedKey + "]",
+              String(nestedValue)
+            );
+          }
+        });
+
+        return;
       }
-    },
-    safeUrl(value) {
-      if (!value) return "";
+
+      url.searchParams.set(key, String(value));
+    });
+
+    return url.toString();
+  }
+
+  async function request(url, options) {
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers: {
+        ...getHeaders(),
+        ...(options && options.headers)
+      }
+    });
+
+    if (!response.ok) {
+      let message = "Request failed (" + response.status + ").";
+
       try {
-        const url = new URL(String(value), window.location.origin);
-        if (!["http:", "https:"].includes(url.protocol)) {
-          return "";
-        }
-        return url.href;
+        const body = await response.json();
+
+        message = toText(
+          body.message ||
+          body.error ||
+          body.detail,
+          message
+        );
       } catch (_) {
+        // Keep the HTTP status message.
+      }
+
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+
+    if (response.status === 204) {
+      return {};
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        "The search API returned an unexpected response format."
+      );
+    }
+
+    return response.json();
+  }
+
+  function isAbortError(error) {
+    return Boolean(
+      error &&
+      (
+        error.name === "AbortError" ||
+        error.code === "ABORT_ERR"
+      )
+    );
+  }
+
+  function safeInternalUrl(value) {
+    const raw = toText(value).trim();
+
+    if (!raw) return "";
+
+    try {
+      const url = new URL(raw, root.location.origin);
+
+      if (
+        url.protocol !== "http:" &&
+        url.protocol !== "https:"
+      ) {
         return "";
       }
-    },
-    notify(message, type) {
-      if (window.MedOrbitsErrorHandler?.notify) {
-        window.MedOrbitsErrorHandler.notify(message, type || "info");
-      } else if (window.MedOrbitsApp?.notify) {
-        window.MedOrbitsApp.notify(message, type || "info");
+
+      if (url.origin !== root.location.origin) {
+        return "";
       }
+
+      return url.pathname + url.search + url.hash;
+    } catch (_) {
+      return "";
     }
-  };
-  async function request(path, options) {
-    const settings = options || {};
-    const headers = new Headers(settings.headers || {});
-    if (!(settings.body instanceof FormData) && settings.body != null) {
-      headers.set("Content-Type", "application/json");
+  }
+
+  function createElement(tag, className, text) {
+    const element = doc.createElement(tag);
+
+    if (className) {
+      element.className = className;
     }
-    const token =
-      window.MedOrbitsAuth?.getToken?.() ||
-      window.MedOrbitsAuth?.getAccessToken?.();
-    if (token) {
-      headers.set("Authorization", "Bearer " + token);
+
+    if (text !== undefined && text !== null) {
+      element.textContent = String(text);
     }
-    const response = await fetch(API_BASE + path, {
-      ...settings,
-      headers,
-      credentials: "same-origin"
+
+    return element;
+  }
+
+  function setTextAll(selector, value) {
+    doc.querySelectorAll(selector).forEach(function (element) {
+      element.textContent = toText(value);
     });
-    const contentType = response.headers.get("content-type") || "";
-    const data = contentType.includes("application/json")
-      ? await response.json().catch(() => null)
-      : await response.text().catch(() => "");
-    if (!response.ok) {
-      const error = new Error(
-        data?.message ||
-        data?.error ||
-        "Search request failed (" + response.status + ")."
-      );
-      error.status = response.status;
-      error.data = data;
-      throw error;
-    }
-    return data;
   }
-  function normalizeResult(item) {
-    const result = item || {};
-    return {
-      id: String(result.id || result._id || result.slug || ""),
-      title: String(
-        result.title ||
-        result.name ||
-        result.courseName ||
-        result.collegeName ||
-        "Untitled result"
-      ),
-      description: String(
-        result.description ||
-        result.summary ||
-        result.excerpt ||
-        ""
-      ),
-      category: String(
-        result.category ||
-        result.type ||
-        result.entityType ||
-        "general"
-      ).toLowerCase(),
-      url: utils.safeUrl(
-        result.url ||
-        result.href ||
-        result.link ||
-        result.path ||
-        ""
-      ),
-      image: utils.safeUrl(
-        result.image ||
-        result.imageUrl ||
-        result.thumbnail ||
-        ""
-      ),
-      location: String(
-        result.location ||
-        result.city ||
-        result.address ||
-        ""
-      ),
-      price: result.price ?? result.fee ?? null,
-      currency: String(result.currency || "INR"),
-      rating: result.rating ?? null,
-      relevance: Number(result.relevance || result.score || 0),
-      createdAt: result.createdAt || result.created_at || null,
-      metadata: result.metadata || {}
-    };
-  }
-  function normalizeResponse(response) {
-    const data = response?.data ?? response;
-    const items = Array.isArray(data)
-      ? data
-      : data?.results ||
-        data?.items ||
-        data?.colleges ||
-        data?.courses ||
-        data?.universities ||
-        [];
-    return {
-      results: items.map(normalizeResult),
-      total: Number(
-        response?.total ??
-        data?.total ??
-        response?.meta?.total ??
-        data?.meta?.total ??
-        items.length
-      ),
-      page: Number(response?.page ?? data?.page ?? state.page),
-      pageSize: Number(
-        response?.pageSize ??
-        response?.limit ??
-        data?.pageSize ??
-        data?.limit ??
-        state.pageSize
-      ),
-      suggestions: Array.isArray(response?.suggestions)
-        ? response.suggestions
-        : Array.isArray(data?.suggestions)
-          ? data.suggestions
-          : []
-    };
-  }
-  function buildSearchParams(options) {
-    const settings = options || {};
-    const params = new URLSearchParams();
-    const query = String(settings.query ?? state.query).trim();
-    if (query) params.set("q", query);
-    const category = settings.category ?? state.category;
-    if (category && category !== "all") {
-      params.set("category", category);
-    }
-    params.set("page", String(settings.page ?? state.page));
-    params.set("limit", String(settings.pageSize ?? state.pageSize));
-    const sortBy = settings.sortBy ?? state.sortBy;
-    if (sortBy) params.set("sort", sortBy);
-    const filters = settings.filters ?? state.filters;
-    Object.entries(filters || {}).forEach(([key, value]) => {
-      if (
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        (Array.isArray(value) && !value.length)
-      ) {
-        return;
-      }
-      if (Array.isArray(value)) {
-        value.forEach((item) => params.append("filter[" + key + "]", String(item)));
-      } else {
-        params.set("filter[" + key + "]", String(value));
-      }
-    });
-    return params;
-  }
-  async function search(query, options) {
-    const settings = options || {};
-    const normalizedQuery = String(query ?? state.query).trim();
-    state.query = normalizedQuery;
-    if (normalizedQuery && normalizedQuery.length < MIN_QUERY_LENGTH) {
-      state.results = [];
-      state.total = 0;
-      renderResults(settings.container);
-      utils.dispatch("results", {
-        query: normalizedQuery,
-        results: [],
-        total: 0
-      });
-      return {
-        results: [],
-        total: 0,
-        page: 1,
-        pageSize: state.pageSize
-      };
-    }
-    state.page = Number(settings.page) || 1;
-    state.pageSize = Number(settings.pageSize) || state.pageSize;
-    state.category = settings.category ?? state.category;
-    state.sortBy = settings.sortBy ?? state.sortBy;
-    state.filters = settings.filters ?? state.filters;
-    if (state.abortController) {
-      state.abortController.abort();
-    }
-    state.abortController = new AbortController();
-    state.loading = true;
-    utils.dispatch("loading", { loading: true });
-    try {
-      const params = buildSearchParams({
-        ...settings,
-        query: normalizedQuery
-      });
-      const response = await request(
-        "/search?" + params.toString(),
-        { signal: state.abortController.signal }
-      );
-      const normalized = normalizeResponse(response);
-      state.results = normalized.results;
-      state.total = normalized.total;
-      state.page = normalized.page || state.page;
-      state.pageSize = normalized.pageSize || state.pageSize;
-      state.suggestions = normalized.suggestions;
-      renderResults(settings.container);
-      renderSuggestions(settings.suggestionsContainer);
-      if (settings.syncUrl !== false) {
-        syncUrl();
-      }
-      if (normalizedQuery) {
-        utils.saveRecentSearch(normalizedQuery);
-      }
-      utils.dispatch("results", {
-        query: normalizedQuery,
-        results: state.results,
-        total: state.total,
-        page: state.page,
-        pageSize: state.pageSize
-      });
-      return normalized;
-    } catch (error) {
-      if (error.name === "AbortError") {
-        return null;
-      }
-      utils.dispatch("error", {
-        error,
-        action: "search"
-      });
-      utils.notify(error.message || "Search failed.", "error");
-      throw error;
-    } finally {
-      state.loading = false;
-      utils.dispatch("loading", { loading: false });
-    }
-  }
-  async function getSuggestions(query, options) {
-    const value = String(query || "").trim();
-    if (value.length < MIN_QUERY_LENGTH) {
-      state.suggestions = [];
-      renderSuggestions(options?.container);
-      return [];
-    }
-    const settings = options || {};
-    const params = new URLSearchParams({ q: value });
-    if (settings.category) {
-      params.set("category", settings.category);
-    }
-    try {
-      const response = await request(
-        "/search/suggestions?" + params.toString()
-      );
-      const data = response?.data ?? response;
-      const suggestions = Array.isArray(data)
-        ? data
-        : data?.suggestions || data?.items || [];
-      state.suggestions = suggestions
-        .map((item) => {
-          if (typeof item === "string") {
-            return {
-              label: item,
-              value: item,
-              category: ""
-            };
-          }
-          return {
-            label: String(item.label || item.title || item.name || item.value || ""),
-            value: String(item.value || item.query || item.title || item.name || ""),
-            category: String(item.category || item.type || "")
-          };
-        })
-        .filter((item) => item.label && item.value);
-      renderSuggestions(settings.container);
-      utils.dispatch("suggestions", {
-        query: value,
-        suggestions: state.suggestions
-      });
-      return state.suggestions;
-    } catch (error) {
-      utils.dispatch("error", {
-        error,
-        action: "suggestions"
-      });
-      return [];
-    }
-  }
-  function renderSuggestions(target) {
-    const container = utils.getElement(
-      target || "[data-search-suggestions]"
-    );
-    if (!container) return;
-    const suggestions = state.suggestions;
-    if (!suggestions.length) {
-      container.innerHTML = "";
-      container.hidden = true;
-      return;
-    }
-    container.innerHTML = suggestions.map((item, index) => `
-      <button
-        type="button"
-        class="mo-search-suggestion"
-        data-search-suggestion="${index}"
-        role="option"
-        aria-selected="false"
-      >
-        <span class="mo-search-suggestion-icon" aria-hidden="true">⌕</span>
-        <span>${utils.escapeHTML(item.label)}</span>
-        ${
-          item.category
-            ? `<small>${utils.escapeHTML(item.category)}</small>`
-            : ""
-        }
-      </button>
-    `).join("");
-    container.hidden = false;
-  }
-  function renderResults(target) {
-    const containers = target
-      ? [utils.getElement(target)]
-      : Array.from(document.querySelectorAll("[data-search-results]"));
-    containers.filter(Boolean).forEach((container) => {
-      const results = state.results;
-      if (!results.length) {
-        container.innerHTML = `
-          <div class="mo-search-empty" role="status">
-            <span class="mo-search-empty-icon" aria-hidden="true">⌕</span>
-            <h3>No results found</h3>
-            <p>Try different keywords or adjust your filters.</p>
-          </div>
-        `;
-        return;
-      }
-      container.innerHTML = results.map((result) => {
-        const title = utils.escapeHTML(result.title);
-        const description = utils.escapeHTML(result.description);
-        const category = utils.escapeHTML(result.category);
-        const location = utils.escapeHTML(result.location);
-        const safeUrl = result.url;
-        const safeImage = result.image;
-        const imageMarkup = safeImage
-          ? `<img src="${utils.escapeHTML(safeImage)}" alt="" loading="lazy">`
-          : `<span class="mo-search-result-placeholder" aria-hidden="true">⌕</span>`;
-        const titleMarkup = safeUrl
-          ? `<a href="${utils.escapeHTML(safeUrl)}" class="mo-search-result-title">${title}</a>`
-          : `<h3 class="mo-search-result-title">${title}</h3>`;
-        return `
-          <article
-            class="mo-search-result"
-            data-search-result-id="${utils.escapeHTML(result.id)}"
-            data-search-result-category="${category}"
-          >
-            <div class="mo-search-result-image">${imageMarkup}</div>
-            <div class="mo-search-result-content">
-              <span class="mo-search-result-category">${category}</span>
-              ${titleMarkup}
-              ${description ? `<p>${description}</p>` : ""}
-              ${location ? `<span class="mo-search-result-location">${location}</span>` : ""}
-              ${
-                result.price !== null
-                  ? `<span class="mo-search-result-price">${utils.escapeHTML(
-                      formatPrice(result.price, result.currency)
-                    )}</span>`
-                  : ""
-              }
-            </div>
-            <button
-              type="button"
-              class="mo-search-save"
-              data-search-save="${utils.escapeHTML(result.id)}"
-              aria-label="Save ${title}"
-            >♡</button>
-          </article>
-        `;
-      }).join("");
-    });
-    document.querySelectorAll("[data-search-total]").forEach((element) => {
-      element.textContent = String(state.total);
-    });
-    document.querySelectorAll("[data-search-query]").forEach((element) => {
-      element.textContent = state.query;
-    });
-    document.querySelectorAll("[data-search-loading]").forEach((element) => {
+
+  function setLoading(loading) {
+    state.loading = Boolean(loading);
+
+    doc.querySelectorAll(SELECTORS.loading).forEach(function (element) {
       element.hidden = !state.loading;
-    });
-  }
-  function formatPrice(value, currency) {
-    const amount = Number(value);
-    if (!Number.isFinite(amount)) {
-      return String(value ?? "");
-    }
-    try {
-      return new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: String(currency || "INR"),
-        maximumFractionDigits: 2
-      }).format(amount);
-    } catch (_) {
-      return String(currency || "INR") + " " + amount.toFixed(2);
-    }
-  }
-  function renderRecentSearches(target) {
-    const container = utils.getElement(
-      target || "[data-search-recent]"
-    );
-    if (!container) return [];
-    const recent = utils.getRecentSearches();
-    container.innerHTML = recent.length
-      ? recent.map((query, index) => `
-          <div class="mo-search-recent-item">
-            <button
-              type="button"
-              data-search-recent="${index}"
-            >${utils.escapeHTML(query)}</button>
-            <button
-              type="button"
-              data-search-remove-recent="${index}"
-              aria-label="Remove recent search"
-            >×</button>
-          </div>
-        `).join("")
-      : '<p class="mo-search-recent-empty">No recent searches.</p>';
-    return recent;
-  }
-  function removeRecentSearch(index) {
-    const recent = utils.getRecentSearches();
-    if (index < 0 || index >= recent.length) return recent;
-    recent.splice(index, 1);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
-    } catch (_) {
-      // Storage may be unavailable.
-    }
-    renderRecentSearches();
-    utils.dispatch("recent-removed", {
-      index,
-      recent
-    });
-    return recent;
-  }
-  function clearRecentSearches() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (_) {
-      // Storage may be unavailable.
-    }
-    renderRecentSearches();
-    utils.dispatch("recent-cleared");
-    return [];
-  }
-  function syncUrl() {
-    const url = new URL(window.location.href);
-    if (state.query) {
-      url.searchParams.set("q", state.query);
-    } else {
-      url.searchParams.delete("q");
-    }
-    if (state.category !== "all") {
-      url.searchParams.set("category", state.category);
-    } else {
-      url.searchParams.delete("category");
-    }
-    url.searchParams.set("page", String(state.page));
-    url.searchParams.set("limit", String(state.pageSize));
-    if (window.history?.replaceState) {
-      window.history.replaceState(
-        window.history.state,
-        "",
-        url.pathname + url.search + url.hash
+      element.setAttribute(
+        "aria-hidden",
+        state.loading ? "false" : "true"
       );
-    }
+    });
+
+    doc.querySelectorAll(SELECTORS.form).forEach(function (form) {
+      form.setAttribute(
+        "aria-busy",
+        state.loading ? "true" : "false"
+      );
+    });
+
+    doc.querySelectorAll(SELECTORS.results).forEach(function (container) {
+      container.setAttribute(
+        "aria-busy",
+        state.loading ? "true" : "false"
+      );
+    });
   }
-  function readUrlState() {
-    const url = new URL(window.location.href);
+
+  /* ---------------------------------------------------------
+     Response normalization
+  --------------------------------------------------------- */
+
+  function normalizeResult(item) {
+    if (!isObject(item)) return null;
+
+    const title = toText(
+      item.title ||
+      item.name ||
+      item.label ||
+      item.heading,
+      "Untitled result"
+    );
+
+    const description = toText(
+      item.description ||
+      item.summary ||
+      item.excerpt ||
+      item.snippet
+    );
+
+    const url = safeInternalUrl(
+      item.url ||
+      item.href ||
+      item.link ||
+      item.path
+    );
+
     return {
-      query: url.searchParams.get("q") || "",
-      category: url.searchParams.get("category") || "all",
-      page: Math.max(1, Number(url.searchParams.get("page")) || 1),
-      pageSize: Math.max(
-        1,
-        Number(url.searchParams.get("limit")) || DEFAULT_PAGE_SIZE
+      ...item,
+      title: title,
+      description: description,
+      url: url,
+      category: toText(
+        item.category ||
+        item.type ||
+        item.contentType,
+        "Resource"
+      ),
+      id: toText(
+        item.id ||
+        item.slug ||
+        url ||
+        title
       )
     };
   }
-  function setFilters(filters, options) {
-    state.filters = { ...(filters || {}) };
-    state.page = 1;
-    return search(state.query, {
-      ...(options || {}),
-      filters: state.filters,
-      page: 1
+
+  function normalizeResponse(response) {
+    const data = isObject(response) ? response : {};
+
+    const candidates = Array.isArray(data.results)
+      ? data.results
+      : Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data.data)
+          ? data.data
+          : Array.isArray(data.documents)
+            ? data.documents
+            : [];
+
+    const results = candidates
+      .map(normalizeResult)
+      .filter(Boolean);
+
+    const pagination = isObject(data.pagination)
+      ? data.pagination
+      : {};
+
+    const total = positiveInteger(
+      data.total !== undefined
+        ? data.total
+        : data.totalCount !== undefined
+          ? data.totalCount
+          : pagination.total,
+      results.length
+    );
+
+    return {
+      results: results,
+      total: total,
+      totalPages: positiveInteger(
+        data.totalPages !== undefined
+          ? data.totalPages
+          : pagination.totalPages,
+        Math.ceil(total / state.pageSize)
+      ),
+      page: positiveInteger(
+        data.page !== undefined
+          ? data.page
+          : pagination.page,
+        state.page
+      ),
+      pageSize: positiveInteger(
+        data.pageSize !== undefined
+          ? data.pageSize
+          : pagination.pageSize,
+        state.pageSize,
+        MAX_PAGE_SIZE
+      ),
+      raw: data
+    };
+  }
+
+  function normalizeSuggestions(response) {
+    const data = isObject(response) ? response : {};
+
+    const candidates = Array.isArray(response)
+      ? response
+      : Array.isArray(data.suggestions)
+        ? data.suggestions
+        : Array.isArray(data.results)
+          ? data.results
+          : Array.isArray(data.items)
+            ? data.items
+            : [];
+
+    const seen = new Set();
+
+    return candidates
+      .map(function (item) {
+        return typeof item === "string"
+          ? item.trim()
+          : toText(
+              item && (
+                item.query ||
+                item.title ||
+                item.name ||
+                item.value
+              )
+            ).trim();
+      })
+      .filter(function (value) {
+        const key = value.toLowerCase();
+
+        if (!value || seen.has(key)) return false;
+
+        seen.add(key);
+        return true;
+      })
+      .slice(0, SUGGESTION_LIMIT);
+  }
+
+  /* ---------------------------------------------------------
+     Recent searches
+  --------------------------------------------------------- */
+
+  function loadRecentSearches() {
+    try {
+      const stored = root.localStorage.getItem(STORAGE_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+
+      state.recent = Array.isArray(parsed)
+        ? parsed
+            .filter(function (item) {
+              return typeof item === "string" && item.trim();
+            })
+            .map(normalizeQuery)
+            .filter(Boolean)
+            .slice(0, MAX_RECENT_SEARCHES)
+        : [];
+    } catch (_) {
+      state.recent = [];
+    }
+
+    renderRecentSearches();
+  }
+
+  function saveRecentSearch(query) {
+    const normalized = normalizeQuery(query);
+
+    if (!normalized) return;
+
+    state.recent = [
+      normalized,
+      ...state.recent.filter(function (item) {
+        return item.toLowerCase() !== normalized.toLowerCase();
+      })
+    ].slice(0, MAX_RECENT_SEARCHES);
+
+    try {
+      root.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(state.recent)
+      );
+    } catch (_) {
+      // Search still works when storage is unavailable.
+    }
+
+    renderRecentSearches();
+
+    dispatch(EVENTS.RECENT_UPDATED, {
+      recent: state.recent.slice()
     });
   }
-  function setCategory(category, options) {
-    state.category = String(category || "all");
-    state.page = 1;
-    return search(state.query, {
-      ...(options || {}),
+
+  function renderRecentSearches() {
+    doc.querySelectorAll(SELECTORS.recent).forEach(function (container) {
+      container.replaceChildren();
+
+      state.recent.forEach(function (query) {
+        const button = createElement(
+          "button",
+          "medorbits-search-recent-item",
+          query
+        );
+
+        button.type = "button";
+        button.dataset.searchRecent = query;
+        button.setAttribute("aria-label", "Search for " + query);
+
+        container.appendChild(button);
+      });
+
+      container.hidden = state.recent.length === 0;
+    });
+  }
+
+  /* ---------------------------------------------------------
+     Search request
+  --------------------------------------------------------- */
+
+  function getSearchParams(overrides) {
+    const params = {
+      q: state.query,
+      query: state.query,
       category: state.category,
-      page: 1
+      sort: state.sort,
+      page: state.page,
+      pageSize: state.pageSize
+    };
+
+    Object.keys(state.filters).forEach(function (key) {
+      params["filter[" + key + "]"] = state.filters[key];
+    });
+
+    return Object.assign(params, overrides || {});
+  }
+
+  async function search(query, options) {
+    const settings = options || {};
+
+    if (query !== undefined) {
+      state.query = normalizeQuery(query);
+    }
+
+    if (settings.category !== undefined) {
+      state.category = toText(settings.category).trim();
+    }
+
+    if (settings.sort !== undefined) {
+      state.sort = toText(settings.sort, "relevance");
+    }
+
+    if (settings.page !== undefined) {
+      state.page = positiveInteger(settings.page, 1);
+    } else if (!settings.keepPage) {
+      state.page = 1;
+    }
+
+    if (settings.pageSize !== undefined) {
+      state.pageSize = positiveInteger(
+        settings.pageSize,
+        DEFAULT_PAGE_SIZE,
+        MAX_PAGE_SIZE
+      );
+    }
+
+    const sequence = ++state.searchSequence;
+
+    if (state.searchController) {
+      state.searchController.abort();
+    }
+
+    const controller = new AbortController();
+    state.searchController = controller;
+
+    setLoading(true);
+    state.error = null;
+
+    dispatch(EVENTS.SEARCH_STARTED, {
+      query: state.query,
+      page: state.page,
+      pageSize: state.pageSize
+    });
+
+    syncUrl();
+
+    try {
+      const response = await request(
+        buildUrl(SEARCH_ENDPOINT, getSearchParams()),
+        { signal: controller.signal }
+      );
+
+      if (sequence !== state.searchSequence) {
+        return state.lastResponse;
+      }
+
+      const normalized = normalizeResponse(response);
+
+      state.results = normalized.results;
+      state.total = normalized.total;
+      state.totalPages = normalized.totalPages;
+      state.page = normalized.page;
+      state.pageSize = normalized.pageSize;
+      state.lastResponse = normalized;
+      state.error = null;
+
+      renderResults(settings.container);
+      renderPagination();
+      updateMetadata();
+
+      if (state.query) {
+        saveRecentSearch(state.query);
+      }
+
+      dispatch(EVENTS.SEARCH_COMPLETED, {
+        query: state.query,
+        results: state.results.slice(),
+        total: state.total,
+        page: state.page,
+        pageSize: state.pageSize,
+        response: normalized.raw
+      });
+
+      dispatch(EVENTS.RESULTS_UPDATED, {
+        results: state.results.slice(),
+        total: state.total
+      });
+
+      return normalized;
+    } catch (error) {
+      if (
+        isAbortError(error) ||
+        sequence !== state.searchSequence
+      ) {
+        return null;
+      }
+
+      state.error = error.message ||
+        "Unable to complete the search.";
+
+      renderError(state.error, settings.container);
+      emitError(error, "search");
+
+      return null;
+    } finally {
+      if (sequence === state.searchSequence) {
+        setLoading(false);
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Results rendering
+  --------------------------------------------------------- */
+
+  function renderResults(target) {
+    const containers = target
+      ? [typeof target === "string" ? doc.querySelector(target) : target]
+      : Array.from(doc.querySelectorAll(SELECTORS.results));
+
+    containers.filter(Boolean).forEach(function (container) {
+      container.replaceChildren();
+
+      if (!state.results.length) {
+        container.appendChild(
+          createElement(
+            "p",
+            "medorbits-search-empty",
+            state.query
+              ? "No results found. Try different keywords or filters."
+              : "No resources are available to display."
+          )
+        );
+        return;
+      }
+
+      const fragment = doc.createDocumentFragment();
+
+      state.results.forEach(function (result) {
+        const card = createElement(
+          "article",
+          "medorbits-search-result"
+        );
+
+        card.dataset.searchResultId = result.id;
+
+        card.appendChild(
+          createElement(
+            "span",
+            "medorbits-search-result-category",
+            result.category
+          )
+        );
+
+        const heading = createElement(
+          "h3",
+          "medorbits-search-result-title"
+        );
+
+        if (result.url) {
+          const link = createElement(
+            "a",
+            "",
+            result.title
+          );
+
+          link.href = result.url;
+          heading.appendChild(link);
+        } else {
+          heading.textContent = result.title;
+        }
+
+        card.appendChild(heading);
+
+        if (result.description) {
+          card.appendChild(
+            createElement(
+              "p",
+              "medorbits-search-result-description",
+              result.description
+            )
+          );
+        }
+
+        if (result.url) {
+          const openLink = createElement(
+            "a",
+            "medorbits-search-result-link",
+            "View resource"
+          );
+
+          openLink.href = result.url;
+          card.appendChild(openLink);
+        }
+
+        fragment.appendChild(card);
+      });
+
+      container.appendChild(fragment);
     });
   }
-  function setSort(sortBy, options) {
-    state.sortBy = String(sortBy || "relevance");
+
+  function renderError(message, target) {
+    const containers = target
+      ? [typeof target === "string" ? doc.querySelector(target) : target]
+      : Array.from(doc.querySelectorAll(SELECTORS.results));
+
+    containers.filter(Boolean).forEach(function (container) {
+      container.replaceChildren();
+
+      container.appendChild(
+        createElement(
+          "p",
+          "medorbits-search-error",
+          toText(message, "Search is temporarily unavailable.")
+        )
+      );
+    });
+  }
+
+  function updateMetadata() {
+    setTextAll(SELECTORS.total, state.total);
+    setTextAll(SELECTORS.query, state.query);
+  }
+
+  /* ---------------------------------------------------------
+     Suggestions
+  --------------------------------------------------------- */
+
+  async function getSuggestions(query) {
+    const normalized = normalizeQuery(query);
+
+    if (normalized.length < MIN_QUERY_LENGTH) {
+      state.suggestions = [];
+      renderSuggestions();
+      return [];
+    }
+
+    const sequence = ++state.suggestionSequence;
+
+    if (state.suggestionController) {
+      state.suggestionController.abort();
+    }
+
+    const controller = new AbortController();
+    state.suggestionController = controller;
+
+    try {
+      const response = await request(
+        buildUrl(SUGGESTIONS_ENDPOINT, {
+          q: normalized,
+          query: normalized,
+          limit: SUGGESTION_LIMIT
+        }),
+        { signal: controller.signal }
+      );
+
+      if (sequence !== state.suggestionSequence) {
+        return state.suggestions;
+      }
+
+      state.suggestions = normalizeSuggestions(response);
+      renderSuggestions();
+
+      dispatch(EVENTS.SUGGESTIONS_UPDATED, {
+        query: normalized,
+        suggestions: state.suggestions.slice()
+      });
+
+      return state.suggestions;
+    } catch (error) {
+      if (
+        isAbortError(error) ||
+        sequence !== state.suggestionSequence
+      ) {
+        return [];
+      }
+
+      state.suggestions = [];
+      renderSuggestions();
+      emitError(error, "suggestions");
+
+      return [];
+    }
+  }
+
+  function renderSuggestions() {
+    doc.querySelectorAll(SELECTORS.suggestions).forEach(function (container) {
+      container.replaceChildren();
+
+      state.suggestions.forEach(function (suggestion) {
+        const button = createElement(
+          "button",
+          "medorbits-search-suggestion",
+          suggestion
+        );
+
+        button.type = "button";
+        button.dataset.searchSuggestion = suggestion;
+        button.setAttribute("role", "option");
+
+        container.appendChild(button);
+      });
+
+      container.hidden = state.suggestions.length === 0;
+      container.setAttribute("role", "listbox");
+    });
+  }
+
+  function hideSuggestions() {
+    doc.querySelectorAll(SELECTORS.suggestions).forEach(function (container) {
+      container.hidden = true;
+    });
+  }
+
+  /* ---------------------------------------------------------
+     Filters, sorting and pagination
+  --------------------------------------------------------- */
+
+  function setFilters(filters) {
+    if (!isObject(filters)) {
+      throw new TypeError("Search filters must be an object.");
+    }
+
+    const next = {};
+
+    Object.keys(filters).forEach(function (key) {
+      const safeKey = normalizeKey(key);
+      const value = filters[key];
+
+      if (!safeKey || value === null || value === undefined) {
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        const values = value
+          .map(function (item) {
+            return toText(item).trim();
+          })
+          .filter(Boolean);
+
+        if (values.length) next[safeKey] = values;
+        return;
+      }
+
+      if (typeof value === "boolean" || typeof value === "number") {
+        next[safeKey] = value;
+        return;
+      }
+
+      const textValue = toText(value).trim();
+
+      if (textValue) {
+        next[safeKey] = textValue;
+      }
+    });
+
+    state.filters = next;
     state.page = 1;
-    return search(state.query, {
-      ...(options || {}),
-      sortBy: state.sortBy,
-      page: 1
+
+    dispatch(EVENTS.FILTERS_UPDATED, {
+      filters: { ...state.filters }
     });
+
+    return search(undefined, { page: 1 });
   }
-  function setPage(page, options) {
-    state.page = Math.max(1, Number(page) || 1);
-    return search(state.query, {
-      ...(options || {}),
+
+  function setCategory(category) {
+    state.category = toText(category).trim();
+    return search(undefined, { page: 1 });
+  }
+
+  function setSort(sort) {
+    state.sort = toText(sort, "relevance").trim() || "relevance";
+    return search(undefined, { page: 1 });
+  }
+
+  function setPage(page) {
+    const nextPage = positiveInteger(page, 1);
+
+    if (state.totalPages > 0 && nextPage > state.totalPages) {
+      return Promise.resolve(null);
+    }
+
+    state.page = nextPage;
+
+    dispatch(EVENTS.PAGE_CHANGED, {
       page: state.page
     });
+
+    return search(undefined, {
+      page: state.page,
+      keepPage: true
+    });
   }
-  function setPageSize(pageSize, options) {
-    state.pageSize = Math.max(1, Number(pageSize) || DEFAULT_PAGE_SIZE);
-    state.page = 1;
-    return search(state.query, {
-      ...(options || {}),
+
+  function setPageSize(size) {
+    state.pageSize = positiveInteger(
+      size,
+      DEFAULT_PAGE_SIZE,
+      MAX_PAGE_SIZE
+    );
+
+    return search(undefined, {
       page: 1,
       pageSize: state.pageSize
     });
   }
-  function debounceSearch(input, options) {
-    if (!input) return;
-    const settings = options || {};
-    input.addEventListener("input", function () {
-      const existingTimer = state.debounceTimers.get(input);
-      if (existingTimer) {
-        window.clearTimeout(existingTimer);
+
+  function renderPagination() {
+    doc.querySelectorAll("[data-search-pagination]").forEach(
+      function (container) {
+        container.replaceChildren();
+
+        if (state.totalPages <= 1) {
+          container.hidden = true;
+          return;
+        }
+
+        container.hidden = false;
+
+        const previous = createElement(
+          "button",
+          "medorbits-search-page-previous",
+          "Previous"
+        );
+
+        previous.type = "button";
+        previous.dataset.searchPage = String(state.page - 1);
+        previous.disabled = state.page <= 1;
+        previous.setAttribute("aria-label", "Previous page");
+
+        container.appendChild(previous);
+
+        const start = Math.max(1, state.page - 2);
+        const end = Math.min(state.totalPages, state.page + 2);
+
+        for (let page = start; page <= end; page += 1) {
+          const button = createElement(
+            "button",
+            "medorbits-search-page",
+            page
+          );
+
+          button.type = "button";
+          button.dataset.searchPage = String(page);
+          button.setAttribute(
+            "aria-current",
+            page === state.page ? "page" : "false"
+          );
+          button.disabled = page === state.page;
+
+          container.appendChild(button);
+        }
+
+        const next = createElement(
+          "button",
+          "medorbits-search-page-next",
+          "Next"
+        );
+
+        next.type = "button";
+        next.dataset.searchPage = String(state.page + 1);
+        next.disabled = state.page >= state.totalPages;
+        next.setAttribute("aria-label", "Next page");
+
+        container.appendChild(next);
       }
-      const query = input.value.trim();
-      const timer = window.setTimeout(async function () {
-        if (query.length >= MIN_QUERY_LENGTH) {
-          await getSuggestions(query, {
-            container: settings.suggestionsContainer,
-            category: settings.category
+    );
+  }
+
+  /* ---------------------------------------------------------
+     URL synchronization
+  --------------------------------------------------------- */
+
+  function syncUrl() {
+    try {
+      const url = new URL(root.location.href);
+
+      if (state.query) {
+        url.searchParams.set("q", state.query);
+      } else {
+        url.searchParams.delete("q");
+      }
+
+      if (state.category) {
+        url.searchParams.set("category", state.category);
+      } else {
+        url.searchParams.delete("category");
+      }
+
+      url.searchParams.set("page", String(state.page));
+      url.searchParams.set("pageSize", String(state.pageSize));
+      url.searchParams.set("sort", state.sort);
+
+      Array.from(url.searchParams.keys()).forEach(function (key) {
+        if (key.startsWith("filter[")) {
+          url.searchParams.delete(key);
+        }
+      });
+
+      Object.keys(state.filters).forEach(function (key) {
+        const value = state.filters[key];
+
+        if (Array.isArray(value)) {
+          value.forEach(function (item) {
+            url.searchParams.append(
+              "filter[" + key + "]",
+              String(item)
+            );
           });
         } else {
-          state.suggestions = [];
-          renderSuggestions(settings.suggestionsContainer);
+          url.searchParams.set(
+            "filter[" + key + "]",
+            String(value)
+          );
         }
-        if (settings.liveSearch !== false) {
-          if (!query || query.length >= MIN_QUERY_LENGTH) {
-            search(query, {
-              ...settings,
-              page: 1
-            }).catch(() => {});
-          }
+      });
+
+      root.history.replaceState(
+        root.history.state,
+        "",
+        url.pathname + url.search + url.hash
+      );
+    } catch (_) {
+      // URL synchronization must not break searching.
+    }
+  }
+
+  function readUrlState() {
+    const params = new URLSearchParams(root.location.search);
+    const filters = {};
+
+    params.forEach(function (value, key) {
+      const match = key.match(/^filter\[([^\]]+)\]$/);
+
+      if (!match) return;
+
+      const filterKey = normalizeKey(match[1]);
+
+      if (!filterKey) return;
+
+      if (Object.prototype.hasOwnProperty.call(filters, filterKey)) {
+        if (!Array.isArray(filters[filterKey])) {
+          filters[filterKey] = [filters[filterKey]];
         }
-      }, DEBOUNCE_DELAY);
-      state.debounceTimers.set(input, timer);
-    });
-    input.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        state.suggestions = [];
-        renderSuggestions(settings.suggestionsContainer);
-      }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        const query = input.value.trim();
-        search(query, {
-          ...settings,
-          page: 1
-        }).catch(() => {});
+
+        filters[filterKey].push(value);
+      } else {
+        filters[filterKey] = value;
       }
     });
-  }
-  function bindSearchForms() {
-    document.querySelectorAll("[data-search-form]").forEach((form) => {
-      if (form.dataset.searchBound === "true") return;
-      form.dataset.searchBound = "true";
-      const input = form.querySelector(
-        "[name='q'], [name='query'], [data-search-input]"
-      );
-      if (!input) return;
-      debounceSearch(input, {
-        liveSearch: form.dataset.liveSearch !== "false",
-        category: form.dataset.searchCategory || undefined,
-        container: form.dataset.resultsTarget || undefined,
-        suggestionsContainer:
-          form.dataset.suggestionsTarget || undefined
-      });
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-        search(input.value, {
-          category: form.dataset.searchCategory || state.category,
-          container: form.dataset.resultsTarget || undefined,
-          suggestionsContainer:
-            form.dataset.suggestionsTarget || undefined,
-          page: 1
-        }).catch(() => {});
-      });
-    });
-  }
-  function bindControls() {
-    document.addEventListener("click", function (event) {
-      const suggestionButton = event.target.closest("[data-search-suggestion]");
-      if (suggestionButton) {
-        const index = Number(suggestionButton.dataset.searchSuggestion);
-        const suggestion = state.suggestions[index];
-        if (!suggestion) return;
-        const input = document.querySelector(
-          "[data-search-input], [data-search-form] input[name='q'], input[name='query']"
-        );
-        if (input) input.value = suggestion.value;
-        search(suggestion.value, { page: 1 }).catch(() => {});
-        return;
-      }
-      const recentButton = event.target.closest("[data-search-recent]");
-      if (recentButton) {
-        const recent = utils.getRecentSearches();
-        const query = recent[Number(recentButton.dataset.searchRecent)];
-        if (!query) return;
-        const input = document.querySelector(
-          "[data-search-input], [data-search-form] input[name='q'], input[name='query']"
-        );
-        if (input) input.value = query;
-        search(query, { page: 1 }).catch(() => {});
-        return;
-      }
-      const removeRecentButton = event.target.closest(
-        "[data-search-remove-recent]"
-      );
-      if (removeRecentButton) {
-        removeRecentSearch(
-          Number(removeRecentButton.dataset.searchRemoveRecent)
-        );
-        return;
-      }
-      const clearRecentButton = event.target.closest(
-        "[data-search-clear-recent]"
-      );
-      if (clearRecentButton) {
-        clearRecentSearches();
-        return;
-      }
-      const categoryButton = event.target.closest("[data-search-category]");
-      if (categoryButton) {
-        setCategory(categoryButton.dataset.searchCategory).catch(() => {});
-        return;
-      }
-      const pageButton = event.target.closest("[data-search-page]");
-      if (pageButton) {
-        setPage(Number(pageButton.dataset.searchPage)).catch(() => {});
-        return;
-      }
-      const saveButton = event.target.closest("[data-search-save]");
-      if (saveButton) {
-        const resultId = saveButton.dataset.searchSave;
-        utils.dispatch("save-requested", {
-          resultId,
-          result: state.results.find((item) => item.id === resultId) || null
-        });
-      }
-    });
-    document.addEventListener("change", function (event) {
-      const sortControl = event.target.closest("[data-search-sort]");
-      if (sortControl) {
-        setSort(sortControl.value).catch(() => {});
-        return;
-      }
-      const pageSizeControl = event.target.closest("[data-search-page-size]");
-      if (pageSizeControl) {
-        setPageSize(Number(pageSizeControl.value)).catch(() => {});
-        return;
-      }
-      const filterControl = event.target.closest("[data-search-filter]");
-      if (filterControl) {
-        const key = filterControl.dataset.searchFilter;
-        const value = filterControl.type === "checkbox"
-          ? filterControl.checked
-          : filterControl.value;
-        setFilters({
-          ...state.filters,
-          [key]: value
-        }).catch(() => {});
-      }
-    });
-  }
-  function on(eventName, callback) {
-    if (typeof callback !== "function") {
-      throw new TypeError("A callback function is required.");
-    }
-    const event = "medorbits:search:" + eventName;
-    document.addEventListener(event, callback);
-    if (!listeners.has(event)) {
-      listeners.set(event, new Set());
-    }
-    listeners.get(event).add(callback);
-    return function unsubscribe() {
-      document.removeEventListener(event, callback);
-      listeners.get(event)?.delete(callback);
+
+    state.query = normalizeQuery(
+      params.get("q") || params.get("query") || ""
+    );
+
+    state.category = toText(params.get("category")).trim();
+    state.sort = toText(params.get("sort"), "relevance");
+    state.page = positiveInteger(params.get("page"), 1);
+    state.pageSize = positiveInteger(
+      params.get("pageSize"),
+      DEFAULT_PAGE_SIZE,
+      MAX_PAGE_SIZE
+    );
+    state.filters = filters;
+
+    return {
+      query: state.query,
+      category: state.category,
+      sort: state.sort,
+      page: state.page,
+      pageSize: state.pageSize,
+      filters: { ...state.filters }
     };
   }
-  function off(eventName, callback) {
-    const event = "medorbits:search:" + eventName;
-    if (callback) {
-      document.removeEventListener(event, callback);
-      listeners.get(event)?.delete(callback);
+
+  function applyStateToControls() {
+    doc.querySelectorAll(SELECTORS.input).forEach(function (input) {
+      input.value = state.query;
+    });
+
+    doc.querySelectorAll(SELECTORS.category).forEach(function (input) {
+      input.value = state.category;
+    });
+
+    doc.querySelectorAll(SELECTORS.sort).forEach(function (input) {
+      input.value = state.sort;
+    });
+
+    doc.querySelectorAll(SELECTORS.pageSize).forEach(function (input) {
+      input.value = String(state.pageSize);
+    });
+
+    doc.querySelectorAll(SELECTORS.filter).forEach(function (input) {
+      const key = normalizeKey(input.dataset.searchFilter);
+      const value = state.filters[key];
+
+      if (!key || value === undefined) return;
+
+      if (input.type === "checkbox") {
+        input.checked = Array.isArray(value)
+          ? value.includes(input.value)
+          : String(value) === input.value ||
+            value === true;
+      } else {
+        input.value = Array.isArray(value)
+          ? value.join(",")
+          : String(value);
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------
+     Debouncing and delegated controls
+  --------------------------------------------------------- */
+
+  function debounceElement(element, callback) {
+    const previous = state.timers.get(element);
+
+    if (previous) {
+      clearTimeout(previous);
+    }
+
+    const timer = setTimeout(function () {
+      state.timers.delete(element);
+      callback();
+    }, DEBOUNCE_DELAY);
+
+    state.timers.set(element, timer);
+  }
+
+  function readFiltersFromControls() {
+    const filters = {};
+
+    doc.querySelectorAll(SELECTORS.filter).forEach(function (input) {
+      const key = normalizeKey(input.dataset.searchFilter);
+
+      if (!key) return;
+
+      if (input.type === "checkbox") {
+        if (!input.checked) return;
+
+        if (!filters[key]) {
+          filters[key] = [];
+        }
+
+        if (!Array.isArray(filters[key])) {
+          filters[key] = [filters[key]];
+        }
+
+        filters[key].push(input.value);
+        return;
+      }
+
+      if (input.type === "radio" && !input.checked) {
+        return;
+      }
+
+      const value = toText(input.value).trim();
+
+      if (value) {
+        filters[key] = value;
+      }
+    });
+
+    return filters;
+  }
+
+  function handleInput(event) {
+    const input = event.target;
+
+    if (!input.matches(SELECTORS.input)) return;
+
+    const query = normalizeQuery(input.value);
+
+    state.query = query;
+
+    debounceElement(input, function () {
+      if (query.length >= MIN_QUERY_LENGTH) {
+        getSuggestions(query);
+      } else {
+        state.suggestions = [];
+        renderSuggestions();
+      }
+
+      search(query, { page: 1 });
+    });
+  }
+
+  function handleSubmit(event) {
+    const form = event.target;
+
+    if (!form.matches(SELECTORS.form)) return;
+
+    event.preventDefault();
+
+    const input = form.querySelector(SELECTORS.input);
+    const query = input ? input.value : state.query;
+
+    doc.querySelectorAll(SELECTORS.input).forEach(function (item) {
+      item.value = normalizeQuery(query);
+    });
+
+    search(query, { page: 1 });
+    hideSuggestions();
+  }
+
+  function handleChange(event) {
+    const element = event.target;
+
+    if (element.matches(SELECTORS.category)) {
+      setCategory(element.value);
       return;
     }
-    listeners.get(event)?.forEach((listener) => {
-      document.removeEventListener(event, listener);
-    });
-    listeners.delete(event);
+
+    if (element.matches(SELECTORS.sort)) {
+      setSort(element.value);
+      return;
+    }
+
+    if (element.matches(SELECTORS.pageSize)) {
+      setPageSize(element.value);
+      return;
+    }
+
+    if (element.matches(SELECTORS.filter)) {
+      setFilters(readFiltersFromControls());
+    }
   }
-  async function init(options) {
+
+  function handleClick(event) {
+    const target = event.target.closest(
+      [
+        SELECTORS.page,
+        SELECTORS.suggestions + " button",
+        SELECTORS.recent + " button",
+        SELECTORS.save
+      ].join(",")
+    );
+
+    if (!target) return;
+
+    if (target.matches(SELECTORS.page)) {
+      event.preventDefault();
+
+      setPage(target.dataset.searchPage).catch(function (error) {
+        emitError(error, "pagination");
+      });
+
+      return;
+    }
+
+    if (target.matches("[data-search-suggestion]")) {
+      event.preventDefault();
+
+      const query = target.dataset.searchSuggestion;
+
+      doc.querySelectorAll(SELECTORS.input).forEach(function (input) {
+        input.value = query;
+      });
+
+      state.query = normalizeQuery(query);
+      hideSuggestions();
+
+      search(state.query, { page: 1 });
+      return;
+    }
+
+    if (target.matches("[data-search-recent]")) {
+      event.preventDefault();
+
+      const query = target.dataset.searchRecent;
+
+      doc.querySelectorAll(SELECTORS.input).forEach(function (input) {
+        input.value = query;
+      });
+
+      search(query, { page: 1 });
+      return;
+    }
+
+    if (target.matches(SELECTORS.save)) {
+      event.preventDefault();
+
+      dispatch(EVENTS.SAVE_REQUESTED, {
+        query: state.query,
+        filters: { ...state.filters },
+        sort: state.sort,
+        page: state.page,
+        pageSize: state.pageSize
+      });
+    }
+  }
+
+  function handleKeydown(event) {
+    if (event.key === "Escape") {
+      hideSuggestions();
+    }
+  }
+
+  function handleDocumentClick(event) {
+    if (
+      !event.target.closest(SELECTORS.input) &&
+      !event.target.closest(SELECTORS.suggestions)
+    ) {
+      hideSuggestions();
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Initialization and lifecycle
+  --------------------------------------------------------- */
+
+  function init(options) {
+    if (state.initialized) return api;
+
     const settings = options || {};
-    if (state.initialized && !settings.force) {
-      return api;
+
+    if (settings.pageSize !== undefined) {
+      state.pageSize = positiveInteger(
+        settings.pageSize,
+        DEFAULT_PAGE_SIZE,
+        MAX_PAGE_SIZE
+      );
     }
-    const urlState = readUrlState();
-    state.query = settings.query ?? urlState.query;
-    state.category = settings.category ?? urlState.category;
-    state.page = settings.page ?? urlState.page;
-    state.pageSize = settings.pageSize ?? urlState.pageSize;
-    bindSearchForms();
-    bindControls();
-    renderRecentSearches();
-    document.querySelectorAll("[data-search-input]").forEach((input) => {
-      if (input.value === "" && state.query) {
-        input.value = state.query;
-      }
-    });
-    if (state.query) {
-      try {
-        await search(state.query, {
-          page: state.page,
-          pageSize: state.pageSize,
-          category: state.category
-        });
-      } catch (_) {
-        // Keep the search interface usable when the API is unavailable.
-      }
-    }
+
+    readUrlState();
+    loadRecentSearches();
+    applyStateToControls();
+
+    doc.addEventListener("input", handleInput);
+    doc.addEventListener("submit", handleSubmit);
+    doc.addEventListener("change", handleChange);
+    doc.addEventListener("click", handleClick);
+    doc.addEventListener("keydown", handleKeydown);
+    doc.addEventListener("click", handleDocumentClick);
+
     state.initialized = true;
-    utils.dispatch("initialized", {
-      query: state.query,
-      category: state.category
-    });
+
+    if (settings.searchOnInit !== false) {
+      search(state.query, { page: state.page, keepPage: true });
+    }
+
     return api;
   }
+
   function destroy() {
-    if (state.abortController) {
-      state.abortController.abort();
-      state.abortController = null;
+    if (state.searchController) {
+      state.searchController.abort();
+      state.searchController = null;
     }
-    listeners.forEach((callbacks, event) => {
-      callbacks.forEach((callback) => {
-        document.removeEventListener(event, callback);
-      });
+
+    if (state.suggestionController) {
+      state.suggestionController.abort();
+      state.suggestionController = null;
+    }
+
+    state.timers.forEach(function (timer) {
+      clearTimeout(timer);
     });
-    listeners.clear();
+
+    state.timers.clear();
+
+    doc.removeEventListener("input", handleInput);
+    doc.removeEventListener("submit", handleSubmit);
+    doc.removeEventListener("change", handleChange);
+    doc.removeEventListener("click", handleClick);
+    doc.removeEventListener("keydown", handleKeydown);
+    doc.removeEventListener("click", handleDocumentClick);
+
+    state.searchSequence += 1;
+    state.suggestionSequence += 1;
     state.initialized = false;
+
+    setLoading(false);
   }
-  const api = {
-    init,
-    destroy,
-    on,
-    off,
-    search,
-    getSuggestions,
-    renderResults,
-    renderSuggestions,
-    renderRecentSearches,
-    setFilters,
-    setCategory,
-    setSort,
-    setPage,
-    setPageSize,
-    getRecentSearches: utils.getRecentSearches,
-    removeRecentSearch,
-    clearRecentSearches,
-    syncUrl,
-    readUrlState,
-    getResults: () => state.results.slice(),
-    getSuggestionsList: () => state.suggestions.slice(),
-    getState: () => ({
+
+  function on(eventName, callback) {
+    if (typeof callback !== "function") {
+      throw new TypeError("Event subscriber must be a function.");
+    }
+
+    const name = toText(eventName);
+
+    if (!state.listeners.has(name)) {
+      state.listeners.set(name, new Set());
+    }
+
+    state.listeners.get(name).add(callback);
+
+    return function unsubscribe() {
+      off(name, callback);
+    };
+  }
+
+  function off(eventName, callback) {
+    const subscribers = state.listeners.get(toText(eventName));
+
+    if (!subscribers) return;
+
+    if (typeof callback === "function") {
+      subscribers.delete(callback);
+    } else {
+      subscribers.clear();
+    }
+
+    if (!subscribers.size) {
+      state.listeners.delete(toText(eventName));
+    }
+  }
+
+  function getState() {
+    return {
       query: state.query,
       category: state.category,
       filters: { ...state.filters },
-      sortBy: state.sortBy,
+      sort: state.sort,
       page: state.page,
       pageSize: state.pageSize,
       total: state.total,
+      totalPages: state.totalPages,
       results: state.results.slice(),
       suggestions: state.suggestions.slice(),
-      loading: state.loading
-    }),
-    constants: {
-      STORAGE_KEY,
-      MAX_RECENT_SEARCHES,
-      DEFAULT_PAGE_SIZE,
-      DEBOUNCE_DELAY,
-      MIN_QUERY_LENGTH
-    }
+      recent: state.recent.slice(),
+      loading: state.loading,
+      error: state.error
+    };
+  }
+
+  const api = {
+    version: "1.3.0",
+
+    init: init,
+    destroy: destroy,
+
+    search: search,
+    getSuggestions: getSuggestions,
+
+    setFilters: setFilters,
+    setCategory: setCategory,
+    setSort: setSort,
+    setPage: setPage,
+    setPageSize: setPageSize,
+
+    syncUrl: syncUrl,
+    readUrlState: readUrlState,
+
+    getState: getState,
+    getRecentSearches: function () {
+      return state.recent.slice();
+    },
+
+    clearRecentSearches: function () {
+      state.recent = [];
+
+      try {
+        root.localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {
+        // Storage may be unavailable.
+      }
+
+      renderRecentSearches();
+
+      dispatch(EVENTS.RECENT_UPDATED, {
+        recent: []
+      });
+    },
+
+    on: on,
+    off: off,
+
+    events: Object.freeze({ ...EVENTS })
   };
-  window.MedOrbitsSearch = api;
-  window.MedOrbits = window.MedOrbits || {};
-  window.MedOrbits.Search = api;
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      if (
-        document.querySelector(
-          "[data-search-form], [data-search-results], [data-search-input]"
-        )
-      ) {
+
+  root.MedorbitsSearch = api;
+
+  root.MedOrbitsSearch = api;
+
+  root.MedOrbits = root.MedOrbits || {};
+  root.MedOrbits.Search = api;
+
+  if (doc.readyState === "loading") {
+    doc.addEventListener("DOMContentLoaded", function () {
+      if (doc.querySelector(SELECTORS.form)) {
         init();
       }
     }, { once: true });
-  } else if (
-    document.querySelector(
-      "[data-search-form], [data-search-results], [data-search-input]"
-    )
-  ) {
+  } else if (doc.querySelector(SELECTORS.form)) {
     init();
   }
+
 })(window, document);
