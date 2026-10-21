@@ -1,44 +1,50 @@
-
 name: MedOrbits CI
 
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
-  workflow_dispatch:
+push:
+branches:
+- main
+- master
+pull_request:
+branches:
+- main
+- master
+workflow_dispatch:
 
 permissions:
-  contents: read
+contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+group: ci-${{ github.workflow }}-${{ github.ref }}
+cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Build and Test
-    runs-on: ubuntu-latest
+build-and-test:
+name: Build and Test
+runs-on: ubuntu-latest
+timeout-minutes: 20
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test --if-present
-
-      - name: Build application
-        run: npm run build --if-present
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+  - name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
+      cache: npm
+  - name: Install dependencies
+    run: npm ci
+  - name: Validate application data
+    run: npm run check:data --if-present
+  - name: Check JavaScript syntax
+    run: npm run check:syntax --if-present
+  - name: Check code formatting
+    run: npm run format:check --if-present
+  - name: Run ESLint
+    run: npm run lint --if-present
+  - name: Run tests with coverage
+    run: npm run test:coverage --if-present
+  - name: Run tests
+    run: npm test --if-present
+  - name: Build application
+    run: npm run build --if-present
