@@ -1,57 +1,59 @@
 
-# File: .github/workflows/codeql.yml
-
-name: CodeQL JavaScript Analysis
+name: CodeQL Security Analysis
 
 on:
   push:
     branches:
       - main
-      - develop
-
+      - master
   pull_request:
     branches:
       - main
-      - develop
-
+      - master
   schedule:
-    - cron: "23 4 * * 1"
-
+    - cron: "23 3 * * 1"
   workflow_dispatch:
 
 permissions:
   contents: read
+  security-events: write
+  actions: read
 
 concurrency:
-  group: codeql-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   analyze:
-    name: Analyze JavaScript and TypeScript
+    name: Analyze JavaScript
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
-          build-mode: none
           queries: security-extended
+
+      - name: Perform JavaScript syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -f package.json ]; then
+            node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json is valid')"
+          fi
+
+          if [ -d scripts ]; then
+            find scripts -type f -name '*.js' -print0 |
+              while IFS= read -r -d '' file; do
+                node --check "$file"
+              done
+          fi
 
       - name: Analyze code
         uses: github/codeql-action/analyze@v4
-        with:
-          category: /language:javascript-typescript
-          upload: true
