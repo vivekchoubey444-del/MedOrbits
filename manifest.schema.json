@@ -1,8 +1,9 @@
+
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://medorbits.in/schemas/manifest.schema.json",
   "title": "MedOrbits Repository Inventory Manifest",
-  "description": "Schema for validating the MedOrbits repository inventory manifest.",
+  "description": "Schema for validating the MedOrbits repository inventory manifest, runtime configuration, project areas, document collections, security policies, and maintenance rules.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -29,7 +30,8 @@
   ],
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "const": "https://json-schema.org/draft/2020-12/schema"
     },
     "name": {
       "const": "MedOrbits"
@@ -95,13 +97,7 @@
       ],
       "properties": {
         "defaultStatus": {
-          "enum": [
-            "planned",
-            "existing",
-            "deprecated",
-            "missing",
-            "ignored"
-          ]
+          "$ref": "#/$defs/status"
         },
         "requireVerificationBeforeExisting": {
           "type": "boolean"
@@ -113,16 +109,19 @@
           "type": "boolean"
         },
         "repositoryPathsMustBeRelative": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
         },
         "repositoryPathsMustNotEscapeRoot": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
         },
         "caseSensitivePathValidation": {
           "type": "boolean"
         },
         "requireStatusForInventoryItems": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
         }
       },
       "additionalProperties": false
@@ -136,13 +135,16 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "designDirection": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "visualGuidance": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "additionalProperties": false
@@ -163,28 +165,45 @@
       ],
       "properties": {
         "platform": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "minimumNodeVersion": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^>=?\\d+\\.\\d+\\.\\d+$"
         },
         "versionSource": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "packageManager": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "npm",
+            "npm@10",
+            "npm@11",
+            "pnpm",
+            "yarn"
+          ]
         },
         "packageManifest": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "lockfile": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "nodeVersionFile": {
-          "type": "string"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/repositoryPath"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "environmentTemplate": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "entryPoints": {
           "type": "object",
@@ -241,86 +260,13 @@
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object",
-        "required": [
-          "id",
-          "path",
-          "purpose",
-          "status"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]*$"
-          },
-          "path": {
-            "$ref": "#/$defs/repositoryPath"
-          },
-          "purpose": {
-            "type": "string",
-            "minLength": 1
-          },
-          "status": {
-            "$ref": "#/$defs/status"
-          },
-          "subareas": {
-            "type": "array",
-            "items": {
-              "$ref": "#/$defs/repositoryPath"
-            }
-          },
-          "databaseEngine": {
-            "type": "string"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "gitPolicy": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
+        "$ref": "#/$defs/projectArea"
       }
     },
     "documentCollections": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "id",
-          "path",
-          "purpose",
-          "status"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]*$"
-          },
-          "path": {
-            "$ref": "#/$defs/repositoryPath"
-          },
-          "manifest": {
-            "$ref": "#/$defs/repositoryPath"
-          },
-          "purpose": {
-            "type": "string",
-            "minLength": 1
-          },
-          "status": {
-            "$ref": "#/$defs/status"
-          },
-          "contentRequirements": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "additionalProperties": false
+        "$ref": "#/$defs/documentCollection"
       }
     },
     "security": {
@@ -343,7 +289,15 @@
       ],
       "properties": {
         "neverCommitSecrets": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
+        },
+        "environmentSecretsSource": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environmentTemplate": {
+          "$ref": "#/$defs/repositoryPath"
         },
         "privateStorageMustBeProtected": {
           "type": "boolean"
@@ -369,25 +323,21 @@
         "useSyntheticTestData": {
           "type": "boolean"
         },
-        "environmentSecretsSource": {
-          "type": "string"
-        },
-        "environmentTemplate": {
-          "type": "string"
-        },
         "securityReportingDocument": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "authenticationRequirements": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "uploadRequirements": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       },
@@ -406,27 +356,28 @@
       ],
       "properties": {
         "formattingConfig": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "lintConfig": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "editorConfig": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "testDirectory": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "documentationDirectory": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "workflowDirectory": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "rules": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       },
@@ -444,19 +395,28 @@
       ],
       "properties": {
         "ignoreFile": {
-          "type": "string"
+          "$ref": "#/$defs/repositoryPath"
         },
         "attributesFile": {
-          "type": "string"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/repositoryPath"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "requiredTrackedFiles": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/repositoryPath"
           }
         },
         "requiredTrackedFilesArePolicy": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "rules": {
           "type": "object",
@@ -505,7 +465,8 @@
         "recommendedChecks": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       },
@@ -597,7 +558,8 @@
           "type": "boolean"
         },
         "pathsMustBeRepositoryRelative": {
-          "type": "boolean"
+          "type": "boolean",
+          "const": true
         },
         "verifyParentDirectoryBeforeAddingFile": {
           "type": "boolean"
@@ -618,7 +580,8 @@
           "$ref": "#/$defs/repositoryPath"
         },
         "validationMustRunBeforeMerge": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "additionalProperties": false
@@ -636,7 +599,8 @@
       ],
       "properties": {
         "maintainedBy": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "updateWhenProjectStructureChanges": {
           "type": "boolean"
@@ -682,7 +646,7 @@
     "repositoryPath": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?![A-Za-z]:).+$"
     },
     "inventoryItem": {
       "type": "object",
@@ -701,6 +665,85 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        }
+      },
+      "additionalProperties": false
+    },
+    "projectArea": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "purpose",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "path": {
+          "$ref": "#/$defs/repositoryPath"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "subareas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repositoryPath"
+          }
+        },
+        "databaseEngine": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gitPolicy": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "documentCollection": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "purpose",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "path": {
+          "$ref": "#/$defs/repositoryPath"
+        },
+        "manifest": {
+          "$ref": "#/$defs/repositoryPath"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "contentRequirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
